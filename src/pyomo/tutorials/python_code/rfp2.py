@@ -1,0 +1,21 @@
+#from coopr.pyomo import *
+from pyomo.environ import *
+model = ConcreteModel()
+model.rfp_d = Param(initialize=60)
+model.rfp_z = Param(initialize=20)
+model.p = Var(within=NonNegativeReals)
+model.w = Var(within=NonNegativeReals)
+model.z = Var(within=Reals)
+model.obj = Objective(expr=model.z + 0.01/2 * ((10*model.p - model.rfp_d) + (model.p+5*model.w-model.rfp_z)),sense=maximize)
+model.con1 = Constraint(expr=10*model.p - model.z -model.rfp_d >= 0)
+model.con2 = Constraint(expr=model.p + 5 * model.w - model.z -model.rfp_z >= 0)
+model.con3 = Constraint(expr=model.p + model.w  <= 14)
+model.con4 = Constraint(expr=model.p  >= 5)
+model.con5 = Constraint(expr=model.w <= 8)
+
+opt = SolverFactory('glpk')
+opt.solve(model)
+model.display()
+q1= 10*value(model.p)
+q2=value(model.p)+5*value(model.w)
+print(" rfp_d = %5.2f d = %5.2f \n rfp_z = %5.2f z = %5.2f \n"%(value(model.rfp_d),q1, value(model.rfp_z), q2))
