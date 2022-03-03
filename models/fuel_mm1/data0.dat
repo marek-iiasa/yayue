@@ -1,0 +1,80 @@
+# data in AMPL format
+# set V := 0 1 2 ;
+# set P := 0 1 2 ;
+# set H := -1 ;
+# the above sets are initialized in sms()
+# could (but should not) be redefined here
+
+set F := fuel;
+set T := OTL PTL;
+#
+param discr := 0.9 ;
+param d :=
+fuel 0 10
+fuel 1 0
+fuel 2 20
+;
+param a :=
+OTL -1 fuel 50
+OTL 0 fuel 0.1
+OTL 1 fuel 101
+OTL 2 fuel 102
+PTL -1 fuel 5
+PTL 0 fuel 30
+PTL 1 fuel 10
+PTL 2 fuel 20
+;
+param cuf :=
+OTL -1 0.95
+OTL 0 0.95
+OTL 1 0.95
+OTL 2 0.95
+PTL -1 0.95
+PTL 0 0.95
+PTL 1 0.95
+PTL 2 0.95
+;
+param hncap :=
+OTL -1 2
+PTL -1 2
+;
+param invC :=
+OTL 0 105
+OTL 1 105
+OTL 2 105
+PTL 0 205
+PTL 1 205
+PTL 2 205
+;
+param vom :=
+OTL 0 0.95
+OTL 1 0.95
+OTL 2 0.95
+PTL 0 0.95
+PTL 1 0.95
+PTL 2 0.95
+;
+param fom :=
+OTL -1 0.95
+OTL 0 0.95
+OTL 1 0.95
+OTL 2 0.95
+PTL -1 0.95
+PTL 0 0.95
+PTL 1 0.95
+PTL 2 0.95
+;
+param ef :=
+OTL -1 55
+OTL 0 25
+OTL 1 25
+OTL 2 25
+PTL -1 15
+PTL 0 15
+PTL 1 15
+PTL 2 15
+;
+
+# for a single param use table instead of param
+# table b := 40 ;
+

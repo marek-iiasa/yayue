@@ -1,0 +1,298 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{fullpage,times}
+\usepackage{verbatim}  % for comments
+% \usepackage{euro}
+% \EUR~10.10
+
+%\input{Figs}
+\input mm_macros.tex
+
+\DeclareMathAlphabet{\mathbit}{OT1}{cmr}{bx}{it}
+\def\vv#1{\ensuremath{\mathbit{\bf #1}}}
+
+\usepackage{amsmath}
+\usepackage{lineno}
+% \usepackage{showlabels}
+
+\pagestyle{plain}
+\thispagestyle{plain}
+
+
+\begin{document}
+\centerline{\Large\bf SMS of simplified cn\_liquid model}
+\bigskip
+
+\centerline{\sc version 1.0 of \today}
+
+\bigskip
+\bigskip
+
+\linenumbers
+
+{\em Note:} The SMS documented here is based on the SMS of the cn\_ptl model of
+Sep.~17, 2021 (see the cn-ptl repo, ..../prototype/docs).
+This SMS has been implemented in pyomo as the {\em cn\_liquid v.1.0} model.
+Whenever modifications of the model will be desired, this document will be kept
+consistent with the pyomo model implementation.
+
+\section{Symbolic model specification (SMS)}
+The SMS documents all model entities (indexing structure, variables,
+parameters, relations).
+This draft presents SMS of incomplete model prototype being implemented in Pyomo
+for testing Pyomo implementation and reporting module.
+The prototype will be gradually extended and use in the corresponding MCMA.
+
+\subsection{The model purpose}
+The model aims at supporting analysis of the relations between the decisions
+on the technology portfolio (investment for capacity expansion and activity-levels)
+for producing liquid fuels, and the consequences of implementation of such decisions.
+The consequences are measured by values of the outcome variables that represent
+conflicting objectives, such as costs and externalities.
+
+\subsection{Indexing structure}
+\begin{comment}
+\subsubsection{Intro to indexing structure}
+The SMS uses the Structured Modeling (SM) concepts; in particular the
+compound entities.
+For example, a compound variable $\vv{x}$ actually represents a set of variables
+$x_{ij}, i \in I,\; j \in J$, where $i$ and $j$ stand for indices, and $I$ and
+$J$ are the sets of values of the corresponding indices.
+To illustrate this concept, let $\vv{x}$ be flows between $i$-th warehouse
+and $j$-th store.
+Then the set $I$ of warehouses can be defined as $I = \{city1, city2, \dots\}$.
+Similarly, the set $J$ of shops can be defined as $J = \{loc1, loc2, \dots\}$.
+
+Thus, the indexing structure is composed of:
+\btlb
+\item symbols of indices (typically a lower-case letter), and
+\item symbols of sets (typically, the corresponding upper-case letter).
+\etl
+The examples of the index-sets below are for illustration only.
+The actual members of these sets are defined by the model parameters.
+\end{comment}
+
+\subsubsection{Model configuration}\label{sec:cfg}
+Model instances corresponding to this SMS are generated based on the values
+in a data set, except of two configuration parameters defined in the SMS, namely:
+\btlb
+\item {\em periods}: number of planning periods, and
+\item {\em lifet}: number of planning periods in which the newly installed
+	capacity remains available.
+\etl
+
+\subsubsection{Indexing structure of the model}\label{sec:index}
+The model uses the following indices and the corresponding sets:
+\btlb
+\item $p \in P$: the ids of the 5-year planing periods; e.g., for
+	{\em periods = 7}, $P = \{0, 1, 2, \dots, 6\}$.\footnote{
+	Instead of using the calendar-year values, we use sequence of positive integer
+	values, i.e., for the calendar years \{2020, 2025, \dots, 2050\} we index
+	the planning periods by non-negative integer numbers.
+	The correspondence between the planning periods and the calendar years
+	can be defined (for reporting) by a simple mapping.}
+\item $H$: set of previous, immediately before the first planning\footnote{
+	First planning period is indexed by 0.} periods.
+	If the newly installed capacity is available only in the vintage period,
+	i.e., $lifet = 0$, then $H$ is an empty set.
+	For $lifet > 0$ it is defined by $H = RangeSet(-lifet, -1)$.\footnote{
+	Note the difference between $RangeSet(1, 3)$ and the sequence returned by
+	the standard Python function $range(1, 3)$. The first one has three elements,
+	while the second has only two elements.}
+	For example, for $lifet = 3$, $H = \{-3, -2, -1\}$.
+\item $v \in V,\; V = H \cup P$: vintage period (i.e., period in which the newly
+	installed capacity becomes available).
+	% The duration (consecutive periods during which the capacity remains available)
+	% of each newly installed capacity is defined by the parameter~$lt$
+	% (life-periods);
+	In other words, in a current period the available capacities consists of:
+	\btlbs
+	\item new capacity installed in the current period, and
+	\item new capacities installed in each of the $lifet$ periods immediately
+		before the current period.
+	\etls
+	Therefore, negative indices of $V$ correspond to historical periods
+	(prior to the first planning period); the capacities installed in these periods
+	can still be used during the planning periods.
+\item $(p, v) \in V_p$ (the set is denoted in the pyomo implementation by VP):
+	two-dimensional set of all feasible pairs of $p$ and $v$ indices.
+\item $t \in T$ technologies: e.g., $T = \{ {\rm OTL, CTL, BTL, PTL} \}$ or
+	$T = \{ {\rm OTL, PTL} \}$.
+	% $T_f \subset T$ technologies directly producing the final commodities
+\item $f \in F$: final commodities (products), i.e., liquid fuel.
+	E.g., $F = \{ {\rm gasoline, diesel-oil} \}$ (if demand is defined for each
+	type of liquid fuel) or
+	$F = \{ {\rm fuel} \}$ (if demand is defined for an aggregate of all
+	considered fuels).
+\begin{comment}
+\item $c \in C$: commodity. E.g.,
+	$C = \{ {\rm oil, gasoline, coal, crude-oil, \dots } \}$.
+	Commodities belong to diverse subsets that correspond to their roles:
+	\btlas{$\diamond$}
+	\item $C_f \subset C$: final commodities (currently: gasoline and diesel-oil),
+	\item $C_i \subset C$: commodities required as inputs for activities of
+		technologies~$t \in T$,
+	\item \dots  (more subsets shall be defined).
+	\etls
+\end{comment}
+\etl
+
+\subsection{Variables}
+Although all variables are treated equally within the model,
+we divide the set of all model variables into categories corresponding to the roles;
+this helps for structuring the model presentation.
+
+\subsubsection{Decision variables}
+The technology portfolio is implied by values the decision (control) variables:
+\btlb
+\item $ncap_{tv}, t \in T, v \in P$: new production capacity of $t$-th
+	technology, made available at the beginning of $v$-th period.\footnote{
+	We use single-letter indices, which allows for the compact notation,
+	i.e., $ncap_{tv}$ instead of $ncap_{t,v}$.}
+	The capacity that is "new", and available, in $v$-th period
+	remains available in $lifet$) following periods.\footnote{In former model
+	versions life-periods $lt$ were denoted by~$\tau$.}
+	Note that the capacities installed in historical periods are defined by
+	the model parameters.
+\item $act_{tpv}, t \in T, (p, v) \in V_p$: activity level of $t$-th
+	technology, using in period $p$ the new capacity provided in period~$v$.
+\etl
+
+\subsubsection{Outcome variables}
+Outcome variables are used for evaluation of the consequences of implementation
+of the decisions; therefore, at least one of them is used as the optimization
+objective.
+
+In the model prototype only three outcomes (to be used used as criteria in
+multiple-criteria model analysis) are defined:
+\btlb
+\item $cost$: the total cost of the system over the planning period,
+\item $invCost$: the investment costs of new capacities, and
+\item $omCost$: the O\&M (operations and maintainance) costs, and
+\item $co2$: the total CO2 emission caused by the production system.
+\etl
+
+\begin{comment}
+\subsubsection{State variables}
+The variables defining the state of the system:
+\btlb
+\item \dots (to be defined, if needed).
+\etl
+\end{comment}
+
+\subsubsection{Auxiliary variables}
+All other variables used in the SMS:
+\btlb
+\item $omcVar$: variable part of $omCost$
+\item $omcFixP$: fixed part of $omCost$ related to the capacities installed in
+	planning periods,
+\item $omcFixH$: fixed part of $omCost$ related to the capacities installed
+	before planning periods,
+\item $omcFix$: total ($omcFixP + omcFixH$) fixed part of $omCost$
+% \item $actInp_{cp}$ input resources required by all technologies $t \in T$
+\etl
+
+\subsection{Parameters}
+The following model parameters are used in the model relations 
+specified in in Section~\ref{sec:rel}:
+\btlb
+\item $dis_p$: discount rate
+\item $hncaph_{tv}, v \in H$: new capacities installed in historical
+	periods,\footnote{For the sake of brevity, iterators $f \in F, p \in P$,
+	and $t \in T$ are further on omitted, whenever these are obvious.}
+\item $d_{fp}$: demand for final commodities defined (fuel),
+\item $a_{tvf}, v \in V$: amount of output from the unit of the corresponding activity,
+\item $cuf_{tv}, v \in V$: capacity utilization factor
+\item $invC_{tv}, v \in P$: unit investment cost of new capacity
+\item $vom_{tv}, v \in V$: variable O\&M costs,
+\item $fom_{tv}, v \in V$: fixed O\&M costs,
+\item $ef_{tv}, v \in V$: CO2 emission factor
+
+\begin{comment}
+\item $inp_{ctv}$: amount of input required by the unit of the corresponding activity
+\item $omcC_{tv}$: unit OMC of activity
+\item $extP_{cp}$: unit price of external input resources
+\end{comment}
+\etl
+
+\subsection{Relations}\label{sec:rel}
+The values of the model variables conform to the following model relations.
+\btla{88.}
+\inum The sum of activities $act_{tvp}$ shall result in producing the required
+	amounts of the final commodities:
+	\be
+	\sum_{t \in T} \sum_{v \in V_p} a_{tvf} \cdot act_{tpv} \ge d_{fp}, \quad
+		f \in F,\; p \in P,\; (p, v) \in V_p.
+	\ee
+\inum The levels of activities cannot exceed the corresponding available
+	capacities. This relation holds for two situation, namely, when the
+	capacity is defined by either the decision variable (then $v \ge 0$)
+	or by the $hncap$ parameter ($v < 0$), respectively.
+	Therefore, the corresponding relation is generated in either~\eqref{eq:avncap}
+	or~\eqref{eq:avhcap} form:
+	\be\label{eq:avncap}
+		act_{tpv} \le cuf_{tv} \cdot ncap_{tv}, \quad t \in T,\; p \in P,\;
+		(p, v) \in V_p,\; v \ge 0,
+	\ee
+	\be\label{eq:avhcap}
+		act_{tpv} \le cuf_{tv} \cdot hncap_{tv}, \quad t \in T,\; p \in P,\;
+		(p, v) \in V_p,\; v < 0.
+	\ee
+\inum Investment costs of new capacities are defined by:
+	\be
+		invCost = \sum_{t \in T} \sum_{v \in P} dis_p \cdot invC_{tv} \cdot ncap_{tv}
+	\ee
+\inum Operations and maintenance costs, defined by~\eqref{eq:omCost}, consists of 
+	two parts, namely the variable costs~\eqref{eq:omcvar}, and the fixed
+	(implied by the installed capacity) costs, see~\eqref{eq:omcfx}:
+	\be\label{eq:omCost}
+		omCost = omcFix + omcVar
+	\ee
+	\be\label{eq:omcvar}
+		omcVar = \sum_{t \in T} \sum_{p \in P}\; dis_p \sum_{(p, v) \in V_p}
+			vom_{tv} \cdot act_{tpv}
+	\ee
+	\be\label{eq:omcfx}
+		omcFix = omcFixP + omcFixH
+	\ee
+	The fixed O\&M costs are related to the capacities installed in the planning
+	periods (the model variable) and to the capacities installed in historical
+	periods (which are given).
+	These two components are represented by~\eqref{eq:omcfxp} and~\eqref{eq:omcfxh},
+	respectively.
+	\be\label{eq:omcfxp}
+		omcFixP = \sum_{t \in T} \sum_{p \in P} dis_p \cdot fom_{tp} \cdot ncap_{tp},
+	\ee
+	\be\label{eq:omcfxh}
+		omcFixH = \sum_{t \in T} \sum_{p \in P} dis_p \sum_{v \in H}
+			fom_{tv} \cdot hncap_{tv}.
+	\ee
+\begin{comment}
+\inum Each activity requires the corresponding input resources.
+	The following relation defines the inputs of the corresponding commodities
+	required as inputs by all technologies:
+	\be
+		actInp_{cp} = \sum_{t \in T} \sum_{v \in V_p} inp_{ctv} \cdot act_{tvp},
+		\quad  c \in C_i,\; p \in P
+	\ee
+\inum Costs of externally provided inputs are defined by:
+	\be
+		extCost = \sum_{c \in C_i} \sum_{p \in P} extP_{cp} \cdot actInp_{cp}
+	\ee
+\end{comment}
+\inum Total cost is defined by:\footnote{Costs of inputs shall be added after
+	clarification how it relates to the $omCost$.}
+	\be
+		% cost = invCost + omCost + extCost
+		cost = invCost + omCost
+	\ee
+\inum The total CO2 emission caused by the activities is defined by:
+	\be\label{eq:co2}
+		co2 = \sum_{t \in T} \sum_{p \in P} \sum_{v \in V_p} ef_{tv} \cdot act_{tvp}
+	\ee
+\etl
+{\em Note:} entities describing the up-stream technologies should be
+researched and added to the SMS in a future version of the model.
+Then eq.~\eqref{eq:co2} shall be modified accordingly.
+
+\end{document}
+
