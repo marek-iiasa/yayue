@@ -5,7 +5,7 @@ import seaborn as sns
 sns.set()   # settings for seaborn plotting style
 
 # directories with data-files for the generated Figures (default: current dir)
-data_dir = './Data/'  # work-default: sub-directory of the sources
+data_dir = './Data/'  # work-default: subdirectory of the sources
 fig_dir = './Figs2/'  # will be created if it does not exist
 if not os.path.exists(fig_dir):
     os.makedirs(fig_dir, mode=0o755)
@@ -103,7 +103,7 @@ fig2.subplots_adjust(wspace=0.3, hspace=0.5)
 fig2.suptitle('Kernel density estimation (KDE) and Empirical cumulative distribution function (eCDF)')
 
 # color palette. Note: set invalid parameter to get the long list of available palettes
-# palettes good for 4 colors: Dark2, cividis, CMRmap, gnuplot, Set1, viridis
+# good for 4 colors: Dark2, cividis, CMRmap, gnuplot, Set1, viridis
 c1, c2, c3, c4 = sns.color_palette('Set1', 4)  # best for 4 colors: either Dark2 or Set1
 
 # first plot: daily prices, twin axis ax3, ax3a
