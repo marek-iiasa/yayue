@@ -1,0 +1,4 @@
+The content of each data-file should be briefly described here.
+
+dat1.dat, by Marek, Feb 4, 2023
+Initial data set, derived from Bingqing paper, 4 technologies, 12 periods

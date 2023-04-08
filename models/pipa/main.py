@@ -27,7 +27,7 @@ if __name__ == '__main__':
     os.chdir(path)
     out_dir = './Out_dir/'
 
-    redir_stdo = False  # optional redirection of stdout to out_dir/stdout.txt
+    redir_stdo = True  # optional redirection of stdout to out_dir/stdout.txt
     default_stdout = sys.stdout
     if redir_stdo:
         if not os.path.exists(out_dir):
@@ -49,23 +49,30 @@ if __name__ == '__main__':
     # model.write('test.gms')
     # model.write('test2.lp', symbolic_solver_labels=True)  # illegal param: symbolic...
 
-    # print('\nmodel display: -----------------------------------------------------------------------------')
-    # model.display()     # displays only instance (not abstract model)
-    # print('end of model display: ------------------------------------------------------------------------\n')
+    print('\nmodel display: -----------------------------------------------------------------------------')
+    # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
+    model.display()     # displays only instance (not abstract model)
+    print('end of model display: ------------------------------------------------------------------------\n')
+    print('\n model.pprint() follows:      -----------------------------------------------------------------')
+    # members of sets, then param values, then (populated by set-members) relations with actual coef-values
+    model.pprint()
+    print('end of model printout          -----------------------------------------------------------------\n')
 
     # opt = SolverFactory('gams')  # gams can be used as a solver
     opt = pe.SolverFactory('glpk')
     result_obj = opt.solve(model, tee=True)
-    cost = f'{pe.value(model.cost):.8e}'
+    cost = f'{pe.value(model.cost):.5e}'
     co2 = f'{pe.value(model.carb):.5e}'  # carbon emission
     oil_imp = f'{pe.value(model.oilImp):.5e}'
-    print('--------------------------------------------------------------------------------')
+    print('\nValues of outcome variables -----------------------------------------------------------------------------')
     print(f'Total cost  = {cost}')
     print(f'CO2 emission = {co2}')
     print(f'Imported crude oil = {oil_imp}')
 
+    # TODO: add storing selected (tdb which are needed) variables
+
     tend = dt.now()
-    print('Started at: ', str(tstart))
+    print('\nStarted at: ', str(tstart))
     print('Finished at:', str(tend))
     time_diff = tend - tstart
     print(f'Wall-clock execution time: {time_diff.seconds} sec.')

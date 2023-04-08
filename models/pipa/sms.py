@@ -166,8 +166,6 @@ def bnd_cap(m, t, p):
         return (0., None)
 '''
 
-# TODO: clarify develop/master
-
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
@@ -234,8 +232,9 @@ def mk_sms():
     m.capTot = pe.Var(m.T, within=pe.NonNegativeReals)  # total capacities (i.e., all cap-investments in techn. t)
     #
 
-    # objectives: two defined for MCA, only one activated at a time
-    m.min_cost = pe.Objective(expr=m.cost, sense=pe.minimize)   # single objective used for this case-study
+    # objectives: three defined for MCA, only one activated at a time
+    # TODO: clarify error (reported in model display): ERROR: evaluating object as numeric value: min_cost
+    m.min_cost = pe.Objective(expr=m.cost, sense=pe.minimize)   # single objective used for testing
     m.min_carb = pe.Objective(expr=m.carb, sense=pe.minimize)
     m.min_oilimp = pe.Objective(expr=m.oilImp, sense=pe.minimize)
     m.min_cost.activate()
