@@ -27,7 +27,7 @@ if __name__ == '__main__':
     os.chdir(path)
     out_dir = './Out_dir/'
 
-    redir_stdo = True  # optional redirection of stdout to out_dir/stdout.txt
+    redir_stdo = False  # optional redirection of stdout to out_dir/stdout.txt
     default_stdout = sys.stdout
     if redir_stdo:
         if not os.path.exists(out_dir):
