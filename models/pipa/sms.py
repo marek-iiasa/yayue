@@ -41,6 +41,8 @@ def vp_lst(m, pp, filt=None):
             elif filt == 'nonneg':
                 if v >= 0:
                     yield v
+            else:
+                raise Exception(f'Unknown value of param filt in vp_lst(): {filt}.')
 
 
 def dem_rule(m, f, p):  # demand must be met for each fuel and period
