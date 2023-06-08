@@ -14,8 +14,8 @@ def instance(m):
     # data.load(filename='Data/Old1/data4.dat')
     data.load(filename='Data/dat1.dat')
     inst = m.create_instance(data)
-    for p in m.P:   # define discount rates for each period
-        inst.dis[p] = inst.discr ** p
+    # for p in m.P:   # define discount rates for each period
+    #     inst.dis[p] = inst.discr ** p
         # print(f'p = {p}, dis = {value(inst.dis[p])}')
     # print('\n instance.pprint() follows      -----------------------------------------------------------------')
     # inst.pprint()

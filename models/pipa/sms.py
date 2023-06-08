@@ -6,6 +6,7 @@ Single (i.e., not populated) relations need rules only, if their expression incl
 """
 
 import pyomo.environ as pe       # more robust than using import *
+# from pyomo.core import AbstractModel (no longer needed)
 # from pyomo.environ import *     # used in pyomo book and many tutotials, causes problems
 # from sympy import subsets  # explore this to avoid warnings
 
@@ -171,36 +172,27 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m = pe.AbstractModel(name='pipa 1.0')
-    # config parameters
-    lifet = 3     # life-time, i.e., number of periods capacity remains available after the vintage period # 4
-    # print(f'Configuration params: planning periods = {periods}, capacity life-time (after vintage) = {lifet}')
-    '''
-    params cannot be used before they are constructed (in abstract model)
-    m.periods = Param(initialize=3)  # number of planning periods
-    m.lifet = Param(initialize=0)   # capacity-life in number of periods after the vintage period
-    '''
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.0')
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
-    # TODO: static values of periods are a temporary solution; periods shall be defined in data
-    periods = 12   # number of planning periods
-    m.P = pe.RangeSet(0, periods - 1)     # planning periods; NOTE: RangeSet(0, 1) has two elements
-    # FIXME: the next two commented lines demonstrate error; explore how to use data-defined parameter for
-    #   defining the range-set
-    # m.periodq = pe.Param(within=pe.PositiveIntegers, default=3)   # number of planning periods
-    # m.Q = pe.RangeSet(0, pe.value(m.periodq) - 1)     # doesn't work: evaluates value before concrete model is set
-    # m.P.pprint()
-    if pe.value(lifet) > 0:
-        m.H = pe.RangeSet(-lifet, -1)     # historical (before the planning) new capacities periods
-    else:
-        m.H = pe.Set()     # empty set of historical capacities
-    # m.H.pprint()
+    m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
+    # noinspection PyTypeChecker
+    # warning: pe.Param is instead of int (but the latter cannot be used in Abstract model)
+    m.periods_ = pe.Param(initialize=m.periods-1)   # number of planning periods
+    m.P = pe.RangeSet(0, m.periods_)     # planning periods; NOTE: RangeSet(0, 1) has two elements
+    # life-time, i.e., number of periods capacity remains available after the vintage period
+    m.lifet = pe.Param(within=pe.NonNegativeIntegers, default=0)
+    m.lifet_ = pe.Param(initialize=-m.lifet)
+    # m.H is empty for m.lifet==0, i.e. RangeSet(0, -1) defines an empty set
+    m.H = pe.RangeSet(m.lifet_, -1)     # historical (before the planning) new capacities periods
     m.V = m.H | m.P     # vintage (periods when ncap become available)
-    # m.V.pprint()
     m.PV = pe.Set(dimen=2, initialize=vp_init)  # V_p (subsets of vintages available at period p)
-    # m.PV.pprint()
     m.T = pe.Set()     # technologies
     m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s)
+
+    # the below two defs result in warnings, to avoid them m.periods_ and m.lifet_ are used above
+    # m.P = pe.RangeSet(0, m.periods - 1)     # planning periods; NOTE: RangeSet(0, 1) has two elements
+    # m.H = pe.RangeSet(-m.lifet, -1)     # historical (before the planning) new capacities periods
 
     # decision variables
     # m.act = Var(m.T, m.V, m.P, within=NonNegativeReals)   # activity level; this specs generates full/dense act matrix
@@ -248,8 +240,8 @@ def mk_sms():
     m.min_oilimp.deactivate()
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
-    m.discr = pe.Param(within=pe.NonNegativeReals, default=0.05)   # discount rate for each period
-    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=0.9)    # cumulated discount
+    m.discr = pe.Param(within=pe.NonNegativeReals, default=0.9)   # discount rate descrease in every period
+    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=0.9)  # cumulated discount in each period
     #
     m.a = pe.Param(m.T, m.F, within=pe.NonNegativeReals, default=1.0)   # unit activity output of fuel
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit CO2 emission

@@ -12,8 +12,12 @@ set F := fuel;
 # set T := BTL OTL;
 set T := BTL CTL STL OTL;
 #
-# param discr := 0.9 ;
-param discr := 1. ;
+
+# the default values (set in SMS) are: periods=3, lifet=0, discr=0.05
+param periods := 12 ;
+param lifet := 3 ;
+param discr := 0.9 ;
+# param discr := 1. ;
 
 # demand: from Fig. 2, p. 12
 param dem :=
@@ -102,5 +106,6 @@ OTL 89
 param carbU := 50 ;
 
 # for a single param use table instead of param
+# this is an old comment by Janusz, no longer relevant?
 # table b := 40 ;
 
