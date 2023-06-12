@@ -177,9 +177,9 @@ def mk_sms():
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
     # noinspection PyTypeChecker
-    # warning: pe.Param is instead of int (but the latter cannot be used in Abstract model)
-    m.periods_ = pe.Param(initialize=m.periods-1)   # number of planning periods
-    m.P = pe.RangeSet(0, m.periods_)     # planning periods; NOTE: RangeSet(0, 1) has two elements
+    # warning: pe.Param used instead of expected int (but a cast to the latter cannot be used in Abstract model)
+    m.periods_ = pe.Param(initialize=m.periods-1)   # index of the last planning periods
+    m.P = pe.RangeSet(0, m.periods_)  # set of periods; NOTE: RangeSet(0, 1) has two elements, RangeSet(0, -1) is empty
     # life-time, i.e., number of periods capacity remains available after the vintage period
     m.lifet = pe.Param(within=pe.NonNegativeIntegers, default=0)
     m.lifet_ = pe.Param(initialize=-m.lifet)
