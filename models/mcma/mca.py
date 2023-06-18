@@ -113,5 +113,21 @@ class Mcma:
 
     def store_sol(self, crit_val):
         print(f'Processing criteria values of the current iteration: {crit_val}')
-        sys.stdout.flush()  # needed for printing exception at the output end
-        raise Exception('Mcma::store_sol not implemented yet.')
+        if self.cur_stage == 1:     # utopia computed for the only one active criterion
+            for (i, crit) in enumerate(self.cr):
+                cr_name = self.cr[i].name
+                val = crit_val.get(cr_name)
+                if crit.is_active:  # utopia computed
+                    crit.utopia = val
+                    crit.uto_def = True
+                else:   # store value
+                    if crit.nadir is None:  # not yet stored: store the current value
+                        crit.nadir = val
+                        print(f'Storing first approxation of nadir for crit "{cr_name} = {val}')
+                    else:   # store the worst of (currently and previously computed)
+                        # todo: correct storing intermediate nadir approximation
+                        crit.nadir = val
+                        print(f'Storing subsequent approxation of nadir for crit "{cr_name} = {val}')
+        else:
+            sys.stdout.flush()  # needed for printing exception at the output end
+            raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')

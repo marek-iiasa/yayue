@@ -44,9 +44,13 @@ class McMod:
             m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
             m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
             m.goal.activate()  # objective of m1 block is deactivated
-            print(f'mc_itr(): concrete model "{m.name}" for computing utopie of criterion "{var_name}" generated.')
+            print(f'mc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
-        else:
+        elif self.mc.cur_stage == 2:  # first stage of nadir approximation
+            raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
+        elif self.mc.cur_stage == 3:  # second stage of nadir approximation
+            raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
+        else:   # Asp/Res based preferences
             raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
 
         # MC-part variables needed for defining Achievement Function (AF), to be maximized
@@ -102,7 +106,7 @@ class McMod:
             print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
         self.mc.store_sol(cri_val)  # process and store criteria values
 
-        sol_val = {}    # dic with values of variables requested in rep_var
+        sol_val = {}    # dict with values of variables requested in rep_var
         for var_name in rep_vars:     # loop over m1.vars of all criteria
             m1_var = m1_vars[var_name]
             # todo: indexed variables needs to be detected and handled accrdingly (see regret::report())

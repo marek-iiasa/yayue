@@ -116,7 +116,7 @@ if __name__ == '__main__':
         mc_part = mc_gen.mc_itr()        # model of the MC-part
         # m.mc_part = mc_part   # replaced by add_component()  (works but gives warning)
         m.add_component('mc_part', mc_part)
-        m.pprint()
+        # m.pprint()
         results = opt.solve(m, tee=True)
         chk_sol(results)  # check the status of the solution
         # todo: clarify exception (uncomment next line) while loading the results
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         print(f'\nFinished itr {n_iter}, updating the analysis stage.')
         i_stage = mc.chk_stage()    # check analysis stage
         n_iter += 1
-        if n_iter > 1:
+        if n_iter > 2:
             print('\nMax iters reached; breaking the iteration loop.')
             break
 
