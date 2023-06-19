@@ -38,7 +38,7 @@ class Mcma:
         self.cr = []    # list of criteria
         self.n_crit = 0
 
-    def addCrit(self, cr_name, var_name, typ):
+    def addCrit(self, cr_name, typ, var_name):
         """
         Add definition of a criterion.
 

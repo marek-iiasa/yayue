@@ -42,5 +42,5 @@ def mk_conc():
     m.emiD = pe.Constraint(expr=(m.emi == m.ex * m.x + m.ey * m.y + m.ez * m.z), doc='specs of emission')
 
     # m.pprint()
-    print(f'mk_conc(): concrete model "{m.name}" generated.')
+    print(f"mk_conc(): concrete model {m.name} generated.")
     return m
