@@ -1,7 +1,7 @@
 """
 Prototype of the MCMA driver
 """
-import os.path
+# import os.path
 
 # import sys		# needed for sys.exit()
 # import os
@@ -29,7 +29,7 @@ def chk_sol(res):  # check status of the solution
 def driver(m1, ana_dir):
     print(f'\nAnalysing instance of model {m1.name}.')
 
-    mc = Mcma()
+    mc = Mcma(ana_dir)
     fname = ana_dir + '/config.txt'     # criteria definition file
     print(f"\nInitializing criteria defined in file '{fname}':")
     n_cr_def = 0
@@ -45,24 +45,14 @@ def driver(m1, ana_dir):
             mc.addCrit(words[0], words[1], words[2])
             n_cr_def += 1
 
-    assert (n_cr_def > 1), f'min. two criteria needs to be defined, only {n_cr_def} was defined.'
-
-    # to create file for writing: os.makedirs(fname, mode=0o755)
+    assert (n_cr_def > 1), f'at least two criteria need to be defined, only {n_cr_def} was defined.'
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
-    fname = ana_dir + '/payoff.txt'     # file with payoff values
-    if os.path.exists(fname):
-        print(f"\nReading payoff table stored in file '{fname}':")
-        n_pay_def = 0
-        for n_line, line in enumerate(reader):
-            line = line.rstrip("\n")
-            # print(f'line {line}')
-            words = line.split()
-            n_words = len(words)
-            assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
-            mc.payOff(words[0], words[1], words[2])
-            n_pay_def += 1
-        assert (n_cr_def == n_pay_def), f'stored payOff table has {n_pay_def} values for {n_cr_def} defined criteria.'
+    # mc.rd_payoff()    # supressed for testing
+    mc.prn_payoff()
+
+    # todo: open .../log.txt either for 'w' or 'a'
+    # todo: get itr-id from length of log.txt
 
     # select solver
     opt = pe.SolverFactory('glpk')
@@ -90,7 +80,8 @@ def driver(m1, ana_dir):
 
         # solve the model instance composed of two blocks
         print('\nsolving --------------------------------')
-        results = opt.solve(m, tee=True)
+        # results = opt.solve(m, tee=True)
+        results = opt.solve(m, tee=False)
         chk_sol(results)  # check the status of the solution
         # todo: clarify exception (uncomment next line) while loading the results
         # m1.load(results)  # Loading solution into results object
@@ -104,8 +95,10 @@ def driver(m1, ana_dir):
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
         print(f'\nFinished itr {n_iter}, updating the analysis stage.')
         i_stage = mc.chk_stage()    # check analysis stage
+        mc.prn_payoff()
+
         n_iter += 1
-        max_itr = 2
+        max_itr = 3
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
             break
