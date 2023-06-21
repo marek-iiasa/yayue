@@ -12,6 +12,36 @@ class McMod:
             self.cr_names.append(mc.cr[i].name)
             self.var_names.append(mc.cr[i].var_name)
 
+    def pwl_pts(self, i):
+        seg_x = []
+        seg_y = []
+        utopia = self.mc.cr[i].utopia
+        asp = self.mc.cr[i].asp
+        res = self.mc.cr[i].res
+        nadir = self.mc.cr[i].nadir
+        # todo: correct (the ad-hoc set) CAF (y) values for each segment
+        # todo: don't generate utopia/nadir points if close to asp/res, respectively
+        if self.mc.cr[i].mult == 1:     # crit. maximized: x ordered: nadir, res, asp, utopia
+            seg_x.append(nadir)
+            seg_x.append(res)
+            seg_x.append(asp)
+            seg_x.append(utopia)
+            seg_y.append(-10000.)
+            seg_y.append(0.)
+            seg_y.append(1000.)
+            seg_y.append(1050.)
+        if self.mc.cr[i].mult == -1:     # minimized: x ordered: utopia, asp, res, nadir
+            seg_x.append(utopia)
+            seg_x.append(asp)
+            seg_x.append(res)
+            seg_x.append(nadir)
+            seg_y.append(1050.)
+            seg_y.append(1000.)
+            seg_y.append(0.)
+            seg_y.append(-10000.)
+        print(f'PWL points for criterion "{self.mc.cr[i].name}: {utopia=}, {asp=}, {res=}, {nadir=}')
+        return seg_x, seg_y
+
     def mc_itr(self):
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
@@ -24,44 +54,60 @@ class McMod:
             if len(act_cr) != 1:
                 raise Exception(f'mc_itr(): computation of utopia component: {len(act_cr)} active criteria '
                                 f'instead of one.')
-            id_cr = act_cr[0]
+            # id_cr = act_cr[0]
             # print(f'\nComputing utopia value of crit "{self.cr_names[id_cr]}" defined by variable '
             #       f'"{self.var_names[id_cr]}".')
 
         # m1_obj = self.m1.component_map(ctype=pe.Objective)  # all objectives of the m1 (core model)
 
-        # link (through constraints) the corresponding variables of the m1 (core) and m (MC-part) models
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
-        m.af = pe.Var()     # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg)
+        # m.af = pe.Var(domain=pe.Reals, doc='AF')      # pe.Reals gives warning
+        m.af = pe.Var(doc='AF')  # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg)
+
         if self.mc.cur_stage == 1:   # utopia component, selfish optimization
             # special case, only one m1 variable used and linked with the AF variable
             # only one criterion active for utopia calculation
-            # m.af = pe.Var()  # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg)
-            var_name = self.var_names[act_cr[0]]    # name of m1-variable representing the active criterion
+            id_cr = act_cr[0]   # index of the only active criterion
+            var_name = self.var_names[id_cr]    # name of m1-variable representing the active criterion
             m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
-            mult = self.mc.cr[act_cr[0]].mult   # multiplier (1 or -1, for max/min criteria, respectively)
+            mult = self.mc.cr[id_cr].mult   # multiplier (1 or -1, for max/min criteria, respectively)
             # print(f'{var_name=}, {m1_var=}, {m1_var.name=}, {mult=}')
             m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
             m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
             m.goal.activate()  # objective of m1 block is deactivated
             print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
-        elif self.mc.cur_stage == 2:  # first stage of nadir approximation
-            raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
+        # elif self.mc.cur_stage == 2:  # first stage of nadir approximation
+        #     raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
         elif self.mc.cur_stage == 3:  # second stage of nadir approximation
             raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
-        else:   # Asp/Res based preferences
+        elif self.mc.cur_stage == 4:   # Asp/Res based preferences
+            raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
+        elif self.mc.cur_stage > 4:  # should not come here
             raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
 
+        # link (through constraints) the corresponding variables of the m1 (core) and m (MC-part) models
         # MC-part variables needed for defining Achievement Function (AF), to be maximized
-        # m.af = pe.Var()     # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg)
+        # m.af = pe.Var()     # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg) (defined above)
+
+        m.I = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
+        m.caf = pe.Var(m.I)     # CAF (value of criterion/component achievement function of the corresponding variable)
+        m.cafMin = pe.Var()     # min of CAFs
+        m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
+        for (i, crit) in enumerate(self.mc.cr):
+            (pwl_x, pwl_y) = self.pwl_pts(i)
+            print(f'{pwl_x = }')
+            print(f'{pwl_y = }')
+
+        raise Exception(f'mc_itr(): not implemented yet.')
+
         # af = caf_min + caf_reg
-        # m.caf_min = pe.Var()     # min of CAFs
-        # m.caf_reg = pe.Var()     # regularizing term (scaled sum of all CAFs)
         # for id_cr in var_names:     # var_names contains list of names of variables representing criteria
         #     m.add_component('caf_' + id_cr, pe.Var())  # CAF: component achievement function of crit. named 'id_cr'
         #     m.add_component('pwl_' + id_cr, pe.Var())  # PWL: of CAF of criterion named 'id' (may not be needed)?
         #
+        if self.mc.cur_stage == 2:  # first stage of nadir approximation
+            pass
         # return m
     # print('\ncore model display: -----------------------------------------------------------------------------')
     # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
