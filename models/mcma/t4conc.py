@@ -16,7 +16,7 @@ def mk_conc():
     m.z = pe.Var(domain=pe.NonNegativeReals, bounds=(2, 4), doc='level of z activity')
 
     # outcome variable
-    m.inc = pe.Var(doc='income')
+    m.inc = pe.Var(bounds=(0, 100), doc='income')   # bounds set only for testing pyo.piecewise()
     m.emi = pe.Var(doc='emission')
 
     # objective:

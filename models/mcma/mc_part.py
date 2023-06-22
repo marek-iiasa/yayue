@@ -23,8 +23,11 @@ class McMod:
         # todo: don't generate utopia/nadir points if close to asp/res, respectively
         if self.mc.cr[i].mult == 1:     # crit. maximized: x ordered: nadir, res, asp, utopia
             seg_x.append(nadir)
-            seg_x.append(res)
-            seg_x.append(asp)
+            # seg_x.append(res)
+            # seg_x.append(asp)
+            # todo: ad-hoc fix to deal with not initiated A/R
+            seg_x.append(1.1*nadir)
+            seg_x.append(0.9*utopia)
             seg_x.append(utopia)
             seg_y.append(-10000.)
             seg_y.append(0.)
@@ -77,8 +80,10 @@ class McMod:
             m.goal.activate()  # objective of m1 block is deactivated
             print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
-        # elif self.mc.cur_stage == 2:  # first stage of nadir approximation
-        #     raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
+        elif self.mc.cur_stage == 2:  # first stage of nadir approximation
+            # todo: set A/R values
+            pass
+            # raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
         elif self.mc.cur_stage == 3:  # second stage of nadir approximation
             raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
         elif self.mc.cur_stage == 4:   # Asp/Res based preferences
@@ -90,8 +95,61 @@ class McMod:
         # MC-part variables needed for defining Achievement Function (AF), to be maximized
         # m.af = pe.Var()     # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg) (defined above)
 
-        m.I = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
-        m.caf = pe.Var(m.I)     # CAF (value of criterion/component achievement function of the corresponding variable)
+        id_cr = act_cr[0]  # index of the only active criterion
+        var_name = self.var_names[id_cr]  # name of m1-variable representing the active criterion
+        m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
+        mult = self.mc.cr[id_cr].mult  # multiplier (1 or -1, for max/min criteria, respectively)
+        # print(f'{var_name=}, {m1_var=}, {m1_var.name=}, {mult=}')
+        m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
+        # m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
+        # m.goal.activate()  # objective of m1 block is deactivated
+        print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
+
+        print(f'\nTesting PWL')
+        (pwl_x, pwl_y) = self.pwl_pts(0)
+        print(f'{pwl_x = }')
+        print(f'{pwl_y = }')
+
+        # see the 6.6.1 p.28 for (cryptic) description of parameters of pe.Piecewise()
+        # p = pe.Piecewise(...)
+
+        import pyomo.core as pcore
+        (code, slopes) = pcore.kernel.piecewise_library.util.characterize_function(pwl_x, pwl_y)
+        # https://pyomo.readthedocs.io/en/stable/library_reference/kernel/piecewise/util.html
+        # codes: 1: affine, 2: convex 3: concave 4: step 5: other
+        print(f'\n{code=}, {slopes=}')
+
+        import pyomo.kernel as pmo  # more robust than using import *
+        # (code, slopes) = pmo.characterize_function(pwl_x, pwl_y)  # does not work
+        # (code, slopes) = pmo.piecewise.characterize_function(pwl_x, pwl_y)  # does not work
+        # (code, slopes) = pmo.characterize_function(pwl_x, pwl_y)  # neither pmo. nor pe. works
+
+        # pmo.piecewise requires pmo vars?
+        # x = pmo.Var(bounds=(0., 1000.))
+        # x = pmo.Var(bounds=(None, None))
+        # m.x = pmo.variable()
+        # m.y = pmo.variable()
+        m.y = pe.Var()
+        m.goal = pe.Objective(expr=m.y, sense=pe.maximize)
+        m.goal.activate()  # objective of m1 block is deactivated
+        m.p = pmo.piecewise(pwl_x, pwl_y, input=m1_var, output=m.y, repn='cc', bound='eq',
+                            require_bounded_input_variable=False)   # does not work
+        print(f'{m.p = }, {type(m.p)}')
+        # m.p.display()     # not supported
+        # m.p.pprint()     # not supported
+        # m.p.validate()    # validation fails: it considers m_var to be unbounded
+
+        # id_cr = act_cr[0]  # index of the only active criterion
+        # var_name = self.var_names[id_cr]  # name of m1-variable representing the active criterion
+        # m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
+        # m.cafMin = pe.Var()     # min of CAFs
+        # m.af = pe.Piecewise(pwl_x, pwl_y, pw_repn='CC')
+        # m.af = pe.Piecewise(pwl_x, pwl_y, input=m1_var, output=m.cafMin, pw_repn='CC')
+
+        return m
+
+        m.C = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
+        # m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function of the corresponding variable)
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
         for (i, crit) in enumerate(self.mc.cr):
@@ -106,8 +164,8 @@ class McMod:
         #     m.add_component('caf_' + id_cr, pe.Var())  # CAF: component achievement function of crit. named 'id_cr'
         #     m.add_component('pwl_' + id_cr, pe.Var())  # PWL: of CAF of criterion named 'id' (may not be needed)?
         #
-        if self.mc.cur_stage == 2:  # first stage of nadir approximation
-            pass
+        # if self.mc.cur_stage == 2:  # first stage of nadir approximation
+        #     pass
         # return m
     # print('\ncore model display: -----------------------------------------------------------------------------')
     # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
