@@ -3,11 +3,12 @@ Prototype of the MCMA driver
 """
 # import os.path
 
-# import sys		# needed for sys.exit()
+import sys		# needed for sys.exit()
 # import os
 # import pandas as pd
-from mca import *  # MCMA class handling MCMA structure and data
-from mc_part import *  # returns MC_model instance
+import pyomo.environ as pe
+from crit import Mcma  # handling MCMA structure and data, uses Crit class
+from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 
