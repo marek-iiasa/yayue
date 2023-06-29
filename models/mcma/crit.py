@@ -154,6 +154,12 @@ class Mcma:
         return self.cur_stage
     # todo: either update crit.{uto,nad}_def or remove, if they not not really needed
 
+    def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app.
+        if self.cur_stage < 2:     # flow error
+            raise Exception(f'Mcma::set_pref() should not be called for stage: {self.cur_stage}.')
+        sys.stdout.flush()  # needed for printing exception at the output end
+        raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
+
     def store_sol(self, crit_val):
         print(f'Processing criteria values of the current iteration: {crit_val}')
         if self.cur_stage == 1:     # utopia computed for the only one active criterion

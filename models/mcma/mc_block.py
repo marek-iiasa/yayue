@@ -53,23 +53,16 @@ class McMod:
                 act_cr.append(i)
 
         print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
-        if self.mc.cur_stage == 1:   # utopia component, selfish optimization
-            if len(act_cr) != 1:
-                raise Exception(f'mc_itr(): computation of utopia component: {len(act_cr)} active criteria '
-                                f'instead of one.')
-            # id_cr = act_cr[0]
-            # print(f'\nComputing utopia value of crit "{self.cr_names[id_cr]}" defined by variable '
-            #       f'"{self.var_names[id_cr]}".')
-
-        # m1_obj = self.m1.component_map(ctype=pe.Objective)  # all objectives of the m1 (core model)
 
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         # m.af = pe.Var(domain=pe.Reals, doc='AF')      # pe.Reals gives warning
         m.af = pe.Var(doc='AF')  # Achievement Function (AF), to be maximized  (af = caf_min + caf_reg)
 
         if self.mc.cur_stage == 1:   # utopia component, selfish optimization
+            if len(act_cr) != 1:  # only one criterion active for utopia calculation
+                raise Exception(f'mc_itr(): computation of utopia component: {len(act_cr)} active criteria '
+                                f'instead of one.')
             # special case, only one m1 variable used and linked with the AF variable
-            # only one criterion active for utopia calculation
             id_cr = act_cr[0]   # index of the only active criterion
             var_name = self.var_names[id_cr]    # name of m1-variable representing the active criterion
             m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
@@ -77,10 +70,19 @@ class McMod:
             # print(f'{var_name=}, {m1_var=}, {m1_var.name=}, {mult=}')
             m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
             m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
-            m.goal.activate()  # objective of m1 block is deactivated
+            m.goal.activate()  # only mc_block objective active, m1_block obj. deactivated in driver()
             print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
-        elif self.mc.cur_stage == 2:  # first stage of nadir approximation
+
+        # define variables needed for for all stages but utopia
+        # AF and m1_vars defined above
+        m.C = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
+        m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m1_var])
+        m.cafMin = pe.Var()     # min of CAFs
+        m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
+
+        self.mc.set_pref()  # set crit attributes (activity, A/R, possibly adjust nadir app.
+        if self.mc.cur_stage == 2:  # first stage of nadir approximation
             # todo: set A/R values
             pass
             # raise Exception(f'mc_itr(): handling of stage {self.mc.cur_stage} not implemented yet.')
@@ -148,10 +150,6 @@ class McMod:
 
         return m
 
-        m.C = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
-        # m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function of the corresponding variable)
-        m.cafMin = pe.Var()     # min of CAFs
-        m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
         for (i, crit) in enumerate(self.mc.cr):
             (pwl_x, pwl_y) = self.pwl_pts(i)
             print(f'{pwl_x = }')

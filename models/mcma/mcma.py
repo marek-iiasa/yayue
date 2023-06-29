@@ -54,7 +54,11 @@ if __name__ == '__main__':
     # print('\ncore model display: -----------------------------------------------------------------------------')
     # m1.pprint()
     # print('end of model display: ------------------------------------------------------------------------\n')
-    # print('solving core model')
+
+    # todo: find name/object of the objective, its name is had-coded
+    m1.goal.deactivate()    # the goal name is hard-coded
+    print(f'core model objective (named: goal) deactivated.')
+    # none of the attempts commented below work
     # m1_obj = m1.component_map(ctype=pe.Objective)  # all objectives of the m1 (core model)
     # print(f'{m1_obj=}')
     # print(f'm1_obj = {m1_obj}')
@@ -63,72 +67,8 @@ if __name__ == '__main__':
     # m1_obj.pprint()
     # m1_obj.print()
     # print(f'{m1_obj.name=}, {m1_obj=}')
-    # opt = pe.SolverFactory('glpk')
-    # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
-    # results = opt.solve(m1, tee=True)
-    # chk_sol(results)    # check the status of the solution
-    # todo: clarify exception while loading the results
-    # m1.load(results)  # Loading solution into results object
-    # print('end of core model solving: ------------------------------------------------------------------------\n')
-
-    # todo: find name/object of the objective
-    m1.goal.deactivate()
-    print(f'core model objective (named: goal) deactivated.')
 
     driver(m1, './Data/test1')
-
-    # print(f'\nInitializing criteria:')
-    # mc = Mcma()
-    # mc.addCrit('income', 'inc', 'max')
-    # mc.addCrit('emission', 'emi', 'min')
-    # # print(f'Criteria:\n{mc.cr}')  # prints only the object id
-    # mc.payOff('income', None, None)
-    # mc.payOff('emission', None, None)
-    # i_stage = mc.chk_stage()    # analysis stage
-    # n_iter = 0
-    # while i_stage < 6:   # MCA iterations
-    #     print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
-    #     print(f'Analysis stage: {i_stage}.')
-    #     m = pe.ConcreteModel()
-    #     # m1.goal.deactivate()
-    #     # m.m1 = m1   # replaced by add_component()  (works but gives warning)
-    #     m.add_component('core_model', m1)
-    #     # m.m1.goal.deactivate()    not needed, deactivated above
-    #     # model instance of the MC-part
-    #     print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
-    #     mc_gen = McMod(mc, m1)
-    #     mc_part = mc_gen.mc_itr()        # model of the MC-part
-    #     # m.mc_part = mc_part   # replaced by add_component()  (works but gives warning)
-    #     m.add_component('mc_part', mc_part)
-    #     # m.pprint()
-    #     results = opt.solve(m, tee=True)
-    #     chk_sol(results)  # check the status of the solution
-    #     # todo: clarify exception (uncomment next line) while loading the results
-    #     # m1.load(results)  # Loading solution into results object
-    #
-    #     # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-    #     rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
-    #     val_vars = mc_gen.mc_sol(rep_vars)
-    #     print(f'Values of the selected variables:\n{val_vars}.')
-    #     m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration
-    #     print(f'\nFinished itr {n_iter}, updating the analysis stage.')
-    #     i_stage = mc.chk_stage()    # check analysis stage
-    #     n_iter += 1
-    #     if n_iter > 2:
-    #         print('\nMax iters reached; breaking the iteration loop.')
-    #         break
-
-    # noinspection SpellCheckingInspection
-    # model = mc_mod(abst)  # model instanceo
-
-    # model.write('test.lp')
-    # model.write('test.mps')
-    # model.write('test.gms')
-    # model.write('test2.lp', symbolic_solver_labels=True)  # illegal param: symbolic...
-
-    # print('\nmodel display: -----------------------------------------------------------------------------')
-    # model.display()     # displays only instance (not abstract model)
-    # print('end of model display: ------------------------------------------------------------------------\n')
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
