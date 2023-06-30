@@ -1,4 +1,5 @@
 import pyomo.environ as pe       # more robust than using import *
+from pwl import PWL
 
 
 class McMod:
@@ -46,6 +47,9 @@ class McMod:
         return seg_x, seg_y
 
     def mc_itr(self):
+        def link_rule(m, i):
+            return m.x[i] == m.m1_cr_vars[i]
+
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
         for (i, crit) in enumerate(self.mc.cr):
@@ -74,9 +78,25 @@ class McMod:
             print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
 
+        # mc_block with mc_core linking variables
+        m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
+        m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
+        m.m1_cr_vars = []     # variables (objects) of m1 defining criteria
+        for crit in self.mc.cr:
+            var_name = crit.var_name
+            m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
+            m.m1_cr_vars.append(m1_var)
+
+        m.xLink = pe.Constraint(m.C, rule=link_rule)
+        m.pprint()
+
+        # prepare caf_pwl's
+        pwls = []
+        for crit in self.mc.cr:
+            pwls.append(PWL(crit))
+
         # define variables needed for for all stages but utopia
         # AF and m1_vars defined above
-        m.C = pe.RangeSet(self.mc.n_crit)   # set of all criteria indices
         m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m1_var])
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)

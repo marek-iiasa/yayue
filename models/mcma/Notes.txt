@@ -28,9 +28,17 @@ Main components:
   * AF: variable used as maximized goal
   * CAF: variables representing Criterion Achievement Function,
   * constraints linking core_block and mc_block
-- helper classes Crit and Mcma (both in crit.py) handling:
+
+Helper classes
+- Crit (in crit.py) handling data of one criterion:
+  * criteria definition
+  * values of attributes (activity, utopia/nadir, A/R, etc)
+- Mcma (also in crit.py) handling stuff common for all criteria:
   * status/stages of analysis
-  * criteria definitions
   * pay-off table
   * specs of preferences and solutions of each iteration: crit-values, A/R
+- PWL (in pwl.py) handling CAF-PWL for each criterion:
+  * define vertices of PWL (based on provided: max/min type, U/N, A/R values
+  * check slopes of segments
+  * provide function caf(x), where x stands for value of var defining the criterion
 
