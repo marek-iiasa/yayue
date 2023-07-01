@@ -47,8 +47,8 @@ class McMod:
         return seg_x, seg_y
 
     def mc_itr(self):
-        def link_rule(m, i):
-            return m.x[i] == m.m1_cr_vars[i]
+        # def link_rule(m, i):
+        #     return m.x[i] == m.m1_cr_vars[i]
 
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
@@ -87,8 +87,10 @@ class McMod:
             m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
             m.m1_cr_vars.append(m1_var)
 
-        m.xLink = pe.Constraint(m.C, rule=link_rule)
-        m.pprint()
+        @m.Constraint(m.C)
+        def xLink(mx, ii):
+            return mx.x[ii] == mx.m1_cr_vars[ii]
+        # m.xLink = pe.Constraint(m.C, rule=link_rule)
 
         # prepare caf_pwl's
         pwls = []
@@ -101,7 +103,33 @@ class McMod:
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
 
-        self.mc.set_pref()  # set crit attributes (activity, A/R, possibly adjust nadir app.
+        @m.Constraint(m.C)
+        def cafMinD(mx, ii):
+            return mx.cafMin <= mx.caf[ii]
+
+        @m.Constraint()
+        def cafRegD(mx):
+            return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
+
+        # def cafRegD(mx):
+        #     cafsum = sum(mx.caf[ii] for ii in mx.C)
+        #     return mx.cafReg == cafsum
+        #     # return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
+        # m.cafRD = pe.Constraint(rule=cafRegD)
+        reg_term = 0.001 / self.mc.n_crit
+
+        @m.Constraint()
+        def afDef(mx):
+            return mx.af == mx.cafMin + reg_term * mx.cafReg
+
+        @m.Objective(sense=pe.maximize)
+        def obj(mx):
+            return mx.af
+
+        m.pprint()
+
+        '''
+        # self.mc.set_pref()  # set crit attributes (activity, A/R, possibly adjust nadir app.): moved to Mcma class
         if self.mc.cur_stage == 2:  # first stage of nadir approximation
             # todo: set A/R values
             pass
@@ -127,55 +155,8 @@ class McMod:
         # m.goal.activate()  # objective of m1 block is deactivated
         print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
 
-        print(f'\nTesting PWL')
-        (pwl_x, pwl_y) = self.pwl_pts(0)
-        print(f'{pwl_x = }')
-        print(f'{pwl_y = }')
 
-        # see the 6.6.1 p.28 for (cryptic) description of parameters of pe.Piecewise()
-        # p = pe.Piecewise(...)
-
-        import pyomo.core as pcore
-        (code, slopes) = pcore.kernel.piecewise_library.util.characterize_function(pwl_x, pwl_y)
-        # https://pyomo.readthedocs.io/en/stable/library_reference/kernel/piecewise/util.html
-        # codes: 1: affine, 2: convex 3: concave 4: step 5: other
-        print(f'\n{code=}, {slopes=}')
-
-        import pyomo.kernel as pmo  # more robust than using import *
-        # (code, slopes) = pmo.characterize_function(pwl_x, pwl_y)  # does not work
-        # (code, slopes) = pmo.piecewise.characterize_function(pwl_x, pwl_y)  # does not work
-        # (code, slopes) = pmo.characterize_function(pwl_x, pwl_y)  # neither pmo. nor pe. works
-
-        # pmo.piecewise requires pmo vars?
-        # x = pmo.Var(bounds=(0., 1000.))
-        # x = pmo.Var(bounds=(None, None))
-        # m.x = pmo.variable()
-        # m.y = pmo.variable()
-        m.y = pe.Var()
-        m.goal = pe.Objective(expr=m.y, sense=pe.maximize)
-        m.goal.activate()  # objective of m1 block is deactivated
-        m.p = pmo.piecewise(pwl_x, pwl_y, input=m1_var, output=m.y, repn='cc', bound='eq',
-                            require_bounded_input_variable=False)   # does not work
-        print(f'{m.p = }, {type(m.p)}')
-        # m.p.display()     # not supported
-        # m.p.pprint()     # not supported
-        # m.p.validate()    # validation fails: it considers m_var to be unbounded
-
-        # id_cr = act_cr[0]  # index of the only active criterion
-        # var_name = self.var_names[id_cr]  # name of m1-variable representing the active criterion
-        # m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
-        # m.cafMin = pe.Var()     # min of CAFs
-        # m.af = pe.Piecewise(pwl_x, pwl_y, pw_repn='CC')
-        # m.af = pe.Piecewise(pwl_x, pwl_y, input=m1_var, output=m.cafMin, pw_repn='CC')
-
-        return m
-
-        for (i, crit) in enumerate(self.mc.cr):
-            (pwl_x, pwl_y) = self.pwl_pts(i)
-            print(f'{pwl_x = }')
-            print(f'{pwl_y = }')
-
-        raise Exception(f'mc_itr(): not implemented yet.')
+        # raise Exception(f'mc_itr(): not implemented yet.')
 
         # af = caf_min + caf_reg
         # for id_cr in var_names:     # var_names contains list of names of variables representing criteria
@@ -214,6 +195,9 @@ class McMod:
     #     # print(f'{m.id=}') # error, Block has no attribute id
     # m.incC = pe.Constraint(expr=(m.inc == 100. * m1.inc))  # linking variables of two blocks
     # print(f'{m.inc.name=}, {m.inc=}')
+        '''
+
+        return m
 
     def mc_sol(self, rep_vars=None):   # extract from m1 solution values of all criteria
         # cf regret::report() for extensive processing
