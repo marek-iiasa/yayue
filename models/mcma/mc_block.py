@@ -4,19 +4,16 @@ from pwl import PWL
 
 class McMod:
     def __init__(self, mc, m1):
-        self.mc = mc    # Mcma class handling data and statues of the MCMA
+        self.mc = mc    # CtrMca class handling MCMA data and process/analysis status
         self.m1 = m1    # instance of the core model (first block of the aggregate model)
 
         self.cr_names = []   # names of all criteria
-        self.var_names = []  # names of variables defining criteria
+        self.var_names = []  # names of m1 variables defining criteria
         for (i, crit) in enumerate(mc.cr):
             self.cr_names.append(mc.cr[i].name)
             self.var_names.append(mc.cr[i].var_name)
 
     def mc_itr(self):
-        # def link_rule(m, i):
-        #     return m.x[i] == m.m1_cr_vars[i]
-
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
         for (i, crit) in enumerate(self.mc.cr):
@@ -45,6 +42,7 @@ class McMod:
             print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
             return m
 
+        # define variables needed for all stages but utopia
         # mc_block with mc_core linking variables
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
@@ -55,16 +53,16 @@ class McMod:
             m.m1_cr_vars.append(m1_var)
 
         @m.Constraint(m.C)
-        def xLink(mx, ii):
+        def xLink(mx, ii):  # link the corresponding m1 and mc_core variables
             return mx.x[ii] == mx.m1_cr_vars[ii]
+        # def link_rule(m, i):  # traditional (without decorations) constraint using a rule
+        #     return m.x[i] == m.m1_cr_vars[i]
         # m.xLink = pe.Constraint(m.C, rule=link_rule)
 
-        # prepare caf_pwl's
-        pwls = []
-        for crit in self.mc.cr:
-            pwls.append(PWL(crit))
+        pwls = []    # prepare caf_pwl's
+        for (i, crit) in enumerate(self.mc.cr):
+            pwls.append(PWL(self.mc, i))
 
-        # define variables needed for for all stages but utopia
         # AF and m1_vars defined above
         m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m1_var])
         m.cafMin = pe.Var()     # min of CAFs
@@ -72,22 +70,19 @@ class McMod:
 
         @m.Constraint(m.C)
         def cafMinD(mx, ii):
+            # Todo: exclude inactive criteria
             return mx.cafMin <= mx.caf[ii]
 
         @m.Constraint()
-        def cafRegD(mx):
+        def cafRegD(mx):    # to avoid var-shadows warning: use mx instead of m
             return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
 
-        # def cafRegD(mx):
-        #     cafsum = sum(mx.caf[ii] for ii in mx.C)
-        #     return mx.cafReg == cafsum
-        #     # return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
-        # m.cafRD = pe.Constraint(rule=cafRegD)
-        reg_term = 0.001 / self.mc.n_crit
+        #  Todo: harmonize epsilon value with the value of CAF(utopia)
+        epsilon = 0.001     # epsilon value to be harmonized with CAF(utopia)
 
         @m.Constraint()
         def afDef(mx):
-            return mx.af == mx.cafMin + reg_term * mx.cafReg
+            return mx.af == mx.cafMin + epsilon / self.mc.n_crit * mx.cafReg
 
         @m.Objective(sense=pe.maximize)
         def obj(mx):
@@ -95,6 +90,9 @@ class McMod:
 
         m.pprint()
 
+        return m
+
+        # noinspection PyUnreachableCode
         '''
         # self.mc.set_pref()  # set crit attributes (activity, A/R, possibly adjust nadir app.): moved to Mcma class
         if self.mc.cur_stage == 2:  # first stage of nadir approximation
@@ -122,49 +120,46 @@ class McMod:
         # m.goal.activate()  # objective of m1 block is deactivated
         print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
 
-
         # raise Exception(f'mc_itr(): not implemented yet.')
 
         # af = caf_min + caf_reg
         # for id_cr in var_names:     # var_names contains list of names of variables representing criteria
-        #     m.add_component('caf_' + id_cr, pe.Var())  # CAF: component achievement function of crit. named 'id_cr'
+        #     m.add_component('caf_' + id_cr, pe.Var()) # CAF: component achievement function of crit. named 'id_cr'
         #     m.add_component('pwl_' + id_cr, pe.Var())  # PWL: of CAF of criterion named 'id' (may not be needed)?
         #
         # if self.mc.cur_stage == 2:  # first stage of nadir approximation
         #     pass
         # return m
-    # print('\ncore model display: -----------------------------------------------------------------------------')
-    # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
-    # m1.display()     # displays only instance (not abstract model)
-    # print('end of model display: ------------------------------------------------------------------------\n')
-    # m1.inc.display()
-    # m1.var_names[0].display() # does not work, maybe a cast could help?
-    # xx = var_names[0]
-    # print(f'{xx}')
-    # m1.xx.display()     # also does not work
-
-    # print(f'{m.af.name=}')
-    # xx = m.af
-    # print(f'{m.af=}')
-    # print(f'{xx=}')
-    # print(f'{xx.name=}')
-    # zz = xx.name
-    # print(f'{zz=}')
-    # m.var_names[0] = pe.Var()  # does not work
-    # var_names.append('x')     # tmp: second variable only needed for testing
-
-    # variables defining criteria (to be linked with the corresponding vars of the core model m1)
-    # for id in var_names:     # var_names contains list of names of variables to be linked between blocks m and m1
-    #     m.add_component(id, pe.Var())
-    #     # m.add_component(id, pe.Constraint(expr=(m.id == m1.id)))  # does not work: m.id is str not object
-    #     print(f'variable "{id}" defined in the second block.')
-    #     # print(f'{m.name=}') # print the block id
-    #     # print(f'{m.id=}') # error, Block has no attribute id
-    # m.incC = pe.Constraint(expr=(m.inc == 100. * m1.inc))  # linking variables of two blocks
-    # print(f'{m.inc.name=}, {m.inc=}')
-        '''
-
-        return m
+        # print('\ncore model display: -----------------------------------------------------------------------------')
+        # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
+        # m1.display()     # displays only instance (not abstract model)
+        # print('end of model display: ------------------------------------------------------------------------\n')
+        # m1.inc.display()
+        # m1.var_names[0].display() # does not work, maybe a cast could help?
+        # xx = var_names[0]
+        # print(f'{xx}')
+        # m1.xx.display()     # also does not work
+    
+        # print(f'{m.af.name=}')
+        # xx = m.af
+        # print(f'{m.af=}')
+        # print(f'{xx=}')
+        # print(f'{xx.name=}')
+        # zz = xx.name
+        # print(f'{zz=}')
+        # m.var_names[0] = pe.Var()  # does not work
+        # var_names.append('x')     # tmp: second variable only needed for testing
+    
+        # variables defining criteria (to be linked with the corresponding vars of the core model m1)
+        # for id in var_names:     # var_names contains list of names of variables to be linked between blocks m and m1
+        #     m.add_component(id, pe.Var())
+        #     # m.add_component(id, pe.Constraint(expr=(m.id == m1.id)))  # does not work: m.id is str not object
+        #     print(f'variable "{id}" defined in the second block.')
+        #     # print(f'{m.name=}') # print the block id
+        #     # print(f'{m.id=}') # error, Block has no attribute id
+        # m.incC = pe.Constraint(expr=(m.inc == 100. * m1.inc))  # linking variables of two blocks
+        # print(f'{m.inc.name=}, {m.inc=}')
+            '''
 
     def mc_sol(self, rep_vars=None):   # extract from m1 solution values of all criteria
         # cf regret::report() for extensive processing

@@ -1,3 +1,7 @@
 Notes/
 Tests/
 Data/test1/payoff.txt
+# links to pipa
+dat1.dat
+inst.py
+sms.py
