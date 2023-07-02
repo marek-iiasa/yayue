@@ -13,39 +13,6 @@ class McMod:
             self.cr_names.append(mc.cr[i].name)
             self.var_names.append(mc.cr[i].var_name)
 
-    def pwl_pts(self, i):
-        seg_x = []
-        seg_y = []
-        utopia = self.mc.cr[i].utopia
-        asp = self.mc.cr[i].asp
-        res = self.mc.cr[i].res
-        nadir = self.mc.cr[i].nadir
-        # todo: correct (the ad-hoc set) CAF (y) values for each segment
-        # todo: don't generate utopia/nadir points if close to asp/res, respectively
-        if self.mc.cr[i].mult == 1:     # crit. maximized: x ordered: nadir, res, asp, utopia
-            seg_x.append(nadir)
-            # seg_x.append(res)
-            # seg_x.append(asp)
-            # todo: ad-hoc fix to deal with not initiated A/R
-            seg_x.append(1.1*nadir)
-            seg_x.append(0.9*utopia)
-            seg_x.append(utopia)
-            seg_y.append(-10000.)
-            seg_y.append(0.)
-            seg_y.append(1000.)
-            seg_y.append(1050.)
-        if self.mc.cr[i].mult == -1:     # minimized: x ordered: utopia, asp, res, nadir
-            seg_x.append(utopia)
-            seg_x.append(asp)
-            seg_x.append(res)
-            seg_x.append(nadir)
-            seg_y.append(1050.)
-            seg_y.append(1000.)
-            seg_y.append(0.)
-            seg_y.append(-10000.)
-        print(f'PWL points for criterion "{self.mc.cr[i].name}: {utopia=}, {asp=}, {res=}, {nadir=}')
-        return seg_x, seg_y
-
     def mc_itr(self):
         # def link_rule(m, i):
         #     return m.x[i] == m.m1_cr_vars[i]

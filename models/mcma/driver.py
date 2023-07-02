@@ -7,7 +7,7 @@ import sys		# needed for sys.exit()
 # import os
 # import pandas as pd
 import pyomo.environ as pe
-from crit import Mcma  # handling MCMA structure and data, uses Crit class
+from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
 from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
@@ -30,7 +30,7 @@ def chk_sol(res):  # check status of the solution
 def driver(m1, ana_dir):
     print(f'\nAnalysing instance of model {m1.name}.')
 
-    mc = Mcma(ana_dir)
+    mc = CtrMca(ana_dir)
     fname = ana_dir + '/config.txt'     # criteria definition file
     print(f"\nInitializing criteria defined in file '{fname}':")
     n_cr_def = 0

@@ -33,10 +33,15 @@ Helper classes
 - Crit (in crit.py) handling data of one criterion:
   * criteria definition
   * values of attributes (activity, utopia/nadir, A/R, etc)
-- Mcma (also in crit.py) handling stuff common for all criteria:
+- CtrMca (ctr_mca.py) handling stuff common for all criteria:
   * status/stages of analysis
   * pay-off table
   * specs of preferences and solutions of each iteration: crit-values, A/R
+  * control flow (stages) of analysis, update analysis stage
+  * update value of crit-attributes (Nadir appr, etc)
+  * define preferences (A/R, crit-activity) in preparatory stages ( <4 )
+  * check and handle the user specified preferences (A/R, crit-activity)
+  * check and store crit-attributes (pay-off table values and status of their defs)
 - PWL (in pwl.py) handling CAF-PWL for each criterion:
   * define vertices of PWL (based on provided: max/min type, U/N, A/R values
   * check slopes of segments
