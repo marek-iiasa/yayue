@@ -1,0 +1,111 @@
+# data for stationary model: all model params (except of demand) are
+# period independent
+
+# data in AMPL format
+# set V := 0 1 2 ;
+# set P := 0 1 2 ;
+# set H := -1 ;
+# the above sets are initialized in sms()
+# could (but should not) be redefined here
+
+set F := fuel;
+# set T := BTL OTL;
+set T := BTL CTL STL OTL;
+#
+
+# the default values (set in SMS) are: periods=3, lifet=0, discr=0.05
+param periods := 12 ;
+param lifet := 3 ;
+param discr := 0.9 ;
+# param discr := 1. ;
+
+# demand: from Fig. 2, p. 12
+param dem :=
+fuel 0 300
+fuel 1 300
+fuel 2 300
+fuel 3 300
+fuel 4 300
+fuel 5 300
+fuel 6 300
+fuel 7 300
+fuel 8 300
+fuel 9 300
+fuel 10 300
+fuel 11 300
+# fuel 12 300
+;
+# from assumption that act are in the same energy-units as output
+param a :=
+BTL fuel 1
+CTL fuel 1
+STL fuel 1
+OTL fuel 1
+;
+# emission factor, Tab. 3, p. 14
+param ef :=
+BTL 0.78
+CTL 7.69
+STL 3.4
+OTL 1.68
+;
+# historical capacities, Table 2, p. 13
+# param hcap :=
+# BTL -1 1.4
+# CTL -1 12.5
+# STL -1 3.4
+# OTL -1 748
+# ;
+
+# capacity utilization factor: Tab 3, p. 14
+param cuf :=
+BTL 0.8
+CTL 0.8
+STL 0.8
+OTL 0.8
+;
+
+# feedstock requirement, == 1/efficiency, Tab 3, p. 14
+param rawU :=
+BTL 3
+CTL 2.17
+STL 3.85
+OTL 1.27
+;
+
+# inv cost, Tab. 3, p. 13
+param invU :=
+BTL 1106
+CTL 1397
+STL 532
+OTL 509
+;
+
+# feedstock prices, Table 1, p. 13
+param rawP :=
+BTL 289
+CTL 83
+STL 94
+OTL 357
+;
+
+# omc, c_{om}, Tab. 3, p. 13
+param omcU :=
+BTL 334
+CTL 380
+STL 392
+OTL 89
+;
+
+# carbon price: p. 15:  [10 - 55] $/ton,
+# in 2020 45 $/t, predicted for 2035: 55$/t
+# cap only in BTL 21K --> no use of hcap, [0.9K, 2.1K] use only OTL hcap, 
+# cap only in OTL:  800 or less
+# param carbU := 500 ;
+# param carbU := 5 ;
+param carbU := 50 ;
+
+# for a single param use table instead of param
+# this is an old comment by Janusz, no longer relevant?
+# table b := 40 ;
+
