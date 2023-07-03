@@ -29,8 +29,8 @@ def chk_sol(res):  # check status of the solution
 
 
 def driver():
-    model = Model(False)
-    par = Params()
+    model = Model(False)    # initialize Model class that generates model instance (ConcreteModel)
+    par = Params()  # prepare all model parameter
     m = model.mk_model(par)
     print(f'\nAnalysing instance of model {m.name}.')
 
