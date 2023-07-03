@@ -36,10 +36,20 @@ class McMod:
             m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
             mult = self.mc.cr[id_cr].mult   # multiplier (1 or -1, for max/min criteria, respectively)
             # print(f'{var_name=}, {m1_var=}, {m1_var.name=}, {mult=}')
-            m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
-            m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
+            # m.afC = pe.Constraint(expr=(m.af == mult * m1_var))  # constraint linking the m1 and m (MC-part) submodels
+            # m.goal = pe.Objective(expr=m.af, sense=pe.maximize)
+
+            @m.Constraint()
+            def afDef(mx):
+                return mx.af == mult * m1_var  # constraint linking the m1 and m (MC-part) submodels
+
+            @m.Objective(sense=pe.maximize)
+            def goal(mx):
+                return mx.af
             m.goal.activate()  # only mc_block objective active, m1_block obj. deactivated in driver()
-            print(f'\nmc_itr(): concrete model "{m.name}" for computing utopia of criterion "{var_name}" generated.')
+            print(f'\nmc_itr(): "{m.name}" for computing utopia of criterion "{self.cr_names[id_cr]}" '
+                  f'defined by core_model variable "{var_name}" generated.')
+            # m.pprint()
             return m
 
         # define variables needed for all stages but utopia

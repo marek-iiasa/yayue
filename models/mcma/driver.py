@@ -73,8 +73,8 @@ def driver(m1, ana_dir):
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)
         mc_part = mc_gen.mc_itr()        # model of the MC-part
-        print('mc-part generated.\n')
-        mc_part.pprint()
+        # print('mc-part generated.\n')
+        # mc_part.pprint()
         m.add_component('mc_part', mc_part)  # add_component() used instead of simple assignment
         print('core-model and mc-part blocks added to the model instance; ready for optimization.')
         # m.pprint()

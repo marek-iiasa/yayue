@@ -18,7 +18,14 @@ class PWL:  # representation of caf(x) for i-th criterion
         print(f"PWL initialized: cr_name = '{self.cr_name}', mult = '{self.mult}', U = '{self.utopia}', "
               "A = '{self.asp}', R = '{self.res}', R = '{self.nadir}'.")
 
-    def pwl_pts(self, i):
+        self.pwl_chk()
+        self.vert_pts()
+
+    def pwl_chk(self):
+        print(f'pwl_chk: criterion {self.cr_name}')
+
+    def vert_pts(self):
+        print(f'vert_pts: criterion {self.cr_name}')
         seg_x = []
         seg_y = []
         utopia = self.cr.utopia
@@ -28,7 +35,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         # todo: correct (the ad-hoc set) CAF (y) values for each segment
         # todo: don't generate utopia/nadir points if close to asp/res, respectively
         # Todo: store points in the same sequence for min/max, then reverse the min-lists to them also in inreas. x
-        if self.mc.cr[i].mult == 1:  # crit. maximized: x ordered: nadir, res, asp, utopia
+        if self.cr.mult == 1:  # crit. maximized: x ordered: nadir, res, asp, utopia
             seg_x.append(nadir)
             # seg_x.append(res)
             # seg_x.append(asp)
@@ -40,7 +47,7 @@ class PWL:  # representation of caf(x) for i-th criterion
             seg_y.append(0.)
             seg_y.append(1000.)
             seg_y.append(1050.)
-        if self.mc.cr[i].mult == -1:  # minimized: x ordered: utopia, asp, res, nadir
+        if self.cr.mult == -1:  # minimized: x ordered: utopia, asp, res, nadir
             seg_x.append(utopia)
             seg_x.append(asp)
             seg_x.append(res)
@@ -49,7 +56,7 @@ class PWL:  # representation of caf(x) for i-th criterion
             seg_y.append(1000.)
             seg_y.append(0.)
             seg_y.append(-10000.)
-        print(f'PWL points for criterion "{self.mc.cr[i].name}: {utopia=}, {asp=}, {res=}, {nadir=}')
+        print(f'PWL points for criterion "{self.cr.name}: {utopia=}, {asp=}, {res=}, {nadir=}')
         return seg_x, seg_y
 
         # noinspection PyUnreachableCode

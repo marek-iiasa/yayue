@@ -14,8 +14,8 @@ class CtrMca:
         self.stages = {'ini': 0, 'utop': 1, 'nad0': 2, 'nad1': 3, 'pref': 4, 'end': 5}
         self.cur_stage = 0  # initialization
         self.nad_cur = None   # cr-index of currently approximated nadir
-        self.cr = []    # list of criteria
-        self.n_crit = 0
+        self.cr = []    # objects of Crit class, each representing the corresponding criterion
+        self.n_crit = 0     # number of defined criteria == len(self.cr)
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -33,7 +33,7 @@ class CtrMca:
         self.cr.append(Crit(cr_name, var_name, typ))
         self.n_crit = len(self.cr)
 
-    def cr_ind(self, cr_name):
+    def cr_ind(self, cr_name):  # return index (in self.cr) of criterion having name cr_name
         for (i, crit) in enumerate(self.cr):
             if crit.name == cr_name:
                 return i
@@ -45,9 +45,9 @@ class CtrMca:
             self.cr[i].utopia = utopia
         if nadir:
             self.cr[i].nadir = nadir
-        print(f'Criterion "{cr_name}": defined values of {utopia=}, {nadir=} set in the PayOff table.')
+        print(f'Criterion "{cr_name}": values of {utopia=}, {nadir=} stored in attributes of self.cr[].')
 
-    def rd_payoff(self):
+    def rd_payoff(self):    # read stored utopia/nadir values and store them as self.cr attributes
         if os.path.exists(self.f_payoff):
             with open(self.f_payoff, "r") as reader:
                 print(f"\nReading payoff table stored in file '{self.f_payoff}':")
@@ -64,7 +64,7 @@ class CtrMca:
         else:
             print(f"\nFile '{self.f_payoff}' with stored payoff table not available.")
 
-    def prn_payoff(self):
+    def prn_payoff(self):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
         print(f'\nCurrent values of the payoff table written to file "{self.f_payoff}":')
@@ -75,7 +75,7 @@ class CtrMca:
             f_payOff.write(line + '\n')
         f_payOff.close()
 
-    def chk_payoff(self, nadir):
+    def chk_payoff(self, nadir):    # return index (in self.cr) of criterion, if its utopia/nadir should be computed
         for (i, crit) in enumerate(self.cr):
             if nadir:   # check if nadir needs to be computed
                 if not crit.nad_def:
@@ -86,51 +86,52 @@ class CtrMca:
                     print(f'Utopia value of criterion "{crit.name}" shall be computed next.')
                     return i
         print(f'All payoff table components computed.')
-        return -1
+        return -1   # all utopia/nadir values are computed
 
     def chk_stage(self):
-        """Determine stage of the analysis.
+        """Control the analysis stage; move to next stage if the current is completed.
 
         :return:  current stage
         :rtype:  int
         """
         if self.cur_stage == 0:     # initialization
-            print('Initialization finished, check if all utopia components computed.')
+            print('Initialization finished, checking, if all utopia components computed.')
             self.cur_stage = 1
         if self.cur_stage == 1:     # computing utopia
             i_cr = self.chk_payoff(False)   # check, if all utopias computed
             if i_cr > -1:   # utopia of i_cr-th criterion needs to be computed
-                for (i, crit) in enumerate(self.cr):
+                print(f'Utopia of criterion {self.cr[i_cr].name} shall be computed.')
+                for (i, crit) in enumerate(self.cr):    # set only one criterion to be active
                     if i_cr == i:
                         crit.is_active = True
                     else:
                         crit.is_active = False
                 return self.cur_stage
             else:   # all utopia computed, start first stage of nadir approximation
-                print('All utopia components computed. Start first stage  of nadir approximation.')
+                print('All utopia components computed. Start first stage of nadir approximation.')
                 self.cur_stage = 2
 
-        for crit in self.cr:    # set all criteria to be active
-            crit.is_active = True
-
-        if 1 < self.cur_stage < 4:     # stages 2 or 3: nadir approximation
+        while 1 < self.cur_stage < 4:     # stages 2 or 3: nadir approximation
             if self.cur_stage == 3:
                 raise Exception(f'chk_stage(): nadir2 stage NOT implemented yet.')
+            for crit in self.cr:  # set all criteria to be active
+                crit.is_active = True
             i_cr = self.chk_payoff(True)    # check, if all nadirs computed
             if i_cr == -1:  # all nadir of at current stage computed
                 self.nad_cur = None
                 if self.cur_stage == 2:
                     print('Finished first nadir approximations. Start the second approximations.')
-                else:
-                    print('PayOff table available. Ready to handle preferences.')
                 self.cur_stage += 1     # move to the next stage
             else:
                 self.nad_cur = i_cr  # store crit-index of currently approximated nadir
+                print(f'Nadir appr. of crit. {self.cr[i_cr].name} shall be computed (stage {self.cur_stage}.')
+                return self.cur_stage
 
+        print('PayOff table available. Ready to handle preferences.')
         return self.cur_stage
     # todo: either update crit.{uto,nad}_def or remove, if they not not really needed
 
-    def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app.
+    def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app).
         if self.cur_stage < 2:     # flow error
             raise Exception(f'Mcma::set_pref() should not be called for stage: {self.cur_stage}.')
         sys.stdout.flush()  # needed for printing exception at the output end
