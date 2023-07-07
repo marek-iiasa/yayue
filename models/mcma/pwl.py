@@ -8,56 +8,70 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.mc = mc    # CtrMca object
         self.cr = mc.cr[i]
         self.cr_name = self.cr.name
-        self.mult = self.cr.mult  # 1 for max-crit, -1 for min.
-        self.utopia = self.cr.utopia
-        self.asp = self.cr.asp
-        self.res = self.cr.res
-        self.nadir = self.cr.nadir
+        self.is_max = self.cr.mult == 1  # 1 for max-crit, -1 for min.
+        self.is_asp = self.cr.asp is not None   # Asp. defined?
+        self.is_res = self.cr.res is not None   # Res. defined?
+        self.is_nadir = self.cr.nadir is not None   # Nadir defined?
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
-        print(f"PWL initialized: cr_name = '{self.cr_name}', mult = '{self.mult}', U = '{self.utopia}', "
-              "A = '{self.asp}', R = '{self.res}', R = '{self.nadir}'.")
+        print(f"PWL initialized: cr_name = '{self.cr_name}', is_max = '{self.is_max}', U = '{self.cr.utopia}', "
+              f"A = '{self.cr.asp}', R = '{self.cr.res}', R = '{self.cr.nadir}'.")
 
-        self.pwl_chk()
-        self.vert_pts()
+        self.set_vert()  # define coordinates of the vertices
 
-    def pwl_chk(self):
-        print(f'pwl_chk: criterion {self.cr_name}')
+    def set_vert(self):  # define coordinates of the vertices
+        # todo: move definition of caf_asp to the ctrMc class
+        caf_asp = 100.    # temporarily
+        assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
+        assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
+        self.vert_x.append(self.cr.utopia)
+        self.vert_y.append(caf_asp)     # the value shall be replaced/ignored, if is_asp == True
+        # todo: add skipping "too close" (in terms of x) vertices
+        if self.is_asp:
+            self.vert_x.append(self.cr.asp)
+            self.vert_y.append(caf_asp)
+        if self.is_res:
+            self.vert_x.append(self.cr.res)
+            self.vert_y.append(0)
+        if self.is_nadir:
+            self.vert_x.append(self.cr.nadir)
+            self.vert_y.append(0)   # the value shall be later replaced or ignored
+        # print(f'set_vert(): criterion {self.cr_name}: {len(self.vert_x)} vertices defined.')
+        print(f'PWL of crit. "{self.cr.name} has {len(self.vert_x)} vertices: x = {self.vert_x}, y = {self.vert_y}')
+        # the two assertions below not needed for the above setup
+        # assert n_seg > 1, f'PWL of {self.cr_name} has only {len(self.vert_x)} break-point defined.'
+        # assert len(self.vert_x) > len(self.vert_y), f'PWL of "{self.cr_name}" criterion has different ' \
+        #        f'lenghts of break-points coordinates: x={len(self.vert_x)}, y={len(self.vert_y)}.'
 
-    def vert_pts(self):
-        print(f'vert_pts: criterion {self.cr_name}')
-        seg_x = []
-        seg_y = []
-        utopia = self.cr.utopia
-        asp = self.cr.asp
-        res = self.cr.res
-        nadir = self.cr.nadir
-        # todo: correct (the ad-hoc set) CAF (y) values for each segment
-        # todo: don't generate utopia/nadir points if close to asp/res, respectively
-        # Todo: store points in the same sequence for min/max, then reverse the min-lists to them also in inreas. x
-        if self.cr.mult == 1:  # crit. maximized: x ordered: nadir, res, asp, utopia
-            seg_x.append(nadir)
-            # seg_x.append(res)
-            # seg_x.append(asp)
-            # todo: ad-hoc fix to deal with not initiated A/R
-            seg_x.append(1.1 * nadir)
-            seg_x.append(0.9 * utopia)
-            seg_x.append(utopia)
-            seg_y.append(-10000.)
-            seg_y.append(0.)
-            seg_y.append(1000.)
-            seg_y.append(1050.)
-        if self.cr.mult == -1:  # minimized: x ordered: utopia, asp, res, nadir
-            seg_x.append(utopia)
-            seg_x.append(asp)
-            seg_x.append(res)
-            seg_x.append(nadir)
-            seg_y.append(1050.)
-            seg_y.append(1000.)
-            seg_y.append(0.)
-            seg_y.append(-10000.)
-        print(f'PWL points for criterion "{self.cr.name}: {utopia=}, {asp=}, {res=}, {nadir=}')
-        return seg_x, seg_y
+        # Todo: vertices stored in the same sequence for min/max, this appears to work for both min and max criteria
+        #   however, it needs to be tested more, also for more than one PWL segment cases
+
+    def segments(self):
+        # n_seg = len(self.vert_x) - 1
+        ab = []     # list of (a, b) parameters of segments, each defining line: y = ax + b
+        assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} points not implemented yet.'
+
+        # start with the middle segment defined by two points: asp or utopia, and res or nadir
+        if self.is_asp:
+            x1 = self.vert_x[1]     # utopia not defining mid-segm, if A defined
+            y1 = self.vert_y[1]
+            x2 = self.vert_x[2]     # next point is either R or Nadir (if R not defined)
+            y2 = self.vert_y[2]
+        else:
+            x1 = self.vert_x[0]
+            y1 = self.vert_y[0]
+            x2 = self.vert_x[1]     # next point is either R or Nadir (if R not defined)
+            y2 = self.vert_y[1]
+        print(f'Middle PWL segment is defined by: ({x1}, {y1}) and ({x2}, {y2}).')
+        slope = (x1 - x2) / (y1 - y2)
+        b = y1 - slope * x1
+        # print(f'{slope=}, {b=}.')
+        ab.append([slope, b])
+        print(f'ab: {ab}.')
+
+        # print(f'PWL points for criterion "{self.cr.name}: {utopia=}, {asp=}, {res=}, {nadir=}')
+
+        return ab
 
         # noinspection PyUnreachableCode
         '''

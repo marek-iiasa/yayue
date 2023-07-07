@@ -69,14 +69,30 @@ class McMod:
         #     return m.x[i] == m.m1_cr_vars[i]
         # m.xLink = pe.Constraint(m.C, rule=link_rule)
 
-        pwls = []    # prepare caf_pwl's
-        for (i, crit) in enumerate(self.mc.cr):
-            pwls.append(PWL(self.mc, i))
-
         # AF and m1_vars defined above
         m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m1_var])
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
+
+        # generate constraints for each CAF
+        for (i, crit) in enumerate(self.mc.cr):
+            pwl = PWL(self.mc, i)   # PWL of i-th criterion
+            ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
+            n_seg = len(ab)
+            print(f'PWL of {i}-th criterion {crit.name} has {n_seg} segments: {ab}.')
+            S = pe.RangeSet(0, n_seg - 1)   # set of indices of the current PWL
+            # if i == 0:    # uncomment to run for only one PWL (the second PWL causes error
+            #     continue
+
+            @m.Constraint(S)
+            # todo: fix the CAF gen.: the same name of the function apareletly connot be reused (e.g., inside a loop)
+            def cafD(mx, ss):
+                # i_caf = mx.caf[i]    # CAF of the current criterion
+                # i_x = mx.x[i]    # x of the current criterion
+                # a = ab[ss][0]
+                # b = ab[ss][1]
+                return mx.caf[i] - ab[ss][0] * mx.x[i] <= ab[ss][1]
+        m.pprint()
 
         @m.Constraint(m.C)
         def cafMinD(mx, ii):
