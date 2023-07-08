@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # m1_obj.print()
     # print(f'{m1_obj.name=}, {m1_obj=}')
 
-    driver(m1, './Data/test1')
+    driver(m1, './Data/test1')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))

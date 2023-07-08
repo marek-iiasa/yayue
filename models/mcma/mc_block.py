@@ -74,13 +74,52 @@ class McMod:
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
 
+        # generate and store params [a, b] of all segments of PWL function y = ax + b, for each criterion
+        pwls = []
+        # n_segs = []
+        for (i, crit) in enumerate(self.mc.cr):
+            pwl = PWL(self.mc, i)   # PWL of i-th criterion
+            ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
+            pwls.append(ab)
+            n_seg = len(ab)
+            # n_segs.append(n_seg)
+            print(f'PWL of {i}-th crit. {crit.name} has {n_seg} segments, each defined by [a, b] of y = ax + b: {ab}.')
+        # print(f'here')
+        # S = pe.Set(initialize=pwls)  # set of numbers of segments in each PWL does not accept duplicates
+        # print(f'S = {S}')
+        for (i, ab) in enumerate(pwls):
+            print(f'{i = }: {ab = }')
+
+        # generate constraints for each CAF
+        @m.Constraint(m.C)
+        # todo: the current fix processes only the first (middle) segment; other segments, if any, are ignored
+        def cafD(mx, ii):
+            # i_caf = mx.caf[i]    # CAF of the current criterion
+            # i_x = mx.x[i]    # x of the current criterion
+            # a = ab[ss][0]
+            # b = ab[ss][1]
+            # return mx.caf[i] - ab[ss][0] * mx.x[i] <= ab[ss][1]
+            # abx = pwls[i]   # [a, b] of 0-th segment of i-th PWL
+            abx = pwls[ii][0]   # [a, b] of 0-th segment of i-th PWL
+            print(f'{ii = }')
+            print(f'{pwls[ii] = }')
+            print(f'{abx = }')
+            print(f'{abx[0] = }')
+            print(f'{abx[1] = }')
+            # print('here')
+            return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+
+        m.pprint()
+        # print(f'here2')
+
+        '''
         # generate constraints for each CAF
         for (i, crit) in enumerate(self.mc.cr):
             pwl = PWL(self.mc, i)   # PWL of i-th criterion
             ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
             n_seg = len(ab)
             print(f'PWL of {i}-th criterion {crit.name} has {n_seg} segments: {ab}.')
-            S = pe.RangeSet(0, n_seg - 1)   # set of indices of the current PWL
+            S = pe.RangeSet(0, n_seg - 1)   # set of segment-indices of the current PWL
             # if i == 0:    # uncomment to run for only second PWL (the second PWL causes error)
             #     continue
 
@@ -92,7 +131,9 @@ class McMod:
                 # a = ab[ss][0]
                 # b = ab[ss][1]
                 return mx.caf[i] - ab[ss][0] * mx.x[i] <= ab[ss][1]
-        m.pprint()
+
+            m.pprint()
+        '''
 
         @m.Constraint(m.C)
         def cafMinD(mx, ii):
