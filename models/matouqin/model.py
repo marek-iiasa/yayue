@@ -23,7 +23,7 @@ class Model:
 
         @m.Constraint(m.C)
         def xLink(mx, ii):  # link the corresponding m1 and mc_core variables
-            return mx.x[ii] == p.pPrice * mx.y[ii]
+            return mx.x[ii] == p.eff.get('el2h') * mx.y[ii]
         # def link_rule(m, i):  # traditional (without decorations) constraint using a rule, just for illustration
         #     return m.x[i] == m.m1_cr_vars[i]
         # m.xLink = pe.Constraint(m.C, rule=link_rule)
