@@ -81,11 +81,11 @@ class McMod:
             n_seg = len(ab)
             print(f'PWL of {i}-th criterion {crit.name} has {n_seg} segments: {ab}.')
             S = pe.RangeSet(0, n_seg - 1)   # set of indices of the current PWL
-            # if i == 0:    # uncomment to run for only one PWL (the second PWL causes error
+            # if i == 0:    # uncomment to run for only second PWL (the second PWL causes error)
             #     continue
 
             @m.Constraint(S)
-            # todo: fix the CAF gen.: the same name of the function apareletly connot be reused (e.g., inside a loop)
+            # todo: fix the CAF gen.: the same name of the function aparently connot be reused (e.g., inside a loop)
             def cafD(mx, ss):
                 # i_caf = mx.caf[i]    # CAF of the current criterion
                 # i_x = mx.x[i]    # x of the current criterion

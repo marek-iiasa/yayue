@@ -14,7 +14,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.is_nadir = self.cr.nadir is not None   # Nadir defined?
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
-        print(f"PWL initialized: cr_name = '{self.cr_name}', is_max = '{self.is_max}', U = '{self.cr.utopia}', "
+        print(f"\n----\nPWL initialized: cr_name = '{self.cr_name}', is_max = '{self.is_max}', U = '{self.cr.utopia}', "
               f"A = '{self.cr.asp}', R = '{self.cr.res}', R = '{self.cr.nadir}'.")
 
         self.set_vert()  # define coordinates of the vertices
@@ -43,33 +43,35 @@ class PWL:  # representation of caf(x) for i-th criterion
         # assert len(self.vert_x) > len(self.vert_y), f'PWL of "{self.cr_name}" criterion has different ' \
         #        f'lenghts of break-points coordinates: x={len(self.vert_x)}, y={len(self.vert_y)}.'
 
-        # Todo: vertices stored in the same sequence for min/max, this appears to work for both min and max criteria
-        #   however, it needs to be tested more, also for more than one PWL segment cases
-
     def segments(self):
         # n_seg = len(self.vert_x) - 1
         ab = []     # list of (a, b) parameters of segments, each defining line: y = ax + b
-        assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} points not implemented yet.'
 
         # start with the middle segment defined by two points: asp or utopia, and res or nadir
         if self.is_asp:
             x1 = self.vert_x[1]     # utopia not defining mid-segm, if A defined
             y1 = self.vert_y[1]
-            x2 = self.vert_x[2]     # next point is either R or Nadir (if R not defined)
+            x2 = self.vert_x[2]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[2]
         else:
-            x1 = self.vert_x[0]
+            x1 = self.vert_x[0]     # utopia is defines mid-segment, if A iss not defined
             y1 = self.vert_y[0]
-            x2 = self.vert_x[1]     # next point is either R or Nadir (if R not defined)
+            x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
         print(f'Middle PWL segment is defined by: ({x1}, {y1}) and ({x2}, {y2}).')
         slope = (x1 - x2) / (y1 - y2)
-        b = y1 - slope * x1
-        # print(f'{slope=}, {b=}.')
-        ab.append([slope, b])
-        print(f'ab: {ab}.')
+        b = y1 - slope * x1     # alternatively: b = y2 - slope * x2
+        ab.append([slope, b])   # mid-segment is first in the list of segment specs.
+        # print(f'ab: {ab}.')
+        print(f'parameters of the line y = ax +b: a = {slope:.2e}, {b = :.2e}.')
 
-        # print(f'PWL points for criterion "{self.cr.name}: {utopia=}, {asp=}, {res=}, {nadir=}')
+        # Note: vertices stored in the same way (U, A, R, N) for min/max, this works OK for both types of criteria
+        #   because values of both slope and b are invariant in regard of order of points (x1, y1) and (x2, y2)
+
+        assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} points not implemented yet.'
+        # segments above A (if A defined) and below R (if R defined and not used for mid-segment):
+        # defined using: one point and slope; the latter more flat or steep than mid-segment slope, for
+        # segments above A and below R, respectively.
 
         return ab
 
