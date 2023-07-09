@@ -59,11 +59,11 @@ class PWL:  # representation of caf(x) for i-th criterion
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
         print(f'Middle PWL segment is defined by: ({x1}, {y1}) and ({x2}, {y2}).')
-        slope = (x1 - x2) / (y1 - y2)
-        b = y1 - slope * x1     # alternatively: b = y2 - slope * x2
-        ab.append([slope, b])   # mid-segment is first in the list of segment specs.
+        mid_slope = (x1 - x2) / (y1 - y2)
+        b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
+        ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         # print(f'ab: {ab}.')
-        print(f'parameters of the line y = ax +b: a = {slope:.2e}, {b = :.2e}.')
+        print(f'parameters of the line y = ax +b: a = {mid_slope:.2e}, {b = :.2e}.')
 
         # Note: vertices stored in the same way (U, A, R, N) for min/max, this works OK for both types of criteria
         #   because values of both slope and b are invariant in regard of order of points (x1, y1) and (x2, y2)
@@ -72,6 +72,16 @@ class PWL:  # representation of caf(x) for i-th criterion
         # segments above A (if A defined) and below R (if R defined and not used for mid-segment):
         # defined using: one point and slope; the latter more flat or steep than mid-segment slope, for
         # segments above A and below R, respectively.
+
+        if self.is_asp:  # generate segment above Asp
+            # slope: flatter than mid_slop
+            # b - defined as above by A point
+            pass
+
+        if self.is_res:  # generate segment below Res
+            # slope: steeper than mid_slop
+            # b - defined as above by R point
+            pass
 
         return ab
 

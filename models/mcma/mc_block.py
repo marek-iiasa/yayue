@@ -76,39 +76,34 @@ class McMod:
 
         # generate and store params [a, b] of all segments of PWL function y = ax + b, for each criterion
         pwls = []
-        # n_segs = []
         for (i, crit) in enumerate(self.mc.cr):
             pwl = PWL(self.mc, i)   # PWL of i-th criterion
             ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
             pwls.append(ab)
             n_seg = len(ab)
-            # n_segs.append(n_seg)
-            print(f'PWL of {i}-th crit. {crit.name} has {n_seg} segments, each defined by [a, b] of y = ax + b: {ab}.')
-        # print(f'here')
-        # S = pe.Set(initialize=pwls)  # set of numbers of segments in each PWL does not accept duplicates
-        # print(f'S = {S}')
+            print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
+                  f'y = ax + b: {ab = }.')
+        print(f'\nParams of segments defining each PWL:')
         for (i, ab) in enumerate(pwls):
             print(f'{i = }: {ab = }')
 
+        print(f'\nGenerating constraints defining each of the CAF[i].')
+
         # generate constraints for each CAF
         @m.Constraint(m.C)
-        # todo: the current fix processes only the first (middle) segment; other segments, if any, are ignored
+        # todo: the current version processes only the first (middle) segment; other segments, if any, are ignored
         def cafD(mx, ii):
             # i_caf = mx.caf[i]    # CAF of the current criterion
             # i_x = mx.x[i]    # x of the current criterion
-            # a = ab[ss][0]
-            # b = ab[ss][1]
-            # return mx.caf[i] - ab[ss][0] * mx.x[i] <= ab[ss][1]
-            # abx = pwls[i]   # [a, b] of 0-th segment of i-th PWL
             abx = pwls[ii][0]   # [a, b] of 0-th segment of i-th PWL
-            print(f'{ii = }')
-            print(f'{pwls[ii] = }')
-            print(f'{abx = }')
-            print(f'{abx[0] = }')
-            print(f'{abx[1] = }')
+            # print(f'{ii}-th criterion:')
+            print(f'PWL of {ii}-th criterion has {len(pwls[ii])} segments: {pwls[ii] = }')
+            # print(f'mid-segment: {abx = }')
+            print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
             # print('here')
             return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
 
+        print('\nMC_block:')
         m.pprint()
         # print(f'here2')
 
@@ -248,6 +243,6 @@ class McMod:
             # val = m1_var.extract_values() # for indexed variables
             val = m1_var.value
             sol_val.update({var_name: val})
-            print(f'Value of report variable {var_name} = {val}')
+            # print(f'Value of the report variable {var_name} = {val}')
         print(f'values of selected variables: {sol_val}')
         return sol_val

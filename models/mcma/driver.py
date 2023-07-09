@@ -60,15 +60,16 @@ def driver(m1, ana_dir):
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
     # opt = SolverFactory('gams')  # gams can be used as a solver
 
-    i_stage = mc.chk_stage()    # analysis stage
+    i_stage = mc.chk_stage()    # define/check current analysis stage
     n_iter = 1
-    while i_stage < 6:   # MCA iterations
+    while i_stage < 6:   # MCA iterations (common loop for all analysis stages)
         print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
         print(f'Analysis stage: {i_stage}.')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
 
+        mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         # model instance of the MC-part
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)

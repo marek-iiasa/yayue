@@ -27,5 +27,6 @@ class Crit:     # definition and attributes of a single criterion
         self.nadir = None
         self.asp = None     # aspiration value (not scaled)
         self.res = None     # reservation value (not scaled)
+        self.val = None     # last computed value
         self.is_active = True
         print(f"Criterion initialized: crit_name = '{cr_name}', var_name = '{var_name}', {self.attr}.")
