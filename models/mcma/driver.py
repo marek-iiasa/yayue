@@ -50,6 +50,7 @@ def driver(m1, ana_dir):
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
+    # todo: store in the file only if changed (modify prn_payoff)
     mc.prn_payoff()
 
     # todo: open .../log.txt either for 'w' or 'a'
@@ -60,10 +61,11 @@ def driver(m1, ana_dir):
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
     # opt = SolverFactory('gams')  # gams can be used as a solver
 
-    i_stage = mc.chk_stage()    # define/check current analysis stage
+    i_stage = 0
     n_iter = 1
     while i_stage < 6:   # MCA iterations (common loop for all analysis stages)
         print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
+        i_stage = mc.chk_stage()  # define/check current analysis stage
         print(f'Analysis stage: {i_stage}.')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
@@ -90,17 +92,21 @@ def driver(m1, ana_dir):
 
         print('\nprocessing solution --------------------------------')
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-        rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
-        val_vars = mc_gen.mc_sol(rep_vars)
+        rep_vars = []  # list of variables, values of which shall be returned
+        # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
+        # todo: fix bug in mc_sol(): nadir not processed OK, it causes loops on the 0-th crit.
+        #   Appr. Nadir of crit. other than income (stage 2).
+        # todo: remove: Nadir value of criterion income shall be computed next.
+        val_vars = mc_gen.mc_sol(rep_vars)  # process solution
         print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
         print(f'\nFinished itr {n_iter}, updating the analysis stage.')
-        i_stage = mc.chk_stage()    # check analysis stage
-        mc.prn_payoff()
+        mc.prn_payoff()     # store current criteria values in the file
+        # i_stage = mc.chk_stage()    # check analysis stage
 
         n_iter += 1
-        max_itr = 3
+        max_itr = 5
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
             break

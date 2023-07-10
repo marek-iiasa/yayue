@@ -55,6 +55,7 @@ class McMod:
         # define variables needed for all stages but utopia
         # mc_block with mc_core linking variables
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
+        m.A = pe.Set(initialize=act_cr)   # set of active criteria indices
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
         m.m1_cr_vars = []     # variables (objects) of m1 defining criteria
         for crit in self.mc.cr:
@@ -103,8 +104,8 @@ class McMod:
             # print('here')
             return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
 
-        print('\nMC_block:')
-        m.pprint()
+        # print('\nMC_block:')
+        # m.pprint()
         # print(f'here2')
 
         '''
@@ -130,7 +131,8 @@ class McMod:
             m.pprint()
         '''
 
-        @m.Constraint(m.C)
+        @m.Constraint(m.A)
+        # todo: replace m.C by m.A (to be defined as set of active criteria)
         def cafMinD(mx, ii):
             # Todo: exclude inactive criteria
             return mx.cafMin <= mx.caf[ii]
@@ -150,7 +152,8 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        m.pprint()
+        # print('\nMC_block (returned to driver):')
+        # m.pprint()
 
         return m
 
@@ -232,7 +235,7 @@ class McMod:
             # val = m1_var.extract_values() # for indexed variables
             val = m1_var.value
             cr_name = self.cr_names[i]
-            cri_val.update({cr_name: val})
+            cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
             print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
         self.mc.store_sol(cri_val)  # process and store criteria values
 
