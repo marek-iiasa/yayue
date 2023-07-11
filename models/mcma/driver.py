@@ -65,7 +65,7 @@ def driver(m1, ana_dir):
     n_iter = 1
     while i_stage < 6:   # MCA iterations (common loop for all analysis stages)
         print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
-        i_stage = mc.chk_stage()  # define/check current analysis stage
+        i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'Analysis stage: {i_stage}.')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
@@ -98,13 +98,13 @@ def driver(m1, ana_dir):
         #   Appr. Nadir of crit. other than income (stage 2).
         # todo: remove: Nadir value of criterion income shall be computed next.
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution
-        print(f'Values of the selected variables:\n{val_vars}.')
+        if len(rep_vars):
+            print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
-        print(f'\nFinished itr {n_iter}, updating the analysis stage.')
         mc.prn_payoff()     # store current criteria values in the file
-        # i_stage = mc.chk_stage()    # check analysis stage
 
+        print(f'\nFinished itr {n_iter}.')
         n_iter += 1
         max_itr = 5
         if n_iter > max_itr:

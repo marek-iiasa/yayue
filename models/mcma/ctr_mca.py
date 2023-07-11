@@ -16,8 +16,9 @@ class CtrMca:
         self.n_crit = 0     # number of defined criteria == len(self.cr)
         self.stages = {'ini': 0, 'utop': 1, 'nad0': 2, 'nad1': 3, 'pref': 4, 'end': 5}
         self.cur_stage = 0  # initialization
-        self.cur_uto = None   # cr-index of currently computed utopia
-        self.cur_nad = None   # cr-index of currently approximated nadir
+        self.cur_cr = None  # cr_index passed to self.set_pref()
+        # self.cur_uto = None   # cr-index of currently computed utopia
+        # self.cur_nad = None   # cr-index of currently approximated nadir
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -90,67 +91,65 @@ class CtrMca:
             f_payOff.write(line + '\n')
         f_payOff.close()
 
-    def chk_payoff(self, nadir):    # return index (in self.cr) of criterion, if its utopia/nadir should be computed
+    def chk_utopia(self):    # return index (in self.cr) of criterion, if its utopia/nadir should be computed
         for (i, crit) in enumerate(self.cr):
-            if nadir:   # check if nadir needs to be computed
-                if not crit.nad_def:
-                    print(f'Nadir value of criterion {crit.name} shall be computed next.')
-                    return i
-            else:   # check if utopia needs to be computed
-                if not crit.utopia:
-                    print(f'Utopia value of criterion "{crit.name}" shall be computed next.')
-                    return i
-        print(f'All payoff table components computed.')
-        return -1   # all utopia/nadir values are computed
+            if not crit.utopia:
+                return i
+        print(f'All utopia components computed.')
+        return -1
 
-    def chk_stage(self):
-        """Control the analysis stage; move to next stage if the current is completed.
-
-        :return:  current stage
-        :rtype:  int
-        """
+    def set_stage(self):
+        """Define and return analysis stage; provide info (in self.cur_cr) for mc.set_pref() """
         if self.cur_stage == 0:     # initialization
             print('Initialization finished, checking, if all utopia components computed.')
             self.cur_stage = 1
         if self.cur_stage == 1:     # computing utopia
-            i_cr = self.chk_payoff(False)   # check, if all utopias computed
+            i_cr = self.chk_utopia()   # check, if all utopias computed
             if i_cr > -1:   # utopia of i_cr-th criterion needs to be computed
-                self.cur_uto = i_cr
-                print(f'Utopia of criterion {self.cr[self.cur_uto].name} shall be computed.')
-                return self.cur_stage
+                self.cur_cr = i_cr
+                print(f'Utopia of criterion "{self.cr[i_cr].name}" shall be computed.')
             else:   # all utopia computed, start first stage of nadir approximation
                 print('All utopia components computed. Start first stage of nadir approximation.')
-                self.cur_uto = None
-                # todo: initialize below crit attributes needed for first stage of nadir app.
-                for crit in self.cr:  # set all criteria to be active
-                    crit.is_active = True
-                    crit.nad_def = False    # reset after stage 1 (nadir value of stage 1 is kept)
+                self.cur_cr = 0     # start first nedir appr with 0-th criterion
                 self.cur_stage = 2
-                # return self.cur_stage
-
-        if self.cur_stage == 2:  # first approximation of Nadir
-            i_cr = self.chk_payoff(True)    # check, if all nadirs computed
-            if i_cr == -1:  # all nadir of at current stage computed
-                self.cur_nad = None
-                print('Finished first nadir approximations. Start the second approximations.')
-                self.cur_stage += 1     # move to the second Nadir appr.
-            else:
-                self.cur_nad = i_cr  # store crit-index of currently approximated nadir
-                print(f'Appr. Nadir of crit. other than {self.cr[i_cr].name} (stage {self.cur_stage}).')
-                return self.cur_stage
-
-        if self.cur_stage == 3:  # second approximation of Nadir
-            raise Exception(f'chk_stage(): nadir2 stage NOT implemented yet.')
+                # the belo moved to mc_set_pref()
+                # # initialize below crit attributes needed for first stage of nadir app.
+                # for crit in self.cr:  # set all criteria to be active
+                #     crit.is_active = True
+                #     crit.nad_def = False    # reset after stage 1 (nadir value of stage 1 is kept)
+            return self.cur_stage
+        elif self.cur_stage == 2:  # continue first approximation of Nadir ?
+            # i_cr = self.chk_payoff(True)    # check, if all nadirs computed
+            # if i_cr == -1:  # all nadir of at current stage computed
+            #     self.cur_nad = None
+            #     print('Finished first nadir approximations. Start the second approximations.')
+            #     self.cur_stage += 1     # move to the second Nadir appr.
+            # else:
+            #     self.cur_nad = i_cr  # store crit-index of currently approximated nadir
+            #     print(f'Appr. Nadir of crit. other than {self.cr[i_cr].name} (stage {self.cur_stage}).')
+            #     return self.cur_stage
+            if self.cur_cr + 1 < self.n_crit:   # not all crit were used in first stagee of nadir appr.
+                self.cur_cr += 1    # use next (not yet used) criterion
+                print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
+            else:   # move to the 2nd stage of nadir appr.
+                print('Finished first nadir approximations. Start the 2nd nadir approximations.')
+                self.cur_cr = 0     # start first nedir appr with 0-th criterion
+                self.cur_stage = 3
+                raise Exception(f'set_stage(): nadir2 stage NOT implemented yet.')
+            return self.cur_stage
+        elif self.cur_stage == 3:  # second approximation of Nadir
+            raise Exception(f'set_stage(): nadir2 stage NOT implemented yet.')
+        elif self.cur_stage > 3:  # second approximation of Nadir
+            raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
         print('PayOff table available. Ready to handle preferences.')
         return self.cur_stage
-    # todo: either update crit.{uto,nad}_def or remove, if they not not really needed
 
     def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app).
         assert self.cur_stage > 0, f'CtrMca::set_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.cur_stage == 1:  # set only currently computed utopia criterion to be active
             for (i, crit) in enumerate(self.cr):
-                if self.cur_uto == i:
+                if self.cur_cr == i:
                     crit.is_active = True
                 else:
                     crit.is_active = False
@@ -158,7 +157,7 @@ class CtrMca:
         elif self.cur_stage == 2:     # set one crit active in first appr. of Nadir
             print(f'---\nMcma::set_pref(): TESTING for stage: {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
-                if self.cur_nad == i:
+                if self.cur_cr == i:
                     crit.is_active = True
                 else:
                     crit.is_active = False
@@ -167,6 +166,7 @@ class CtrMca:
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
 
+    '''
     def upd_nad(self, stage, crit, new_val):    # update nadir appr.
         assert crit.nadir is not None, f'nadir of crit {crit.name} undefined before stage {self.cur_stage}.'
         assert self.cur_stage > 1, f'upd_nad() should not be called in stage {self.cur_stage}.'
@@ -190,6 +190,7 @@ class CtrMca:
         else:
             yes_no = 'not'
         print(f'nadir appr. of crit {crit.name}: {old_val} {yes_no} changed to {new_val}.')
+    '''
 
     def store_sol(self, crit_val):
         print(f'Processing criteria values of the current iteration: {crit_val}')
@@ -200,16 +201,14 @@ class CtrMca:
                 crit.val = val
                 if crit.is_active:  # utopia computed
                     crit.utopia = val
-                    crit.uto_def = True
-                else:   # store nadir value
-                    crit.nad_def = True     # will be reset before stage 2
-                    if crit.nadir is None:  # not yet stored: store the current value
-                        crit.nadir = val
-                        print(f'Storing first approxation of nadir for crit "{cr_name}" = {val}')
-                    else:   # store nadir, if the new value is a better appr.
-                        # todo: check correctness of  storing intermediate nadir approximation
-                        self.upd_nad(self.cur_stage, crit, val)
-                        print(f'Storing subsequent approxation of nadir for crit "{cr_name}" = {val}')
+                # else:   # set/update nadir for not activate
+                # store/update nadir for all criteria
+                if crit.nadir is None:  # not yet stored: store the current value
+                    crit.nadir = val
+                    print(f'Storing initial approxation of nadir for crit "{cr_name}" = {val}')
+                else:   # store nadir, if the new value is a better appr.
+                    self.cr[i].updNadir(self.cur_stage, val)
+                    # print(f'Storing subsequent approxation of nadir for crit "{cr_name}" = {val}')
         elif self.cur_stage == 2:   # update nadir values
             print(f'---\nMcma::store_sol(): TESTING for stage {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
@@ -217,12 +216,10 @@ class CtrMca:
                 val = crit_val.get(cr_name)
                 crit.val = val
                 if crit.is_active:  # nothing to store/update
-                    pass
+                    print(f'NOT updating nadir for active crit "{cr_name}" = {val}')
+                    # pass
                 else:   # store nadir value
-                    # todo: check why it was defined earlir
-                    crit.nad_def = True     # declare as defined
-                    # todo: check correctness of  storing intermediate nadir approximation
-                    self.upd_nad(self.cur_stage, crit, val)  # store, if better
+                    self.cr[i].updNadir(self.cur_stage, val)
                     # print(f'Storing subsequent approxation of nadir for crit "{cr_name}" = {val}')
         else:
             sys.stdout.flush()  # needed for printing exception at the output end

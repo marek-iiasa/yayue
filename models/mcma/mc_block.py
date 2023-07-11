@@ -237,9 +237,11 @@ class McMod:
             cr_name = self.cr_names[i]
             cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
             print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
-        self.mc.store_sol(cri_val)  # process and store criteria values
 
-        sol_val = {}    # dict with values of variables requested in rep_var
+        # store criteria attributes
+        self.mc.store_sol(cri_val)
+
+        sol_val = {}    # initialize dict with values of variables requested in rep_var
         for var_name in rep_vars:     # loop over m1.vars of all criteria
             m1_var = m1_vars[var_name]
             # todo: indexed variables needs to be detected and handled accrdingly (see regret::report())
