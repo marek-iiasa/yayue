@@ -34,23 +34,23 @@ def driver(m1, ana_dir):
     fname = ana_dir + '/config.txt'     # criteria definition file
     print(f"\nInitializing criteria defined in file '{fname}':")
     n_cr_def = 0
-    with open(fname) as reader:
+    with open(fname) as reader:  # read and store specs of criteria
         for n_line, line in enumerate(reader):
             line = line.rstrip("\n")
             # print(f'line {line}')
             if line[0] == "*" or len(line) == 0:  # skip commented and empty lines
                 continue
             words = line.split()
-            n_words = len(words)
+            n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
             assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
-            mc.addCrit(words[0], words[1], words[2])
+            mc.addCrit(words[0], words[1], words[2])    # store the criterion specs
             n_cr_def += 1
 
     assert (n_cr_def > 1), f'at least two criteria need to be defined, only {n_cr_def} was defined.'
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
-    # todo: store in the file only if changed (modify prn_payoff)
+    # todo: modify prn_payoff() to store in the file only if changed (modify prn_payoff)
     mc.prn_payoff()
 
     # todo: open .../log.txt either for 'w' or 'a'
@@ -94,15 +94,13 @@ def driver(m1, ana_dir):
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
         rep_vars = []  # list of variables, values of which shall be returned
         # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
-        # todo: fix bug in mc_sol(): nadir not processed OK, it causes loops on the 0-th crit.
-        #   Appr. Nadir of crit. other than income (stage 2).
-        # todo: remove: Nadir value of criterion income shall be computed next.
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
         mc.prn_payoff()     # store current criteria values in the file
+        # todo: add print to a log
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
