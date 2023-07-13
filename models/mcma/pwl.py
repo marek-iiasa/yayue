@@ -15,27 +15,55 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
         print(f"\n----\nPWL initialized: cr_name = '{self.cr_name}', is_max = '{self.is_max}', U = '{self.cr.utopia}', "
-              f"A = '{self.cr.asp}', R = '{self.cr.res}', R = '{self.cr.nadir}'.")
+              f"A = '{self.cr.asp}', R = '{self.cr.res}', N = '{self.cr.nadir}'.")
+        assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
+        assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
+        #
+        assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'A {self.cr.asp} must be worse than U {self.cr.utopia}.'
+        assert self.cr.isBetter(self.cr.utopia, self.cr.res), f'R {self.cr.res} must be worse than U {self.cr.utopia}.'
+        assert self.cr.isBetter(self.cr.utopia, self.cr.nadir), f'N {self.cr.nadir} must be worse than U ' \
+            f'{self.cr.utopia}.'
+        assert self.cr.isBetter(self.cr.asp, self.cr.res), f'R {self.cr.res} must be worse than A {self.cr.asp}.'
+        assert self.cr.isBetter(self.cr.asp, self.cr.nadir), f'N {self.cr.nadir} must be worse than A {self.cr.asp}.'
+        assert self.cr.isBetter(self.cr.res, self.cr.nadir), f'N {self.cr.nadir} must be worse than R {self.cr.res}.'
+        #
+        maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
+        minDiff = mc.minDiff * maxVal
+        assert self.mc.diffOK(i, self.cr.utopia, self.cr.nadir), f'utopia and nadir closer then ' \
+            f'{minDiff:.2e}. Criterion unsuitable for MCA.'
+        if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
+            self.is_asp = False
+            print(f'A {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
+        if self.is_res and self.is_nadir and not self.mc.diffOK(i, self.cr.nadir, self.cr.res):
+            self.is_res = False
+            print(f'R {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
+        # maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
+        # minDiff = mc.minDiff * maxVal
+        # assert abs(self.cr.utopia - self.cr.nadir) > minDiff, f'utopia and nadir closer then '\
+        #     f'{minDiff:.2e}. Criterion unsuitable for MCA.'
+        # if self.is_asp and abs(self.cr.utopia - self.cr.asp) < minDiff:
+        #     self.is_asp = False
+        #     print(f'A {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
+        # if self.is_res and self.is_nadir and abs(self.cr.nadir - self.cr.res) < minDiff:
+        #     self.is_res = False
+        #     print(f'R {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
 
         self.set_vert()  # define coordinates of the vertices
 
     def set_vert(self):  # define coordinates of the vertices
         # todo: move definition of caf_asp to the ctrMc class
-        caf_asp = 100.    # temporarily
-        assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
-        assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
         self.vert_x.append(self.cr.utopia)
-        self.vert_y.append(caf_asp)     # the value shall be replaced/ignored, if is_asp == True
+        self.vert_y.append(self.mc.cafAsp)     # the value shall be replaced/ignored, if is_asp == True
         # todo: add skipping "too close" (in terms of x) vertices
         if self.is_asp:
             self.vert_x.append(self.cr.asp)
-            self.vert_y.append(caf_asp)
+            self.vert_y.append(self.mc.cafAsp)
         if self.is_res:
             self.vert_x.append(self.cr.res)
             self.vert_y.append(0)
         if self.is_nadir:
             self.vert_x.append(self.cr.nadir)
-            self.vert_y.append(0)   # the value shall be later replaced or ignored
+            self.vert_y.append(0)   # the value shall be later replaced or ignored, if is_res == True
         # print(f'set_vert(): criterion {self.cr_name}: {len(self.vert_x)} vertices defined.')
         print(f'PWL of crit. "{self.cr.name} has {len(self.vert_x)} vertices: x = {self.vert_x}, y = {self.vert_y}')
         # the two assertions below not needed for the above setup
@@ -59,7 +87,8 @@ class PWL:  # representation of caf(x) for i-th criterion
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
         print(f'Middle PWL segment is defined by: ({x1}, {y1}) and ({x2}, {y2}).')
-        mid_slope = (x1 - x2) / (y1 - y2)
+        # see: Bronsztejn p. 245
+        mid_slope = (y1 - y2) / (x1 - x2)
         b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         # print(f'ab: {ab}.')

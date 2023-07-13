@@ -104,7 +104,7 @@ def driver(m1, ana_dir):
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 5
+        max_itr = 7
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
             break

@@ -66,9 +66,21 @@ class Crit:     # definition and attributes of a single criterion
                     shift = True     # move away from U
 
         if shift:
+            # todo: add check to prevent moving (back?) to utopia
             self.nadir = val    # set val as new nadir appr.
             no_yes = ''
         else:
             no_yes = 'not'
 
         print(f'nadir appr. of crit "{self.name}": {old_val} {no_yes} changed to {val} (in {stage=}).')
+
+    def isBetter(self, val1, val2):   # return true if val1 is better (in terms of achivement) than val2
+        if val1 is None or val2 is None:
+            return True     # PWL takes care about undefined values
+        if self.mult == 1:  # max criterion
+            if val1 > val2:
+                return True
+        else:  # min criterion
+            if val1 < val2:
+                return True
+        return False
