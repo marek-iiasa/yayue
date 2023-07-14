@@ -84,3 +84,11 @@ class Crit:     # definition and attributes of a single criterion
             if val1 < val2:
                 return True
         return False
+
+    def setAR(self):   # set AR for neutral solution
+        is_max = self.mult == 1  # 1 for max-crit, -1 for min.
+        delta = abs(self.utopia - self.nadir) / 3.  # equal distance between U, A, R, N
+        self.asp = self.utopia - self.mult * delta
+        self.res = self.asp - self.mult * delta
+        print(f"Preferences for neutral solution: cr_name = '{self.name}', {is_max = }, U = {self.utopia}, "
+              f"A = {self.asp}, R = {self.res}, N = {self.nadir}.")

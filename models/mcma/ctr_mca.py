@@ -20,6 +20,7 @@ class CtrMca:
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
+        self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -144,7 +145,7 @@ class CtrMca:
             self.cur_stage = 5
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
-        print('PayOff table available. Ready to handle preferences.')
+        print('PayOff table and neutral solution available. Ready to handle user preferences.')
         return self.cur_stage
 
     def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app).
@@ -165,12 +166,17 @@ class CtrMca:
                     crit.is_active = False
             return
         elif self.cur_stage == 3:     # set one crit active in first appr. of Nadir
-            print(f'---\nMcma::set_pref(): TESTING for stage: {self.cur_stage}.')
+            print(f'---\nMcma::set_pref(): stage: {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
                 if self.cur_cr == i:
                     crit.is_active = True
                 else:
                     crit.is_active = False
+            return
+        elif self.cur_stage == 4:     # set A and R for neutral solution
+            print(f'---\nMcma::set_pref(): for neutral solution, stage: {self.cur_stage}.')
+            for crit in self.cr:
+                crit.setAR()
             return
 
         sys.stdout.flush()  # needed for printing exception at the output end
@@ -195,7 +201,7 @@ class CtrMca:
                 else:
                     crit.updNadir(self.cur_stage, val)  # update nadir value
         elif self.cur_stage == 3:   # update nadir values
-            print(f'---\nMcma::store_sol(): TESTING for stage {self.cur_stage}.')
+            print(f'---\nMcma::store_sol() in stage {self.cur_stage}.')
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val

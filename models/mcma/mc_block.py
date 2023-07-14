@@ -76,36 +76,72 @@ class McMod:
 
         # generate and store params [a, b] of all segments of PWL function y = ax + b, for each criterion
         pwls = []
+        segs = []
         for (i, crit) in enumerate(self.mc.cr):
             pwl = PWL(self.mc, i)   # PWL of i-th criterion
             ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
             pwls.append(ab)
-            # n_seg = len(ab)
-        #     print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
-        #           f'y = ax + b: {ab = }.')
-        # print(f'\nParams of segments defining each PWL:')
-        # for (i, ab) in enumerate(pwls):
-        #     print(f'{i = }: {ab = }')
+            n_seg = len(ab)
+            segs.append(n_seg)
+            print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
+                  f'y = ax + b: {ab = }.')
+        print(f'\nParams of s-th segment defining PWL for i-th CAF:')
+        for (i, pwl) in enumerate(pwls):
+            for (s, ab) in enumerate(pwl):
+                print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
 
-        print(f'\nGenerating constraints defining each of the CAF[i].')
+        # m.S = pe.Set(initialize=segs)   # NOT suitable: 1-dim set stores only unique numbers of segments of each PWL
+        # s_pairs = [(0, 1), (1, 1)]  # works for predefined list of pairs: (i, nseq)
+        print(f'\nGenerating pairs defining two-dimensiol set m.S')
+        s_pairs = []    # list of pairs: (i, ns), i = index of CAF/PWL, ns = number of segments of the PWL
+        for (i, pwl) in enumerate(pwls):
+            for (ns, ab) in enumerate(pwl):
+                pair = (i, ns)
+                print(f'{pair = }')
+                s_pairs.append(pair)
+        m.S = pe.Set(dimen=2, initialize=s_pairs)   # m.S initialized by list of pairs of indices
 
-        # generate constraints for each CAF
-        @m.Constraint(m.C)
-        # todo: the current version processes only the first (middle) segment; other segments, if any, are ignored
-        def cafD(mx, ii):
-            # i_caf = mx.caf[i]    # CAF of the current criterion
-            # i_x = mx.x[i]    # x of the current criterion
-            abx = pwls[ii][0]   # [a, b] of 0-th segment of i-th PWL
-            # print(f'{ii}-th criterion:')
-            # print(f'PWL of {ii}-th criterion has {len(pwls[ii])} segments: {pwls[ii] = }')
-            # print(f'mid-segment: {abx = }')
-            print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-            # print('here')
-            return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+        print(f'\nGenerating constraints defining each of the CAF[i] and segments of its PWL.')
 
-        # print('\nMC_block:')
-        # m.pprint()
-        # print(f'here2')
+        # todo: the version below is an early prototype, it appears to work but requires testing and cleaning
+        # generate constraints for each CAF and all segments of its PWL
+        m.cafD = pe.ConstraintList()
+        for (ix, sx) in m.S:
+            print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
+            pwlx = pwls[ix]     # list of PWL segments of ix-th CAF
+            abx = pwlx[sx]      # params of line defining the current segment:  y = abx[0] * x + abx[1]
+            print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+            m.cafD.add(m.caf[ix] - abx[0] * m.x[ix] <= abx[1])  # caf[i] <= a * x[i] + b
+
+        # @m.Constraint(m.S)
+        # # todo: the current version processes only the last segment; earlier segments, if any, are ignored
+        # def cafD(mx, ii, ss):
+        #     # i_caf = mx.caf[i]    # CAF of the current criterion
+        #     # i_x = mx.x[i]    # x of the current criterion
+        #     nsx = ss - 1  # ss contains number of segments, their indices are equal to ss - 1
+        #     print(f'{ii}-th criterion, {ns}-th segment:')
+        #     print(f'PWL of {ii}-th criterion has {len(pwls[ii])} segments: {pwls[ii] = }')
+        #     pwlx = pwls[ii]
+        #     abx = pwlx[nsx]
+        #     print(f'({ii = }, {ns = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+        #     return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+
+        # the below loop breaks after the 1st segment
+        # for (ss, seg) in enumerate(pwls):
+        #     abx = seg[ss]  # [a, b] of 0-th segment of i-th PWL
+        #     print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+        #     return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+        # the below handles only the 1st segment
+        # abx = pwls[ii][0]   # [a, b] of 0-th segment of i-th PWL
+        # print(f'mid-segment: {abx = }')
+        # print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+        # print('here')
+        # return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+
+        if self.mc.cur_stage == 4:   # neutral solution, PWLs with possibly more than one segment
+            print('\n---  MC_block:')
+            m.pprint()
+            print(f'---  end of specs of the MC_blok.\n')
 
         @m.Constraint(m.A)
         def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
@@ -115,8 +151,7 @@ class McMod:
         def cafRegD(mx):    # regularizing term (without the scaling coef.)
             return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
 
-        #  Todo: harmonize eps with value of CAF(utopia); currently CAF(utopia) = 100., move eps to CtrMca attributes
-        epsilon = 0.01     # scaling coef of regularizing term
+        epsilon = 0.01 * self.mc.cafAsp     # scaling coef of regularizing term as fraction of caf(asp)
 
         @m.Constraint()
         def afDef(mx):
