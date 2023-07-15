@@ -101,10 +101,21 @@ class McMod:
                 s_pairs.append(pair)
         m.S = pe.Set(dimen=2, initialize=s_pairs)   # m.S initialized by list of pairs of indices
 
-        print(f'\nGenerating constraints defining each of the CAF[i] and segments of its PWL.')
+        print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
 
-        # todo: the version below is an early prototype, it appears to work but requires testing and cleaning
-        # generate constraints for each CAF and all segments of its PWL
+        @m.Constraint(m.S)
+        # todo: the below version generates constraints for all segments in all PWLs
+        #   more testing is desired
+        def cafD(mx, ix, sx):   # is called for each (ix, sx) in m.S; indexes each constraint by (ix, sx)
+            print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
+            pwlx = pwls[ix]     # pwlx: ix-item from the pwls list of all PWLs
+            abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
+            print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+            cons_item = mx.caf[ix] <= abx[0] * mx.x[ix] + abx[1]
+            return cons_item
+
+        # the version below also works; it assigns consecutive numbers as the constraint index
+        '''
         m.cafD = pe.ConstraintList()
         for (ix, sx) in m.S:
             print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
@@ -112,31 +123,7 @@ class McMod:
             abx = pwlx[sx]      # params of line defining the current segment:  y = abx[0] * x + abx[1]
             print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
             m.cafD.add(m.caf[ix] - abx[0] * m.x[ix] <= abx[1])  # caf[i] <= a * x[i] + b
-
-        # @m.Constraint(m.S)
-        # # todo: the current version processes only the last segment; earlier segments, if any, are ignored
-        # def cafD(mx, ii, ss):
-        #     # i_caf = mx.caf[i]    # CAF of the current criterion
-        #     # i_x = mx.x[i]    # x of the current criterion
-        #     nsx = ss - 1  # ss contains number of segments, their indices are equal to ss - 1
-        #     print(f'{ii}-th criterion, {ns}-th segment:')
-        #     print(f'PWL of {ii}-th criterion has {len(pwls[ii])} segments: {pwls[ii] = }')
-        #     pwlx = pwls[ii]
-        #     abx = pwlx[nsx]
-        #     print(f'({ii = }, {ns = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-        #     return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
-
-        # the below loop breaks after the 1st segment
-        # for (ss, seg) in enumerate(pwls):
-        #     abx = seg[ss]  # [a, b] of 0-th segment of i-th PWL
-        #     print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-        #     return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
-        # the below handles only the 1st segment
-        # abx = pwls[ii][0]   # [a, b] of 0-th segment of i-th PWL
-        # print(f'mid-segment: {abx = }')
-        # print(f'a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-        # print('here')
-        # return mx.caf[ii] - abx[0] * mx.x[ii] <= abx[1]
+        '''
 
         if self.mc.cur_stage == 4:   # neutral solution, PWLs with possibly more than one segment
             print('\n---  MC_block:')

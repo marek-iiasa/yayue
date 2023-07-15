@@ -142,10 +142,14 @@ class CtrMca:
                 self.cur_cr = None     # should no longer be used
             return self.cur_stage
         elif self.cur_stage == 4:  # comes here after comptuting neutral solution
+            print('Finished computation of neutral Pareto solution.')
+            print('Aproximation of PayOff table ready. First preferences set automatically.')
             self.cur_stage = 5
+            self.cur_cr = None  # should no longer be used
+        else:
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
-        print('PayOff table and neutral solution available. Ready to handle user preferences.')
+        # print('PayOff table and neutral solution available. Ready to handle user preferences.')
         return self.cur_stage
 
     def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app).
@@ -183,6 +187,7 @@ class CtrMca:
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
 
     def store_sol(self, crit_val):  # crit_val: dict of values of all criteria
+        assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
         print(f'Processing criteria values of the current iteration: {crit_val}')
         if self.cur_stage == 1:     # utopia computed for the only one active criterion
             for crit in self.cr:
@@ -191,6 +196,19 @@ class CtrMca:
                 if crit.is_active:
                     crit.setUtopia(val)  # utopia computed
                 crit.updNadir(self.cur_stage, val)
+        elif 1 < self.cur_stage < 5:  # update nadir values
+            print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
+            for crit in self.cr:
+                val = crit_val.get(crit.name)
+                crit.val = val
+                if crit.is_active:  # nothing to store/update
+                    print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
+                else:
+                    crit.updNadir(self.cur_stage, val)  # update nadir value (processing depends on stage)
+        else:
+            sys.stdout.flush()  # needed for printing exception at the output end
+            raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
+        '''
         elif self.cur_stage == 2:  # update nadir values
             # print(f'---\nMcma::store_sol(): TESTING for stage {self.cur_stage}.')
             for crit in self.cr:
@@ -209,9 +227,7 @@ class CtrMca:
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
                 else:
                     crit.updNadir(self.cur_stage, val)   # update nadir value
-        else:
-            sys.stdout.flush()  # needed for printing exception at the output end
-            raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
+        '''
 
     def diffOK(self, i, val1, val2):  # return True if the difference of two values of i-th is large enough
         maxVal = max(abs(self.cr[i].utopia), (abs(self.cr[i].nadir)))  # value used as basis for min-differences
