@@ -137,22 +137,28 @@ class CtrMca:
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
             else:   # move to the 2nd stage of nadir appr.
                 print('Finished 2nd nadir approximations.')
-                print('Aproximation of PayOff table ready. First preferences set automatically.')
+                print('Aproximation of PayOff table ready. Preferences for neutral solution set automatically.')
                 self.cur_stage = 4
                 self.cur_cr = None     # should no longer be used
             return self.cur_stage
         elif self.cur_stage == 4:  # comes here after comptuting neutral solution
             print('Finished computation of neutral Pareto solution.')
-            print('Aproximation of PayOff table ready. First preferences set automatically.')
+            print('Switch to get and process user-preferences.')
             self.cur_stage = 5
             self.cur_cr = None  # should no longer be used
+            return self.cur_stage   # return to set pref for gor neutral solution and compute it
+        elif self.cur_stage == 5:  # comes here after comptuting neutral solution
+            print('Continue to get and handle user preferences.')
+            # self.usrPref()   #  get user preferences; called from driver, (should set stage to 6 for finish)
+            return self.cur_stage
         else:
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
-        # print('PayOff table and neutral solution available. Ready to handle user preferences.')
-        return self.cur_stage
+        # return self.cur_stage
 
-    def set_pref(self):     # set crit attributes (activity, A/R, possibly adjust nadir app).
+    def set_pref(self):
+        # set automatically (acording to programmed rules for each stage) crit attributes:
+        # (activity, A/R, possibly adjust nadir app).
         assert self.cur_stage > 0, f'CtrMca::set_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.cur_stage == 1:  # set only currently computed utopia criterion to be active
             for (i, crit) in enumerate(self.cr):
@@ -182,9 +188,16 @@ class CtrMca:
             for crit in self.cr:
                 crit.setAR()
             return
+        elif self.cur_stage == 5:     # get user-preferences
+            self.usrPref()    # driver() calls this function to access usrPref()
+            return
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
+
+    def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
+        raise Exception(f'Mcma::usrPref() not implemented yet for stage: {self.cur_stage}.')
+        # return
 
     def store_sol(self, crit_val):  # crit_val: dict of values of all criteria
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
@@ -196,7 +209,7 @@ class CtrMca:
                 if crit.is_active:
                     crit.setUtopia(val)  # utopia computed
                 crit.updNadir(self.cur_stage, val)
-        elif 1 < self.cur_stage < 5:  # update nadir values
+        elif 1 < self.cur_stage < 6:  # update nadir values
             print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
             for crit in self.cr:
                 val = crit_val.get(crit.name)

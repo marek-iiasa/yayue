@@ -72,6 +72,8 @@ def driver(m1, ana_dir):
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
 
         mc.set_pref()   # set preferences (crit activity, optionally A/R values)
+        if mc.cur_stage == 6:
+            raise Exception(f'driver(): end of analysisl clearing not yet implemented.')
         # model instance of the MC-part
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)
@@ -104,7 +106,7 @@ def driver(m1, ana_dir):
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 8
+        max_itr = 9
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
             break
