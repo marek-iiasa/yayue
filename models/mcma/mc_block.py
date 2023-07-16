@@ -47,8 +47,9 @@ class McMod:
             def goal(mx):   # define objective
                 return mx.af
             m.goal.activate()  # only mc_block objective active, m1_block obj. deactivated in driver()
-            print(f'\nmc_itr(): "{m.name}" for computing utopia of criterion "{self.cr_names[id_cr]}" '
-                  f'defined by core_model variable "{var_name}" generated.')
+            if self.mc.verb > 2:
+                print(f'\nmc_itr(): "{m.name}" for computing utopia of criterion "{self.cr_names[id_cr]}" '
+                      f'defined by core_model variable "{var_name}" generated.')
             # m.pprint()
             return m
 
@@ -83,34 +84,37 @@ class McMod:
             pwls.append(ab)
             n_seg = len(ab)
             segs.append(n_seg)
-            print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
-                  f'y = ax + b: {ab = }.')
-        print(f'\nParams of s-th segment defining PWL for i-th CAF:')
-        for (i, pwl) in enumerate(pwls):
-            for (s, ab) in enumerate(pwl):
-                print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
+            # print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
+            #       f'y = ax + b: {ab = }.')
+        if self.mc.verb > 2:
+            print(f'\nParams of s-th segment defining PWL for i-th CAF:')
+            for (i, pwl) in enumerate(pwls):
+                for (s, ab) in enumerate(pwl):
+                    print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
 
         # m.S = pe.Set(initialize=segs)   # NOT suitable: 1-dim set stores only unique numbers of segments of each PWL
         # s_pairs = [(0, 1), (1, 1)]  # works for predefined list of pairs: (i, nseq)
-        print(f'\nGenerating pairs defining two-dimensiol set m.S')
+        if self.mc.verb > 2:
+            print(f'\nGenerating pairs defining two-dimensiol set m.S')
         s_pairs = []    # list of pairs: (i, ns), i = index of CAF/PWL, ns = number of segments of the PWL
         for (i, pwl) in enumerate(pwls):
             for (ns, ab) in enumerate(pwl):
                 pair = (i, ns)
-                print(f'{pair = }')
                 s_pairs.append(pair)
+                if self.mc.verb > 2:
+                    print(f'{pair = }')
         m.S = pe.Set(dimen=2, initialize=s_pairs)   # m.S initialized by list of pairs of indices
 
-        print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
-
+        # print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
         @m.Constraint(m.S)
         # todo: the below version generates constraints for all segments in all PWLs
         #   more testing is desired
         def cafD(mx, ix, sx):   # is called for each (ix, sx) in m.S; indexes each constraint by (ix, sx)
-            print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
             pwlx = pwls[ix]     # pwlx: ix-item from the pwls list of all PWLs
             abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
-            print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+            if self.mc.verb > 2:
+                print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
+                print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
             cons_item = mx.caf[ix] <= abx[0] * mx.x[ix] + abx[1]
             return cons_item
 
@@ -125,10 +129,10 @@ class McMod:
             m.cafD.add(m.caf[ix] - abx[0] * m.x[ix] <= abx[1])  # caf[i] <= a * x[i] + b
         '''
 
-        if self.mc.cur_stage == 4:   # neutral solution, PWLs with possibly more than one segment
-            print('\n---  MC_block:')
-            m.pprint()
-            print(f'---  end of specs of the MC_blok.\n')
+        # if self.mc.cur_stage == 4:   # neutral solution, PWLs with possibly more than one segment
+        #     print('\n---  MC_block:')
+        #     m.pprint()
+        #     print(f'---  end of specs of the MC_blok.\n')
 
         @m.Constraint(m.A)
         def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
@@ -148,8 +152,9 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        # print('\nMC_block (returned to driver):')
-        # m.pprint()
+        if self.mc.verb > 2:
+            print('\nMC_block (returned to driver):')
+            m.pprint()
 
         return m
 
@@ -175,7 +180,8 @@ class McMod:
             val = m1_var.value
             cr_name = self.cr_names[i]
             cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
-            print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
+            if self.mc.verb > 2:
+                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
 
         # store through updating criteria attributes
         # todo: consider to add to an iter-log criteria values from each iter
@@ -189,5 +195,6 @@ class McMod:
             val = m1_var.value
             sol_val.update({var_name: val})
             # print(f'Value of the report variable {var_name} = {val}')
-        print(f'values of selected variables: {sol_val}')
+        if len(sol_val) and self.mc.verb > 2:
+            print(f'values of selected variables: {sol_val}')
         return sol_val

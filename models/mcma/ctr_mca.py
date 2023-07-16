@@ -11,6 +11,8 @@ class CtrMca:
     def __init__(self, ana_dir):
         self.ana_dir = ana_dir  # wrk dir for the current analysis
         self.f_payoff = ana_dir + '/payoff.txt'     # file with payoff values
+        self.f_pref = ana_dir + '/pref.txt'     # file with set of preferences
+        self.f_crit = ana_dir + '/config.txt'   # file with criteria specification
         self.pay_upd = False  # set to true, if current payOff differs from the store one
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
@@ -21,6 +23,11 @@ class CtrMca:
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
+        # diverse
+        self.verb = 2   # printout verbosity: 0 - only basic flow, 1 - key infos, 2 - intermediate, 3 - detailed
+        self.pref = [[]]    # list of lists of preferences, each inner list item composed of pref. for one itr
+        self.n_pref = 0     # number of read-in preferences
+        self.cur_pref = 0   # index of currently processed preference
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -87,19 +94,20 @@ class CtrMca:
     def prn_payoff(self):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
-        print(f'\nCurrent values of the payoff table written to file "{self.f_payoff}":')
-        f_payOff = open(self.f_payoff, "w")
-        for crit in self.cr:
-            line = f'{crit.name} {crit.utopia} {crit.nadir}'
-            print(line)
-            f_payOff.write(line + '\n')
-        f_payOff.close()
+        if self.cur_stage >  4: # don't store payOff table before neutral solution is computed:
+            print(f'\nCurrent values of the payoff table written to file "{self.f_payoff}":')
+            f_payOff = open(self.f_payoff, "w")
+            for crit in self.cr:
+                line = f'{crit.name} {crit.utopia} {crit.nadir}'
+                print(line)
+                f_payOff.write(line + '\n')
+            f_payOff.close()
 
     def chk_utopia(self):    # return crit-index of criterion, whose utopia was not computed yet
         for (i, crit) in enumerate(self.cr):
             if not crit.utopia:
                 return i
-        print(f'All utopia components computed.')
+        # print(f'All utopia components computed.') # duplicate msg
         return -1
 
     def set_stage(self):
@@ -168,7 +176,8 @@ class CtrMca:
                     crit.is_active = False
             return
         elif self.cur_stage == 2:     # set one crit active in first appr. of Nadir
-            print(f'---\nMcma::set_pref(): stage {self.cur_stage}.')
+            if self.verb > 2:
+                print(f'---\nMcma::set_pref(): stage {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
                 if self.cur_cr == i:
                     crit.is_active = True
@@ -176,7 +185,8 @@ class CtrMca:
                     crit.is_active = False
             return
         elif self.cur_stage == 3:     # set one crit active in first appr. of Nadir
-            print(f'---\nMcma::set_pref(): stage: {self.cur_stage}.')
+            if self.verb > 2:
+                print(f'---\nMcma::set_pref(): stage: {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
                 if self.cur_cr == i:
                     crit.is_active = True
@@ -189,15 +199,45 @@ class CtrMca:
                 crit.setAR()
             return
         elif self.cur_stage == 5:     # get user-preferences
-            self.usrPref()    # driver() calls this function to access usrPref()
+            self.usrPref()    # driver() calls setPref() function to access usrPref()
             return
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
-        raise Exception(f'Mcma::usrPref() not implemented yet for stage: {self.cur_stage}.')
-        # return
+        # todo: make sure that all criteria are active by default
+        for crit in self.cr:
+            crit.is_active = True
+        if self.n_pref == 0:    # no preferences defined, read them
+            self.readPref()
+        if self.n_pref == 0 or self.cur_pref >= self.n_pref:
+            print(f'Out of {self.n_pref} user-specified preferences {self.cur_pref} processed.')
+            self.cur_stage = 6  # finish analysis
+            return
+        print(f'Out of {self.n_pref} user-specified preferences {self.cur_pref} processed.')
+        raise Exception(f'Mcma::usrPref(): should not come here.')
+
+    def rdCritSpc(self):    # read specification of criteria
+        print(f"\nInitializing criteria defined in file '{self.f_crit}':")
+        self.n_crit = 0
+        with open(self.f_crit) as reader:  # read and store specs of criteria
+            for n_line, line in enumerate(reader):
+                line = line.rstrip("\n")
+                # print(f'line {line}')
+                if line[0] == "*" or len(line) == 0:  # skip commented and empty lines
+                    continue
+                words = line.split()
+                n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
+                assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
+                self.addCrit(words[0], words[1], words[2])    # store the criterion specs
+
+        assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
+
+    def readPref(self):  # read preferences
+        # get A, R, optionally activity
+        n_rej = 0
+        print(f'User-specified preferences: {self.n_pref} passed validation, {n_rej} rejected.')
 
     def store_sol(self, crit_val):  # crit_val: dict of values of all criteria
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'

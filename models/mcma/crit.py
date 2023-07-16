@@ -86,6 +86,7 @@ class Crit:     # definition and attributes of a single criterion
         return False
 
     def setAR(self):   # set AR for neutral solution
+        self.is_active = True   # make sure the criterion is active
         is_max = self.mult == 1  # 1 for max-crit, -1 for min.
         delta = abs(self.utopia - self.nadir) / 3.  # equal distance between U, A, R, N
         self.asp = self.utopia - self.mult * delta

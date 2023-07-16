@@ -14,12 +14,17 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.is_nadir = self.cr.nadir is not None   # Nadir defined?
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
-        print(f"\n----\nPWL initialized: cr_name = '{self.cr_name}', is_max = {self.is_max}, "
-              f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
+        if 0 < self.mc.verb <= 2:
+            print(f"PWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
+                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
+        elif self.mc.verb > 2:
+            print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
+                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
         #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
         #   f"N = {self.cr.nadir:.2e}.")
         # at least two points are needed
+        # todo: make sure in setting prefence that the below not happen (here any violation causes exception)
         assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
         assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
         # the below relations must hold to conform to the approach assumptions (in particular, concave, increasing CAFs)
@@ -44,6 +49,7 @@ class PWL:  # representation of caf(x) for i-th criterion
 
         self.set_vert()  # define coordinates of the vertices
 
+    # todo: bug in setting preferences for neutral solution (not all criteria are active)
     def set_vert(self):  # define coordinates of the vertices
         self.vert_x.append(self.cr.utopia)
         self.vert_y.append(self.mc.cafAsp)     # the value shall be replaced/ignored, if is_asp == True
@@ -57,7 +63,9 @@ class PWL:  # representation of caf(x) for i-th criterion
         if self.is_nadir:
             self.vert_x.append(self.cr.nadir)
             self.vert_y.append(0)   # the value shall be later replaced or ignored, if is_res == True
-        print(f"PWL of crit. '{self.cr.name}' has {len(self.vert_x)} vertices: x = {self.vert_x}, y = {self.vert_y}")
+        if self.mc.verb > 2:
+            print(f"PWL of crit. '{self.cr.name}' has {len(self.vert_x)} vertices: x = {self.vert_x}, "
+                  f"y = {self.vert_y}")
 
     def segments(self):
 
@@ -75,13 +83,14 @@ class PWL:  # representation of caf(x) for i-th criterion
             y1 = self.vert_y[0]
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
-        print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2}:.2e).')
         # see: Bronsztejn p. 245
         mid_slope = (y1 - y2) / (x1 - x2)
         b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
-        # print(f'ab: {ab}.')
-        print(f'parameters of the mid-segment line y = ax +b: a = {mid_slope:.2e}, b ={b:.2e}.')
+        if self.mc.verb > 2:
+            print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2}:.2e).')
+            # print(f'ab: {ab}.')
+            print(f'parameters of the mid-segment line y = ax +b: a = {mid_slope:.2e}, b ={b:.2e}.')
 
         # assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} points not implemented yet.'
         # segments above A (if A defined) and below R (if R defined and not used for mid-segment):
@@ -92,13 +101,15 @@ class PWL:  # representation of caf(x) for i-th criterion
             up_slope = mid_slope / self.mc.slopeR    # flatter than mid_slop
             up_b = y1 - up_slope * x1  # defined as above but by A point
             ab.append([up_slope, up_b])  # up-segment is second in the list of segment specs.
-            print(f'parameters of the up-segment line y = ax +b: a = {up_slope:.2e}, b ={up_b:.2e}.')
+            if self.mc.verb > 2:
+                print(f'parameters of the up-segment line y = ax +b: a = {up_slope:.2e}, b ={up_b:.2e}.')
 
         if self.is_res:  # generate segment below Res
             lo_slope = mid_slope * self.mc.slopeR    # steeper than mid_slop
             lo_b = y2 - lo_slope * x2  # defined as above but by R point
             ab.append([lo_slope, lo_b])  # up-segment is second in the list of segment specs.
-            print(f'parameters of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b ={lo_b:.2e}.')
+            if self.mc.verb > 2:
+                print(f'parameters of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b ={lo_b:.2e}.')
 
         return ab
 

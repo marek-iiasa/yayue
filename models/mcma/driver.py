@@ -30,28 +30,15 @@ def chk_sol(res):  # check status of the solution
 def driver(m1, ana_dir):
     print(f'\nAnalysing instance of model {m1.name}.')
 
-    mc = CtrMca(ana_dir)
-    fname = ana_dir + '/config.txt'     # criteria definition file
-    print(f"\nInitializing criteria defined in file '{fname}':")
-    n_cr_def = 0
-    with open(fname) as reader:  # read and store specs of criteria
-        for n_line, line in enumerate(reader):
-            line = line.rstrip("\n")
-            # print(f'line {line}')
-            if line[0] == "*" or len(line) == 0:  # skip commented and empty lines
-                continue
-            words = line.split()
-            n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
-            assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
-            mc.addCrit(words[0], words[1], words[2])    # store the criterion specs
-            n_cr_def += 1
-
-    assert (n_cr_def > 1), f'at least two criteria need to be defined, only {n_cr_def} was defined.'
+    # todo: define mc.verb level and gradually implementing controlling printouts according to mc.verb
+    #   (instead of currenly used statement commonting/uncommenting)
+    mc = CtrMca(ana_dir)    # CtrMca ctor
+    mc.rdCritSpc()      # read criteria definition from the corresponding file
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
     # todo: modify prn_payoff() to store in the file only if changed (modify prn_payoff)
-    mc.prn_payoff()
+    # mc.prn_payoff()   # no need to store the table just read
 
     # todo: open .../log.txt either for 'w' or 'a'
     # todo: get itr-id from length of log.txt
@@ -66,14 +53,14 @@ def driver(m1, ana_dir):
     while i_stage < 6:   # MCA iterations (common loop for all analysis stages)
         print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
         i_stage = mc.set_stage()  # define/check current analysis stage
-        print(f'Analysis stage: {i_stage}.')
+        # print(f'Analysis stage: {i_stage}.')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
 
         mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:
-            raise Exception(f'driver(): end of analysisl clearing not yet implemented.')
+            raise Exception(f'driver(): end of analysis clearing not yet implemented.')
         # model instance of the MC-part
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)
@@ -81,8 +68,9 @@ def driver(m1, ana_dir):
         # print('mc-part generated.\n')
         # mc_part.pprint()
         m.add_component('mc_part', mc_part)  # add_component() used instead of simple assignment
-        print('core-model and mc-part blocks added to the model instance; ready for optimization.')
-        # m.pprint()
+        if mc.verb > 2:
+            print('core-model and mc-part blocks added to the model instance; ready for optimization.')
+            m.pprint()
 
         # solve the model instance composed of two blocks
         print('\nsolving --------------------------------')
