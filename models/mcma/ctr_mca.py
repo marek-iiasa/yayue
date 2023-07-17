@@ -10,9 +10,9 @@ from crit import Crit
 class CtrMca:
     def __init__(self, ana_dir):
         self.ana_dir = ana_dir  # wrk dir for the current analysis
-        self.f_payoff = ana_dir + '/payoff.txt'     # file with payoff values
-        self.f_pref = ana_dir + '/pref.txt'     # file with set of preferences
         self.f_crit = ana_dir + '/config.txt'   # file with criteria specification
+        self.f_payoff = ana_dir + '/payoff.txt'     # file with payoff values
+        self.f_pref = ana_dir + '/pref.txt'     # file with defined preferences' set
         self.pay_upd = False  # set to true, if current payOff differs from the store one
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
@@ -41,15 +41,21 @@ class CtrMca:
         :type typ:  str
         :return:  None
         """
-        # todo: add checking cr_name duplication
-        self.cr.append(Crit(cr_name, var_name, typ))
-        self.n_crit = len(self.cr)
+        # todo: verify the check of cr_name duplication
+        if self.cr_ind(cr_name, False) == -1:  # add, if the cr_name is not already used
+            self.cr.append(Crit(cr_name, var_name, typ))
+            self.n_crit = len(self.cr)
+        else:
+            raise Exception(f'addCrit(): duplicated criterion name: "{cr_name}".')
 
-    def cr_ind(self, cr_name):  # return index (in self.cr) of criterion having name cr_name
+    def cr_ind(self, cr_name, fatal=True):  # return index (in self.cr) of criterion having name cr_name
         for (i, crit) in enumerate(self.cr):
             if crit.name == cr_name:
                 return i
-        raise Exception(f'cr_ind(): unknown criterion name: "{cr_name}".')
+        if fatal:   # raise exception
+            raise Exception(f'cr_ind(): unknown criterion name: "{cr_name}".')
+        else:   # only inform
+            return -1
 
     # todo: check, if set_payOff is really needed.
     #   Used only in rd_payoff (below)?
@@ -94,7 +100,7 @@ class CtrMca:
     def prn_payoff(self):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
-        if self.cur_stage >  4: # don't store payOff table before neutral solution is computed:
+        if self.cur_stage > 4:  # don't store payOff table before neutral solution is computed:
             print(f'\nCurrent values of the payoff table written to file "{self.f_payoff}":')
             f_payOff = open(self.f_payoff, "w")
             for crit in self.cr:
@@ -231,13 +237,77 @@ class CtrMca:
                 n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
                 assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
                 self.addCrit(words[0], words[1], words[2])    # store the criterion specs
-
         assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
 
-    def readPref(self):  # read preferences
-        # get A, R, optionally activity
+    def readPref(self):  # read preferences provided in file self.f_pref
+        # each line defines: cr_name, A, R, optionally activity for a criterion
+        # sets of preferences for all criteria should be separated by line having only #-char in first column
+        # preferences for criteria not specified in a set are reset to: A=utopia, R=nadir, criterion not-active
+
+        print(f"\nReading user-preferences defined in file '{self.f_pref}':")
+        self.n_pref = 0  # number of specified sets of preferences
         n_rej = 0
-        print(f'User-specified preferences: {self.n_pref} passed validation, {n_rej} rejected.')
+        lines = []
+        with open(self.f_pref) as reader:  # read and store specs of criteria
+            for n_line, line in enumerate(reader):
+                line = line.rstrip("\n")
+                print(f'line {n_line}: "{line}"')
+                if len(line) == 0 or line[0] == '*':    # skip empty or commented lines
+                    continue
+                if line[0] == "#" or len(line) == 1:  # separator of set of preferences
+                    print(f'marker found in line {n_line}')
+                else:
+                    words = line.split()
+                    n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
+                    assert(3 <= n_words <= 4), f'line {line} has {n_words}; required are either three or four.'
+                    for i in [1, 2]:
+                        assert type(float(words[i])) == float and words[i] is not None, \
+                            f'line "{line}": "{words[i]}" should be a float number.'
+                lines.append(line)
+        line = '#'
+        lines.append(line)  # make sure that the last line marks end of a set
+
+        print(f'Process {len(lines)} lines read.')
+        n_sets = 0
+        cur_set = []
+        for line in lines:
+            print(f'processing line. {line}')
+            if line[0] == '#':  # process the cur_set
+                to_proc = []    # lines of cur_set with preferences only, i.e., without comments & markers
+                for s_line in cur_set:
+                    if s_line[0] != '#':  # skip lines with set-end markers
+                        to_proc.append(s_line)
+                cur_set = []    # empty for starting a new set
+                if len(to_proc) > 0:
+                    print(f'Processing set {n_sets} of preferences composed of {len(to_proc)} lines.')
+                    self.procPrefSet(to_proc)
+                    n_sets += 1
+                else:
+                    print(f'Ignoring empty set {n_sets} of preferences.')
+                    n_rej += 1
+            else:
+                cur_set.append(line)    # add line to cur_set
+        print(f'User-specified preferences: {self.n_pref} sets passed validation, {n_rej} sets ignored.')
+
+    def procPrefSet(self, lines):  # process set of lines defining preferences
+        pref_set = []
+        for line in lines:
+            words = line.split()
+            c_ind = self.cr_ind(words[0], False)
+            if c_ind < 0:
+                print(f'unknown criterion name "{words[0]}", ignoring line {line}.')
+                continue
+            is_ok = self.cr[c_ind].chkAR(words[1], words[2])  # check correctness of A and R values
+            if is_ok:
+                pref_set.append(line)
+            else:
+                print(f'ignoring inconsistened preferences: {line}.')
+        if len(pref_set) > 0:
+            self.pref.append(pref_set)
+            return True
+        else:
+            print(f'ignoring empty set of preferences.')
+            return False
 
     def store_sol(self, crit_val):  # crit_val: dict of values of all criteria
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'

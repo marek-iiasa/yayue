@@ -85,6 +85,9 @@ class Crit:     # definition and attributes of a single criterion
                 return True
         return False
 
+    def chkAR(self, asp, res):   # check correctnes of A and R values
+        raise Exception(f'chkAR({asp}, {res}): not implemented yet.')
+
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
         is_max = self.mult == 1  # 1 for max-crit, -1 for min.
