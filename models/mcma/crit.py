@@ -3,6 +3,14 @@
 # import numpy as np
 
 
+class CrPref:     # attributes of item of preference specs
+    def __init__(self, parent, asp, res, act=True):
+        self.parent = parent  # seq_no (in mc container) of parent crit
+        self.asp = asp     # aspiration value (not scaled)
+        self.res = res     # reservation value (not scaled)
+        self.is_active = act    # activity
+
+
 class Crit:     # definition and attributes of a single criterion
     # see: ~/src/mcma/mc_defs.h for the corresponding C++ classes
     """Attributes of particular criterion."""
@@ -85,8 +93,24 @@ class Crit:     # definition and attributes of a single criterion
                 return True
         return False
 
-    def chkAR(self, asp, res):   # check correctnes of A and R values
-        raise Exception(f'chkAR({asp}, {res}): not implemented yet.')
+    def chkAR(self, pref_item, n_line):   # check correctnes of A and R values
+        asp = pref_item.asp
+        res = pref_item.res
+        print(f'chkAR(): crit "{self.name}", {asp = }, {res = }')
+        is_ok = True
+        if self.isBetter(asp, self.utopia):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified A {asp} is better thnn U {self.utopia}')
+            is_ok = False
+        if self.isBetter(res, asp):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified A {asp} is worse than R {res}')
+            is_ok = False
+        if self.isBetter(res, self.nadir):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified R {res} is worse than N {self.nadir}.')
+            is_ok = False
+        if is_ok:
+            return
+        raise Exception(f'chkAR(): preferences A = {asp}, R = {res}) specified in line {n_line} for '
+                        f'criterion "{self.name}" are inconsistent.')
 
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
