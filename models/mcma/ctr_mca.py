@@ -217,12 +217,22 @@ class CtrMca:
             crit.is_active = True
         if self.n_pref == 0:    # no preferences defined, read them
             self.readPref()
-        if self.n_pref == 0 or self.cur_pref >= self.n_pref:
-            print(f'Out of {self.n_pref} user-specified preferences {self.cur_pref} processed.')
-            self.cur_stage = 6  # finish analysis
-            return
+        # print(f'{self.n_pref = }, {self.n_pref == 0}, {self.cur_pref = }, {self.cur_pref >= self.n_pref}')
         print(f'Out of {self.n_pref} user-specified preferences {self.cur_pref} processed.')
-        raise Exception(f'Mcma::usrPref(): should not come here.')
+        if self.n_pref == 0 or self.cur_pref >= self.n_pref:    # no more user-pref. to handle
+            self.cur_stage = 6  # finish analysis
+        else:   # use next unprocessed user preference set
+            # print(f'Applying {self.cur_pref}-th set of user preferences.')
+            items = self.pref[self.cur_pref]
+            self.cur_pref += 1
+            for item in items:
+                c_ind = item.parent
+                crit = self.cr[c_ind]
+                crit.asp = item.asp
+                crit.res = item.res
+                crit.is_active = item.is_active
+                print(f'Attributes of crit "{crit.name}": A {crit.asp}, R {crit.res}, active {crit.is_active}.')
+        return
 
     def rdCritSpc(self):    # read specification of criteria
         print(f"\nInitializing criteria defined in file '{self.f_crit}':")
@@ -246,7 +256,6 @@ class CtrMca:
 
         print(f"\nReading user-preferences defined in file '{self.f_pref}':")
         self.n_pref = 0  # number of specified sets of preferences
-        n_rej = 0
         lines = []
         with open(self.f_pref) as reader:  # read all lines and store for processing next
             for n_line, line in enumerate(reader):
@@ -296,7 +305,8 @@ class CtrMca:
                         print(f'ignoring empty block ending at line {n_line}')
                 cur_set = []    # empty for starting a new set
 
-        print(f'Prepared {len(self.pref)} sets of user-defined preferences.')
+        self.n_pref = len(self.pref)
+        print(f'Prepared {self.n_pref} sets of user-defined preferences.')
 
     def procPrefSet(self, lines):  # process set of lines defining preferences
         pref_set = []

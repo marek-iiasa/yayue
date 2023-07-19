@@ -60,7 +60,8 @@ def driver(m1, ana_dir):
 
         mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:
-            raise Exception(f'driver(): end of analysis clearing not yet implemented.')
+            print(f'\nFinished the analysis for all specified preferences.')
+            break
         # model instance of the MC-part
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)
@@ -94,21 +95,25 @@ def driver(m1, ana_dir):
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 9
+        max_itr = 20
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
             break
+    # iterations end here
+    # todo: clearing-house (logs, report, etc) waits for implementation
+    raise Exception(f'driver(): clearing-house not yet implemented.')
 
-    # noinspection SpellCheckingInspection
-    # model = mc_mod(abst)  # model instanceo
+# below are diverse, potentially useful, notes
+# noinspection SpellCheckingInspection
+# model = mc_mod(abst)  # model instanceo
 
-    # model.write('test.lp')
-    # model.write('test.mps')
-    # model.write('test.gms')
-    # model.write('test2.lp', symbolic_solver_labels=True)  # illegal param: symbolic...
+# model.write('test.lp')
+# model.write('test.mps')
+# model.write('test.gms')
+# model.write('test2.lp', symbolic_solver_labels=True)  # illegal param: symbolic...
 
-    # print('\nmodel display: -----------------------------------------------------------------------------')
-    # model.display()     # displays only instance (not abstract model)
-    # print('end of model display: ------------------------------------------------------------------------\n')
+# print('\nmodel display: -----------------------------------------------------------------------------')
+# model.display()     # displays only instance (not abstract model)
+# print('end of model display: ------------------------------------------------------------------------\n')
 
-    # opt = SolverFactory('gams')  # gams can be used as a solver
+# opt = SolverFactory('gams')  # gams can be used as a solver
