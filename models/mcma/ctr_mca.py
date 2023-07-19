@@ -268,7 +268,6 @@ class CtrMca:
         lines.append(line)  # make sure that the last line marks end of a set
 
         print(f'Process {len(lines)} lines with user preferences.')
-        n_sets = 0
         cur_set = []    # current set of preferences (specified in blocks of lines separated by #)
         for n_line, line in enumerate(lines):
             print(f'processing {n_line}-th line: {line}')
@@ -279,32 +278,25 @@ class CtrMca:
                     raise Exception(f'unknown crit. name "{words[0]}" in {n_line}: "{line}".')
                 pref_item = CrPref(c_ind, float(words[1]), float(words[2]), len(words) == 3)
                 self.cr[c_ind].chkAR(pref_item, n_line)  # check correctness of A and R values
+                # todo: check, if already defined in the current set
+                for item in cur_set:    # check, if crit. preferences are already defined in the current set
+                    if c_ind == item.parent:
+                        raise Exception(f'duplicated (in the current set, line {n_line}) preferences for '
+                                        f'criterion "{self.cr[c_ind].name}".')
                 cur_set.append(pref_item)   # add to the current set
             else:
                 n_items = len(cur_set)
                 if n_items == self.n_crit:
                     self.pref.append(cur_set)
                 else:
-                    raise Exception(f'{n_items} preferences in the block ending at line {n_line} for {self.n_crit} '
-                                    f'defined criteria.')
+                    if n_items > 0:
+                        raise Exception(f'{n_items} preference(s) in the block ending at line {n_line} for  '
+                                        f'{self.n_crit} defined criteria.')
+                    else:
+                        print(f'ignoring empty block ending at line {n_line}')
                 cur_set = []    # empty for starting a new set
 
-            # if line[0] == '#':  # process the cur_set
-            #     to_proc = []    # lines of cur_set with preferences only, i.e., without comments & markers
-            #     for s_line in cur_set:
-            #         if s_line[0] != '#':  # skip lines with set-end markers
-            #             to_proc.append(s_line)
-            #     cur_set = []    # empty for starting a new set
-            #     if len(to_proc) > 0:
-            #         print(f'Processing set {n_sets} of preferences composed of {len(to_proc)} lines.')
-            #         self.procPrefSet(to_proc)
-            #         n_sets += 1
-            #     else:
-            #         print(f'Ignoring empty set {n_sets} of preferences.')
-            #         n_rej += 1
-            # else:
-            #     cur_set.append(line)    # add line to cur_set
-        print(f'User-specified preferences: {self.n_pref} sets passed validation, {n_rej} sets ignored.')
+        print(f'Prepared {len(self.pref)} sets of user-defined preferences.')
 
     def procPrefSet(self, lines):  # process set of lines defining preferences
         pref_set = []

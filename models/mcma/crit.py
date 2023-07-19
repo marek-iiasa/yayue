@@ -96,21 +96,21 @@ class Crit:     # definition and attributes of a single criterion
     def chkAR(self, pref_item, n_line):   # check correctnes of A and R values
         asp = pref_item.asp
         res = pref_item.res
-        print(f'chkAR(): crit "{self.name}", {asp = }, {res = }')
+        print(f'chkAR(): crit "{self.name}" ({self.attr}), U {self.utopia}, {asp = }, {res = }, N {self.nadir}')
         is_ok = True
-        if self.isBetter(asp, self.utopia):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified A {asp} is better thnn U {self.utopia}')
+        if not self.isBetter(self.utopia, asp):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified A {asp} is better than U {self.utopia}')
             is_ok = False
-        if self.isBetter(res, asp):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified A {asp} is worse than R {res}')
+        if not self.isBetter(asp, res):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is better than A {asp}')
             is_ok = False
-        if self.isBetter(res, self.nadir):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}: specified R {res} is worse than N {self.nadir}.')
+        if not self.isBetter(res, self.nadir):
+            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is worse than N {self.nadir}.')
             is_ok = False
-        if is_ok:
-            return
-        raise Exception(f'chkAR(): preferences A = {asp}, R = {res}) specified in line {n_line} for '
-                        f'criterion "{self.name}" are inconsistent.')
+        if not is_ok:
+            raise Exception(f'chkAR(): preferences A = {asp}, R = {res} specified in line {n_line} for '
+                            f'criterion "{self.name}" are inconsistent.')
+        return
 
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
