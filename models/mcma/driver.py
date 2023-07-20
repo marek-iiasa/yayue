@@ -7,10 +7,11 @@ import sys		# needed for sys.exit()
 # import os
 # import pandas as pd
 import pyomo.environ as pe
-from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
-from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
+from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
+from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
+from report import Report  # handles submodel/block of AF and links to the core/substantive model
 
 
 def chk_sol(res):  # check status of the solution
@@ -34,6 +35,7 @@ def driver(m1, ana_dir):
     #   (instead of currenly used statement commonting/uncommenting)
     mc = CtrMca(ana_dir)    # CtrMca ctor
     mc.rdCritSpc()      # read criteria definition from the corresponding file
+    rep = Report(mc)
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
@@ -88,6 +90,8 @@ def driver(m1, ana_dir):
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')
+        if n_iter == 1:
+            rep.add_itr(mc_part, n_iter)
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
         mc.prn_payoff()     # store current criteria values in the file
