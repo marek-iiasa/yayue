@@ -2,11 +2,14 @@
 Reporting results of iterations of the regret function applied to the China liquid fuel production model.
 """
 
+import pandas as pd
 import pyomo.environ as pe       # more robust than using import *
+# from ctr_mca import CtrMca
+# from crit import Crit
+
 '''
 import os
 import numpy as np
-import pandas as pd
 # from sklearn.cluster import KMeans
 # import collections   # for Counter()
 import matplotlib.pyplot as plt
@@ -20,13 +23,30 @@ sns.set()   # settings for seaborn plotting style
 '''
 
 
-# from ctr_mca import CtrMca
-# from crit import Crit
-
 class Report:
-    def __init__(self, mc):
+    # cf regret::report() for extensive processing
+    def __init__(self, mc, m1):
         self.mc = mc    # CtrMca
+        self.m1 = m1    # core-model (used only for extracting solutions in stage one
         self.rep_dir = mc.ana_dir  # repository of MCMA analysis instance configuration and results
+        self.cr_names = []   # names of all criteria
+        self.var_names = []  # names of mc_block variables defining criteria
+        self.id_attr = ['_U', '_A', '_v', '_R', '_N', '_act']   # v: crit-value, act: crit-activity (for each crit.)
+        self.cols = ['itr_id']
+        for crit in mc.cr:
+            self.cr_names.append(crit.name)
+            self.var_names.append(crit.var_name)
+            for idx in self.id_attr:
+                self.cols.append(crit.name + idx)
+        # cols = ['itr_id'] + ['cost', 'CO2', 'oilImp']
+        self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
+        self.f_itr_df = mc.ana_dir + '/itr_df.csv'  # file name of the stored df
+        self.itr_id = 100
+        self.prev_itr = 0   # number of previosly made iters
+        self.cur_itr = 0   # number of currently made iters
+
+        # todo: initialize self.itr_df with previously stored df, if exists
+        #   modify self.itr_id to a subsequent number
 
         print(f'\nReport ctor: handling results MCMA iters.     -------------')
 
@@ -59,11 +79,56 @@ class Report:
         print('\nReport ctor finished.                                           --------------------------------')
         '''
 
-    def add_itr(self, m, itr):   # extract and store values of requested vars for the current itr
+    def itr(self, m):   # m: current mc_block (invariant core-model linked in the ctor)
+        """Process values of criteria and other vars in the current solution."""
         # formatting doc: https://docs.python.org/3/library/string.html#formatstrings
-        print(f'Extracting solution values of iter. {itr} from model {m.name}.')
+        print(f'Extracting current solution values from model {m.name}.')
         af = f'{pe.value(m.af):.3e}'
-        print(f'AF  = {af}')
+        print(f'AF = {af}')
+
+        cri_val = {}    # all criteria values in current solution
+        '''
+        if self.mc.cur_stage > 1:
+            mx = m  # use the current mc_core model for accesing solution
+            m_vars = m.component_map(ctype=pe.Var)  # all variables of the mc_block
+        else:
+            mx = self.m1  # use the core-model for accesing solution
+        '''
+        m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
+        for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
+            m_var = m_vars[var_name]
+            val = m_var.value
+            cr_name = self.cr_names[i]
+            cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
+            if self.mc.verb > 2:
+                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
+        if self.mc.verb > 1:
+            print(f'Values of criteria {cri_val}')
+
+        self.mc.updCrit(cri_val)    # update crit attributes (nadir, utopia)
+        self.mc.prn_payoff()     # print, and optionally store payOff table
+
+        # todo: add tp self.itr_df one row with values of all attributes for each criterion
+
+        '''
+            for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
+                m_var = m_vars[var_name]
+                val = m_var.value
+                cr_name = self.cr_names[i]
+                cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
+                if self.mc.verb > 2:
+                    print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
+        else:   # in stage 1 (utopia calculation) only one core-model var (defining the only active crit.) is used
+            for crit in self.mc.cr:
+                cr_name = crit.name
+                if crit.is_active:
+                    val = pe.value(m.af)
+                else:
+                    val = None
+                cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
+                if self.mc.verb > 2:
+                    print(f'Value of variable  defining criterion "{cr_name}" = {val}')
+            '''
 
         '''
         # add to the summary df: oil price and the total cost
@@ -130,3 +195,8 @@ class Report:
         print('--------------------------------------------------------------------------------')
         # end of add_itr()
         '''
+
+    def summary(self):
+        print(f'\nResults of {self.cur_itr} currently made iters added to results of {self.prev_itr} previously made.')
+        print(f'Results are stored in the DataFrane "{self.f_itr_df}" file.')  # file name of the stored df
+        raise Exception(f'Report::summary() not implemented yet.')

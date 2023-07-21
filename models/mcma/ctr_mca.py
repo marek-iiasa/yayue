@@ -28,6 +28,7 @@ class CtrMca:
         self.pref = []    # list of preferences defined for each blocks
         self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
+        self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -100,14 +101,22 @@ class CtrMca:
     def prn_payoff(self):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
-        if self.cur_stage > 4:  # don't store payOff table before neutral solution is computed:
-            print(f'\nCurrent values of the payoff table written to file "{self.f_payoff}":')
+        if not self.payOffChange:
+            print('payOff table values not changed.')
+            return
+        print('PayOff table:')
+        lines = []
+        for crit in self.cr:
+            line = f'{crit.name}: U {crit.utopia}, N {crit.nadir}'
+            print(line)
+            lines.append(line)
+        if self.cur_stage > 3:  # don't store payOff table before neutral solution is computed:
+            print(f'Current values of the payoff table written to file "{self.f_payoff}":')
             f_payOff = open(self.f_payoff, "w")
-            for crit in self.cr:
-                line = f'{crit.name} {crit.utopia} {crit.nadir}'
-                print(line)
+            for line in lines:
                 f_payOff.write(line + '\n')
             f_payOff.close()
+            self.payOffChange = False
 
     def chk_utopia(self):    # return crit-index of criterion, whose utopia was not computed yet
         for (i, crit) in enumerate(self.cr):
@@ -260,11 +269,12 @@ class CtrMca:
         with open(self.f_pref) as reader:  # read all lines and store for processing next
             for n_line, line in enumerate(reader):
                 line = line.rstrip("\n")
-                print(f'line {n_line}: "{line}"')
+                # print(f'line {n_line}: "{line}"')
                 if len(line) == 0 or line[0] == '*':    # skip empty or commented lines
                     continue
                 if line[0] == "#" or len(line) == 1:  # separator of set of preferences
-                    print(f'marker found in line {n_line}')
+                    # print(f'marker found in line {n_line}')
+                    pass
                 else:
                     words = line.split()
                     n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
@@ -279,7 +289,7 @@ class CtrMca:
         print(f'Process {len(lines)} lines with user preferences.')
         cur_set = []    # current set of preferences (specified in blocks of lines separated by #)
         for n_line, line in enumerate(lines):
-            print(f'processing {n_line}-th line: {line}')
+            # print(f'processing {n_line}-th line: {line}')
             if line[0] != '#':  # process the line
                 words = line.split()    # number of woords check above
                 c_ind = self.cr_ind(words[0], False)
@@ -308,6 +318,7 @@ class CtrMca:
         self.n_pref = len(self.pref)
         print(f'Prepared {self.n_pref} sets of user-defined preferences.')
 
+    '''
     def procPrefSet(self, lines):  # process set of lines defining preferences
         pref_set = []
         for line in lines:
@@ -330,8 +341,9 @@ class CtrMca:
         else:
             print(f'ignoring empty set of preferences.')
             return False
+    '''
 
-    def store_sol(self, crit_val):  # crit_val: dict of values of all criteria
+    def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
         print(f'Processing criteria values of the current iteration: {crit_val}')
         if self.cur_stage == 1:     # utopia computed for the only one active criterion
@@ -349,7 +361,9 @@ class CtrMca:
                 if crit.is_active:  # nothing to store/update
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
                 else:
-                    crit.updNadir(self.cur_stage, val)  # update nadir value (processing depends on stage)
+                    change = crit.updNadir(self.cur_stage, val)  # update nadir value (processing depends on stage)
+                    if change:
+                        self.payOffChange = True
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')

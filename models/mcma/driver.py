@@ -35,7 +35,7 @@ def driver(m1, ana_dir):
     #   (instead of currenly used statement commonting/uncommenting)
     mc = CtrMca(ana_dir)    # CtrMca ctor
     mc.rdCritSpc()      # read criteria definition from the corresponding file
-    rep = Report(mc)
+    rep = Report(mc, m1)
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
@@ -84,27 +84,25 @@ def driver(m1, ana_dir):
         # m1.load(results)  # Loading solution into results object
 
         print('\nprocessing solution --------------------------------')
+        rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
         rep_vars = []  # list of variables, values of which shall be returned
         # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
-        val_vars = mc_gen.mc_sol(rep_vars)  # process solution
+        val_vars = mc_gen.mc_sol(rep_vars)  # process solution:
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')
-        if n_iter == 1:
-            rep.add_itr(mc_part, n_iter)
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
-        mc.prn_payoff()     # store current criteria values in the file
-        # todo: add print to a log
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 20
+        max_itr = 9
         if n_iter > max_itr:
-            print(f'\nMax iters {max_itr} reached; breaking the iteration loop.')
+            print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
             break
     # iterations end here
     # todo: clearing-house (logs, report, etc) waits for implementation
+    rep.summary()
     raise Exception(f'driver(): clearing-house not yet implemented.')
 
 # below are diverse, potentially useful, notes

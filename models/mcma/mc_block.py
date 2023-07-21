@@ -171,8 +171,10 @@ class McMod:
         '''
 
     def mc_sol(self, rep_vars=None):
-        """Extract from m1_block (core model) values of (1) criteria and (2) other vars requested to report."""
+        """Get from core model values of other (then criteria) vars to report. Criteria handled in Report::itr()"""
         # cf regret::report() for extensive processing
+        '''
+        moved to Report
         cri_val = {}    # all criteria values in current solution
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         for (i, var_name) in enumerate(self.var_names):  # extract m1.vars defining criteria
@@ -180,14 +182,16 @@ class McMod:
             val = m1_var.value
             cr_name = self.cr_names[i]
             cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
-            if self.mc.verb > 2:
-                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
+            # if self.mc.verb > 2:      # printed by Report::add_itr()
+            #     print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
 
         # store through updating criteria attributes
         # todo: consider to add to an iter-log criteria values from each iter
         self.mc.store_sol(cri_val)
+        '''
 
         sol_val = {}    # initialize dict with values of variables requested in rep_var
+        m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         for var_name in rep_vars:     # loop over m1.vars of all criteria
             m1_var = m1_vars[var_name]
             # todo: indexed variables needs to be detected and handled accrdingly (see regret::report())

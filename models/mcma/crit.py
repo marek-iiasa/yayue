@@ -81,6 +81,7 @@ class Crit:     # definition and attributes of a single criterion
             no_yes = 'not'
 
         print(f'nadir appr. of crit "{self.name}": {old_val} {no_yes} changed to {val} (in {stage=}).')
+        return shift
 
     def isBetter(self, val1, val2):   # return true if val1 is better (in terms of achivement) than val2
         if val1 is None or val2 is None:
@@ -96,16 +97,16 @@ class Crit:     # definition and attributes of a single criterion
     def chkAR(self, pref_item, n_line):   # check correctnes of A and R values
         asp = pref_item.asp
         res = pref_item.res
-        print(f'chkAR(): crit "{self.name}" ({self.attr}), U {self.utopia}, {asp = }, {res = }, N {self.nadir}')
+        # print(f'chkAR(): crit "{self.name}" ({self.attr}), U {self.utopia}, {asp = }, {res = }, N {self.nadir}')
         is_ok = True
         if not self.isBetter(self.utopia, asp):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified A {asp} is better than U {self.utopia}')
+            # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified A {asp} is better than U {self.utopia}')
             is_ok = False
         if not self.isBetter(asp, res):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is better than A {asp}')
+            # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is better than A {asp}')
             is_ok = False
         if not self.isBetter(res, self.nadir):
-            print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is worse than N {self.nadir}.')
+            # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is worse than N {self.nadir}.')
             is_ok = False
         if not is_ok:
             raise Exception(f'chkAR(): preferences A = {asp}, R = {res} specified in line {n_line} for '
