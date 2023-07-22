@@ -3,6 +3,7 @@ Tests/
 Data/test1/pref.txt
 Data/test1/pref_tst.txt
 Data/test1/payoff.txt
+Data/test1/*.csv
 # links to pipa
 dat1.dat
 inst.py

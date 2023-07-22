@@ -35,11 +35,12 @@ def driver(m1, ana_dir):
     #   (instead of currenly used statement commonting/uncommenting)
     mc = CtrMca(ana_dir)    # CtrMca ctor
     mc.rdCritSpc()      # read criteria definition from the corresponding file
+
+    # todo: implement hot start
     rep = Report(mc, m1)
 
     # Load payOff table if previously stored (initialized to undefined by Crit ctor)
     # mc.rd_payoff()    # supressed for testing
-    # todo: modify prn_payoff() to store in the file only if changed (modify prn_payoff)
     # mc.prn_payoff()   # no need to store the table just read
 
     # todo: open .../log.txt either for 'w' or 'a'
@@ -96,7 +97,7 @@ def driver(m1, ana_dir):
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 9
+        max_itr = 20
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
             break

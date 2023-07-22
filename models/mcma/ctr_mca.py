@@ -21,6 +21,7 @@ class CtrMca:
         self.cur_cr = None  # cr_index passed to self.set_pref()
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
+        self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse

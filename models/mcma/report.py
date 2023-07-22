@@ -31,17 +31,17 @@ class Report:
         self.rep_dir = mc.ana_dir  # repository of MCMA analysis instance configuration and results
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of mc_block variables defining criteria
-        self.id_attr = ['_U', '_A', '_v', '_R', '_N', '_act']   # v: crit-value, act: crit-activity (for each crit.)
-        self.cols = ['itr_id']
+        # crit-attributes: v: value, Y: y/n is_active marker, M: 1/-1 (max/min mult.)
+        self.id_attr = ['_U', '_A', '_v', '_R', '_N', '_M', '_Y']
+        self.cols = ['itr_id', 'af', 'cafMin', 'cafReg']
         for crit in mc.cr:
             self.cr_names.append(crit.name)
             self.var_names.append(crit.var_name)
             for idx in self.id_attr:
                 self.cols.append(crit.name + idx)
-        # cols = ['itr_id'] + ['cost', 'CO2', 'oilImp']
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
         self.f_itr_df = mc.ana_dir + '/itr_df.csv'  # file name of the stored df
-        self.itr_id = 100
+        self.itr_id = 99
         self.prev_itr = 0   # number of previosly made iters
         self.cur_itr = 0   # number of currently made iters
 
@@ -82,9 +82,9 @@ class Report:
     def itr(self, m):   # m: current mc_block (invariant core-model linked in the ctor)
         """Process values of criteria and other vars in the current solution."""
         # formatting doc: https://docs.python.org/3/library/string.html#formatstrings
-        print(f'Extracting current solution values from model {m.name}.')
-        af = f'{pe.value(m.af):.3e}'
-        print(f'AF = {af}')
+
+        self.itr_id += 1
+        print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         cri_val = {}    # all criteria values in current solution
         '''
@@ -108,7 +108,48 @@ class Report:
         self.mc.updCrit(cri_val)    # update crit attributes (nadir, utopia)
         self.mc.prn_payoff()     # print, and optionally store payOff table
 
-        # todo: add tp self.itr_df one row with values of all attributes for each criterion
+        # add to self.itr_df one row with values of all attributes for each criterion
+        af = pe.value(m.af)
+        af = round(af, 1)
+        if self.mc.cur_stage > 1:
+            cafMin = pe.value(m.cafMin)
+            cafReg = pe.value(m.cafReg)
+            print(f'af = {af:.3e}, cafMin = {cafMin:3e}, cafReg = {cafReg:3e}')
+            cafMin = round(cafMin, 1)
+            cafReg = round(cafReg, 1)
+            new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
+        else:   # cafMin, cafReg not defined in stage 1
+            print(f'af = {af:.3e}')
+            new_row = {'itr_id': self.itr_id, 'af': af}
+        cur_col = 4
+        for crit in self.mc.cr:
+            new_row.update({self.cols[cur_col]: crit.utopia})
+            cur_col += 1
+            asp = crit.asp
+            if asp is not None:
+                asp = round(asp, 1)
+            new_row.update({self.cols[cur_col]: asp})
+            cur_col += 1
+            new_row.update({self.cols[cur_col]: round(crit.val, 1)})
+            cur_col += 1
+            res = crit.res
+            if res is not None:
+                res = round(res, 1)
+            new_row.update({self.cols[cur_col]: res})
+            cur_col += 1
+            new_row.update({self.cols[cur_col]: crit.nadir})
+            cur_col += 1
+            new_row.update({self.cols[cur_col]: crit.mult})
+            cur_col += 1
+            marker = 'y'
+            if not crit.is_active:
+                marker = 'n'
+            new_row.update({self.cols[cur_col]: marker})
+            cur_col += 1
+        df2 = pd.DataFrame(new_row, index=list(range(1)))
+        self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
+        # print(f'current itr_df in report():\n{self.itr_df}')
+        # print(f'Report::itr({self.itr_id} finished.')
 
         '''
             for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
@@ -198,5 +239,6 @@ class Report:
 
     def summary(self):
         print(f'\nResults of {self.cur_itr} currently made iters added to results of {self.prev_itr} previously made.')
+        self.itr_df.to_csv(self.f_itr_df, index=True)
         print(f'Results are stored in the DataFrane "{self.f_itr_df}" file.')  # file name of the stored df
-        raise Exception(f'Report::summary() not implemented yet.')
+        # raise Exception(f'Report::summary() not implemented yet.')

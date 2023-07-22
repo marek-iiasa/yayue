@@ -138,15 +138,16 @@ class McMod:
         def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
             return mx.cafMin <= mx.caf[ii]
 
+        reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit       # scaling coef of regularizing term
+        # print(f'----------------------------------------------------- {reg_scale = }')
+
         @m.Constraint()
         def cafRegD(mx):    # regularizing term (without the scaling coef.)
-            return mx.cafReg == sum(mx.caf[ii] for ii in mx.C)
-
-        epsilon = 0.01 * self.mc.cafAsp     # scaling coef of regularizing term as fraction of caf(asp)
+            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
 
         @m.Constraint()
         def afDef(mx):
-            return mx.af == mx.cafMin + epsilon / self.mc.n_crit * mx.cafReg
+            return mx.af == mx.cafMin + mx.cafReg
 
         @m.Objective(sense=pe.maximize)
         def obj(mx):
