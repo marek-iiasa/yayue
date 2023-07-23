@@ -55,13 +55,13 @@ if __name__ == '__main__':
     # model.write('test.gms')
     # model.write('test2.lp', symbolic_solver_labels=True)  # illegal param: symbolic...
 
-    print('\nmodel display: -----------------------------------------------------------------------------')
-    # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
+    # print('\nmodel display: -----------------------------------------------------------------------------')
+    # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
     # model.display()     # displays only instance (not abstract model)
-    print('end of model display: ------------------------------------------------------------------------\n')
+    # print('end of model display: ------------------------------------------------------------------------\n')
     print('\n model.pprint() follows:      -----------------------------------------------------------------')
     # members of sets, then param values, then (populated by set-members) relations with actual coef-values
-    # model.pprint()
+    model.pprint()
     print('end of model printout          -----------------------------------------------------------------\n')
 
     # opt = SolverFactory('gams')  # gams can be used as a solver
