@@ -1,6 +1,6 @@
 """
 sms(): returns the Symbolic model specification (SMS), i.e., the Abstract Model
-of the China liquid fuel production model.
+of the Pipa model
 All rules are before sms() to avoid warnings "m shadows name from outer scope".
 Single (i.e., not populated) relations need rules only, if their expression include iterators (e.g., a sum).
 """
@@ -138,8 +138,33 @@ def capTot_rule(m, t):  # sum (over all periods) of idle capacities
 
 def oilImp_rule(m):  # sum (over all periods) of idle capacities
     return m.oilImp == sum(m.raw['OTL', p] for p in m.P)
-'''
 
+    # relations  (declared in the sequence corresponding to their use in SMS)
+    # single (non-indexed) constraints; expr cannot use iterators, e.g., sum for p in m.P
+    # indexed constraints (require rules defining population; to avoid warnings, rules are defined outside sms()
+    # m.demC = pe.Constraint(m.F, m.P, rule=dem_rule)
+    # m.actC = pe.Constraint(m.T, m.PV, rule=act_rule)  # act constained by the corresponding available capacity
+    # m.rawD = pe.Constraint(m.T, m.P, rule=rawd_rule)  # amounts of raw material definitions
+    # m.invCD = pe.Constraint(m.T, m.P, rule=invcd_rule)  # trajectory of inv cost
+    # m.rawCD = pe.Constraint(m.T, m.P, rule=rawcd_rule)
+    # m.omCD = pe.Constraint(m.T, m.P, rule=omcd_rule)  # trajectory of OM costs (currently of capacities)
+    # m.carbED = pe.Constraint(m.T, m.P, rule=carbed_rule)    # trajectory of amounts of CO2 emissions caused by dem[p]
+    # m.carbEvD = pe.Constraint(m.T, m.V, rule=carbevd_rule)    # trajectory of CO2 emissions caused by cap[v]
+    # m.carbCD = pe.Constraint(m.T, m.P, rule=carbcd_rule)    # trajectory of costs of CO2 emissions
+    # m.costAnD = pe.Constraint(m.T, m.P, rule=costad_rule)   # trajectory of annual cost
+    # m.costD = pe.Constraint(rule=cost_rule)     # total cost
+    # m.carbD = pe.Constraint(rule=carb_rule)     # total CO2 emission
+    # m.actSumD = pe.Constraint(m.T, m.P, rule=actSum_rule)
+    # m.actSumpD = pe.Constraint(m.T, rule=actSump_rule)
+    # m.capAvailD = pe.Constraint(m.T, m.P, rule=capAva_rule)
+    # m.capIdleD = pe.Constraint(m.T, m.P, rule=capIdle_rule)
+    # m.capIdleSD = pe.Constraint(m.T, rule=capIdleS_rule)
+    # m.capTotD = pe.Constraint(m.T, rule=capTot_rule)
+    # m.oilImpD = pe.Constraint(rule=oilImp_rule)
+    # the below defined without a rule; () in expr are optional
+    # m.co2CD = pe.Constraint(expr=(m.co2C == m.carbU * m.carb))  # costs of CO2 emission
+    # m.costexco2D = pe.Constraint(expr=(m.coexco2 == m.cost - m.co2C))  # total costs excl. CO2 emission cost
+'''
 
 '''
 # for ad-hoc testing of upp-bnds for cap
@@ -237,29 +262,6 @@ def mk_sms():
     m.rawP = pe.Param(m.T, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of raw material
     m.omcU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit OMC cost (excl. feedstock)
     m.carbU = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
-
-    # relations  (declared in the sequence corresponding to their use in SMS)
-    # single (non-indexed) constraints; expr cannot use iterators, e.g., sum for p in m.P
-    # indexed constraints (require rules defining population; to avoid warnings, rules are defined outside sms()
-    # m.demC = pe.Constraint(m.F, m.P, rule=dem_rule)
-    # m.actC = pe.Constraint(m.T, m.PV, rule=act_rule)  # act constained by the corresponding available capacity
-    # m.rawD = pe.Constraint(m.T, m.P, rule=rawd_rule)  # amounts of raw material definitions
-    # m.invCD = pe.Constraint(m.T, m.P, rule=invcd_rule)  # trajectory of inv cost
-    # m.rawCD = pe.Constraint(m.T, m.P, rule=rawcd_rule)
-    # m.omCD = pe.Constraint(m.T, m.P, rule=omcd_rule)  # trajectory of OM costs (currently of capacities)
-    # m.carbED = pe.Constraint(m.T, m.P, rule=carbed_rule)    # trajectory of amounts of CO2 emissions caused by dem[p]
-    # m.carbEvD = pe.Constraint(m.T, m.V, rule=carbevd_rule)    # trajectory of CO2 emissions caused by cap[v]
-    # m.carbCD = pe.Constraint(m.T, m.P, rule=carbcd_rule)    # trajectory of costs of CO2 emissions
-    # m.costAnD = pe.Constraint(m.T, m.P, rule=costad_rule)   # trajectory of annual cost
-    # m.costD = pe.Constraint(rule=cost_rule)     # total cost
-    # m.carbD = pe.Constraint(rule=carb_rule)     # total CO2 emission
-    # m.actSumD = pe.Constraint(m.T, m.P, rule=actSum_rule)
-    # m.actSumpD = pe.Constraint(m.T, rule=actSump_rule)
-    # m.capAvailD = pe.Constraint(m.T, m.P, rule=capAva_rule)
-    # m.capIdleD = pe.Constraint(m.T, m.P, rule=capIdle_rule)
-    # m.capIdleSD = pe.Constraint(m.T, rule=capIdleS_rule)
-    # m.capTotD = pe.Constraint(m.T, rule=capTot_rule)
-    # m.oilImpD = pe.Constraint(rule=oilImp_rule)
 
     '''
     demR() works after modifications; therefore these lines are now commented
@@ -378,8 +380,6 @@ def mk_sms():
     def oilImpD(mx):  # sum (over all periods) of idle capacities
         return mx.oilImp == sum(mx.raw['OTL', p] for p in mx.P)
 
-    # the below defined without a rule; () in expr are optional
-    # m.co2CD = pe.Constraint(expr=(m.co2C == m.carbU * m.carb))  # costs of CO2 emission
     @m.Constraint()  # cost of the total CO2 emission
     def co2CD(mx):
         return mx.co2C == mx.carbU * mx.carb
@@ -387,7 +387,6 @@ def mk_sms():
     @m.Constraint()  # total costs excl. CO2 emission cost
     def costExco2CD(mx):
         return mx.coexco2 == mx.cost - mx.co2C
-    # m.costexco2D = pe.Constraint(expr=(m.coexco2 == m.cost - m.co2C))  # total costs excl. CO2 emission cost
 
     print('sms(): finished')
     # m.pprint()    # does not work (needs lengths of sets)

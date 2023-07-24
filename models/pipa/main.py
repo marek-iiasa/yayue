@@ -43,12 +43,12 @@ if __name__ == '__main__':
     # noinspection SpellCheckingInspection
     abst = mk_sms()        # abstract model (SMS)
     model = instance(abst)  # model instance
-    model.P.pprint()
-    model.H.pprint()
-    print('Values of discount rates for each planning period:')
-    for p in model.P:   # define discount rates for each period
-        model.dis[p] = model.discr ** p
-        print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
+    # model.P.pprint()
+    # model.H.pprint()
+    # print('Values of discount rates for each planning period:')
+    # for p in model.P:   # define discount rates for each period
+    #     model.dis[p] = model.discr ** p
+    #     print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
     # model.write('test.lp')
     # model.write('test.mps')
@@ -59,10 +59,10 @@ if __name__ == '__main__':
     # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
     # model.display()     # displays only instance (not abstract model)
     # print('end of model display: ------------------------------------------------------------------------\n')
-    print('\n model.pprint() follows:      -----------------------------------------------------------------')
-    # members of sets, then param values, then (populated by set-members) relations with actual coef-values
-    model.pprint()
-    print('end of model printout          -----------------------------------------------------------------\n')
+    # print('\n model.pprint() follows:      -----------------------------------------------------------------')
+    # # members of sets, then param values, then (populated by set-members) relations with actual coef-values
+    # model.pprint()
+    # print('end of model printout          -----------------------------------------------------------------\n')
 
     # opt = SolverFactory('gams')  # gams can be used as a solver
     opt = pe.SolverFactory('glpk')
