@@ -1,6 +1,7 @@
 """
-sms(): returns the Symbolic model specification (SMS), i.e., the Abstract Model
-of the Pipa model
+sms(): returns the Symbolic model specification (SMS), i.e., the Abstract Model of the Pipa model
+Decorations are used for Constraints and Objective to simplify the old/traditional approach based on rules,
+which required a separation of rules needed for defining constraints, i.e.:
 All rules are before sms() to avoid warnings "m shadows name from outer scope".
 Single (i.e., not populated) relations need rules only, if their expression include iterators (e.g., a sum).
 """
@@ -181,7 +182,7 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m: AbstractModel = pe.AbstractModel(name='pipa 1.0')
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.1')
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
@@ -235,8 +236,14 @@ def mk_sms():
     m.capTot = pe.Var(m.T, within=pe.NonNegativeReals)  # total capacities (i.e., all cap-investments in techn. t)
     #
 
-    # objectives: three defined for MCA, only one activated at a time
-    # TODO: clarify error (reported in model display): ERROR: evaluating object as numeric value: min_cost
+    # objectives: three defined for MCA, only one activated here at a time
+    # TODO: clarify error (reported in model display): ERROR: evaluating object as numeric value: goal
+    @m.Objective(sense=pe.minimize)
+    def goal(mx):
+        return mx.cost      # total cost
+        # return mx.carb    # total CO2 emission
+        # return mx.oilImp  # total oil import
+    '''
     m.min_cost = pe.Objective(expr=m.cost, sense=pe.minimize)   # single objective used for testing
     m.min_carb = pe.Objective(expr=m.carb, sense=pe.minimize)
     m.min_oilimp = pe.Objective(expr=m.oilImp, sense=pe.minimize)
@@ -247,6 +254,7 @@ def mk_sms():
     # m.min_cost.deactivate()
     m.min_carb.deactivate()
     m.min_oilimp.deactivate()
+    '''
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.9)   # discount rate descrease in every period
