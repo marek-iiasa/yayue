@@ -48,126 +48,6 @@ def vp_lst(m, pp, filt=None):
 
 
 '''
-Rules no longer used (replaced by functions attached to the constraint decorators
-
-def dem_rule(m, f, p):  # demand must be met for each fuel and period
-    exp1 = sum(sum(m.a[t, f] * m.act[t, p, v] for v in vp_lst(m, p)) for t in m.T)  # output from V_p & all techn.
-    return m.dem[f, p], exp1, None
-
-def act_rule(m, t, p, v):  # activity cannot exceed the corresponding (cuf * capacity)
-    # print(f'pcap_rule: t {t}, p {p}, v {v}')
-    if v < 0:   # act constrained by (given) historical new capacity
-        return pe.inequality(0., m.act[t, p, v], m.cuf[t] * m.hcap[t, v])
-    else:   # act constrained by (decision variable) new capacity
-        exp1 = m.cuf[t] * m.cap[t, v] - m.act[t, p, v]
-        return pe.inequality(0., exp1, None)
-
-def rawd_rule(m, t, p):  # total amounts of raw material needed for production
-    # return m.raw[t, p] - sum(m.rawU[t, v] * m.act[t, p, v] for v in vp_lst(m, p)) == 0
-    return m.raw[t, p] == sum(m.rawU[t] * m.act[t, p, v] for v in vp_lst(m, p))  # equivalent to the commented above
-
-def invcd_rule(m, t, p):  # total amounts of raw material needed for production
-    return m.invC[t, p] == m.invU[t] * m.cap[t, p]
-
-def omcd_rule(m, t, p):  # OMC (excl. raw-material) of all (currently available) capacities
-    # return m.omC == sum(m.omcU[t, v] * m.act[t, p, v] for v in vp_lst(m, p, 'nonneg'))
-    # return m.omC == sum(m.omcU[t, v] * m.act[t, p, v] for v in vp_lst(m, p))  # use for omC(act[]) instead omC(cap[])
-    # return m.omC[t, p] == sum(m.omcU[t, v] * m.cap[t, v] for v in vp_lst(m, p))  # doesn't work for v < 0
-    omsum = 0.
-    for v in vp_lst(m, p):
-        if v < 0:
-            omsum += m.omcU[t] * m.hcap[t, v]
-        else:
-            omsum += m.omcU[t] * m.cap[t, v]
-    return m.omC[t, p] == omsum
-    
-def carbed_rule(m, t, p):
-    return m.carbE[t, p] == sum(m.ef[t] * m.act[t, p, v] for v in vp_lst(m, p))
-
-def carbevd_rule(m, t, v):
-    # print(f'carbevd start: t = {t}, v = {v} ------------------------------ ')
-    sum_act = 0.    # sum act[t, p, v] for all p using act[*, p, v] (v - given)
-    for p, vv in m.PV:
-        if v == vv:
-            sum_act += m.act[t, p, v]
-            # print(f'carbed_rule: t = {t}, p = {p}, vv = {vv}, v = {v}, sum changed = {sum_act}')
-        else:
-            # print(f'carbed: p = {p}, vv = {vv}, v = {v}, sum unchanged')
-            pass
-    # print(f'carbed_rule: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
-    return m.carbEv[t, v] == m.ef[t] * sum_act
-
-
-def carbcd_rule(m, t, p):  # cost of carbon emission
-    # the old/commented code double-counts carbE[t, v] in costs
-    # return m.carbC[t, p] == m.carbU * sum(m.carbE[t, v] for v in vp_lst(m, p))
-    return m.carbC[t, p] == m.carbU * m.carbE[t, p]
-
-def costad_rule(m, t, p):  # total annual cost
-    return m.costAn[t, p] == m.invC[t, p] + m.rawC[t, p] + m.omC[t, p] + m.carbC[t, p]
-
-def cost_rule(m):  # total cost
-    return m.cost == sum(m.dis[p] * sum(m.costAn[t, p] for t in m.T) for p in m.P)
-
-def carb_rule(m):  # total CO2 emission
-    # return m.carb == sum(sum(sum(m.ef[t, v] * m.act[t, p, v] for v in vp_lst(m, p)) for p in m.P) for t in m.T)
-    return m.carb == sum(sum(m.carbE[t, p] for p in m.P) for t in m.T)
-
-def actSum_rule(m, t, p):  # sum of activities [t] covering demand[p]
-    return m.actsv[t, p] == sum(m.act[t, p, v] for v in vp_lst(m, p))
-
-def actSump_rule(m, t):  # sum of activities [t] covering demand over all [p]
-    return m.actsvp[t] == sum(m.actsv[t, p] for p in m.P)
-
-def capAva_rule(m, t, p):  # cuf[t, v] * capacities avail. for covering demand[p] by techn. [t]
-    capsum = 0.
-    for v in vp_lst(m, p):
-        if v < 0:
-            capsum += m.cuf[t] * m.hcap[t, v]
-        else:
-            capsum += m.cuf[t] * m.cap[t, v]
-    return m.capAva[t, p] == capsum
-
-def capIdle_rule(m, t, p):  # idle (unused) capacities available for covering demans[p]
-    return m.capIdle[t, p] == m.capAva[t, p] - m.actsv[t, p]
-
-def capIdleS_rule(m, t):  # sum (over all periods) of idle capacities
-    return m.capIdleS[t] == sum(m.capIdle[t, p] for p in m.P)
-
-def capTot_rule(m, t):  # sum (over all periods) of idle capacities
-    return m.capTot[t] == sum(m.cap[t, p] for p in m.P)
-
-def oilImp_rule(m):  # sum (over all periods) of idle capacities
-    return m.oilImp == sum(m.raw['OTL', p] for p in m.P)
-
-    # relations  (declared in the sequence corresponding to their use in SMS)
-    # single (non-indexed) constraints; expr cannot use iterators, e.g., sum for p in m.P
-    # indexed constraints (require rules defining population; to avoid warnings, rules are defined outside sms()
-    # m.demC = pe.Constraint(m.F, m.P, rule=dem_rule)
-    # m.actC = pe.Constraint(m.T, m.PV, rule=act_rule)  # act constained by the corresponding available capacity
-    # m.rawD = pe.Constraint(m.T, m.P, rule=rawd_rule)  # amounts of raw material definitions
-    # m.invCD = pe.Constraint(m.T, m.P, rule=invcd_rule)  # trajectory of inv cost
-    # m.rawCD = pe.Constraint(m.T, m.P, rule=rawcd_rule)
-    # m.omCD = pe.Constraint(m.T, m.P, rule=omcd_rule)  # trajectory of OM costs (currently of capacities)
-    # m.carbED = pe.Constraint(m.T, m.P, rule=carbed_rule)    # trajectory of amounts of CO2 emissions caused by dem[p]
-    # m.carbEvD = pe.Constraint(m.T, m.V, rule=carbevd_rule)    # trajectory of CO2 emissions caused by cap[v]
-    # m.carbCD = pe.Constraint(m.T, m.P, rule=carbcd_rule)    # trajectory of costs of CO2 emissions
-    # m.costAnD = pe.Constraint(m.T, m.P, rule=costad_rule)   # trajectory of annual cost
-    # m.costD = pe.Constraint(rule=cost_rule)     # total cost
-    # m.carbD = pe.Constraint(rule=carb_rule)     # total CO2 emission
-    # m.actSumD = pe.Constraint(m.T, m.P, rule=actSum_rule)
-    # m.actSumpD = pe.Constraint(m.T, rule=actSump_rule)
-    # m.capAvailD = pe.Constraint(m.T, m.P, rule=capAva_rule)
-    # m.capIdleD = pe.Constraint(m.T, m.P, rule=capIdle_rule)
-    # m.capIdleSD = pe.Constraint(m.T, rule=capIdleS_rule)
-    # m.capTotD = pe.Constraint(m.T, rule=capTot_rule)
-    # m.oilImpD = pe.Constraint(rule=oilImp_rule)
-    # the below defined without a rule; () in expr are optional
-    # m.co2CD = pe.Constraint(expr=(m.co2C == m.carbU * m.carb))  # costs of CO2 emission
-    # m.costexco2D = pe.Constraint(expr=(m.coexco2 == m.cost - m.co2C))  # total costs excl. CO2 emission cost
-'''
-
-'''
 # for ad-hoc testing of upp-bnds for cap
 # for a proper/general approach cf: https://pyomo.readthedocs.io/en/stable/pyomo_modeling_components/Variables.html
 def bnd_cap(m, t, p):
@@ -182,7 +62,7 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m: AbstractModel = pe.AbstractModel(name='pipa 1.1')
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.1')
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
@@ -243,21 +123,10 @@ def mk_sms():
         return mx.cost      # total cost
         # return mx.carb    # total CO2 emission
         # return mx.oilImp  # total oil import
-    '''
-    m.min_cost = pe.Objective(expr=m.cost, sense=pe.minimize)   # single objective used for testing
-    m.min_carb = pe.Objective(expr=m.carb, sense=pe.minimize)
-    m.min_oilimp = pe.Objective(expr=m.oilImp, sense=pe.minimize)
-    m.min_cost.activate()
-    # m.min_carb.activate()
-    # m.min_oilimp.activate()
-    #
-    # m.min_cost.deactivate()
-    m.min_carb.deactivate()
-    m.min_oilimp.deactivate()
-    '''
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.9)   # discount rate descrease in every period
+    # todo: check eiyh cost specs (eq 13), if dis[p] is needed
     m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=0.9)  # cumulated discount in each period
     #
     m.a = pe.Param(m.T, m.F, within=pe.NonNegativeReals, default=1.0)   # unit activity output of fuel
@@ -271,12 +140,6 @@ def mk_sms():
     m.omcU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit OMC cost (excl. feedstock)
     m.carbU = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
 
-    '''
-    demR() works after modifications; therefore these lines are now commented
-    # noinspection PyShadowingNames
-    # suppressed (for mk_sms()) warning: "shadows 'm' from outr scope" for code readability (to have demR() here)
-    # use of m-alias in demR cause error in create_instance: Cannot iterate over AbstractOrderedScalarSet 'PV'
-    '''
     @m.Constraint(m.F, m.P)  # fuel produced by activities must cover demand for each fuel at each period
     def demC(mx, f, p):
         exp = sum(sum(mx.a[t, f] * mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from V_p & all tech

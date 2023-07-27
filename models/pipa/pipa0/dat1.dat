@@ -14,8 +14,10 @@ set T := BTL CTL STL OTL;
 #
 
 # the default values (set in SMS) are: periods=3, lifet=0, discr=0.05
-param periods := 12 ;
-param lifet := 3 ;
+# param periods := 12 ;
+# param lifet := 3 ;
+param periods := 5 ;
+param lifet := 1 ;
 param discr := 0.9 ;
 # param discr := 1. ;
 
@@ -26,13 +28,13 @@ fuel 1 300
 fuel 2 300
 fuel 3 300
 fuel 4 300
-fuel 5 300
-fuel 6 300
-fuel 7 300
-fuel 8 300
-fuel 9 300
-fuel 10 300
-fuel 11 300
+# fuel 5 300
+# fuel 6 300
+# fuel 7 300
+# fuel 8 300
+# fuel 9 300
+# fuel 10 300
+# fuel 11 300
 # fuel 12 300
 ;
 # from assumption that act are in the same energy-units as output
