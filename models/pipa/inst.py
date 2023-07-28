@@ -12,12 +12,11 @@ def instance(m):
     data.load(filename='Data/dat2.dat')
     inst = m.create_instance(data)
     # todo: check and activate computation of dis[p]
-    # todo: check eiyh cost specs (eq 13), if dis[p] is needed
 
-    # from pyomo.environ import *     # used in pyomo book and many tutotial
-    # for p in m.P:   # define discount rates for each period
-    #     inst.dis[p] = inst.discr ** p
-    #   print(f'p = {p}, dis = {value(inst.dis[p])}')
+    # add here other precomputed parameters, if they will be introduced
+    for p in m.P:   # define discount rates for each period
+        inst.dis[p] = (1. - inst.discr) ** p
+        print(f'p = {p}, dis = {inst.dis[p]}')
 
     # print('\n instance.pprint() follows      -----------------------------------------------------------------')
     # inst.pprint()

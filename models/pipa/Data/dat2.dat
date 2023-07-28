@@ -93,6 +93,5 @@ OTL 89
 ;
 
 # carbon price: p. 15:  [10 - 55] $/ton,
-# param carbU := 5 ;
 param carbU := 50 ;
 

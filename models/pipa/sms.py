@@ -62,9 +62,10 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.1')
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.1')  # multiple inputs/outputs to/from technologies
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
+    m.T = pe.Set()     # technologies
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
     # noinspection PyTypeChecker
     # warning: pe.Param used instead of expected int (but a cast to the latter cannot be used in Abstract model)
@@ -77,8 +78,9 @@ def mk_sms():
     m.H = pe.RangeSet(m.lifet_, -1)     # historical (before the planning) new capacities periods
     m.V = m.H | m.P     # vintage (periods when ncap become available)
     m.PV = pe.Set(dimen=2, initialize=vp_init)  # V_p (subsets of vintages available at period p)
-    m.T = pe.Set()     # technologies
-    m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s)
+    m.J = pe.Set()     # inputs to technologies
+    m.K = pe.Set()     # outputs from technologies (products, commodities) to cover demand or used as inputs
+    # m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s): replaced by O
 
     # the below two defs result in warnings, to avoid them m.periods_ and m.lifet_ are used above
     # m.P = pe.RangeSet(0, m.periods - 1)     # planning periods; NOTE: RangeSet(0, 1) has two elements
@@ -87,29 +89,31 @@ def mk_sms():
     # decision variables
     # m.act = Var(m.T, m.V, m.P, within=NonNegativeReals)   # activity level; this specs generates full/dense act matrix
     # m.act = Var(m.T, m.PV, m.P, within=NonNegativeReals)  # wrong: generates 4 indices !
+    # m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals, bounds=bnd_cap)   # newly installed capacity cap[t, p]
     m.act = pe.Var(m.T, m.PV, within=pe.NonNegativeReals)  # activity level act[t, p, v]
     m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # newly installed capacity cap[t, p]
-    # m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals, bounds=bnd_cap)   # newly installed capacity cap[t, p]
 
     # outcome variables
     m.cost = pe.Var()   # total cost, single-crit objective for the regret-function app.
     m.carb = pe.Var()   # total carbon emission
-    m.co2C = pe.Var()   # cost of the total carbon emission
-    m.coexco2 = pe.Var()   # cost of the total carbon emission
     m.oilImp = pe.Var()   # total amount of imported oil
+    m.carbC = pe.Var()   # cost of the total carbon emission
+    m.excarbC = pe.Var()   # total cost excludidng carbon emission cost
     # auxiliary variables, amounts
-    m.raw = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # amount of raw-material (feeadstock)
     m.carbE = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # CO2 emissions (caused by act covering demand[p]
     m.carbEv = pe.Var(m.T, m.V, within=pe.NonNegativeReals)   # CO2 emissions (by act[t, p, v]) caused by cap[v]
     # auxiliary variables, costs
+    m.inpC = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # cost of inputs
+    m.outC = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # cost of outputs
     m.invC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of investment costs
-    m.rawC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of raw-material costs
     m.omC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of OMC (raw-materials excluded)
     m.carbC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of CO2 emission costs
     m.costAn = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of total costs
     # other auxiliary variables, e.g., sums
-    m.actsv = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
-    m.actsvp = pe.Var(m.T, within=pe.NonNegativeReals)  # total activities (i.e., summed over v and p act[t])
+    m.inp = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs
+    m.out = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # amounts of outputs
+    m.actV = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
+    m.actS = pe.Var(m.T, within=pe.NonNegativeReals)  # total activities (i.e., summed over v and p act[t])
     m.capAva = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # avail. capacities
     m.capIdle = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # idle capacities
     m.capIdleS = pe.Var(m.T, within=pe.NonNegativeReals)  # total idle capacities
@@ -125,9 +129,8 @@ def mk_sms():
         # return mx.oilImp  # total oil import
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
-    m.discr = pe.Param(within=pe.NonNegativeReals, default=0.9)   # discount rate descrease in every period
-    # todo: check eiyh cost specs (eq 13), if dis[p] is needed
-    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=0.9)  # cumulated discount in each period
+    m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
+    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=1.)  # cumulated discount, see mod_instance
     #
     m.a = pe.Param(m.T, m.F, within=pe.NonNegativeReals, default=1.0)   # unit activity output of fuel
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit CO2 emission
