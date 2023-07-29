@@ -132,21 +132,21 @@ def mk_sms():
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
     m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=1.)  # cumulated discount, see mod_instance
     #
-    m.a = pe.Param(m.T, m.F, within=pe.NonNegativeReals, default=1.0)   # unit activity output of fuel
-    m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit CO2 emission
-    m.dem = pe.Param(m.F, m.P, within=pe.NonNegativeReals, default=350.0)   # given demand
+    m.dem = pe.Param(m.P, m.K, within=pe.NonNegativeReals, default=0.0)   # given demand
+    m.inpU = pe.Param(m.T, m.J, within=pe.NonNegativeReals, default=1.0)   # input use per prod.-unit
+    m.outU = pe.Param(m.T, m.K, within=pe.NonNegativeReals, default=1.0)   # output per unit activity
     m.hcap = pe.Param(m.T, m.H, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
-    m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # capacity utilization factor
-    m.rawU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # raw material use per prod.-unit
+    m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=0.8)   # capacity utilization factor
+    m.inpP = pe.Param(m.T, m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
     m.invU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit inv cost
-    m.rawP = pe.Param(m.T, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of raw material
-    m.omcU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit OMC cost (excl. feedstock)
+    m.omcU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit OMC cost (excl. inputs)
+    m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit carbon emission
     m.carbU = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
 
-    @m.Constraint(m.F, m.P)  # fuel produced by activities must cover demand for each fuel at each period
-    def demC(mx, f, p):
-        exp = sum(sum(mx.a[t, f] * mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from V_p & all tech
-        return mx.dem[f, p], exp, None
+    @m.Constraint(m.P, m.K)  # output produced by activities must cover demand at each period for each product
+    def demC(mx, p, k):
+        exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
+        return mx.dem[p, k], exp, None
 
     @m.Constraint(m.T, m.PV)  # activity cannot exceed the corresponding (cuf * capacity)
     def actC(mx, t, p, v):
