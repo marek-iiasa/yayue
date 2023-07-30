@@ -98,23 +98,25 @@ def mk_sms():
     m.carb = pe.Var()   # total carbon emission
     m.oilImp = pe.Var()   # total amount of imported oil
     m.carbC = pe.Var()   # cost of the total carbon emission
-    m.excarbC = pe.Var()   # total cost excludidng carbon emission cost
     # auxiliary variables, amounts
-    m.carbE = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # CO2 emissions (caused by act covering demand[p]
-    m.carbEv = pe.Var(m.T, m.V, within=pe.NonNegativeReals)   # CO2 emissions (by act[t, p, v]) caused by cap[v]
+    m.carbE = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # carbon emissions (caused by act covering demand[p]
+    m.carbEv = pe.Var(m.T, m.V, within=pe.NonNegativeReals)   # carbon emissions (by act[t, p, v]) caused by cap[v]
     # auxiliary variables, costs
-    m.inpC = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # cost of inputs
+    m.inpC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # cost of all inputs
     m.outC = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # cost of outputs
     m.invC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of investment costs
-    m.omC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of OMC (raw-materials excluded)
-    m.carbC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of CO2 emission costs
+    m.omcC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of OMC (raw-materials excluded)
+    m.carbPC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of carbon emission costs
     m.costAn = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of total costs
-    # other auxiliary variables, e.g., sums
-    m.inp = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs
+    # other auxiliary variables
+    m.inp = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs of each technology
+    m.inpT = pe.Var(m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs by all technologies
     m.out = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # amounts of outputs
-    m.actV = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
+    # secondary auxiliary variables
+    m.excarbC = pe.Var()   # total cost excludidng carbon emission cost
+    m.actvS = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
     m.actS = pe.Var(m.T, within=pe.NonNegativeReals)  # total activities (i.e., summed over v and p act[t])
-    m.capAva = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # avail. capacities
+    m.capAv = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # avail. capacities
     m.capIdle = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # idle capacities
     m.capIdleS = pe.Var(m.T, within=pe.NonNegativeReals)  # total idle capacities
     m.capTot = pe.Var(m.T, within=pe.NonNegativeReals)  # total capacities (i.e., all cap-investments in techn. t)
@@ -125,24 +127,25 @@ def mk_sms():
     @m.Objective(sense=pe.minimize)
     def goal(mx):
         return mx.cost      # total cost
-        # return mx.carb    # total CO2 emission
+        # return mx.carb    # total carbon emission
         # return mx.oilImp  # total oil import
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
-    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=1.)  # cumulated discount, see mod_instance
+    m.dis = pe.Param(m.P, mutable=True, within=pe.NonNegativeReals, default=.9)  # cumulated discount, see mod_instance
     #
     m.dem = pe.Param(m.P, m.K, within=pe.NonNegativeReals, default=0.0)   # given demand
     m.inpU = pe.Param(m.T, m.J, within=pe.NonNegativeReals, default=1.0)   # input use per prod.-unit
     m.outU = pe.Param(m.T, m.K, within=pe.NonNegativeReals, default=1.0)   # output per unit activity
     m.hcap = pe.Param(m.T, m.H, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
     m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=0.8)   # capacity utilization factor
-    m.inpP = pe.Param(m.T, m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
+    m.inpP = pe.Param(m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
     m.invU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit inv cost
     m.omcU = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit OMC cost (excl. inputs)
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)   # unit carbon emission
     m.carbU = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
 
+    # Relations
     @m.Constraint(m.P, m.K)  # output produced by activities must cover demand at each period for each product
     def demC(mx, p, k):
         exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
@@ -151,116 +154,123 @@ def mk_sms():
     @m.Constraint(m.T, m.PV)  # activity cannot exceed the corresponding (cuf * capacity)
     def actC(mx, t, p, v):
         # print(f'pcap_rule: t {t}, p {p}, v {v}')
-        if v < 0:  # act constrained by (given) historical new capacity
+        if v < 0:  # act constrained by (given) historical capacity at each relevant v
             return pe.inequality(0., mx.act[t, p, v], mx.cuf[t] * mx.hcap[t, v])
-        else:  # act constrained by (decision variable) new capacity
+        else:  # act constrained by (decision variable) new capacity at each relevant v
             exp1 = mx.cuf[t] * mx.cap[t, v] - mx.act[t, p, v]
             return pe.inequality(0., exp1, None)
 
-    @m.Constraint(m.T, m.P)  # total amounts of raw material needed for production
-    def rawD(mx, t, p):
-        # return mx.raw[t, p] - sum(mx.rawU[t, v] * mx.act[t, p, v] for v in vp_lst(mx, p)) == 0
-        return mx.raw[t, p] == sum(mx.rawU[t] * mx.act[t, p, v] for v in vp_lst(mx, p))  # equivalent to the above
+    @m.Constraint(m.T, m.P, m.J)  # total amounts of j-th input needed by t-th technology at period p
+    def inpD(mx, t, p, j):
+        return mx.inp[t, p, j] == mx.inpU[t, j] * sum(mx.act[t, p, v] for v in vp_lst(mx, p))
 
-    @m.Constraint(m.T, m.P)  # trajectory of inv cost
+    @m.Constraint(m.P, m.J)  # total amounts of j-th input needed by all technologies at period p
+    def inpTD(mx, p, j):
+        return mx.inpT[p, j] == sum(mx.inp[t, p, j] for t in mx.T)
+
+    @m.Constraint(m.T, m.P)  # trajectory of inv cost for building capacities
     def invCD(mx, t, p):
         return mx.invC[t, p] == mx.invU[t] * mx.cap[t, p]
 
-    @m.Constraint(m.T, m.P)  # trajectory of raw-material cost
-    def rawCD(mx, t, p):
-        return mx.rawC[t, p] == mx.rawP[t] * mx.raw[t, p]
+    @m.Constraint(m.T, m.P)  # trajectory of costs of all inputs to each technology
+    def inpCD(mx, t, p):
+        return mx.inpC[t, p] == sum(mx.inpP[j] * mx.inp[t, p, j] for j in mx.J)
 
-    @m.Constraint(m.T, m.P)  # OMC (excl. raw-material) of all (currently available) capacities
-    def omCD(mx, t, p):
-        # return mx.omC == sum(mx.omcU[t, v] * mx.act[t, p, v] for v in vp_lst(mx, p, 'nonneg'))
-        # ret mx.omC == sum(mx.omcU[t, v] * mx.act[t, p, v] for v in vp_lst(mx, p))  # use omC(act[]) instead omC(cap[])
-        # return mx.omC[t, p] == sum(mx.omcU[t, v] * mx.cap[t, v] for v in vp_lst(mx, p))  # doesn't work for v < 0
-        omsum = 0.
+    @m.Constraint(m.T, m.P)  # OMC (excl. inputs) of all (available at $p$-th period) capacities
+    def omcCD(mx, t, p):
+        caph = 0.   # historical capacities
+        capn = 0.   # new capacities
         for v in vp_lst(mx, p):
             if v < 0:
-                omsum += mx.omcU[t] * mx.hcap[t, v]
+                caph += mx.hcap[t, v]
             else:
-                omsum += mx.omcU[t] * mx.cap[t, v]
-        return mx.omC[t, p] == omsum
+                capn += mx.cap[t, v]
+        return mx.omcC[t, p] == mx.omcU[t] * (caph + capn)
 
-    @m.Constraint(m.T, m.P)    # trajectory of amounts of CO2 emissions caused by covering dem[p]
+    @m.Constraint(m.T, m.P)    # trajectory of amounts of carbon emissions caused by covering dem[p]
     def carbED(mx, t, p):
         return mx.carbE[t, p] == sum(mx.ef[t] * mx.act[t, p, v] for v in vp_lst(mx, p))
 
-    @m.Constraint(m.T, m.V)    # trajectory of amounts of CO2 emissions caused by cap[v]
+    @m.Constraint(m.T, m.V)    # trajectory of amounts of carbon emissions caused by cap[v]
     def carbEDv(mx, t, v):
-        # print(f'carbevd start: t = {t}, v = {v} ------------------------------ ')
+        # print(f'carbEDv start: t = {t}, v = {v} ------------------------------ ')
         sum_act = 0.  # sum act[t, p, v] for all p using act[*, p, v] (v - given)
         for p, vv in mx.PV:
             if v == vv:
                 sum_act += mx.act[t, p, v]
-                # print(f'carbed_rule: t = {t}, p = {p}, vv = {vv}, v = {v}, sum changed = {sum_act}')
+                # print(f'carbEDv: t = {t}, p = {p}, vv = {vv}, v = {v}, sum changed = {sum_act}')
             else:
-                # print(f'carbed: p = {p}, vv = {vv}, v = {v}, sum unchanged')
+                # print(f'carbEDv: p = {p}, vv = {vv}, v = {v}, sum unchanged')
                 pass
-        # print(f'carbed_rule: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
+        # print(f'carbEDv: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
         return mx.carbEv[t, v] == mx.ef[t] * sum_act
 
-    @m.Constraint(m.T, m.P)    # trajectory of costs of CO2 emissions
-    def carbCD(mx, t, p):  # cost of carbon emission
+    @m.Constraint(m.T, m.P)    # trajectory of costs of carb emissions
+    def carbPCD(mx, t, p):
         # the old/commented code double-counts carbE[t, v] in costs
         # return mx.carbC[t, p] == mx.carbU * sum(mx.carbE[t, v] for v in vp_lst(mx, p))
-        return mx.carbC[t, p] == mx.carbU * mx.carbE[t, p]
+        return mx.carbPC[t, p] == mx.carbU * mx.carbE[t, p]
 
     @m.Constraint(m.T, m.P)    # trajectory of annual cost
-    def costAnD(mx, t, p):  # total annual cost
-        return mx.costAn[t, p] == mx.invC[t, p] + mx.rawC[t, p] + mx.omC[t, p] + mx.carbC[t, p]
+    def costAD(mx, t, p):
+        return mx.costAn[t, p] == mx.invC[t, p] + mx.inpC[t, p] + mx.omcC[t, p] + mx.carbPC[t, p]
 
-    @m.Constraint()    # total cost
+    @m.Constraint()    # discounted total cost
     def costD(mx):
+        # todo: clarify impacts of dis[p] in the three definitions below
+        #   also how to correctly compute compound params; use default, from data, and computed
         return mx.cost == sum(mx.dis[p] * sum(mx.costAn[t, p] for t in mx.T) for p in mx.P)
+        # return mx.cost == sum(sum(mx.costAn[t, p] for t in mx.T) for p in mx.P)
+        # return mx.cost == sum(mx.dis[p] * sum(mx.costAn[t, p] for t in mx.T) for p in mx.P)
+        # return mx.cost == sum(mx.dis[p].value * sum(mx.costAn[t, p] for t in mx.T) for p in mx.P)
 
-    @m.Constraint()    # total CO2 emission
+    @m.Constraint()    # total carb emission
     def carbD(mx):
-        # ret mx.carb == sum(sum(sum(mx.ef[t, v] * mx.act[t, p, v] for v in vp_lst(mx, p)) for p in mx.P) for t in mx.T)
         return mx.carb == sum(sum(mx.carbE[t, p] for p in mx.P) for t in mx.T)
 
+    @m.Constraint()  # total imported crude-oil
+    def oilImpD(mx):
+        return mx.oilImp == sum(mx.inpT[p, 'crude'] for p in mx.P)
+
+    @m.Constraint()  # the total (discounted) carbon emission cost
+    def carbCD(mx):
+        return mx.carbC == mx.carbU * mx.carb
+
+    #
+    # auxiliary relations follow:
+    @m.Constraint()  # total (discointed) costs excl. carbon emission cost
+    def excarbCD(mx):
+        return mx.excarbC == mx.cost - mx.carbC
+
     @m.Constraint(m.T, m.P)  # sum of activities [t] covering demand[p]
-    def actSumD(mx, t, p):
-        return mx.actsv[t, p] == sum(mx.act[t, p, v] for v in vp_lst(mx, p))
+    def actvSD(mx, t, p):
+        return mx.actvS[t, p] == sum(mx.act[t, p, v] for v in vp_lst(mx, p))
 
     @m.Constraint(m.T)  # sum of activities [t] covering demand over all [p]
-    def actSumpD(mx, t):
-        return mx.actsvp[t] == sum(mx.actsv[t, p] for p in mx.P)
+    def actSD(mx, t):
+        return mx.actS[t] == sum(mx.actvS[t, p] for p in mx.P)
 
     @m.Constraint(m.T, m.P)  # sum_v cuf[t] * cap[v] for covering demand[p] by techn. [t]
-    def capAvaD(mx, t, p):
+    def capAvD(mx, t, p):
         capsum = 0.
         for v in vp_lst(mx, p):
             if v < 0:
                 capsum += mx.cuf[t] * mx.hcap[t, v]
             else:
                 capsum += mx.cuf[t] * mx.cap[t, v]
-        return mx.capAva[t, p] == capsum
+        return mx.capAv[t, p] == capsum
 
     @m.Constraint(m.T, m.P)  # idle (unused) capacities
-    def capIdleD(mx, t, p):
-        return mx.capIdle[t, p] == mx.capAva[t, p] - mx.actsv[t, p]
+    def capIdlD(mx, t, p):
+        return mx.capIdle[t, p] == mx.capAv[t, p] - mx.actvS[t, p]
 
     @m.Constraint(m.T)  # sum (over all periods) of idle capacities
-    def capIdleSD(mx, t):
+    def capIdlSD(mx, t):
         return mx.capIdleS[t] == sum(mx.capIdle[t, p] for p in mx.P)
 
-    @m.Constraint(m.T)  # sum (over all periods) of capacities
+    @m.Constraint(m.T)  # sum (over all periods) of new capacities (excl. historical)
     def capTotD(mx, t):
         return mx.capTot[t] == sum(mx.cap[t, p] for p in mx.P)
-
-    @m.Constraint()  # total imported oil
-    def oilImpD(mx):  # sum (over all periods) of idle capacities
-        return mx.oilImp == sum(mx.raw['OTL', p] for p in mx.P)
-
-    @m.Constraint()  # cost of the total CO2 emission
-    def co2CD(mx):
-        return mx.co2C == mx.carbU * mx.carb
-
-    @m.Constraint()  # total costs excl. CO2 emission cost
-    def costExco2CD(mx):
-        return mx.coexco2 == mx.cost - mx.co2C
 
     print('sms(): finished')
     # m.pprint()    # does not work (needs lengths of sets)

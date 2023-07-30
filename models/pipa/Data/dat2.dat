@@ -7,60 +7,56 @@ param lifet := 1 ;
 # sets: P, V, PV, H are initialized in SMS
 # could (but should not) be redefined here
 
-# the default (set in SMS) discr=0.05 ?  ??? or 0.95?
-# param discr := 1. ;
-param discr := 0.9 ;
+# the default (set in SMS) discr=0.04
+param discr := 0.05 ;
 
 # technologies
 set T := BTL CTL OTL;
 
 # inputs and outputs
-set I := ele h2 biom coal
-set O := fuel;
+set J := ele h2 biom coal crude;
+set K := fuel;
 #
 
 
 # demand: from Fig. 2, p. 12
 param dem :=
-fuel 0 300
-fuel 1 300
-fuel 2 300
-fuel 3 300
-fuel 4 300
+0 fuel 300
+1 fuel 310
+2 fuel 320
 ;
 
 # from assumption that act are in the same energy-units as output
-param a :=
-BTL fuel 1
-CTL fuel 1
-STL fuel 1
-OTL fuel 1
+param inpU :=
+BTL ele 1.1
+CTL ele 1.2
+OTL ele 1.3
+BTL biom 2.0
+CTL coal 4.0
+OTL crude 3.0
 ;
 
 # emission factor, Tab. 3, p. 14
 param ef :=
 BTL 0.78
 CTL 7.69
-STL 3.4
 OTL 1.68
 ;
 # historical capacities, default 0.
 param hcap :=
 BTL -1 1.4
 CTL -1 12.5
-STL -1 3.4
 OTL -1 748
-# ;
+;
 
 # capacity utilization factor: Tab 3, p. 14
 param cuf :=
-BTL 0.8
+BTL 0.08
 CTL 0.8
-STL 0.8
-OTL 0.8
+OTL 0.85
 ;
 
-# feedstock requirement, == 1/efficiency, Tab 3, p. 14
+# input requirement, == 1/efficiency, Tab 3, p. 14
 param inpU :=
 BTL biom 3
 BTL ele 0.5
@@ -77,21 +73,20 @@ CTL 1397
 OTL 509
 ;
 
-# feedstock prices, Table 1, p. 13
+# feedstock prices
 param inpP :=
-BTL 289
-CTL 83
-STL 94
-OTL 357
+ele  110
+biom 289
+coal 83
+crude 357
 ;
 
-# omc, c_{om}, Tab. 3, p. 13
 param omcU :=
 BTL 334
 CTL 380
 OTL 89
 ;
 
-# carbon price: p. 15:  [10 - 55] $/ton,
+# carbon price
 param carbU := 50 ;
 

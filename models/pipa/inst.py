@@ -11,12 +11,11 @@ def instance(m):
     # dat-format requires DataPortal(model=m)
     data.load(filename='Data/dat2.dat')
     inst = m.create_instance(data)
-    # todo: check and activate computation of dis[p]
 
-    # add here other precomputed parameters, if they will be introduced
-    for p in m.P:   # define discount rates for each period
-        inst.dis[p] = (1. - inst.discr) ** p
-        print(f'p = {p}, dis = {inst.dis[p]}')
+    # # add here other precomputed parameters, if they will be introduced
+    # for p in inst.P:   # define discount rates for each period
+    #     inst.dis[p] = (1. - inst.discr) ** p
+    #     print(f'p = {p}, {inst.discr.value = }, dis = {inst.dis[p].value}')
 
     # print('\n instance.pprint() follows      -----------------------------------------------------------------')
     # inst.pprint()
