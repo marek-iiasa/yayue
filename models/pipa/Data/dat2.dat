@@ -67,7 +67,7 @@ OTL ele 0.1
 ;
 
 # inv cost, Tab. 3, p. 13
-param invU :=
+param invP :=
 BTL 1106
 CTL 1397
 OTL 509
@@ -81,12 +81,12 @@ coal 83
 crude 357
 ;
 
-param omcU :=
+param omcP :=
 BTL 334
 CTL 380
 OTL 89
 ;
 
 # carbon price
-param carbU := 50 ;
+param carbP := 50 ;
 

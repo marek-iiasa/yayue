@@ -45,7 +45,7 @@ if __name__ == '__main__':
     model = instance(abst)  # model instance
     # model.P.pprint()
     # model.H.pprint()
-    # print('Values of discount rates for each planning period:')
+    # print('Values of the discount factor for each planning period:')
     for p in model.P:   # define discount rates for each period
         model.dis[p] = model.discr ** p
     #     print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
@@ -67,13 +67,15 @@ if __name__ == '__main__':
     # opt = SolverFactory('gams')  # gams can be used as a solver
     opt = pe.SolverFactory('glpk')
     result_obj = opt.solve(model, tee=True)
-    cost = f'{pe.value(model.cost):.5e}'
-    co2 = f'{pe.value(model.carb):.5e}'  # carbon emission
-    oil_imp = f'{pe.value(model.oilImp):.5e}'
+    cost = f'{pe.value(model.cost):.3e}'
+    oil_imp = f'{pe.value(model.oilImp):.3e}'
+    carb = f'{pe.value(model.carb):.3e}'  # amount of carbon emission
+    carbC = f'{pe.value(model.carbC):.3e}'  # discounted cost of carbon emission
     print('\nValues of outcome variables -----------------------------------------------------------------------------')
     print(f'Total cost  = {cost}')
-    print(f'CO2 emission = {co2}')
     print(f'Imported crude oil = {oil_imp}')
+    print(f'Carbon emission = {carb}')
+    print(f'Carbon emission (discounted) cost = {carbC}')
 
     # TODO: add storing selected (tdb which are needed) variables
 

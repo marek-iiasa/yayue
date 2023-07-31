@@ -1,0 +1,730 @@
+mk_sms(): finished
+
+ model.pprint() follows:      -----------------------------------------------------------------
+38 Set Declarations
+    J : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    5 : {'ele', 'h2', 'biom', 'coal', 'crude'}
+    K : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    1 : {'fuel',}
+    PV : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    Any :    6 : {(0, 0), (0, -1), (1, 1), (1, 0), (2, 2), (2, 1)}
+    T : Size=1, Index=None, Ordered=Insertion
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :    Any :    3 : {'BTL', 'CTL', 'OTL'}
+    V : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     1 :  H | P :    4 : {-1, 0, 1, 2}
+    actC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     3 :   T*PV :   18 : {('BTL', 0, 0), ('BTL', 0, -1), ('BTL', 1, 1), ('BTL', 1, 0), ('BTL', 2, 2), ('BTL', 2, 1), ('CTL', 0, 0), ('CTL', 0, -1), ('CTL', 1, 1), ('CTL', 1, 0), ('CTL', 2, 2), ('CTL', 2, 1), ('OTL', 0, 0), ('OTL', 0, -1), ('OTL', 1, 1), ('OTL', 1, 0), ('OTL', 2, 2), ('OTL', 2, 1)}
+    act_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     3 :   T*PV :   18 : {('BTL', 0, 0), ('BTL', 0, -1), ('BTL', 1, 1), ('BTL', 1, 0), ('BTL', 2, 2), ('BTL', 2, 1), ('CTL', 0, 0), ('CTL', 0, -1), ('CTL', 1, 1), ('CTL', 1, 0), ('CTL', 2, 2), ('CTL', 2, 1), ('OTL', 0, 0), ('OTL', 0, -1), ('OTL', 1, 1), ('OTL', 1, 0), ('OTL', 2, 2), ('OTL', 2, 1)}
+    actvSD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    actvS_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    capAvD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    capAv_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    capIdlD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    capIdle_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    cap_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbED_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbEDv_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*V :   12 : {('BTL', -1), ('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', -1), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', -1), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbE_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbEv_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*V :   12 : {('BTL', -1), ('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', -1), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', -1), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbPCD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    carbPC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    costAD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    costAn_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    demC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    P*K :    3 : {(0, 'fuel'), (1, 'fuel'), (2, 'fuel')}
+    dem_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    P*K :    3 : {(0, 'fuel'), (1, 'fuel'), (2, 'fuel')}
+    hcap_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*H :    3 : {('BTL', -1), ('CTL', -1), ('OTL', -1)}
+    inpCD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    inpC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    inpD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     3 :  T*P*J :   45 : {('BTL', 0, 'ele'), ('BTL', 0, 'h2'), ('BTL', 0, 'biom'), ('BTL', 0, 'coal'), ('BTL', 0, 'crude'), ('BTL', 1, 'ele'), ('BTL', 1, 'h2'), ('BTL', 1, 'biom'), ('BTL', 1, 'coal'), ('BTL', 1, 'crude'), ('BTL', 2, 'ele'), ('BTL', 2, 'h2'), ('BTL', 2, 'biom'), ('BTL', 2, 'coal'), ('BTL', 2, 'crude'), ('CTL', 0, 'ele'), ('CTL', 0, 'h2'), ('CTL', 0, 'biom'), ('CTL', 0, 'coal'), ('CTL', 0, 'crude'), ('CTL', 1, 'ele'), ('CTL', 1, 'h2'), ('CTL', 1, 'biom'), ('CTL', 1, 'coal'), ('CTL', 1, 'crude'), ('CTL', 2, 'ele'), ('CTL', 2, 'h2'), ('CTL', 2, 'biom'), ('CTL', 2, 'coal'), ('CTL', 2, 'crude'), ('OTL', 0, 'ele'), ('OTL', 0, 'h2'), ('OTL', 0, 'biom'), ('OTL', 0, 'coal'), ('OTL', 0, 'crude'), ('OTL', 1, 'ele'), ('OTL', 1, 'h2'), ('OTL', 1, 'biom'), ('OTL', 1, 'coal'), ('OTL', 1, 'crude'), ('OTL', 2, 'ele'), ('OTL', 2, 'h2'), ('OTL', 2, 'biom'), ('OTL', 2, 'coal'), ('OTL', 2, 'crude')}
+    inpTD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    P*J :   15 : {(0, 'ele'), (0, 'h2'), (0, 'biom'), (0, 'coal'), (0, 'crude'), (1, 'ele'), (1, 'h2'), (1, 'biom'), (1, 'coal'), (1, 'crude'), (2, 'ele'), (2, 'h2'), (2, 'biom'), (2, 'coal'), (2, 'crude')}
+    inpT_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    P*J :   15 : {(0, 'ele'), (0, 'h2'), (0, 'biom'), (0, 'coal'), (0, 'crude'), (1, 'ele'), (1, 'h2'), (1, 'biom'), (1, 'coal'), (1, 'crude'), (2, 'ele'), (2, 'h2'), (2, 'biom'), (2, 'coal'), (2, 'crude')}
+    inpU_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*J :   15 : {('BTL', 'ele'), ('BTL', 'h2'), ('BTL', 'biom'), ('BTL', 'coal'), ('BTL', 'crude'), ('CTL', 'ele'), ('CTL', 'h2'), ('CTL', 'biom'), ('CTL', 'coal'), ('CTL', 'crude'), ('OTL', 'ele'), ('OTL', 'h2'), ('OTL', 'biom'), ('OTL', 'coal'), ('OTL', 'crude')}
+    inp_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     3 :  T*P*J :   45 : {('BTL', 0, 'ele'), ('BTL', 0, 'h2'), ('BTL', 0, 'biom'), ('BTL', 0, 'coal'), ('BTL', 0, 'crude'), ('BTL', 1, 'ele'), ('BTL', 1, 'h2'), ('BTL', 1, 'biom'), ('BTL', 1, 'coal'), ('BTL', 1, 'crude'), ('BTL', 2, 'ele'), ('BTL', 2, 'h2'), ('BTL', 2, 'biom'), ('BTL', 2, 'coal'), ('BTL', 2, 'crude'), ('CTL', 0, 'ele'), ('CTL', 0, 'h2'), ('CTL', 0, 'biom'), ('CTL', 0, 'coal'), ('CTL', 0, 'crude'), ('CTL', 1, 'ele'), ('CTL', 1, 'h2'), ('CTL', 1, 'biom'), ('CTL', 1, 'coal'), ('CTL', 1, 'crude'), ('CTL', 2, 'ele'), ('CTL', 2, 'h2'), ('CTL', 2, 'biom'), ('CTL', 2, 'coal'), ('CTL', 2, 'crude'), ('OTL', 0, 'ele'), ('OTL', 0, 'h2'), ('OTL', 0, 'biom'), ('OTL', 0, 'coal'), ('OTL', 0, 'crude'), ('OTL', 1, 'ele'), ('OTL', 1, 'h2'), ('OTL', 1, 'biom'), ('OTL', 1, 'coal'), ('OTL', 1, 'crude'), ('OTL', 2, 'ele'), ('OTL', 2, 'h2'), ('OTL', 2, 'biom'), ('OTL', 2, 'coal'), ('OTL', 2, 'crude')}
+    invCD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    invC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    omcCD_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    omcC_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*P :    9 : {('BTL', 0), ('BTL', 1), ('BTL', 2), ('CTL', 0), ('CTL', 1), ('CTL', 2), ('OTL', 0), ('OTL', 1), ('OTL', 2)}
+    outU_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     2 :    T*K :    3 : {('BTL', 'fuel'), ('CTL', 'fuel'), ('OTL', 'fuel')}
+    out_index : Size=1, Index=None, Ordered=True
+        Key  : Dimen : Domain : Size : Members
+        None :     3 :  T*P*K :    9 : {('BTL', 0, 'fuel'), ('BTL', 1, 'fuel'), ('BTL', 2, 'fuel'), ('CTL', 0, 'fuel'), ('CTL', 1, 'fuel'), ('CTL', 2, 'fuel'), ('OTL', 0, 'fuel'), ('OTL', 1, 'fuel'), ('OTL', 2, 'fuel')}
+
+2 RangeSet Declarations
+    H : Dimen=1, Size=1, Bounds=(-1, -1)
+        Key  : Finite : Members
+        None :   True :    [-1]
+    P : Dimen=1, Size=3, Bounds=(0, 2)
+        Key  : Finite : Members
+        None :   True :   [0:2]
+
+16 Param Declarations
+    carbP : Size=1, Index=None, Domain=NonNegativeReals, Default=1.0, Mutable=True
+        Key  : Value
+        None :    50
+    cuf : Size=3, Index=T, Domain=NonNegativeReals, Default=0.8, Mutable=False
+        Key : Value
+        BTL :  0.08
+        CTL :   0.8
+        OTL :  0.85
+    dem : Size=3, Index=dem_index, Domain=NonNegativeReals, Default=0.0, Mutable=False
+        Key         : Value
+        (0, 'fuel') :   300
+        (1, 'fuel') :   310
+        (2, 'fuel') :   320
+    dis : Size=3, Index=P, Domain=NonNegativeReals, Default=0.9, Mutable=True
+        Key : Value
+          0 :                   1.0
+          1 :                  0.05
+          2 : 0.0025000000000000005
+    discr : Size=1, Index=None, Domain=NonNegativeReals, Default=0.04, Mutable=False
+        Key  : Value
+        None :  0.05
+    ef : Size=3, Index=T, Domain=NonNegativeReals, Default=1.0, Mutable=False
+        Key : Value
+        BTL :  0.78
+        CTL :  7.69
+        OTL :  1.68
+    hcap : Size=3, Index=hcap_index, Domain=NonNegativeReals, Default=0.0, Mutable=False
+        Key         : Value
+        ('BTL', -1) :   1.4
+        ('CTL', -1) :  12.5
+        ('OTL', -1) :   748
+    inpP : Size=5, Index=J, Domain=NonNegativeReals, Default=1.0, Mutable=True
+        Key   : Value
+         biom :   289
+         coal :    83
+        crude :   357
+          ele :   110
+           h2 :   1.0
+    inpU : Size=15, Index=inpU_index, Domain=NonNegativeReals, Default=1.0, Mutable=False
+        Key              : Value
+         ('BTL', 'biom') :     3
+          ('BTL', 'ele') :   0.5
+         ('CTL', 'coal') :  2.17
+          ('CTL', 'ele') :   0.2
+        ('OTL', 'crude') :  1.27
+          ('OTL', 'ele') :   0.1
+    invP : Size=3, Index=T, Domain=NonNegativeReals, Default=1.0, Mutable=False
+        Key : Value
+        BTL :  1106
+        CTL :  1397
+        OTL :   509
+    lifet : Size=1, Index=None, Domain=NonNegativeIntegers, Default=0, Mutable=False
+        Key  : Value
+        None :     1
+    lifet_ : Size=1, Index=None, Domain=Any, Default=None, Mutable=False
+        Key  : Value
+        None :    -1
+    omcP : Size=3, Index=T, Domain=NonNegativeReals, Default=1.0, Mutable=False
+        Key : Value
+        BTL :   334
+        CTL :   380
+        OTL :    89
+    outU : Size=3, Index=outU_index, Domain=NonNegativeReals, Default=1.0, Mutable=False
+        Key : Value
+    periods : Size=1, Index=None, Domain=PositiveIntegers, Default=3, Mutable=False
+        Key  : Value
+        None :     3
+    periods_ : Size=1, Index=None, Domain=Any, Default=None, Mutable=False
+        Key  : Value
+        None :     2
+
+23 Var Declarations
+    act : Size=18, Index=act_index
+        Key            : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0, -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 0, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 1, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 1, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 2, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 2, 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0, -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 0, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 1, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 1, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 2, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 2, 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0, -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 0, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 1, 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 1, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 2, 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 2, 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    actS : Size=3, Index=T
+        Key : Lower : Value : Upper : Fixed : Stale : Domain
+        BTL :     0 :  None :  None : False :  True : NonNegativeReals
+        CTL :     0 :  None :  None : False :  True : NonNegativeReals
+        OTL :     0 :  None :  None : False :  True : NonNegativeReals
+    actvS : Size=9, Index=actvS_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    cap : Size=9, Index=cap_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    capAv : Size=9, Index=capAv_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    capIdle : Size=9, Index=capIdle_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    capIdleS : Size=3, Index=T
+        Key : Lower : Value : Upper : Fixed : Stale : Domain
+        BTL :     0 :  None :  None : False :  True : NonNegativeReals
+        CTL :     0 :  None :  None : False :  True : NonNegativeReals
+        OTL :     0 :  None :  None : False :  True : NonNegativeReals
+    capTot : Size=3, Index=T
+        Key : Lower : Value : Upper : Fixed : Stale : Domain
+        BTL :     0 :  None :  None : False :  True : NonNegativeReals
+        CTL :     0 :  None :  None : False :  True : NonNegativeReals
+        OTL :     0 :  None :  None : False :  True : NonNegativeReals
+    carb : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :  None :  None : False :  True :  Reals
+    carbC : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :  None :  None : False :  True :  Reals
+    carbE : Size=9, Index=carbE_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    carbEv : Size=12, Index=carbEv_index
+        Key         : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', -1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    carbPC : Size=9, Index=carbPC_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    cost : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :  None :  None : False :  True :  Reals
+    costAn : Size=9, Index=costAn_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    excarbC : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :  None :  None : False :  True :  Reals
+    inp : Size=45, Index=inp_index
+        Key                 : Lower : Value : Upper : Fixed : Stale : Domain
+         ('BTL', 0, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 0, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 0, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('BTL', 0, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('BTL', 0, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 1, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 1, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('BTL', 1, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('BTL', 1, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 2, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('BTL', 2, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('BTL', 2, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('BTL', 2, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 0, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 0, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('CTL', 0, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('CTL', 0, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 1, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 1, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('CTL', 1, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('CTL', 1, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 2, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('CTL', 2, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('CTL', 2, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('CTL', 2, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 0, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 0, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('OTL', 0, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('OTL', 0, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 1, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 1, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('OTL', 1, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('OTL', 1, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 2, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         ('OTL', 2, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          ('OTL', 2, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           ('OTL', 2, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+    inpC : Size=9, Index=inpC_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    inpT : Size=15, Index=inpT_index
+        Key          : Lower : Value : Upper : Fixed : Stale : Domain
+         (0, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         (0, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        (0, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          (0, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           (0, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         (1, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         (1, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        (1, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          (1, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           (1, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+         (2, 'biom') :     0 :  None :  None : False :  True : NonNegativeReals
+         (2, 'coal') :     0 :  None :  None : False :  True : NonNegativeReals
+        (2, 'crude') :     0 :  None :  None : False :  True : NonNegativeReals
+          (2, 'ele') :     0 :  None :  None : False :  True : NonNegativeReals
+           (2, 'h2') :     0 :  None :  None : False :  True : NonNegativeReals
+    invC : Size=9, Index=invC_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    oilImp : Size=1, Index=None
+        Key  : Lower : Value : Upper : Fixed : Stale : Domain
+        None :  None :  None :  None : False :  True :  Reals
+    omcC : Size=9, Index=omcC_index
+        Key        : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1) :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2) :     0 :  None :  None : False :  True : NonNegativeReals
+    out : Size=9, Index=out_index
+        Key                : Lower : Value : Upper : Fixed : Stale : Domain
+        ('BTL', 0, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 1, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('BTL', 2, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 0, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 1, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('CTL', 2, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 0, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 1, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+        ('OTL', 2, 'fuel') :     0 :  None :  None : False :  True : NonNegativeReals
+
+1 Objective Declarations
+    goal : Size=1, Index=None, Active=True
+        Key  : Active : Sense    : Expression
+        None :   True : minimize :       cost
+
+22 Constraint Declarations
+    actC : Size=18, Index=actC_index, Active=True
+        Key            : Lower : Body                           : Upper               : Active
+        ('BTL', 0, -1) :   0.0 :                  act[BTL,0,-1] : 0.11199999999999999 :   True
+         ('BTL', 0, 0) :   0.0 : 0.08*cap[BTL,0] - act[BTL,0,0] :                +Inf :   True
+         ('BTL', 1, 0) :   0.0 : 0.08*cap[BTL,0] - act[BTL,1,0] :                +Inf :   True
+         ('BTL', 1, 1) :   0.0 : 0.08*cap[BTL,1] - act[BTL,1,1] :                +Inf :   True
+         ('BTL', 2, 1) :   0.0 : 0.08*cap[BTL,1] - act[BTL,2,1] :                +Inf :   True
+         ('BTL', 2, 2) :   0.0 : 0.08*cap[BTL,2] - act[BTL,2,2] :                +Inf :   True
+        ('CTL', 0, -1) :   0.0 :                  act[CTL,0,-1] :                10.0 :   True
+         ('CTL', 0, 0) :   0.0 :  0.8*cap[CTL,0] - act[CTL,0,0] :                +Inf :   True
+         ('CTL', 1, 0) :   0.0 :  0.8*cap[CTL,0] - act[CTL,1,0] :                +Inf :   True
+         ('CTL', 1, 1) :   0.0 :  0.8*cap[CTL,1] - act[CTL,1,1] :                +Inf :   True
+         ('CTL', 2, 1) :   0.0 :  0.8*cap[CTL,1] - act[CTL,2,1] :                +Inf :   True
+         ('CTL', 2, 2) :   0.0 :  0.8*cap[CTL,2] - act[CTL,2,2] :                +Inf :   True
+        ('OTL', 0, -1) :   0.0 :                  act[OTL,0,-1] :               635.8 :   True
+         ('OTL', 0, 0) :   0.0 : 0.85*cap[OTL,0] - act[OTL,0,0] :                +Inf :   True
+         ('OTL', 1, 0) :   0.0 : 0.85*cap[OTL,0] - act[OTL,1,0] :                +Inf :   True
+         ('OTL', 1, 1) :   0.0 : 0.85*cap[OTL,1] - act[OTL,1,1] :                +Inf :   True
+         ('OTL', 2, 1) :   0.0 : 0.85*cap[OTL,1] - act[OTL,2,1] :                +Inf :   True
+         ('OTL', 2, 2) :   0.0 : 0.85*cap[OTL,2] - act[OTL,2,2] :                +Inf :   True
+    actSD : Size=3, Index=T, Active=True
+        Key : Lower : Body                                                     : Upper : Active
+        BTL :   0.0 : actS[BTL] - (actvS[BTL,0] + actvS[BTL,1] + actvS[BTL,2]) :   0.0 :   True
+        CTL :   0.0 : actS[CTL] - (actvS[CTL,0] + actvS[CTL,1] + actvS[CTL,2]) :   0.0 :   True
+        OTL :   0.0 : actS[OTL] - (actvS[OTL,0] + actvS[OTL,1] + actvS[OTL,2]) :   0.0 :   True
+    actvSD : Size=9, Index=actvSD_index, Active=True
+        Key        : Lower : Body                                          : Upper : Active
+        ('BTL', 0) :   0.0 : actvS[BTL,0] - (act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+        ('BTL', 1) :   0.0 :  actvS[BTL,1] - (act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+        ('BTL', 2) :   0.0 :  actvS[BTL,2] - (act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+        ('CTL', 0) :   0.0 : actvS[CTL,0] - (act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+        ('CTL', 1) :   0.0 :  actvS[CTL,1] - (act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+        ('CTL', 2) :   0.0 :  actvS[CTL,2] - (act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+        ('OTL', 0) :   0.0 : actvS[OTL,0] - (act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+        ('OTL', 1) :   0.0 :  actvS[OTL,1] - (act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+        ('OTL', 2) :   0.0 :  actvS[OTL,2] - (act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+    capAvD : Size=9, Index=capAvD_index, Active=True
+        Key        : Lower : Body                                                   : Upper : Active
+        ('BTL', 0) :   0.0 : capAv[BTL,0] - (0.08*cap[BTL,0] + 0.11199999999999999) :   0.0 :   True
+        ('BTL', 1) :   0.0 :     capAv[BTL,1] - (0.08*cap[BTL,1] + 0.08*cap[BTL,0]) :   0.0 :   True
+        ('BTL', 2) :   0.0 :     capAv[BTL,2] - (0.08*cap[BTL,2] + 0.08*cap[BTL,1]) :   0.0 :   True
+        ('CTL', 0) :   0.0 :                 capAv[CTL,0] - (0.8*cap[CTL,0] + 10.0) :   0.0 :   True
+        ('CTL', 1) :   0.0 :       capAv[CTL,1] - (0.8*cap[CTL,1] + 0.8*cap[CTL,0]) :   0.0 :   True
+        ('CTL', 2) :   0.0 :       capAv[CTL,2] - (0.8*cap[CTL,2] + 0.8*cap[CTL,1]) :   0.0 :   True
+        ('OTL', 0) :   0.0 :               capAv[OTL,0] - (0.85*cap[OTL,0] + 635.8) :   0.0 :   True
+        ('OTL', 1) :   0.0 :     capAv[OTL,1] - (0.85*cap[OTL,1] + 0.85*cap[OTL,0]) :   0.0 :   True
+        ('OTL', 2) :   0.0 :     capAv[OTL,2] - (0.85*cap[OTL,2] + 0.85*cap[OTL,1]) :   0.0 :   True
+    capIdlD : Size=9, Index=capIdlD_index, Active=True
+        Key        : Lower : Body                                           : Upper : Active
+        ('BTL', 0) :   0.0 : capIdle[BTL,0] - (capAv[BTL,0] - actvS[BTL,0]) :   0.0 :   True
+        ('BTL', 1) :   0.0 : capIdle[BTL,1] - (capAv[BTL,1] - actvS[BTL,1]) :   0.0 :   True
+        ('BTL', 2) :   0.0 : capIdle[BTL,2] - (capAv[BTL,2] - actvS[BTL,2]) :   0.0 :   True
+        ('CTL', 0) :   0.0 : capIdle[CTL,0] - (capAv[CTL,0] - actvS[CTL,0]) :   0.0 :   True
+        ('CTL', 1) :   0.0 : capIdle[CTL,1] - (capAv[CTL,1] - actvS[CTL,1]) :   0.0 :   True
+        ('CTL', 2) :   0.0 : capIdle[CTL,2] - (capAv[CTL,2] - actvS[CTL,2]) :   0.0 :   True
+        ('OTL', 0) :   0.0 : capIdle[OTL,0] - (capAv[OTL,0] - actvS[OTL,0]) :   0.0 :   True
+        ('OTL', 1) :   0.0 : capIdle[OTL,1] - (capAv[OTL,1] - actvS[OTL,1]) :   0.0 :   True
+        ('OTL', 2) :   0.0 : capIdle[OTL,2] - (capAv[OTL,2] - actvS[OTL,2]) :   0.0 :   True
+    capIdlSD : Size=3, Index=T, Active=True
+        Key : Lower : Body                                                               : Upper : Active
+        BTL :   0.0 : capIdleS[BTL] - (capIdle[BTL,0] + capIdle[BTL,1] + capIdle[BTL,2]) :   0.0 :   True
+        CTL :   0.0 : capIdleS[CTL] - (capIdle[CTL,0] + capIdle[CTL,1] + capIdle[CTL,2]) :   0.0 :   True
+        OTL :   0.0 : capIdleS[OTL] - (capIdle[OTL,0] + capIdle[OTL,1] + capIdle[OTL,2]) :   0.0 :   True
+    capTotD : Size=3, Index=T, Active=True
+        Key : Lower : Body                                                 : Upper : Active
+        BTL :   0.0 : capTot[BTL] - (cap[BTL,0] + cap[BTL,1] + cap[BTL,2]) :   0.0 :   True
+        CTL :   0.0 : capTot[CTL] - (cap[CTL,0] + cap[CTL,1] + cap[CTL,2]) :   0.0 :   True
+        OTL :   0.0 : capTot[OTL] - (cap[OTL,0] + cap[OTL,1] + cap[OTL,2]) :   0.0 :   True
+    carbCD : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                                                                                                                            : Upper : Active
+        None :   0.0 : carbC - carbP*(dis[0]*(carbE[BTL,0] + carbE[CTL,0] + carbE[OTL,0]) + dis[1]*(carbE[BTL,1] + carbE[CTL,1] + carbE[OTL,1]) + dis[2]*(carbE[BTL,2] + carbE[CTL,2] + carbE[OTL,2])) :   0.0 :   True
+    carbD : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                                                                                          : Upper : Active
+        None :   0.0 : carb - (carbE[BTL,0] + carbE[BTL,1] + carbE[BTL,2] + carbE[CTL,0] + carbE[CTL,1] + carbE[CTL,2] + carbE[OTL,0] + carbE[OTL,1] + carbE[OTL,2]) :   0.0 :   True
+    carbED : Size=9, Index=carbED_index, Active=True
+        Key        : Lower : Body                                                    : Upper : Active
+        ('BTL', 0) :   0.0 : carbE[BTL,0] - (0.78*act[BTL,0,0] + 0.78*act[BTL,0,-1]) :   0.0 :   True
+        ('BTL', 1) :   0.0 :  carbE[BTL,1] - (0.78*act[BTL,1,1] + 0.78*act[BTL,1,0]) :   0.0 :   True
+        ('BTL', 2) :   0.0 :  carbE[BTL,2] - (0.78*act[BTL,2,2] + 0.78*act[BTL,2,1]) :   0.0 :   True
+        ('CTL', 0) :   0.0 : carbE[CTL,0] - (7.69*act[CTL,0,0] + 7.69*act[CTL,0,-1]) :   0.0 :   True
+        ('CTL', 1) :   0.0 :  carbE[CTL,1] - (7.69*act[CTL,1,1] + 7.69*act[CTL,1,0]) :   0.0 :   True
+        ('CTL', 2) :   0.0 :  carbE[CTL,2] - (7.69*act[CTL,2,2] + 7.69*act[CTL,2,1]) :   0.0 :   True
+        ('OTL', 0) :   0.0 : carbE[OTL,0] - (1.68*act[OTL,0,0] + 1.68*act[OTL,0,-1]) :   0.0 :   True
+        ('OTL', 1) :   0.0 :  carbE[OTL,1] - (1.68*act[OTL,1,1] + 1.68*act[OTL,1,0]) :   0.0 :   True
+        ('OTL', 2) :   0.0 :  carbE[OTL,2] - (1.68*act[OTL,2,2] + 1.68*act[OTL,2,1]) :   0.0 :   True
+    carbEDv : Size=12, Index=carbEDv_index, Active=True
+        Key         : Lower : Body                                               : Upper : Active
+        ('BTL', -1) :   0.0 :                carbEv[BTL,-1] - 0.78*act[BTL,0,-1] :   0.0 :   True
+         ('BTL', 0) :   0.0 : carbEv[BTL,0] - 0.78*(act[BTL,0,0] + act[BTL,1,0]) :   0.0 :   True
+         ('BTL', 1) :   0.0 : carbEv[BTL,1] - 0.78*(act[BTL,1,1] + act[BTL,2,1]) :   0.0 :   True
+         ('BTL', 2) :   0.0 :                  carbEv[BTL,2] - 0.78*act[BTL,2,2] :   0.0 :   True
+        ('CTL', -1) :   0.0 :                carbEv[CTL,-1] - 7.69*act[CTL,0,-1] :   0.0 :   True
+         ('CTL', 0) :   0.0 : carbEv[CTL,0] - 7.69*(act[CTL,0,0] + act[CTL,1,0]) :   0.0 :   True
+         ('CTL', 1) :   0.0 : carbEv[CTL,1] - 7.69*(act[CTL,1,1] + act[CTL,2,1]) :   0.0 :   True
+         ('CTL', 2) :   0.0 :                  carbEv[CTL,2] - 7.69*act[CTL,2,2] :   0.0 :   True
+        ('OTL', -1) :   0.0 :                carbEv[OTL,-1] - 1.68*act[OTL,0,-1] :   0.0 :   True
+         ('OTL', 0) :   0.0 : carbEv[OTL,0] - 1.68*(act[OTL,0,0] + act[OTL,1,0]) :   0.0 :   True
+         ('OTL', 1) :   0.0 : carbEv[OTL,1] - 1.68*(act[OTL,1,1] + act[OTL,2,1]) :   0.0 :   True
+         ('OTL', 2) :   0.0 :                  carbEv[OTL,2] - 1.68*act[OTL,2,2] :   0.0 :   True
+    carbPCD : Size=9, Index=carbPCD_index, Active=True
+        Key        : Lower : Body                               : Upper : Active
+        ('BTL', 0) :   0.0 : carbPC[BTL,0] - carbP*carbE[BTL,0] :   0.0 :   True
+        ('BTL', 1) :   0.0 : carbPC[BTL,1] - carbP*carbE[BTL,1] :   0.0 :   True
+        ('BTL', 2) :   0.0 : carbPC[BTL,2] - carbP*carbE[BTL,2] :   0.0 :   True
+        ('CTL', 0) :   0.0 : carbPC[CTL,0] - carbP*carbE[CTL,0] :   0.0 :   True
+        ('CTL', 1) :   0.0 : carbPC[CTL,1] - carbP*carbE[CTL,1] :   0.0 :   True
+        ('CTL', 2) :   0.0 : carbPC[CTL,2] - carbP*carbE[CTL,2] :   0.0 :   True
+        ('OTL', 0) :   0.0 : carbPC[OTL,0] - carbP*carbE[OTL,0] :   0.0 :   True
+        ('OTL', 1) :   0.0 : carbPC[OTL,1] - carbP*carbE[OTL,1] :   0.0 :   True
+        ('OTL', 2) :   0.0 : carbPC[OTL,2] - carbP*carbE[OTL,2] :   0.0 :   True
+    costAD : Size=9, Index=costAD_index, Active=True
+        Key        : Lower : Body                                                                      : Upper : Active
+        ('BTL', 0) :   0.0 : costAn[BTL,0] - (invC[BTL,0] + inpC[BTL,0] + omcC[BTL,0] + carbPC[BTL,0]) :   0.0 :   True
+        ('BTL', 1) :   0.0 : costAn[BTL,1] - (invC[BTL,1] + inpC[BTL,1] + omcC[BTL,1] + carbPC[BTL,1]) :   0.0 :   True
+        ('BTL', 2) :   0.0 : costAn[BTL,2] - (invC[BTL,2] + inpC[BTL,2] + omcC[BTL,2] + carbPC[BTL,2]) :   0.0 :   True
+        ('CTL', 0) :   0.0 : costAn[CTL,0] - (invC[CTL,0] + inpC[CTL,0] + omcC[CTL,0] + carbPC[CTL,0]) :   0.0 :   True
+        ('CTL', 1) :   0.0 : costAn[CTL,1] - (invC[CTL,1] + inpC[CTL,1] + omcC[CTL,1] + carbPC[CTL,1]) :   0.0 :   True
+        ('CTL', 2) :   0.0 : costAn[CTL,2] - (invC[CTL,2] + inpC[CTL,2] + omcC[CTL,2] + carbPC[CTL,2]) :   0.0 :   True
+        ('OTL', 0) :   0.0 : costAn[OTL,0] - (invC[OTL,0] + inpC[OTL,0] + omcC[OTL,0] + carbPC[OTL,0]) :   0.0 :   True
+        ('OTL', 1) :   0.0 : costAn[OTL,1] - (invC[OTL,1] + inpC[OTL,1] + omcC[OTL,1] + carbPC[OTL,1]) :   0.0 :   True
+        ('OTL', 2) :   0.0 : costAn[OTL,2] - (invC[OTL,2] + inpC[OTL,2] + omcC[OTL,2] + carbPC[OTL,2]) :   0.0 :   True
+    costD : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                                                                                                                                              : Upper : Active
+        None :   0.0 : cost - (dis[0]*(costAn[BTL,0] + costAn[CTL,0] + costAn[OTL,0]) + dis[1]*(costAn[BTL,1] + costAn[CTL,1] + costAn[OTL,1]) + dis[2]*(costAn[BTL,2] + costAn[CTL,2] + costAn[OTL,2])) :   0.0 :   True
+    demC : Size=3, Index=demC_index, Active=True
+        Key         : Lower : Body                                                                                       : Upper : Active
+        (0, 'fuel') : 300.0 : act[BTL,0,0] + act[BTL,0,-1] + act[CTL,0,0] + act[CTL,0,-1] + act[OTL,0,0] + act[OTL,0,-1] :  +Inf :   True
+        (1, 'fuel') : 310.0 :    act[BTL,1,1] + act[BTL,1,0] + act[CTL,1,1] + act[CTL,1,0] + act[OTL,1,1] + act[OTL,1,0] :  +Inf :   True
+        (2, 'fuel') : 320.0 :    act[BTL,2,2] + act[BTL,2,1] + act[CTL,2,2] + act[CTL,2,1] + act[OTL,2,2] + act[OTL,2,1] :  +Inf :   True
+    excarbCD : Size=1, Index=None, Active=True
+        Key  : Lower : Body                     : Upper : Active
+        None :   0.0 : excarbC - (cost - carbC) :   0.0 :   True
+    inpCD : Size=9, Index=inpCD_index, Active=True
+        Key        : Lower : Body                                                                                                                                                       : Upper : Active
+        ('BTL', 0) :   0.0 : inpC[BTL,0] - (inpP[ele]*inp[BTL,0,ele] + inpP[h2]*inp[BTL,0,h2] + inpP[biom]*inp[BTL,0,biom] + inpP[coal]*inp[BTL,0,coal] + inpP[crude]*inp[BTL,0,crude]) :   0.0 :   True
+        ('BTL', 1) :   0.0 : inpC[BTL,1] - (inpP[ele]*inp[BTL,1,ele] + inpP[h2]*inp[BTL,1,h2] + inpP[biom]*inp[BTL,1,biom] + inpP[coal]*inp[BTL,1,coal] + inpP[crude]*inp[BTL,1,crude]) :   0.0 :   True
+        ('BTL', 2) :   0.0 : inpC[BTL,2] - (inpP[ele]*inp[BTL,2,ele] + inpP[h2]*inp[BTL,2,h2] + inpP[biom]*inp[BTL,2,biom] + inpP[coal]*inp[BTL,2,coal] + inpP[crude]*inp[BTL,2,crude]) :   0.0 :   True
+        ('CTL', 0) :   0.0 : inpC[CTL,0] - (inpP[ele]*inp[CTL,0,ele] + inpP[h2]*inp[CTL,0,h2] + inpP[biom]*inp[CTL,0,biom] + inpP[coal]*inp[CTL,0,coal] + inpP[crude]*inp[CTL,0,crude]) :   0.0 :   True
+        ('CTL', 1) :   0.0 : inpC[CTL,1] - (inpP[ele]*inp[CTL,1,ele] + inpP[h2]*inp[CTL,1,h2] + inpP[biom]*inp[CTL,1,biom] + inpP[coal]*inp[CTL,1,coal] + inpP[crude]*inp[CTL,1,crude]) :   0.0 :   True
+        ('CTL', 2) :   0.0 : inpC[CTL,2] - (inpP[ele]*inp[CTL,2,ele] + inpP[h2]*inp[CTL,2,h2] + inpP[biom]*inp[CTL,2,biom] + inpP[coal]*inp[CTL,2,coal] + inpP[crude]*inp[CTL,2,crude]) :   0.0 :   True
+        ('OTL', 0) :   0.0 : inpC[OTL,0] - (inpP[ele]*inp[OTL,0,ele] + inpP[h2]*inp[OTL,0,h2] + inpP[biom]*inp[OTL,0,biom] + inpP[coal]*inp[OTL,0,coal] + inpP[crude]*inp[OTL,0,crude]) :   0.0 :   True
+        ('OTL', 1) :   0.0 : inpC[OTL,1] - (inpP[ele]*inp[OTL,1,ele] + inpP[h2]*inp[OTL,1,h2] + inpP[biom]*inp[OTL,1,biom] + inpP[coal]*inp[OTL,1,coal] + inpP[crude]*inp[OTL,1,crude]) :   0.0 :   True
+        ('OTL', 2) :   0.0 : inpC[OTL,2] - (inpP[ele]*inp[OTL,2,ele] + inpP[h2]*inp[OTL,2,h2] + inpP[biom]*inp[OTL,2,biom] + inpP[coal]*inp[OTL,2,coal] + inpP[crude]*inp[OTL,2,crude]) :   0.0 :   True
+    inpD : Size=45, Index=inpD_index, Active=True
+        Key                 : Lower : Body                                                   : Upper : Active
+         ('BTL', 0, 'biom') :   0.0 :     inp[BTL,0,biom] - 3*(act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+         ('BTL', 0, 'coal') :   0.0 :       inp[BTL,0,coal] - (act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+        ('BTL', 0, 'crude') :   0.0 :      inp[BTL,0,crude] - (act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+          ('BTL', 0, 'ele') :   0.0 :    inp[BTL,0,ele] - 0.5*(act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+           ('BTL', 0, 'h2') :   0.0 :         inp[BTL,0,h2] - (act[BTL,0,0] + act[BTL,0,-1]) :   0.0 :   True
+         ('BTL', 1, 'biom') :   0.0 :      inp[BTL,1,biom] - 3*(act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+         ('BTL', 1, 'coal') :   0.0 :        inp[BTL,1,coal] - (act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+        ('BTL', 1, 'crude') :   0.0 :       inp[BTL,1,crude] - (act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+          ('BTL', 1, 'ele') :   0.0 :     inp[BTL,1,ele] - 0.5*(act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+           ('BTL', 1, 'h2') :   0.0 :          inp[BTL,1,h2] - (act[BTL,1,1] + act[BTL,1,0]) :   0.0 :   True
+         ('BTL', 2, 'biom') :   0.0 :      inp[BTL,2,biom] - 3*(act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+         ('BTL', 2, 'coal') :   0.0 :        inp[BTL,2,coal] - (act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+        ('BTL', 2, 'crude') :   0.0 :       inp[BTL,2,crude] - (act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+          ('BTL', 2, 'ele') :   0.0 :     inp[BTL,2,ele] - 0.5*(act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+           ('BTL', 2, 'h2') :   0.0 :          inp[BTL,2,h2] - (act[BTL,2,2] + act[BTL,2,1]) :   0.0 :   True
+         ('CTL', 0, 'biom') :   0.0 :       inp[CTL,0,biom] - (act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+         ('CTL', 0, 'coal') :   0.0 :  inp[CTL,0,coal] - 2.17*(act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+        ('CTL', 0, 'crude') :   0.0 :      inp[CTL,0,crude] - (act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+          ('CTL', 0, 'ele') :   0.0 :    inp[CTL,0,ele] - 0.2*(act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+           ('CTL', 0, 'h2') :   0.0 :         inp[CTL,0,h2] - (act[CTL,0,0] + act[CTL,0,-1]) :   0.0 :   True
+         ('CTL', 1, 'biom') :   0.0 :        inp[CTL,1,biom] - (act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+         ('CTL', 1, 'coal') :   0.0 :   inp[CTL,1,coal] - 2.17*(act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+        ('CTL', 1, 'crude') :   0.0 :       inp[CTL,1,crude] - (act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+          ('CTL', 1, 'ele') :   0.0 :     inp[CTL,1,ele] - 0.2*(act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+           ('CTL', 1, 'h2') :   0.0 :          inp[CTL,1,h2] - (act[CTL,1,1] + act[CTL,1,0]) :   0.0 :   True
+         ('CTL', 2, 'biom') :   0.0 :        inp[CTL,2,biom] - (act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+         ('CTL', 2, 'coal') :   0.0 :   inp[CTL,2,coal] - 2.17*(act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+        ('CTL', 2, 'crude') :   0.0 :       inp[CTL,2,crude] - (act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+          ('CTL', 2, 'ele') :   0.0 :     inp[CTL,2,ele] - 0.2*(act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+           ('CTL', 2, 'h2') :   0.0 :          inp[CTL,2,h2] - (act[CTL,2,2] + act[CTL,2,1]) :   0.0 :   True
+         ('OTL', 0, 'biom') :   0.0 :       inp[OTL,0,biom] - (act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+         ('OTL', 0, 'coal') :   0.0 :       inp[OTL,0,coal] - (act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+        ('OTL', 0, 'crude') :   0.0 : inp[OTL,0,crude] - 1.27*(act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+          ('OTL', 0, 'ele') :   0.0 :    inp[OTL,0,ele] - 0.1*(act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+           ('OTL', 0, 'h2') :   0.0 :         inp[OTL,0,h2] - (act[OTL,0,0] + act[OTL,0,-1]) :   0.0 :   True
+         ('OTL', 1, 'biom') :   0.0 :        inp[OTL,1,biom] - (act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+         ('OTL', 1, 'coal') :   0.0 :        inp[OTL,1,coal] - (act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+        ('OTL', 1, 'crude') :   0.0 :  inp[OTL,1,crude] - 1.27*(act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+          ('OTL', 1, 'ele') :   0.0 :     inp[OTL,1,ele] - 0.1*(act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+           ('OTL', 1, 'h2') :   0.0 :          inp[OTL,1,h2] - (act[OTL,1,1] + act[OTL,1,0]) :   0.0 :   True
+         ('OTL', 2, 'biom') :   0.0 :        inp[OTL,2,biom] - (act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+         ('OTL', 2, 'coal') :   0.0 :        inp[OTL,2,coal] - (act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+        ('OTL', 2, 'crude') :   0.0 :  inp[OTL,2,crude] - 1.27*(act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+          ('OTL', 2, 'ele') :   0.0 :     inp[OTL,2,ele] - 0.1*(act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+           ('OTL', 2, 'h2') :   0.0 :          inp[OTL,2,h2] - (act[OTL,2,2] + act[OTL,2,1]) :   0.0 :   True
+    inpTD : Size=15, Index=inpTD_index, Active=True
+        Key          : Lower : Body                                                                     : Upper : Active
+         (0, 'biom') :   0.0 :     inpT[0,biom] - (inp[BTL,0,biom] + inp[CTL,0,biom] + inp[OTL,0,biom]) :   0.0 :   True
+         (0, 'coal') :   0.0 :     inpT[0,coal] - (inp[BTL,0,coal] + inp[CTL,0,coal] + inp[OTL,0,coal]) :   0.0 :   True
+        (0, 'crude') :   0.0 : inpT[0,crude] - (inp[BTL,0,crude] + inp[CTL,0,crude] + inp[OTL,0,crude]) :   0.0 :   True
+          (0, 'ele') :   0.0 :         inpT[0,ele] - (inp[BTL,0,ele] + inp[CTL,0,ele] + inp[OTL,0,ele]) :   0.0 :   True
+           (0, 'h2') :   0.0 :             inpT[0,h2] - (inp[BTL,0,h2] + inp[CTL,0,h2] + inp[OTL,0,h2]) :   0.0 :   True
+         (1, 'biom') :   0.0 :     inpT[1,biom] - (inp[BTL,1,biom] + inp[CTL,1,biom] + inp[OTL,1,biom]) :   0.0 :   True
+         (1, 'coal') :   0.0 :     inpT[1,coal] - (inp[BTL,1,coal] + inp[CTL,1,coal] + inp[OTL,1,coal]) :   0.0 :   True
+        (1, 'crude') :   0.0 : inpT[1,crude] - (inp[BTL,1,crude] + inp[CTL,1,crude] + inp[OTL,1,crude]) :   0.0 :   True
+          (1, 'ele') :   0.0 :         inpT[1,ele] - (inp[BTL,1,ele] + inp[CTL,1,ele] + inp[OTL,1,ele]) :   0.0 :   True
+           (1, 'h2') :   0.0 :             inpT[1,h2] - (inp[BTL,1,h2] + inp[CTL,1,h2] + inp[OTL,1,h2]) :   0.0 :   True
+         (2, 'biom') :   0.0 :     inpT[2,biom] - (inp[BTL,2,biom] + inp[CTL,2,biom] + inp[OTL,2,biom]) :   0.0 :   True
+         (2, 'coal') :   0.0 :     inpT[2,coal] - (inp[BTL,2,coal] + inp[CTL,2,coal] + inp[OTL,2,coal]) :   0.0 :   True
+        (2, 'crude') :   0.0 : inpT[2,crude] - (inp[BTL,2,crude] + inp[CTL,2,crude] + inp[OTL,2,crude]) :   0.0 :   True
+          (2, 'ele') :   0.0 :         inpT[2,ele] - (inp[BTL,2,ele] + inp[CTL,2,ele] + inp[OTL,2,ele]) :   0.0 :   True
+           (2, 'h2') :   0.0 :             inpT[2,h2] - (inp[BTL,2,h2] + inp[CTL,2,h2] + inp[OTL,2,h2]) :   0.0 :   True
+    invCD : Size=9, Index=invCD_index, Active=True
+        Key        : Lower : Body                          : Upper : Active
+        ('BTL', 0) :   0.0 : invC[BTL,0] - 1106*cap[BTL,0] :   0.0 :   True
+        ('BTL', 1) :   0.0 : invC[BTL,1] - 1106*cap[BTL,1] :   0.0 :   True
+        ('BTL', 2) :   0.0 : invC[BTL,2] - 1106*cap[BTL,2] :   0.0 :   True
+        ('CTL', 0) :   0.0 : invC[CTL,0] - 1397*cap[CTL,0] :   0.0 :   True
+        ('CTL', 1) :   0.0 : invC[CTL,1] - 1397*cap[CTL,1] :   0.0 :   True
+        ('CTL', 2) :   0.0 : invC[CTL,2] - 1397*cap[CTL,2] :   0.0 :   True
+        ('OTL', 0) :   0.0 :  invC[OTL,0] - 509*cap[OTL,0] :   0.0 :   True
+        ('OTL', 1) :   0.0 :  invC[OTL,1] - 509*cap[OTL,1] :   0.0 :   True
+        ('OTL', 2) :   0.0 :  invC[OTL,2] - 509*cap[OTL,2] :   0.0 :   True
+    oilImpD : Size=1, Index=None, Active=True
+        Key  : Lower : Body                                                     : Upper : Active
+        None :   0.0 : oilImp - (inpT[0,crude] + inpT[1,crude] + inpT[2,crude]) :   0.0 :   True
+    omcCD : Size=9, Index=omcCD_index, Active=True
+        Key        : Lower : Body                                        : Upper : Active
+        ('BTL', 0) :   0.0 :        omcC[BTL,0] - 334*(1.4 + cap[BTL,0]) :   0.0 :   True
+        ('BTL', 1) :   0.0 : omcC[BTL,1] - 334*(cap[BTL,1] + cap[BTL,0]) :   0.0 :   True
+        ('BTL', 2) :   0.0 : omcC[BTL,2] - 334*(cap[BTL,2] + cap[BTL,1]) :   0.0 :   True
+        ('CTL', 0) :   0.0 :       omcC[CTL,0] - 380*(12.5 + cap[CTL,0]) :   0.0 :   True
+        ('CTL', 1) :   0.0 : omcC[CTL,1] - 380*(cap[CTL,1] + cap[CTL,0]) :   0.0 :   True
+        ('CTL', 2) :   0.0 : omcC[CTL,2] - 380*(cap[CTL,2] + cap[CTL,1]) :   0.0 :   True
+        ('OTL', 0) :   0.0 :       omcC[OTL,0] - 89*(748.0 + cap[OTL,0]) :   0.0 :   True
+        ('OTL', 1) :   0.0 :  omcC[OTL,1] - 89*(cap[OTL,1] + cap[OTL,0]) :   0.0 :   True
+        ('OTL', 2) :   0.0 :  omcC[OTL,2] - 89*(cap[OTL,2] + cap[OTL,1]) :   0.0 :   True
+
+102 Declarations: T periods periods_ P lifet lifet_ H V PV J K act_index act cap_index cap cost carb oilImp carbC inp_index inp inpT_index inpT out_index out carbE_index carbE inpC_index inpC invC_index invC omcC_index omcC carbPC_index carbPC costAn_index costAn excarbC carbEv_index carbEv actvS_index actvS actS capAv_index capAv capIdle_index capIdle capIdleS capTot goal discr dis dem_index dem inpU_index inpU outU_index outU hcap_index hcap cuf ef inpP invP omcP carbP demC_index demC actC_index actC inpD_index inpD inpTD_index inpTD invCD_index invCD inpCD_index inpCD omcCD_index omcCD carbED_index carbED carbPCD_index carbPCD costAD_index costAD costD carbD oilImpD carbCD excarbCD carbEDv_index carbEDv actvSD_index actvSD actSD capAvD_index capAvD capIdlD_index capIdlD capIdlSD capTotD
+end of model printout          -----------------------------------------------------------------
+
+GLPSOL--GLPK LP/MIP Solver 5.0
+Parameter(s) specified in the command line:
+ --write /var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmpr9u_phml.glpk.raw
+ --wglp /var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmp8_7j7hch.glpk.glp
+ --cpxlp /var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmpbkuje0q5.pyomo.lp
+Reading problem data from '/var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmpbkuje0q5.pyomo.lp'...
+191 rows, 194 columns, 616 non-zeros
+1393 lines were read
+Writing problem data to '/var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmp8_7j7hch.glpk.glp'...
+1040 lines were written
+GLPK Simplex Optimizer 5.0
+191 rows, 194 columns, 616 non-zeros
+Preprocessing...
+45 rows, 45 columns, 117 non-zeros
+Scaling...
+ A: min|aij| =  8.000e-02  max|aij| =  1.000e+00  ratio =  1.250e+01
+GM: min|aij| =  1.000e+00  max|aij| =  1.000e+00  ratio =  1.000e+00
+EQ: min|aij| =  1.000e+00  max|aij| =  1.000e+00  ratio =  1.000e+00
+Constructing initial basis...
+Size of triangular part is 45
+      0: obj =   7.178960000e+04 inf =   9.300e+02 (3)
+     16: obj =   6.310287728e+06 inf =   0.000e+00 (0)
+*    27: obj =   3.742286982e+05 inf =   0.000e+00 (0)
+OPTIMAL LP SOLUTION FOUND
+Time used:   0.0 secs
+Memory used: 0.2 Mb (226864 bytes)
+Writing basic solution to '/var/folders/z_/ymxpbs093bs2llny_97bdx0m0000gn/T/tmpr9u_phml.glpk.raw'...
+394 lines were written
+
+Values of outcome variables -----------------------------------------------------------------------------
+Total cost  = 3.742e+05
+Imported crude oil = 1.181e+03
+Carbon emission = 1.562e+03
+Carbon emission (discounted) cost = 2.657e+04
+
+Started at:  2023-07-31 13:14:47.944222
+Finished at: 2023-07-31 13:14:48.013303
+Wall-clock execution time: 0 sec.
