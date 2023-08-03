@@ -12,6 +12,61 @@ import pyomo.environ as pe       # more robust than using import *
 # from sympy import subsets  # explore this to avoid warnings
 
 
+def th_init(m):  # initialize TH set (t, v) of vintage periods prior to p=0 capacities of t-th techn.
+    for t in m.T:
+        print(f'th_init(): {t = }, life[t] = {m.life[t]}')
+        for v in range(-m.life[t], 0):
+            print(f'{t = }, {v = }')
+            yield t, v
+
+
+def tv_init(m):  # initialize TV set (t, v) of all vintage periods of t-th techn.
+    # use of m.periods/m.periods_ does not work: these are objects, not integers
+    # print(f'tv_init(): periods = {len(m.P)}')
+    periods = len(m.P)
+    for t in m.T:
+        hlen = m.life[t]
+        # print(f'tv_init(): {t = }, hlist_len = {hlen}')
+        v_lst1 = list(range(-hlen, 0))
+        v_lst2 = list(range(0, periods))
+        v_lst = v_lst1 + v_lst2
+        # print(f'{v_lst = }')
+        for v in v_lst:
+            print(f'tv_init(): {t = }, {v = }')
+            yield t, v
+
+
+def tpv_init(m):  # initialize TPH set (t, p, v) of vintage periods with t-th capacities available at period p
+    for t in m.T:
+        for p in m.P:
+            print(f'tpv_init(): {t = }, life[t] = {m.life[t]}')
+            for i in range(0, m.life[t] + 1):   # vintage period: current p and life[t] previous
+                v = p - i
+                print(f'th_init(): {t = },  {p = }, {t = }, {v = }')
+                yield t, p, v
+
+
+# generator of v (vintage periods) for pp (planning period); the pairs stored in the Vp set (V_p)
+# filter values: None (yield all), neg (yield only negative v), nonneg (yield only non-negative v)
+def vtp_lst(mx, tt, pp, filt=None):
+    # el_lst = mx.TPV.value_list    # el_lst: list of (t, p, v) tuples
+    for t, p, v in mx.TPV:
+        if tt == t and p == pp:
+            print(f'vtp_lst: {tt = }, {t = }, {pp = }, {p = }, {v = }')
+            if filt is None:
+                yield v
+            elif filt == 'neg':
+                if v < 0:
+                    yield v
+            elif filt == 'nonneg':
+                if v >= 0:
+                    yield v
+            else:
+                raise Exception(f'Unknown value of param filt in vtp_lst(): {filt}.')
+
+'''
+# no longer used in the modified indexing structure
+
 def vlist(p, lifet):
     # noinspection GrazieInspection
     """
@@ -24,10 +79,8 @@ def vlist(p, lifet):
         yield p - i
 
 
-# initialize the Vp set (V_p)
 def vp_init(m):
     return ((p, v) for p in m.P for v in vlist(p, len(m.H)))
-
 
 # generator of v (vintage periods) for pp (planning period); the pairs stored in the Vp set (V_p)
 # filter values: None (yield all), neg (yield only negative v), nonneg (yield only non-negative v)
@@ -45,6 +98,7 @@ def vp_lst(m, pp, filt=None):
                     yield v
             else:
                 raise Exception(f'Unknown value of param filt in vp_lst(): {filt}.')
+'''
 
 
 '''
@@ -72,14 +126,20 @@ def mk_sms():
     m.periods_ = pe.Param(initialize=m.periods-1)   # index of the last planning periods
     m.P = pe.RangeSet(0, m.periods_)  # set of periods; NOTE: RangeSet(0, 1) has two elements, RangeSet(0, -1) is empty
     # life-time, i.e., number of periods capacity remains available after the vintage period
+    m.life = pe.Param(m.T, within=pe.NonNegativeIntegers, default=0)    # life-time of cap after vintage period
+    m.TH = pe.Set(dimen=2, initialize=th_init)  # (t, v): prior to p=0 vintage periods of capacity of t-th techn.
+    m.TV = pe.Set(dimen=2, initialize=tv_init)  # (t, v): all vintage periods of capacity of t-th techn.
+    m.TPV = pe.Set(dimen=3, initialize=tpv_init)  # (t, p, v) of vintages available for t=th techn. at period p
+    '''
     m.lifet = pe.Param(within=pe.NonNegativeIntegers, default=0)
     m.lifet_ = pe.Param(initialize=-m.lifet)
     # m.H is empty for m.lifet==0, i.e. RangeSet(0, -1) defines an empty set
     m.H = pe.RangeSet(m.lifet_, -1)     # historical (before the planning) new capacities periods
     m.V = m.H | m.P     # vintage (periods when ncap become available)
     m.PV = pe.Set(dimen=2, initialize=vp_init)  # V_p (subsets of vintages available at period p)
+    '''
     m.J = pe.Set()     # inputs to technologies
-    m.K = pe.Set()     # outputs from technologies (products, commodities) to cover demand or used as inputs
+    m.K = pe.Set()     # outputs from technologies (products, commodities) to cover demand or to  be used as inputs
     # m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s): replaced by O
 
     # the below two defs result in warnings, to avoid them m.periods_ and m.lifet_ are used above
@@ -90,7 +150,7 @@ def mk_sms():
     # m.act = Var(m.T, m.V, m.P, within=NonNegativeReals)   # activity level; this specs generates full/dense act matrix
     # m.act = Var(m.T, m.PV, m.P, within=NonNegativeReals)  # wrong: generates 4 indices !
     # m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals, bounds=bnd_cap)   # newly installed capacity cap[t, p]
-    m.act = pe.Var(m.T, m.PV, within=pe.NonNegativeReals)  # activity level act[t, (p, v)]
+    m.act = pe.Var(m.TPV, within=pe.NonNegativeReals)  # activity level act[t, (p, v)]
     m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # newly installed capacity cap[t, p]
 
     # outcome variables
@@ -113,7 +173,7 @@ def mk_sms():
     #
     # secondary auxiliary variables
     m.excarbC = pe.Var()   # total cost excludidng carbon emission cost
-    m.carbEv = pe.Var(m.T, m.V, within=pe.NonNegativeReals)   # carbon emissions (by act[t, p, v]) caused by cap[v]
+    m.carbEv = pe.Var(m.TV, within=pe.NonNegativeReals)   # carbon emissions (by act[t, p, v]) caused by cap[v]
     m.actvS = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
     m.actS = pe.Var(m.T, within=pe.NonNegativeReals)  # total activities (i.e., summed over v and p act[t])
     m.capAv = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # avail. capacities
@@ -137,7 +197,7 @@ def mk_sms():
     m.dem = pe.Param(m.P, m.K, within=pe.NonNegativeReals, default=0.0)   # given demand
     m.inpU = pe.Param(m.T, m.J, within=pe.NonNegativeReals, default=1.0)  # input use per prod.-unit
     m.outU = pe.Param(m.T, m.K, within=pe.NonNegativeReals, default=1.0)  # output per unit activity
-    m.hcap = pe.Param(m.T, m.H, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
+    m.hcap = pe.Param(m.TH, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
     m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=0.8)         # capacity utilization factor
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)       # unit carbon emission
     m.inpP = pe.Param(m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
@@ -146,12 +206,19 @@ def mk_sms():
     m.carbP = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
 
     # Relations
-    @m.Constraint(m.P, m.K)  # output produced by activities must cover demand at each period for each product
+    @m.Constraint(m.P, m.K)  # output produced by activities of all techn. cover demand at each period for each product
     def demC(mx, p, k):
-        exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
+        # out_sum = 0.
+        # el_lst = mx.TPV.value_list
+        # for (t, pp, v) in el_lst:
+        #     print(f'demC: TPV element: {t = }, {p = }, {pp = }, {v = }')
+        #     if pp == p:
+        #         out_sum += mx.outU[t, k] * mx.act[t, p, v]
+        # exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
+        exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p)) for t in mx.T)  # output from activ.
         return mx.dem[p, k], exp, None
 
-    @m.Constraint(m.T, m.PV)  # activity cannot exceed the corresponding (cuf * capacity)
+    @m.Constraint(m.TPV)  # activity cannot exceed the corresponding (cuf * capacity)
     def actC(mx, t, p, v):
         # print(f'pcap_rule: t {t}, p {p}, v {v}')
         if v < 0:  # act constrained by (given) historical capacity at each relevant v
@@ -162,7 +229,7 @@ def mk_sms():
 
     @m.Constraint(m.T, m.P, m.J)  # total amounts of j-th input needed by t-th technology at period p
     def inpD(mx, t, p, j):
-        return mx.inp[t, p, j] == mx.inpU[t, j] * sum(mx.act[t, p, v] for v in vp_lst(mx, p))
+        return mx.inp[t, p, j] == mx.inpU[t, j] * sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p))
 
     @m.Constraint(m.P, m.J)  # total amounts of j-th input needed by all technologies at period p
     def inpTD(mx, p, j):
@@ -180,7 +247,7 @@ def mk_sms():
     def omcCD(mx, t, p):
         caph = 0.   # historical capacities
         capn = 0.   # new capacities
-        for v in vp_lst(mx, p):
+        for v in vtp_lst(mx, t, p):
             if v < 0:
                 caph += mx.hcap[t, v]
             else:
@@ -189,7 +256,7 @@ def mk_sms():
 
     @m.Constraint(m.T, m.P)    # trajectory of amounts of carbon emissions caused by covering dem[p]
     def carbED(mx, t, p):
-        return mx.carbE[t, p] == sum(mx.ef[t] * mx.act[t, p, v] for v in vp_lst(mx, p))
+        return mx.carbE[t, p] == sum(mx.ef[t] * mx.act[t, p, v] for v in vtp_lst(mx, t, p))
 
     @m.Constraint(m.T, m.P)    # trajectory of costs of carb emissions
     def carbPCD(mx, t, p):
@@ -228,7 +295,20 @@ def mk_sms():
     def excarbCD(mx):
         return mx.excarbC == mx.cost - mx.carbC
 
-    @m.Constraint(m.T, m.V)    # trajectory of amounts of carbon emissions caused by cap[v]
+    @m.Constraint(m.TV)    # trajectory of amounts of carbon emissions caused by cap[t, v]
+    def carbEDv(mx, t, v):
+        # print(f'carbEDv start: t = {t}, v = {v} ------------------------------ ')
+        sum_act = 0.  # sum act[t, p, v] for all p using act[*, p, v] (v - given)
+        for tt, p, vv in mx.TPV:
+            if tt == t and v == vv:
+                sum_act += mx.act[t, p, v]
+                print(f'carbEDv: {tt = }, {t = }, {p = }, {vv = }, {v = }, sum changed = {sum_act}')
+            else:
+                # print(f'carbEDv: p = {p}, vv = {vv}, v = {v}, sum unchanged')
+                pass
+        # print(f'carbEDv: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
+        return mx.carbEv[t, v] == mx.ef[t] * sum_act
+    '''
     def carbEDv(mx, t, v):
         # print(f'carbEDv start: t = {t}, v = {v} ------------------------------ ')
         sum_act = 0.  # sum act[t, p, v] for all p using act[*, p, v] (v - given)
@@ -241,10 +321,11 @@ def mk_sms():
                 pass
         # print(f'carbEDv: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
         return mx.carbEv[t, v] == mx.ef[t] * sum_act
+    '''
 
     @m.Constraint(m.T, m.P)  # sum of activities [t] covering demand[p]
     def actvSD(mx, t, p):
-        return mx.actvS[t, p] == sum(mx.act[t, p, v] for v in vp_lst(mx, p))
+        return mx.actvS[t, p] == sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p))
 
     @m.Constraint(m.T)  # sum of activities [t] covering demand over all [p]
     def actSD(mx, t):
@@ -253,7 +334,7 @@ def mk_sms():
     @m.Constraint(m.T, m.P)  # sum_v cuf[t] * cap[v] for covering demand[p] by techn. [t]
     def capAvD(mx, t, p):
         capsum = 0.
-        for v in vp_lst(mx, p):
+        for v in vtp_lst(mx, t, p):
             if v < 0:
                 capsum += mx.cuf[t] * mx.hcap[t, v]
             else:

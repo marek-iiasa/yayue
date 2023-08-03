@@ -1,9 +1,14 @@
 # tiny data set for testing the SMS
 # data in AMPL format
 
-# the default values (set in SMS) are: periods=3, lifet=0, discr=0.05
+# the default values (set in SMS) are: periods=3, life=0, discr=0.05
 param periods := 3 ;
-param lifet := 1 ;
+param life := 
+BTL 0
+CTL 1
+OTL 3
+;
+#     param lifet := 1 ; no longer used (replaced by life_t)
 # sets: P, V, PV, H are initialized in SMS
 # could (but should not) be redefined here
 
@@ -44,9 +49,10 @@ OTL 1.68
 ;
 # historical capacities, default 0.
 param hcap :=
-BTL -1 1.4
+# BTL -1 1.4
 CTL -1 12.5
 OTL -1 748
+OTL -3 748
 ;
 
 # capacity utilization factor: Tab 3, p. 14
@@ -64,6 +70,13 @@ CTL coal 2.17
 CTL ele 0.2
 OTL crude 1.27
 OTL ele 0.1
+;
+
+# outputs
+param outU :=
+BTL fuel 0.7
+CTL fuel 0.8
+OTL fuel 0.9
 ;
 
 # inv cost, Tab. 3, p. 13
