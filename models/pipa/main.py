@@ -47,8 +47,8 @@ if __name__ == '__main__':
     # model.H.pprint()
     # print('Values of the discount factor for each planning period:')
     for p in model.P:   # define discount rates for each period
-        model.dis[p] = model.discr ** p
-    #     print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
+        model.dis[p] = (1. - model.discr) ** p
+        # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
     # model.write('test.lp')
     # model.write('test.mps')

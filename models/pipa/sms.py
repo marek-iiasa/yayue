@@ -14,9 +14,9 @@ import pyomo.environ as pe       # more robust than using import *
 
 def th_init(m):  # initialize TH set (t, v) of vintage periods prior to p=0 capacities of t-th techn.
     for t in m.T:
-        print(f'th_init(): {t = }, life[t] = {m.life[t]}')
+        # print(f'th_init(): {t = }, life[t] = {m.life[t]}')
         for v in range(-m.life[t], 0):
-            print(f'{t = }, {v = }')
+            # print(f'{t = }, {v = }')
             yield t, v
 
 
@@ -32,17 +32,17 @@ def tv_init(m):  # initialize TV set (t, v) of all vintage periods of t-th techn
         v_lst = v_lst1 + v_lst2
         # print(f'{v_lst = }')
         for v in v_lst:
-            print(f'tv_init(): {t = }, {v = }')
+            # print(f'tv_init(): {t = }, {v = }')
             yield t, v
 
 
 def tpv_init(m):  # initialize TPH set (t, p, v) of vintage periods with t-th capacities available at period p
     for t in m.T:
         for p in m.P:
-            print(f'tpv_init(): {t = }, life[t] = {m.life[t]}')
+            # print(f'tpv_init(): {t = }, life[t] = {m.life[t]}')
             for i in range(0, m.life[t] + 1):   # vintage period: current p and life[t] previous
                 v = p - i
-                print(f'th_init(): {t = },  {p = }, {t = }, {v = }')
+                # print(f'th_init(): {t = },  {p = }, {t = }, {v = }')
                 yield t, p, v
 
 
@@ -52,7 +52,7 @@ def vtp_lst(mx, tt, pp, filt=None):
     # el_lst = mx.TPV.value_list    # el_lst: list of (t, p, v) tuples
     for t, p, v in mx.TPV:
         if tt == t and p == pp:
-            print(f'vtp_lst: {tt = }, {t = }, {pp = }, {p = }, {v = }')
+            # print(f'vtp_lst: {tt = }, {t = }, {pp = }, {p = }, {v = }')
             if filt is None:
                 yield v
             elif filt == 'neg':
@@ -63,6 +63,7 @@ def vtp_lst(mx, tt, pp, filt=None):
                     yield v
             else:
                 raise Exception(f'Unknown value of param filt in vtp_lst(): {filt}.')
+
 
 '''
 # no longer used in the modified indexing structure
@@ -131,6 +132,7 @@ def mk_sms():
     m.TV = pe.Set(dimen=2, initialize=tv_init)  # (t, v): all vintage periods of capacity of t-th techn.
     m.TPV = pe.Set(dimen=3, initialize=tpv_init)  # (t, p, v) of vintages available for t=th techn. at period p
     '''
+    # no longer used in the modified indexing structure
     m.lifet = pe.Param(within=pe.NonNegativeIntegers, default=0)
     m.lifet_ = pe.Param(initialize=-m.lifet)
     # m.H is empty for m.lifet==0, i.e. RangeSet(0, -1) defines an empty set
@@ -206,14 +208,8 @@ def mk_sms():
     m.carbP = pe.Param(within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit carbon-emission cost
 
     # Relations
-    @m.Constraint(m.P, m.K)  # output produced by activities of all techn. cover demand at each period for each product
+    @m.Constraint(m.P, m.K)  # output from activities of all techn. to cover demand at each period for each output
     def demC(mx, p, k):
-        # out_sum = 0.
-        # el_lst = mx.TPV.value_list
-        # for (t, pp, v) in el_lst:
-        #     print(f'demC: TPV element: {t = }, {p = }, {pp = }, {v = }')
-        #     if pp == p:
-        #         out_sum += mx.outU[t, k] * mx.act[t, p, v]
         # exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
         exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p)) for t in mx.T)  # output from activ.
         return mx.dem[p, k], exp, None
@@ -302,7 +298,7 @@ def mk_sms():
         for tt, p, vv in mx.TPV:
             if tt == t and v == vv:
                 sum_act += mx.act[t, p, v]
-                print(f'carbEDv: {tt = }, {t = }, {p = }, {vv = }, {v = }, sum changed = {sum_act}')
+                # print(f'carbEDv: {tt = }, {t = }, {p = }, {vv = }, {v = }, sum changed = {sum_act}')
             else:
                 # print(f'carbEDv: p = {p}, vv = {vv}, v = {v}, sum unchanged')
                 pass
