@@ -2,8 +2,7 @@
 sms(): returns the Symbolic model specification (SMS), i.e., the Abstract Model of the Pipa model
 Decorations are used for Constraints and Objective to simplify the old/traditional approach based on rules,
 which required a separation of rules needed for defining constraints, i.e.:
-All rules are before sms() to avoid warnings "m shadows name from outer scope".
-Single (i.e., not populated) relations need rules only, if their expression include iterators (e.g., a sum).
+All functions used in the m model are defined before mk_sms() to avoid warnings "m shadows name from outer scope".
 """
 
 import pyomo.environ as pe       # more robust than using import *
@@ -142,7 +141,7 @@ def mk_sms():
     '''
     m.J = pe.Set()     # inputs to technologies
     m.K = pe.Set()     # outputs from technologies (products, commodities) to cover demand or to  be used as inputs
-    # m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s): replaced by O
+    # m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s): replaced by m.K
 
     # the below two defs result in warnings, to avoid them m.periods_ and m.lifet_ are used above
     # m.P = pe.RangeSet(0, m.periods - 1)     # planning periods; NOTE: RangeSet(0, 1) has two elements
