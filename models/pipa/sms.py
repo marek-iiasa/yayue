@@ -65,43 +65,6 @@ def vtp_lst(mx, tt, pp, filt=None):
 
 
 '''
-# no longer used in the modified indexing structure
-
-def vlist(p, lifet):
-    # noinspection GrazieInspection
-    """
-    :param p: index of the period
-    :param lifet: capacity life-time (periods after the vitage period)
-    :return: list of vitage periods of still available new capacity (composed of at least one period, i.e., p)
-    """
-    for i in range(0, lifet + 1):
-        # print(f'lifet = {lifet}, p = {p}, i = {i}, p - i = {p - i}')
-        yield p - i
-
-
-def vp_init(m):
-    return ((p, v) for p in m.P for v in vlist(p, len(m.H)))
-
-# generator of v (vintage periods) for pp (planning period); the pairs stored in the Vp set (V_p)
-# filter values: None (yield all), neg (yield only negative v), nonneg (yield only non-negative v)
-def vp_lst(m, pp, filt=None):
-    for p, v in m.PV:
-        if p == pp:
-            # print(f'vp_lst: pp = {pp}, p = {p}, v = {v}')
-            if filt is None:
-                yield v
-            elif filt == 'neg':
-                if v < 0:
-                    yield v
-            elif filt == 'nonneg':
-                if v >= 0:
-                    yield v
-            else:
-                raise Exception(f'Unknown value of param filt in vp_lst(): {filt}.')
-'''
-
-
-'''
 # for ad-hoc testing of upp-bnds for cap
 # for a proper/general approach cf: https://pyomo.readthedocs.io/en/stable/pyomo_modeling_components/Variables.html
 def bnd_cap(m, t, p):
@@ -130,27 +93,11 @@ def mk_sms():
     m.TH = pe.Set(dimen=2, initialize=th_init)  # (t, v): prior to p=0 vintage periods of capacity of t-th techn.
     m.TV = pe.Set(dimen=2, initialize=tv_init)  # (t, v): all vintage periods of capacity of t-th techn.
     m.TPV = pe.Set(dimen=3, initialize=tpv_init)  # (t, p, v) of vintages available for t=th techn. at period p
-    '''
-    # no longer used in the modified indexing structure
-    m.lifet = pe.Param(within=pe.NonNegativeIntegers, default=0)
-    m.lifet_ = pe.Param(initialize=-m.lifet)
-    # m.H is empty for m.lifet==0, i.e. RangeSet(0, -1) defines an empty set
-    m.H = pe.RangeSet(m.lifet_, -1)     # historical (before the planning) new capacities periods
-    m.V = m.H | m.P     # vintage (periods when ncap become available)
-    m.PV = pe.Set(dimen=2, initialize=vp_init)  # V_p (subsets of vintages available at period p)
-    '''
     m.J = pe.Set()     # inputs to technologies
     m.K = pe.Set()     # outputs from technologies (products, commodities) to cover demand or to  be used as inputs
-    # m.F = pe.Set()     # final commodities/products, i.e., liquid fuel(s): replaced by m.K
-
-    # the below two defs result in warnings, to avoid them m.periods_ and m.lifet_ are used above
-    # m.P = pe.RangeSet(0, m.periods - 1)     # planning periods; NOTE: RangeSet(0, 1) has two elements
-    # m.H = pe.RangeSet(-m.lifet, -1)     # historical (before the planning) new capacities periods
 
     # decision variables
     # m.act = Var(m.T, m.V, m.P, within=NonNegativeReals)   # activity level; this specs generates full/dense act matrix
-    # m.act = Var(m.T, m.PV, m.P, within=NonNegativeReals)  # wrong: generates 4 indices !
-    # m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals, bounds=bnd_cap)   # newly installed capacity cap[t, p]
     m.act = pe.Var(m.TPV, within=pe.NonNegativeReals)  # activity level act[t, (p, v)]
     m.cap = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # newly installed capacity cap[t, p]
 
@@ -298,25 +245,8 @@ def mk_sms():
             if tt == t and v == vv:
                 sum_act += mx.act[t, p, v]
                 # print(f'carbEDv: {tt = }, {t = }, {p = }, {vv = }, {v = }, sum changed = {sum_act}')
-            else:
-                # print(f'carbEDv: p = {p}, vv = {vv}, v = {v}, sum unchanged')
-                pass
         # print(f'carbEDv: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
         return mx.carbEv[t, v] == mx.ef[t] * sum_act
-    '''
-    def carbEDv(mx, t, v):
-        # print(f'carbEDv start: t = {t}, v = {v} ------------------------------ ')
-        sum_act = 0.  # sum act[t, p, v] for all p using act[*, p, v] (v - given)
-        for p, vv in mx.PV:
-            if v == vv:
-                sum_act += mx.act[t, p, v]
-                # print(f'carbEDv: t = {t}, p = {p}, vv = {vv}, v = {v}, sum changed = {sum_act}')
-            else:
-                # print(f'carbEDv: p = {p}, vv = {vv}, v = {v}, sum unchanged')
-                pass
-        # print(f'carbEDv: t = {t}, v = {v}, sum_act = {sum_act} ------------------------------ ')
-        return mx.carbEv[t, v] == mx.ef[t] * sum_act
-    '''
 
     @m.Constraint(m.T, m.P)  # sum of activities [t] covering demand[p]
     def actvSD(mx, t, p):
