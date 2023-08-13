@@ -88,7 +88,7 @@ def driver(m1, ana_dir):
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
         rep_vars = []  # list of variables, values of which shall be returned
-        # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
+        rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution:
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')

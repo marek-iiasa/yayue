@@ -3,6 +3,8 @@ Handle data structure and control flows of the MCMA
 """
 import sys      # needed from stdout
 import os
+from os import R_OK, access
+from os.path import isfile
 # import numpy as np
 from crit import Crit, CrPref
 
@@ -264,8 +266,11 @@ class CtrMca:
         # sets of preferences for all criteria should be separated by line having only #-char in first column
         # preferences for criteria not specified in a set are reset to: A=utopia, R=nadir, criterion not-active
 
-        print(f"\nReading user-preferences defined in file '{self.f_pref}':")
         self.n_pref = 0  # number of specified sets of preferences
+        if not (isfile(self.f_pref) and access(self.f_pref, R_OK)):
+            print(f"\nUser-preferences not defined (file '{self.f_pref}' is not accessible).")
+            return
+        print(f"\nReading user-preferences defined in file '{self.f_pref}':")
         lines = []
         with open(self.f_pref) as reader:  # read all lines and store for processing next
             for n_line, line in enumerate(reader):
@@ -298,7 +303,6 @@ class CtrMca:
                     raise Exception(f'unknown crit. name "{words[0]}" in {n_line}: "{line}".')
                 pref_item = CrPref(c_ind, float(words[1]), float(words[2]), len(words) == 3)
                 self.cr[c_ind].chkAR(pref_item, n_line)  # check correctness of A and R values
-                # todo: check, if already defined in the current set
                 for item in cur_set:    # check, if crit. preferences are already defined in the current set
                     if c_ind == item.parent:
                         raise Exception(f'duplicated (in the current set, line {n_line}) preferences for '
