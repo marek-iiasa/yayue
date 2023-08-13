@@ -83,7 +83,7 @@ class Crit:     # definition and attributes of a single criterion
         print(f'nadir appr. of crit "{self.name}": {old_val} {no_yes} changed to {val} (in {stage=}).')
         return shift
 
-    def isBetter(self, val1, val2):   # return true if val1 is better or equal to (in terms of achivement) than val2
+    def isBetter(self, val1, val2):   # return true if val1 is better or equal to (in terms of achievement) than val2
         if val1 is None or val2 is None:
             return True     # PWL takes care about undefined values
         if self.mult == 1:  # max criterion
