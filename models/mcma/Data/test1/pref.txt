@@ -1,0 +1,14 @@
+* payoff: just for info
+* income: U 10000.0, N 5.0
+* emission: U 5.0, N 10000.0
+
+* preferences: positional fields: crit_name, A, R, NA
+* NA - any non-empty string to optionally mark the criterion as non-active
+* sets of preferences have to be separated by a line with # char in the first column
+
+income 7000 5000
+emission 5000 7000
+#
+income 5000 100
+emission 50 500
+

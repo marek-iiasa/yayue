@@ -31,32 +31,24 @@ def chk_sol(res):  # check status of the solution
 def driver(m1, ana_dir):
     print(f'\nAnalysing instance of model {m1.name}.')
 
-    # todo: define mc.verb level and gradually implementing controlling printouts according to mc.verb
-    #   (instead of currenly used statement commonting/uncommenting)
     mc = CtrMca(ana_dir)    # CtrMca ctor
-    mc.rdCritSpc()      # read criteria definition from the corresponding file
-
-    # todo: implement hot start
-    rep = Report(mc, m1)
-
-    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
-    # mc.rd_payoff()    # supressed for testing
-    # mc.prn_payoff()   # no need to store the table just read
-
-    # todo: open .../log.txt either for 'w' or 'a'
-    # todo: get itr-id from length of log.txt
+    # todo: improve handling og verbosity levels
+    mc.verb = 1    # verbosity (affecting mainly message-printouts) level
+    rep = Report(mc, m1)    # Report ctor
 
     # select solver
     opt = pe.SolverFactory('glpk')
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
     # opt = SolverFactory('gams')  # gams can be used as a solver
 
-    i_stage = 0
+    # todo: implement scaling of vars defining criteria.
+    # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
+    # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
-    while i_stage < 6:   # MCA iterations (common loop for all analysis stages)
-        print(f'\nStart iteration {n_iter}  -----------------------------------------------------------------------')
+    max_itr = 20
+    while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
-        # print(f'Analysis stage: {i_stage}.')
+        print(f'\nAnalysis stage: {i_stage}, start iteration {n_iter}  -----------------------------------------------')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
@@ -87,17 +79,16 @@ def driver(m1, ana_dir):
         print('\nprocessing solution --------------------------------')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-        rep_vars = []  # list of variables, values of which shall be returned
+        # rep_vars = []  # list of variables, values of which shall be returned
         rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution:
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
-        # m.del_component(m.mc_part)   # must be deleted (otherwise would have to be generated every iteration)
+        # m.del_component(m.mc_part)   # need not be deleted
 
         print(f'\nFinished itr {n_iter}.')
         n_iter += 1
-        max_itr = 20
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
             break

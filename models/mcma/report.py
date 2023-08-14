@@ -45,6 +45,9 @@ class Report:
         self.prev_itr = 0   # number of previosly made iters
         self.cur_itr = 0   # number of currently made iters
 
+        # todo: implement hot start
+        # todo: get itr-id from length of log.txt
+
         # todo: initialize self.itr_df with previously stored df, if exists
         #   modify self.itr_id to a subsequent number
 
@@ -106,7 +109,7 @@ class Report:
             print(f'Values of criteria {cri_val}')
 
         self.mc.updCrit(cri_val)    # update crit attributes (nadir, utopia)
-        self.mc.prn_payoff()     # print, and optionally store payOff table
+        self.mc.prnPayOff()     # print, and optionally store payOff table
 
         # add to self.itr_df one row with values of all attributes for each criterion
         af = pe.value(m.af)

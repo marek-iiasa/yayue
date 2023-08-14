@@ -34,6 +34,9 @@ class CtrMca:
         self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
         self.hotStart = None    # if payOff provided, jump to stage==5
 
+        self.rdCritSpc()    # read criteria specs from the config file
+        self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
+
     def addCrit(self, cr_name, typ, var_name):
         """
         Add definition of a criterion.
@@ -65,6 +68,12 @@ class CtrMca:
     def set_payOff(self, cr_name, utopia, nadir):   # set the previously stored utopia/nadir values
         if utopia is None or nadir is None:
             raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): undefined values.')
+        utopia = float(utopia)  # read-in words are of type string; have to explicitly converted
+        nadir = float(nadir)
+        if type(utopia) is not float or type(nadir) is not float:
+            print(f'{type(utopia) = }')
+            print(f'{type(nadir) = }')
+            raise Exception(f'set_payOff("{cr_name}", "{utopia}", "{nadir}"): both values should be of type float.')
         for crit in self.cr:
             if crit.name == cr_name:
                 if crit.isBetter(utopia, nadir):
@@ -106,17 +115,21 @@ class CtrMca:
                     # print(f'line {line}')
                     words = line.split()
                     n_words = len(words)
-                    assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
-                    self.set_payOff(words[0], words[1], words[2])
+                    # assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
+                    # self.set_payOff(words[0], words[1], words[2])
+                    assert(n_words == 5), f'line {line} has {n_words} instead of the required five.'
+                    self.set_payOff(words[0], words[2], words[4])
                     n_def += 1
             assert (self.n_crit == n_def), f'stored payOff table has {n_def} values for {self.n_crit} defined criteria.'
+            self.prnPayOff(True)    # print only (don't write to the file)
             self.hotStart = True  # if payOff provided, jump to stage==5
             self.cur_stage = 5
+            print(f'\nPayOff table provided. Skipping its computation. Jump to processing user-defined preferences.')
         else:
             print(f"\nFile '{self.f_payoff}' with stored payoff table not available.")
             self.hotStart = False  # if payOff provided, jump to stage==5
 
-    def prn_payoff(self):   # store current values of utopia/nadir in a file for subsequent use
+    def prnPayOff(self, prn_only=False):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
         if not self.payOffChange:
@@ -125,10 +138,12 @@ class CtrMca:
         print('PayOff table:')
         lines = []
         for crit in self.cr:
-            line = f'{crit.name}: U {crit.utopia}, N {crit.nadir}'
+            line = f'{crit.name}   U {crit.utopia}   N {crit.nadir}'
             print(line)
             lines.append(line)
-        if self.cur_stage > 3:  # don't store payOff table before neutral solution is computed:
+        if prn_only or self.cur_stage < 4:  # don't store payOff table before neutral solution is computed:
+            print(f'Current values of the payoff table NOT written to file "{self.f_payoff}":')
+        else:
             print(f'Current values of the payoff table written to file "{self.f_payoff}":')
             f_payOff = open(self.f_payoff, "w")
             for line in lines:
