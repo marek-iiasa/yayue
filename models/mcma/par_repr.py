@@ -10,6 +10,16 @@ class ParSol:     # one Pareto solution
         self.cr_vals = cr_vals  # list of criteria values
 
 
+class Cube:     # one Pareto solution
+    def __init__(self, s1, s2):
+        self.s1 = s1    # id of first solution defining the cube
+        self.s2 = s2    # id of second solution defining the cube
+        self.asp_asf = []   # list of A values in the ASF scale
+        self.res_asf = []   # list of R values in the ASF scale
+        self.asp_vals = []   # list of A values in the core scale
+        self.res_vals = []   # list of R values in the core scale
+
+
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):
         self.mc = mc    # CtrMca object
@@ -17,6 +27,7 @@ class ParRep:     # representation of Pareto set
         self.n_corners = 0   # number of corners (one utopia + other inactive)
         self.sols = []  # Pareto-solutions (ParSol objects)
         self.neigh = []  # list of pairs [seq_id and distance to] defining closest neighbor
+        self.cubes = []     # list of cubes (Cube objects, one cube for each iteration)
 
         self.ini_corners()  # initialize corner solutions
         self.nearest()
