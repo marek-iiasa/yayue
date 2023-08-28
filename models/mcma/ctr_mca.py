@@ -7,20 +7,23 @@ from os import R_OK, access
 from os.path import isfile
 # import numpy as np
 from crit import Crit, CrPref
+from par_repr import ParRep
 
 
 class CtrMca:
-    def __init__(self, ana_dir):
+    def __init__(self, ana_dir, par_rep):
         self.ana_dir = ana_dir  # wrk dir for the current analysis
         self.f_crit = ana_dir + '/config.txt'   # file with criteria specification
         self.f_payoff = ana_dir + '/payoff.txt'     # file with payoff values
         self.f_pref = ana_dir + '/pref.txt'     # file with defined preferences' set
-        self.pay_upd = False  # set to true, if current payOff differs from the store one
-        self.cr = []        # objects of Crit class, each representing the corresponding criterion
-        self.n_crit = 0     # number of defined criteria == len(self.cr)
         self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6}
         self.cur_stage = 0  # initialization
+        self.cr = []        # objects of Crit class, each representing the corresponding criterion
+        self.n_crit = 0     # number of defined criteria == len(self.cr)
+        self.is_par_rep = par_rep    # if True, then switch to ParetoRepresentation mode
+        self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         self.cur_cr = None  # cr_index passed to self.set_pref()
+        self.pay_upd = False  # set to true, if current payOff differs from the store one
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
@@ -252,6 +255,14 @@ class CtrMca:
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
+
+    def par_pref(self):
+        assert self.is_par_rep, f'CtrMca::par_pref() is not set to be used.'
+        assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
+        if self.par_rep is None:
+            self.par_rep = ParRep(self)
+        self.par_rep.cube()     # define new cube, set A/R
+        # raise Exception(f'Mcma::par_pref() not implemented yet.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
         # todo: make sure that all criteria are active by default

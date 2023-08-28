@@ -28,10 +28,12 @@ def chk_sol(res):  # check status of the solution
             raise Exception('Optimization failed.')
 
 
-def driver(m1, ana_dir):
+def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     print(f'\nAnalysing instance of model {m1.name}.')
 
-    mc = CtrMca(ana_dir)    # CtrMca ctor
+    is_par_rep = True   # switch to Pareto-representation mode (comment this line for standard MCMA use)
+    # is_par_rep = False   # uncomment for standard MCMA use
+    mc = CtrMca(ana_dir, is_par_rep)    # CtrMca ctor
     # todo: improve handling og verbosity levels
     mc.verb = 1    # verbosity (affecting mainly message-printouts) level
     rep = Report(mc, m1)    # Report ctor
@@ -53,7 +55,10 @@ def driver(m1, ana_dir):
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
 
-        mc.set_pref()   # set preferences (crit activity, optionally A/R values)
+        if mc.is_par_rep:
+            mc.par_pref()   # set preferences in Pareto reprentation mode
+        else:
+            mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:
             print(f'\nFinished the analysis for all specified preferences.')
             break
