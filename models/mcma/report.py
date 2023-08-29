@@ -87,6 +87,7 @@ class Report:
         # formatting doc: https://docs.python.org/3/library/string.html#formatstrings
 
         self.itr_id += 1
+        self.mc.cur_itr_id = self.itr_id
         print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         cri_val = {}    # all criteria values in current solution
@@ -152,7 +153,7 @@ class Report:
         df2 = pd.DataFrame(new_row, index=list(range(1)))
         self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
         # print(f'current itr_df in report():\n{self.itr_df}')
-        # print(f'Report::itr({self.itr_id} finished.')
+        print(f'Report::itr({self.itr_id}) finished.')
 
         '''
             for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
@@ -241,7 +242,8 @@ class Report:
         '''
 
     def summary(self):
+        # todo: correct info on current and previous iterations
         print(f'\nResults of {self.cur_itr} currently made iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_itr_df, index=True)
-        print(f'Results are stored in the DataFrane "{self.f_itr_df}" file.')  # file name of the stored df
+        print(f'Summary results of iterations are stored in the DataFrane "{self.f_itr_df}" file.')
         # raise Exception(f'Report::summary() not implemented yet.')

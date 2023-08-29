@@ -100,6 +100,8 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     # iterations end here
     # todo: clearing-house (logs, report, etc) waits for implementation
     rep.summary()
+    if mc.par_rep:
+        mc.par_rep.summary()
     raise Exception(f'driver(): clearing-house not yet implemented.')
 
 # below are diverse, potentially useful, notes

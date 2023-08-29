@@ -18,6 +18,7 @@ class CtrMca:
         self.f_pref = ana_dir + '/pref.txt'     # file with defined preferences' set
         self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6}
         self.cur_stage = 0  # initialization
+        self.cur_itr_id = None  # id of the current iteration
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
         self.is_par_rep = par_rep    # if True, then switch to ParetoRepresentation mode
@@ -26,6 +27,7 @@ class CtrMca:
         self.pay_upd = False  # set to true, if current payOff differs from the store one
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
+        self.critScale = 1000.   # range [utopia, nadir] of scaled values
         self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
@@ -87,27 +89,6 @@ class CtrMca:
                     raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): inconsistent values.')
         raise Exception(f'set_payoff(): unknown criterion name: "{cr_name}".')
 
-    '''
-    # below is the old/extended version, no longer needed
-    def set_payOff(self, cr_name, utopia=None, nadir=None):   # set the provided utopia/nadir values (if not None)
-        print(f'Crit. "{cr_name}": checking update of {utopia=}, {nadir=} values.')
-        i = self.cr_ind(cr_name)    # get the criterion index in cr[]
-        updated = False
-        # todo: add tolerances for checks of old and new values
-        if utopia:  # value provided
-            if self.cr[i].utopia != utopia:
-                updated = True
-                print(f'Crit. "{cr_name}": utopia value {cr_name.utopia} updated to {utopia}.')
-                self.cr[i].utopia = utopia
-        if nadir:  # value provided
-            if self.cr[i].nadir != nadir:
-                updated = True
-                print(f'Crit. "{cr_name}": nadir value {cr_name.nadir} updated to {nadir}.')
-                self.cr[i].nadir = nadir
-        if updated:
-            self.pay_upd = True ???
-    '''
-
     def rd_payoff(self):    # read stored utopia/nadir values and store them as self.cr attributes
         if os.path.exists(self.f_payoff):
             with open(self.f_payoff, "r") as reader:
@@ -160,6 +141,13 @@ class CtrMca:
                 return i
         # print(f'All utopia components computed.') # duplicate msg
         return -1
+
+    def scale(self):    # define scaling-coeffs (for scaling criteria values to the same range of values)
+        for cr in self.cr:
+            diff = abs(cr.utopia - cr.nadir)
+            assert diff > self.minDiff, f'Criterion "{cr.name}" utopia {cr.utopia} too close to nadir {cr.nadir}.'
+            cr.sc_var = self.critScale / diff
+            print(f'Criterion "{cr.name}": scale {cr.sc_var:.2e}, utopia {cr.utopia}, nadir {cr.nadir}.')
 
     def set_stage(self):
         """Define and return analysis stage; provide (in self.cur_cr) info for mc.set_pref()."""
@@ -261,7 +249,8 @@ class CtrMca:
         assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.par_rep is None:
             self.par_rep = ParRep(self)
-        self.par_rep.cube()     # define new cube, set A/R
+        self.par_rep.cube()     # define new cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
+        # asp, res = self.par_rep.cube()     # define new cube, returns A/R in the model (not ASF) scale
         # raise Exception(f'Mcma::par_pref() not implemented yet.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
@@ -410,6 +399,8 @@ class CtrMca:
                     change = crit.updNadir(self.cur_stage, val)  # update nadir value (processing depends on stage)
                     if change:
                         self.payOffChange = True
+            if self.par_rep:
+                self.par_rep.addSol(self.cur_itr_id)   # add solution to ParRep solutions
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
