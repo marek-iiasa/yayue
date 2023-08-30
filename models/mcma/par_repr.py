@@ -128,7 +128,7 @@ class ParRep:     # representation of Pareto set
             cur_uto += 1
 
     def nearest(self):  # for each solution find distance (in ASF scale) to the nearest neighbor
-        # todo: implement update while adding new solutions (instead of computing all)
+        # todo: consider update of self.neigh while adding one new solution (instead of computing all)
         self.neigh = []
         mx_gap = 0.     # max gap
         min_gap = float('inf')  # min gap
@@ -137,10 +137,9 @@ class ParRep:     # representation of Pareto set
         for (i, s1) in enumerate(self.sols):
             dist = float('inf')
             nearest = None
-            j = i + 1
-            if j == len(self.sols):
-                break
-            while j < len(self.sols):
+            for (j, s2) in enumerate(self.sols):
+                if i == j:
+                    continue
                 s2 = self.sols[j]
                 d = 0.
                 for (a1, a2) in zip(s1.sc_vals, s2.sc_vals):    # loop over scaled values of criteria
