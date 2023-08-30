@@ -195,7 +195,8 @@ class CtrMca:
             self.cur_cr = None  # should no longer be used
             return self.cur_stage   # return to set pref for gor neutral solution and compute it
         elif self.cur_stage == 5:  # comes here after comptuting neutral solution
-            print('Continue to get and handle user preferences.')
+            # nothing to do here
+            # print('Continue to get and handle user preferences.')
             # self.usrPref()   #  get user preferences; called from driver, (should set stage to 6 for finish)
             return self.cur_stage
         else:
@@ -244,13 +245,12 @@ class CtrMca:
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
 
-    def par_pref(self):
+    def par_pref(self):  # generate preferences for finding next solution in Pareto set representation
         assert self.is_par_rep, f'CtrMca::par_pref() is not set to be used.'
         assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.par_rep is None:
-            self.par_rep = ParRep(self)
+            self.par_rep = ParRep(self)     # initialize Pareto set representation
         self.par_rep.cube()     # define new cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
-        # asp, res = self.par_rep.cube()     # define new cube, returns A/R in the model (not ASF) scale
         # raise Exception(f'Mcma::par_pref() not implemented yet.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)

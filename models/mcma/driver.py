@@ -47,7 +47,7 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
-    max_itr = 20
+    max_itr = 100
     while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nAnalysis stage: {i_stage}, start iteration {n_iter}  -----------------------------------------------')
@@ -56,8 +56,10 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
 
         if mc.is_par_rep:
+            print('Generate preferences for further exploration of Pareto set representation.')
             mc.par_pref()   # set preferences in Pareto reprentation mode
         else:
+            print('Continue to get and handle user preferences.')
             mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:
             print(f'\nFinished the analysis for all specified preferences.')
@@ -84,15 +86,15 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
         print('\nprocessing solution --------------------------------')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-        # rep_vars = []  # list of variables, values of which shall be returned
-        rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
-        val_vars = mc_gen.mc_sol(rep_vars)  # process solution:
+        rep_vars = []  # list of variables, values of which shall be returned
+        # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
+        val_vars = mc_gen.mc_sol(rep_vars)  # process solution
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # need not be deleted
 
-        print(f'\nFinished itr {n_iter}.')
+        print(f'Finished itr {n_iter}.')
         n_iter += 1
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
