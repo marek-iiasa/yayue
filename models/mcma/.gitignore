@@ -1,4 +1,5 @@
 Notes/
+pyBak/
 Tests/
 # Data/test1/pref.txt
 Data/test1/payoff.txt
@@ -7,6 +8,8 @@ Data/test1/pref1.txt
 Data/test1/pref
 Data/test1/pay
 Data/test1/*.csv
+Data/test1/*.jpg
+Data/test1/*.png
 # links to pipa
 dat1.dat
 inst.py
