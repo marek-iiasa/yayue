@@ -41,7 +41,7 @@ class Report:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
         self.f_itr_df = mc.ana_dir + '/itr_df.csv'  # file name of the stored df
-        self.itr_id = 99
+        self.itr_id = -1
         self.prev_itr = 0   # number of previosly made iters
         self.cur_itr = 0   # number of currently made iters
 

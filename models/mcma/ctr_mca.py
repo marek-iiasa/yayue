@@ -250,7 +250,7 @@ class CtrMca:
         assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.par_rep is None:
             self.par_rep = ParRep(self)     # initialize Pareto set representation
-        self.par_rep.cube()     # define new cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
+        self.par_rep.pref()     # define largest cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
         # raise Exception(f'Mcma::par_pref() not implemented yet.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)

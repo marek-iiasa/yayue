@@ -17,22 +17,24 @@ def plot2D(df, dir_name):
     '''
 
     cols = df.columns
+    n_sol = len(df.index)
 
     # Create a scatter plot using Matplotlib
     fig, ax = plt.subplots()
     # scatter = ax.scatter(df['x'], df['y'], label='Data Points')   # scatter not used but useful for debug
     # scatter = ax.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')
-    ax.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')
+    ax.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
 
     # Add labels and title
     ax.set_xlabel(cols[1])
     ax.set_ylabel(cols[2])
-    ax.set_title('Plot of Pareto solutions')
+    ax.set_title(f'Plot of {n_sol} Pareto solutions')
 
     # Use mplcursors for interactive labels
     cursor = mplcursors.cursor(hover=True)
     cursor.connect("add", lambda sel: sel.annotation.set_text(
-        f"{cols[0]}: {df[cols[0]][sel.index]}\nCrit-vals: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
+        f"{df[cols[0]][sel.index]}: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
+    # f"{cols[0]}: {df[cols[0]][sel.index]}\nCrit-vals: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
 
     plt.legend()
 
