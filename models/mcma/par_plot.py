@@ -19,30 +19,53 @@ def plot2D(df, dir_name):
     cols = df.columns
     n_sol = len(df.index)
 
-    # Create a scatter plot using Matplotlib
-    fig, ax = plt.subplots()
+    # Create two scatter plots using Matplotlib
+    # fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(16, 8))    # (width, height)
+    fig.canvas.set_window_title(f'Scatter plots of {n_sol} criteria.')  # title of the window/canvas
+    fig.subplots_adjust(wspace=0.3, hspace=0.5)
+
+    ax1 = fig.add_subplot(121)  # per-col, per_row, subplot number (starts from 1)
     # scatter = ax.scatter(df['x'], df['y'], label='Data Points')   # scatter not used but useful for debug
-    # scatter = ax.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')
-    ax.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+    # scatter = ax1.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')
+    ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
 
     # Add labels and title
-    ax.set_xlabel(cols[1])
-    ax.set_ylabel(cols[2])
-    ax.set_title(f'Plot of {n_sol} Pareto solutions')
+    ax1.set_xlabel(cols[1])
+    ax1.set_ylabel(cols[2])
+    ax1.set_title(f'Criteria values')
+    ax1.legend()
 
     # Use mplcursors for interactive labels
-    cursor = mplcursors.cursor(hover=True)
+    cursor = mplcursors.cursor(ax1, hover=True)
     cursor.connect("add", lambda sel: sel.annotation.set_text(
         f"{df[cols[0]][sel.index]}: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
     # f"{cols[0]}: {df[cols[0]][sel.index]}\nCrit-vals: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
 
-    plt.legend()
+    ax2 = fig.add_subplot(122)  # per-col, per_row, subplot number (starts from 1)
+    ax2.scatter(df[cols[3]], df[cols[4]], label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
+
+    # Add labels and title
+    ax2.set_xlabel(cols[1])
+    ax2.set_ylabel(cols[2])
+    ax2.set_title(f'Criteria achievements')
+    ax2.legend()
+
+    # Use mplcursors for interactive labels
+    cursor2 = mplcursors.cursor(ax2, hover=True)
+    cursor2.connect("add", lambda sel: sel.annotation.set_text(
+        f"{df[cols[0]][sel.index]}: ({sel.target[0]:.1f}, {sel.target[1]:.1f})"))
+    # f"{cols[0]}: {df[cols[0]][sel.index]}\nCrit-vals: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
+
+    '''
+    # plt.legend()
+    '''
 
     # Show the plot in a pop-up window
     f_name = dir_name + '/par_sol.png'
     fig.savefig(f_name)
-    print(f'Solution plot stored in file: {f_name}')
     plt.show()
+    print(f'Plot of Pareto solutions stored in file: {f_name}')
 
     '''
     # examples/temples below
