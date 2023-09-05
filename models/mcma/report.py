@@ -153,7 +153,7 @@ class Report:
         df2 = pd.DataFrame(new_row, index=list(range(1)))
         self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
         # print(f'current itr_df in report():\n{self.itr_df}')
-        print(f'Report::itr({self.itr_id}) finished.')
+        print(f'Report::itr_id({self.itr_id}) finished.')
 
         '''
             for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria

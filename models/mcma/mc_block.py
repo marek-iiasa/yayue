@@ -21,7 +21,7 @@ class McMod:
         for (i, crit) in enumerate(self.mc.cr):
             if crit.is_active:
                 act_cr.append(i)
-        print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
+        # print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
 
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         # m.af = pe.Var(domain=pe.Reals, doc='AF')      # pe.Reals gives warning
@@ -195,7 +195,7 @@ class McMod:
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         for var_name in rep_vars:     # loop over m1.vars of all criteria
             m1_var = m1_vars[var_name]
-            # todo: indexed variables needs to be detected and handled accrdingly (see regret::report())
+            # todo: indexed variables need to be detected and handled accrdingly (see regret::report())
             # val = m1_var.extract_values() # for indexed variables
             val = m1_var.value
             sol_val.update({var_name: val})

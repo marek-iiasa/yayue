@@ -94,7 +94,7 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # need not be deleted
 
-        print(f'Finished itr {n_iter}.')
+        print(f'Finished current itr, count: {n_iter}.')
         n_iter += 1
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
