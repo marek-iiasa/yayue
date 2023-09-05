@@ -11,7 +11,7 @@ class ParSol:     # one Pareto solution
         self.vals = vals  # list of criteria values
         self.a_vals = a_vals  # list of achievement values
         self.sc_vals = sc_vals  # list of scaled criteria values
-        print(f'Solution of itr {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
+        print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
 
 
 class Cube:     # defined (in scaled values) by the two given neighbor solutions
@@ -71,10 +71,8 @@ class Cube:     # defined (in scaled values) by the two given neighbor solutions
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):
         self.mc = mc    # CtrMca object
-        # self.n_crit = mc.n_crit   # number of criteria  (not needed?)
-        # self.n_corners = 0   # number of corners (one utopia + other inactive)
         self.sols = []      # Pareto-solutions (ParSol objects)
-        self.neigh = []     # list of tuples (itr_id1, itr_id2, distance) to the nearest neighbor
+        # self.neigh = []     # list of tuples (itr_id1, itr_id2, distance) to the nearest neighbor
         self.cubes = []     # list of cubes (Cube objects, one cube for each iteration)
         self.df_sol = None  # df with solutions prepared for plots
 
@@ -125,9 +123,9 @@ class ParRep:     # representation of Pareto set
         print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
 
     def chk_inside(self, s, s1, s2):    # return True if s is inside cube(s1, s2)
-        it = s.itr_id
-        it1 = s1.itr_id
-        it2 = s2.itr_id
+        # it = s.itr_id
+        # it1 = s1.itr_id
+        # it2 = s2.itr_id
         for (i, cr) in enumerate(self.mc.cr):
             v = s.vals[i]
             v1 = s1.vals[i]
@@ -141,6 +139,7 @@ class ParRep:     # representation of Pareto set
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
         # raise Exception(f'ParRep::chk_inside() not implemented yeYt.')
 
+    '''
     def cube(self):     # not good, therefore no longer used
         # define new cube (in ASF space), set A/R (in both ASF and A/R scales)
         mx_dis = 0.    # initialize distance
@@ -160,6 +159,7 @@ class ParRep:     # representation of Pareto set
         print(f'Largest cube defined by solutions: {s1} (itr {itr1}), {s2} (itr {itr2}); cube size = {mx_dis}.')
         self.cubes.append(Cube(self.mc, self.sols[s1], self.sols[s2]))     # ctor sets A/R values in mc.cr
         print(f'Cube added to ParRep. There are {len(self.cubes)} cubes defined.')
+    '''
 
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr)
         vals = []     # crit values
@@ -226,14 +226,27 @@ class ParRep:     # representation of Pareto set
             cols.append(cr.name)
         for cr in self.mc.cr:   # space for criteria achievements
             cols.append('a_' + cr.name)
-        self.df_sol = pd.DataFrame(columns=cols)
+        # self.df_sol = pd.DataFrame(columns=cols)  # not needed, if df created by row dictionaries
+        rows = []
         for s in self.sols:
             new_row = {'itr_id': s.itr_id}
+            # for (i, cr) in enumerate(self.mc.cr):     # results in different column seq. than the two loops bellow
+            #     new_row.update({cr.name: s.vals[i]})
+            #     new_row.update({'a_' + cr.name: s.a_vals[i]})
             for (i, cr) in enumerate(self.mc.cr):
                 new_row.update({cr.name: s.vals[i]})
+            for (i, cr) in enumerate(self.mc.cr):
                 new_row.update({'a_' + cr.name: s.a_vals[i]})
-            df2 = pd.DataFrame(new_row, index=list(range(1)))
-            self.df_sol = pd.concat([self.df_sol, df2], axis=0, ignore_index=True)
+            rows.append(new_row)
+            # df2 = pd.DataFrame(new_row, index=list(range(1)))
+            # self.df_sol = pd.concat([self.df_sol, df2], axis=0, ignore_index=True)    # results in compatibility warn.
+            # self.df_sol.loc[len(self.df_sol)] = new_row   # does not work
+            # last = len(self.df_sol)
+            # self.df_sol.loc[last] = new_row   # also does not work
+            # self.df_sol.append(new_row, ignore_index=True)    # append() removed from pd
+        # self.df_sol = pd.DataFrame(rows)
+        self.df_sol = pd.DataFrame(rows)
+        # self.df_sol = pd.DataFrame.from_dict(rows)
         f_name = self.mc.ana_dir + '/sol_df.csv'
         self.df_sol.to_csv(f_name, index=True)
         print(f'Solutions stored in the csv file: {f_name}.')

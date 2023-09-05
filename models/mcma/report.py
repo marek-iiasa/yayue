@@ -105,7 +105,7 @@ class Report:
             cr_name = self.cr_names[i]
             cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
             if self.mc.verb > 2:
-                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
+                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val:.2e}')
         if self.mc.verb > 1:
             print(f'Values of criteria {cri_val}')
 
