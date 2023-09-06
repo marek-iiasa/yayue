@@ -25,7 +25,8 @@ from driver import *  # driver (run the analysis set-up and iterations)
 # from inst import instance as pipa_ins  # ditto
 # from t3sms import mk_sms as sms3  # tiny, testing model
 # from t3inst import mk_inst as ins3  # ditto
-from t4conc import mk_conc as conc4  # tiny testing model, developed as concrete (without abstract)
+# from t4conc import mk_conc as conc4  # tiny testing model, developed as concrete (without abstract)
+from tspipa import sbPipa as sbPipa  # sand-box tiny Pipa testing model, developed as concrete (without abstract)
 
 
 def mk_mod1():  # generate the core model
@@ -33,7 +34,7 @@ def mk_mod1():  # generate the core model
     # mod1 = pipa_ins(abst)  # pipa model instance
     # abst = sms3()  # tiny test abstract model (SMS)
     # mod1 = ins3(abst)  # tiny test model instance
-    mod1 = conc4()  # tiny test model instance (without its abstract model)
+    mod1 = sbPipa()  # tiny test (Pipa-like) model instance (without its abstract model)
     return mod1
 
 
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     print(f'wrk_dir: {wrk_dir}')
     out_dir = './Out_dir/'
 
-    redir_stdo = False  # optoional redirection of stdout to out_dir/stdout.txt
+    redir_stdo = False  # optional redirection of stdout to out_dir/stdout.txt
     default_stdout = sys.stdout
     if redir_stdo:
         if not os.path.exists(out_dir):
@@ -79,7 +80,8 @@ if __name__ == '__main__':
     # m1_obj.print()
     # print(f'{m1_obj.name=}, {m1_obj=}')
 
-    driver(m1, './Data/test1')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
+    # driver(m1, './Data/test1')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
+    driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
