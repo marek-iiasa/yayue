@@ -37,6 +37,10 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     # todo: improve handling og verbosity levels
     mc.verb = 1    # verbosity (affecting mainly message-printouts) level
     rep = Report(mc, m1)    # Report ctor
+    # rep_vars = []  # list of variables, values of which shall be returned
+    # todo: current version the report works only for indexded vars
+    rep_vars = ['prod', 'emi', 'act']  # list of variables, values of which shall be returned
+    # rep_vars = ['act']  # list of variables, values of which shall be returned
 
     # select solver
     opt = pe.SolverFactory('glpk')
@@ -47,7 +51,8 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
-    max_itr = 16
+    # max_itr = 16
+    max_itr = 7
     while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nAnalysis stage: {i_stage}, start iteration {n_iter}  -----------------------------------------------')
@@ -86,8 +91,6 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
         print('\nprocessing solution --------------------------------')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-        rep_vars = []  # list of variables, values of which shall be returned
-        # rep_vars = ['x', 'y', 'z']  # list of variables, values of which shall be returned
         val_vars = mc_gen.mc_sol(rep_vars)  # process solution
         if len(rep_vars):
             print(f'Values of the selected variables:\n{val_vars}.')

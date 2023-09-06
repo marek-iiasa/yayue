@@ -192,14 +192,30 @@ class McMod:
         '''
 
         sol_val = {}    # initialize dict with values of variables requested in rep_var
+        # m1_vars = self.m1.component_objects(pe.Var)  # does not work as needed
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         for var_name in rep_vars:     # loop over m1.vars of all criteria
             m1_var = m1_vars[var_name]
-            # todo: indexed variables need to be detected and handled accrdingly (see regret::report())
-            # val = m1_var.extract_values() # for indexed variables
-            val = m1_var.value
-            sol_val.update({var_name: val})
-            # print(f'Value of the report variable {var_name} = {val}')
+            # todo: implement a check, if a var is indexed or not
+            # xx = pe.value(m1_var)     # gives exception for indexed vars
+            # ind = m1_var.index_set().getname()  # works only for indexed vars, raise exception for non-indexed
+            ind = None
+            # noinspection PyBroadException
+            try:
+                ind = m1_var.index_set().getname()  # works only for indexed vars, raise exception for non-indexed
+            except Exception:
+                # e = None
+                print(f'{var_name} is not indexed')
+            # ind2 = m1_var.get_sets()    # does not work
+            # todo: rounding is values should be implemented
+            if ind is None:     # not-indexed var
+                val = m1_var.value
+                sol_val.update({var_name: val})
+                print(f'Value of the report variable {var_name} = {val}')
+            else:     # indexed var
+                val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
+                sol_val.update({var_name: val_dict})
+                print(f'Values of indexed variable {var_name} = {val_dict}')
         if len(sol_val) and self.mc.verb > 2:
             print(f'values of selected variables: {sol_val}')
         return sol_val
