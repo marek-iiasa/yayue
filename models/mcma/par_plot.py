@@ -16,35 +16,34 @@ def plot2D(df, dir_name):
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used
     fig = plt.figure(figsize=(16, 8))    # (width, height)
-    fig.canvas.set_window_title(f'Scatter plots of {n_sol} criteria.')  # title of the window/canvas
+    fig.canvas.set_window_title(f'Scatter plots of criteria attributes for {n_sol} solutions.')  # the window title
     fig.subplots_adjust(wspace=0.3, hspace=0.5)
 
+    # define the first subplot
     ax1 = fig.add_subplot(121)  # per-col, per_row, subplot number (starts from 1)
+    ax1.set_title(f'Criteria values')   # title of the subplot
     # scatter = ax1.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')   # scatter unused but useful for debug
     ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
-    ax1.set_xlabel(cols[1])     # Add labels and title for first subplot
+    ax1.legend()    # legend within the subplot (defined by the label param of scatter)
+    ax1.set_xlabel(cols[1])     # Labels of the axis
     ax1.set_ylabel(cols[2])
-    ax1.set_title(f'Criteria values')
-    ax1.legend()
-    crs1 = mplcursors.cursor(ax1, hover=True)     # Use mplcursors for interactive labels
+    crs1 = mplcursors.cursor(ax1, hover=True)     # mplcursors for interactive labels
     crs1.connect("add", lambda sel: sel.annotation.set_text(    # 1st value taken from the df, others from the axes
         f"{df[cols[0]][sel.index]}: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
 
+    # define the second subplot
     ax2 = fig.add_subplot(122)  # per-col, per_row, subplot number (starts from 1)
     ax2.scatter(df[cols[3]], df[cols[4]], label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
-    # Add labels and title
+    ax2.legend()
     ax2.set_xlabel(cols[1])
     ax2.set_ylabel(cols[2])
     ax2.set_title(f'Criteria achievements')
-    ax2.legend()
-    # Use mplcursors for interactive labels
     crs2 = mplcursors.cursor(ax2, hover=True)
     crs2.connect("add", lambda sel: sel.annotation.set_text(
         f"{df[cols[0]][sel.index]}: ({sel.target[0]:.1f}, {sel.target[1]:.1f})"))
 
+    # Show the plot in a pop-up window and store it
     # plt.legend()
-
-    # Show the plot in a pop-up window
     f_name = dir_name + '/par_sol.png'
     fig.savefig(f_name)
     plt.show()

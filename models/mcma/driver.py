@@ -104,7 +104,7 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     rep.summary()
     if mc.par_rep:
         mc.par_rep.summary()
-    raise Exception(f'driver(): clearing-house not yet implemented.')
+    # raise Exception(f'driver(): clearing-house not yet implemented.')
 
 # below are diverse, potentially useful, notes
 # noinspection SpellCheckingInspection
