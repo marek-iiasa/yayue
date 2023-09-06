@@ -136,10 +136,9 @@ class CtrMca:
             self.payOffChange = False
 
     def chk_utopia(self):    # return crit-index of criterion, whose utopia was not computed yet
-        for (i, crit) in enumerate(self.cr):
-            if not crit.utopia:
+        for (i, cr) in enumerate(self.cr):
+            if cr.utopia is None:  # old version: if not cr.utopia is wrong (returns True if cr.utopia == 0.)
                 return i
-        # print(f'All utopia components computed.') # duplicate msg
         return -1
 
     def scale(self):    # define scaling-coeffs (for scaling criteria values to the same range of values)
