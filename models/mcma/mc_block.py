@@ -171,10 +171,9 @@ class McMod:
         #     # m.add_component(id, pe.Constraint(expr=(m.id == m1.id)))  # does not work: m.id is str not object
         '''
 
-    def mc_sol(self, rep_vars=None):
-        """Get from core model values of other (then criteria) vars to report. Criteria handled in Report::itr()"""
+    '''
+    # def mc_sol(self, rep_vars=None):
         # cf regret::report() for extensive processing
-        '''
         moved to Report
         cri_val = {}    # all criteria values in current solution
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
@@ -189,12 +188,12 @@ class McMod:
         # store through updating criteria attributes
         # todo: consider to add to an iter-log criteria values from each iter
         self.mc.store_sol(cri_val)
-        '''
 
+        # moved to Report
         sol_val = {}    # initialize dict with values of variables requested in rep_var
         # m1_vars = self.m1.component_objects(pe.Var)  # does not work as needed
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
-        for var_name in rep_vars:     # loop over m1.vars of all requested vars
+        for var_name in rep_vars:     # loop over m1.vars of all requested var-names
             m1_var = m1_vars[var_name]
             if m1_var is None:
                 raise Exception(f'Variable {var_name} is not defined in the core model.')
@@ -202,12 +201,12 @@ class McMod:
             if m1_var.is_indexed():
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
                 sol_val.update({var_name: val_dict})
-                print(f'Values of indexed variable {var_name} = {val_dict}')
+                # print(f'Values of indexed variable {var_name} = {val_dict}')
             else:
                 val = m1_var.value
                 sol_val.update({var_name: val})
-                print(f'Value of the report variable {var_name} = {val}')
-            '''
+                # print(f'Value of the report variable {var_name} = {val}')
+        
             # the below works but it is rather an ad-hoc fix than a good code
             # xx = pe.value(m1_var)     # gives exception for indexed vars
             # ind = m1_var.index_set().getname()  # works only for indexed vars, raise exception for non-indexed
@@ -228,8 +227,4 @@ class McMod:
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
                 sol_val.update({var_name: val_dict})
                 print(f'Values of indexed variable {var_name} = {val_dict}')
-            '''
-        if len(sol_val) and self.mc.verb > 2:
-            print(f'values of selected variables: {sol_val}')
-        # todo: add the retrieved values to the current solution (and also to plots)
-        return sol_val
+   '''

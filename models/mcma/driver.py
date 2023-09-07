@@ -36,11 +36,12 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
     mc = CtrMca(ana_dir, is_par_rep)    # CtrMca ctor
     # todo: improve handling og verbosity levels
     mc.verb = 1    # verbosity (affecting mainly message-printouts) level
-    rep = Report(mc, m1)    # Report ctor
+
+    rep_vars = ['prod', 'emi', 'act']  # list of variables, values of which shall be included in the report
+    # rep_vars = ['act']  # list of variables, values of which shall be returned
+    rep = Report(mc, m1, rep_vars)    # Report ctor
     # rep_vars = []  # list of variables, values of which shall be returned
     # todo: current version the report works only for indexded vars
-    rep_vars = ['prod', 'emi', 'act']  # list of variables, values of which shall be returned
-    # rep_vars = ['act']  # list of variables, values of which shall be returned
 
     # select solver
     opt = pe.SolverFactory('glpk')
@@ -91,9 +92,9 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
         print('\nprocessing solution --------------------------------')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         # get crit. values, store them via calling mc.store_sol(), return values of rep_vars
-        val_vars = mc_gen.mc_sol(rep_vars)  # process solution
-        if len(rep_vars):
-            print(f'Values of the selected variables:\n{val_vars}.')
+        # val_vars = mc_gen.mc_sol(rep_vars)  # extracting values of vars to be reported moved rep.itr()
+        # if len(rep_vars):
+        #     print(f'Values of the selected variables:\n{val_vars}.')
         m.del_component(m.core_model)   # must be deleted (otherwise would have to be generated every iteration)
         # m.del_component(m.mc_part)   # need not be deleted
 
