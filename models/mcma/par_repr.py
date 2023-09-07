@@ -185,6 +185,8 @@ class ParRep:     # representation of Pareto set
         # raise Exception(f'ParRep::addSol() not implemented yet.')
 
     def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
+        # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
+        #   this can be done rather in the driver than here.
         cur_uto = 0     # index of the current utopia
         for (k, crit) in enumerate(self.mc.cr):     # one corner for each criterion
             vals = []  # crit values

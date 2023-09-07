@@ -194,9 +194,21 @@ class McMod:
         sol_val = {}    # initialize dict with values of variables requested in rep_var
         # m1_vars = self.m1.component_objects(pe.Var)  # does not work as needed
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
-        for var_name in rep_vars:     # loop over m1.vars of all criteria
+        for var_name in rep_vars:     # loop over m1.vars of all requested vars
             m1_var = m1_vars[var_name]
-            # todo: implement a check, if a var is indexed or not
+            if m1_var is None:
+                raise Exception(f'Variable {var_name} is not defined in the core model.')
+            # todo: add roundings of values (either here or when df will be created)
+            if m1_var.is_indexed():
+                val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
+                sol_val.update({var_name: val_dict})
+                print(f'Values of indexed variable {var_name} = {val_dict}')
+            else:
+                val = m1_var.value
+                sol_val.update({var_name: val})
+                print(f'Value of the report variable {var_name} = {val}')
+            '''
+            # the below works but it is rather an ad-hoc fix than a good code
             # xx = pe.value(m1_var)     # gives exception for indexed vars
             # ind = m1_var.index_set().getname()  # works only for indexed vars, raise exception for non-indexed
             ind = None
@@ -216,6 +228,8 @@ class McMod:
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
                 sol_val.update({var_name: val_dict})
                 print(f'Values of indexed variable {var_name} = {val_dict}')
+            '''
         if len(sol_val) and self.mc.verb > 2:
             print(f'values of selected variables: {sol_val}')
+        # todo: add the retrieved values to the current solution (and also to plots)
         return sol_val

@@ -87,29 +87,15 @@ if __name__ == '__main__':
     # the below loop deactivates the objectives, can also be adapted for finding types of any model objects
     for component_name, component in m1.component_map().items():
         c_type = str(type(component))
-        print(f'Component: name = {component_name}, type: {c_type}')
-        # if str(type(component)) == "<class 'pyomo.core.base.objective.SimpleObjective'>": # GPT suggestion
-        if str(type(component)) == "<class 'pyomo.core.base.objective.ScalarObjective'>":
+        # print(f'Component: name = {component_name}, type: {c_type}')
+        # if str(type(component)) == "<class 'pyomo.core.base.objective.SimpleObjective'>": # GPT (wrong) suggestion
+        if str(type(component)) == "<class 'pyomo.core.base.objective.ScalarObjective'>":   # corrected GPT suggestion
             print(f'objective name: "{component_name}" deactivated.')
             component.deactivate()
     # obj_name = 'goal'
     # if hasattr(m1, obj_name):
     #     print(f'Objective function {obj_name} removed from the core model')
     #     del m1.obj_name
-    # the below does not work
-    # for obj_name, obj in m1.component_objects(Objective, active=True):
-    #     print(f'core model objective deactivated')
-    # m1.goal.deactivate()    # the goal name is hard-coded
-    # print(f'core model objective (named: goal) deactivated.')
-    # none of the attempts commented below work
-    # m1_obj = m1.component_map(ctype=pe.Objective)  # all objectives of the m1 (core model)
-    # print(f'{m1_obj=}')
-    # print(f'm1_obj = {m1_obj}')
-    # print(f'{type(m1_obj)=}')
-    # m1_obj.display()
-    # m1_obj.pprint()
-    # m1_obj.print()
-    # print(f'{m1_obj.name=}, {m1_obj=}')
 
     # driver(m1, './Data/test1')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
     driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
