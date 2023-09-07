@@ -22,6 +22,11 @@ def sbPipa():
     def goal(mx):
         return mx.prod
 
+    @m.Objective(sense=pe.minimize)
+    def goal2(mx):
+        return mx.emi
+    m.goal2.deactivate()
+
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.capT = pe.Param(domain=pe.NonNegativeReals, default=1000., doc='sum of capcities of all techn.')
     m.frac = pe.Param(domain=pe.NonNegativeReals, default=70., doc='fraction of total cap. available to each tech')

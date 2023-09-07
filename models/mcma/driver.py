@@ -59,6 +59,7 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
+        # m.core_model.objective.deactivate()       # does not work
 
         if mc.is_par_rep:
             print('Generate preferences for further exploration of Pareto set representation.')
