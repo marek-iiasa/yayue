@@ -9,6 +9,7 @@ Prototype of the MCMA
 # import sys		# needed for sys.exit()
 import os
 # import pandas as pd
+# import pickle     # pickle does not work correctly
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
@@ -63,9 +64,25 @@ if __name__ == '__main__':
 
     print(f'\nGenerating instance of the core model.')
     m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
-    # print('\ncore model display: -----------------------------------------------------------------------------')
-    # m1.pprint()
-    # print('end of model display: ------------------------------------------------------------------------\n')
+
+    '''
+    # exploring storing the model by pickle; negative:
+    # pickle.dump(m2store, f)
+    # AttributeError: Can't pickle local object 'sbPipa.<locals>.actC'
+    m2store = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
+    if hasattr(m2store, 'goal'):
+        del m2store.goal
+        print('Objective function removed from the model to be stored by pickle.')
+    with open("m1.pkl", "wb") as f:     # store for testing
+        pickle.dump(m2store, f)
+
+    # retrieve (just for testing)
+    with open("m1.pkl", "rb") as f:
+        m1 = pickle.load(f)
+    '''
+    print('\ncore model display: -----------------------------------------------------------------------------')
+    m1.pprint()
+    print('end of model display: ------------------------------------------------------------------------\n')
 
     # todo: find name/object of the objective, its name is had-coded
     m1.goal.deactivate()    # the goal name is hard-coded
