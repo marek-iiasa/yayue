@@ -99,6 +99,10 @@ if __name__ == '__main__':
     # m1.pprint()
     # print('end of model display: ------------------------------------------------------------------------\n')
 
+    for obj in m1.component_data_objects(pe.Objective):
+        print(f'Objective "{obj}" deactivated.')
+        obj.deactivate()
+    '''
     # the below loop deactivates the objectives, can also be adapted for finding types of any model objects
     for component_name, component in m1.component_map().items():
         c_type = str(type(component))
@@ -111,6 +115,7 @@ if __name__ == '__main__':
     # if hasattr(m1, obj_name):
     #     print(f'Objective function {obj_name} removed from the core model')
     #     del m1.obj_name
+    '''
 
     driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
     # driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
