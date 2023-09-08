@@ -30,7 +30,6 @@ class Report:
         self.mc = mc    # CtrMca
         self.m1 = m1    # core-model (used only for extracting solutions in stage one
         self.rep_dir = mc.ana_dir  # repository of MCMA analysis instance configuration and results
-        self.rep_vars = rep_vars    # name of variables to be included in the report
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of mc_block variables defining criteria
         # crit-attributes: v: value, Y: y/n is_active marker, M: 1/-1 (max/min mult.)
@@ -43,6 +42,12 @@ class Report:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
         self.f_itr_df = mc.ana_dir + '/df_itr.csv'  # file name of the stored df
+        self.rep_vars = rep_vars    # names of the core-model variables to be included in the report
+        self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
+        self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
+        self.f_df_vars = mc.ana_dir + '/df_vars.csv'  # file name of the stored df
+
+        #
         self.itr_id = -1
         self.prev_itr = 0   # number of previosly made iters
         self.cur_itr = 0   # number of currently made iters
@@ -111,7 +116,7 @@ class Report:
         if self.mc.verb > 1:
             print(f'Values of criteria {cri_val}')
 
-        self.mc.updCrit(cri_val)    # update crit attributes (nadir, utopia)
+        self.mc.updCrit(cri_val)    # update crit attributes (value, optionally: nadir, utopia)
         self.mc.prnPayOff()     # print, and optionally store payOff table
 
         # add to self.itr_df one row with values of all attributes for each criterion
@@ -153,120 +158,55 @@ class Report:
             new_row.update({self.cols[cur_col]: marker})
             cur_col += 1
         df2 = pd.DataFrame(new_row, index=list(range(1)))
-        with warnings.catch_warnings():  # suppress thepd.concat() warning
+        with warnings.catch_warnings():  # suppress the pd.concat() warning
             warnings.filterwarnings("ignore", category=FutureWarning)
             self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
         # print(f'current itr_df in report():\n{self.itr_df}')
 
-        sol_val = {}    # initialize dict with values of variables requested in rep_var
-        # m1_vars = self.m1.component_objects(pe.Var)  # does not work as needed
+        if len(self.rep_vars):
+            self.req_vals()     # extract and store values of the core-model variables requested to be reported
+
+    # exctract and store values of the variables to be included in the report
+    def req_vals(self):
+        vals = []   # tmp list of lists, each for one var: [var_name, is_indexed, val(s)]
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         for var_name in self.rep_vars:     # loop over m1.vars of all requested var-names
             m1_var = m1_vars[var_name]
             if m1_var is None:
                 raise Exception(f'Variable {var_name} is not defined in the core model.')
-            # todo: add roundings of values (either here or when df will be created)
             if m1_var.is_indexed():
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
-                sol_val.update({var_name: val_dict})
+                vals.append([var_name, True, val_dict])
                 # print(f'Values of indexed variable {var_name} = {val_dict}')
             else:
                 val = m1_var.value
-                sol_val.update({var_name: val})
+                vals.append([var_name, False, val])
                 # print(f'Value of the report variable {var_name} = {val}')
-        if len(self.rep_vars):
-            print(f'Values of the selected variables:\n{sol_val}.')
+
+        # parse the extracted values into entries of a row to be included by the self.summary() in the df_vars
+        new_row = {'itr': self.itr_id}
+        for item in vals:
+            if item[1] is False:    # simple (not indexed) var
+                new_row.update({item[0]: f'{item[2]:.2e}'})
+            else:       # indexed var
+                d_item = item[2]    # dict with values of indexed var
+                for (ind, val) in d_item.items():
+                    idx = f'{item[0]}_{ind}'
+                    new_row.update({idx: f'{val:.2e}'})
+        self.sol_vars.append(new_row)   # append to the list of rows
+        print(f'Values of (the to be reported) core-model variables for the current iter:\n{new_row}.')
+
+        # sign-off
         print(f'Report::itr_id({self.itr_id}) finished.')
 
-        '''
-            for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
-                m_var = m_vars[var_name]
-                val = m_var.value
-                cr_name = self.cr_names[i]
-                cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
-                if self.mc.verb > 2:
-                    print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val}')
-        else:   # in stage 1 (utopia calculation) only one core-model var (defining the only active crit.) is used
-            for crit in self.mc.cr:
-                cr_name = crit.name
-                if crit.is_active:
-                    val = pe.value(m.af)
-                else:
-                    val = None
-                cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
-                if self.mc.verb > 2:
-                    print(f'Value of variable  defining criterion "{cr_name}" = {val}')
-            '''
-
-        '''
-        # add to the summary df: oil price and the total cost
-        # cost = round(pe.value(m.cost), 0)
-        # new_row = {'itr_id': self.itr_id, 'co_price': op, 'cost': cost, 'CO2': co2, 'oilImp': oil_imp}
-        new_row = {'itr_id': self.itr_id, 'cost': cost, 'CO2': co2, 'oilImp': oil_imp}
-        for indx, idx in enumerate(self.par_id):
-            new_row.update({idx: val[indx]})
-        df2 = pd.DataFrame(new_row, index=list(range(1)))
-        # print(f'df2 in report():\n{df2}')
-        self.sum_df = pd.concat([self.sum_df, df2], axis=0, ignore_index=True)
-        # print(f'current sum_df in report():\n{self.sum_df}')
-
-        # extract values of the requested variables and store them in the corresponding lists of sequences
-        model_vars = m.component_map(ctype=pe.Var)
-        for seq_req, req_var in enumerate(self.var_lst):  # loop over the list of the variables to be processed
-            print(f'\nProcessing values of variable: {req_var}')
-            try:
-                assert(req_var in model_vars)
-            except AssertionError:
-                print(f'The requested var {req_var} undefined in the model (it should have been removed by the ctor).')
-                raise
-
-            # get the model variable with the req_var name
-            # for k in model_vars.keys():  # this is a map of {name:pyo.Var}
-            #     print(f'checking model var: {k}')
-            #     if k == req_var:
-            #         m_var = model_vars[k]
-            #         break
-            m_var = model_vars[req_var]     # instead of the above loop
-            # make a pd.Series of the variable's values (with the corresponding indices)
-            s = pd.Series(m_var.extract_values(), index=m_var.extract_values().keys())
-            # s = s.round(5)  # replace small numbers by zeros
-
-            # if the series is multi-indexed we need to unstack it...
-            if type(s.index[0]) == tuple:  # the series is multi-indexed
-                print(f'multi-indexed series s[{req_var}] before unstack:\n{s}')
-                s = s.unstack(level=0)  # df-cols defined by technologies
-                # multi-index the columns (hierarchical column indexing, no longer used)
-                # s.columns = pd.MultiIndex.from_tuples([(pr_id, t) for t in s.columns])
-                # print(f'df[{req_var}] after series-index unstack and conversion of series to df:\n{s}')
-            else:   # the series indexed by technologies only
-                # print(f'var: {m_var} has one index, the series not unstacked (but converted to df):\n{s}')
-                d1 = s.to_frame()
-                s = d1.transpose()  # convert tech-indices into columns (the df has one row only)
-
-            eps = 0.000001
-            # s[(-eps < s and s < eps)] = 0    # replace small numbers by zeros
-            # s[s.all(-eps < s < eps)] = 0    # replace small numbers by zeros
-            # s.bool(-eps < s < eps) = 0    # replace small numbers by zeros
-            # all of the above result in error
-            # s.where(-eps < s < eps, 0.)
-            # s.where(-eps < s < eps) =  0.
-            # TODO: test the below
-            # TODO: fix the below to handle also s < -eps
-            s[s < eps] = 0    # replace small numbers by zeros
-            s.insert(0, 'itr_id', self.itr_id)  # add itr_id col to uniformly index both one and two param's value(s)
-            # print(f'\nMultiIndex of the df with values of {req_var} and of param {pr_id}:\n{s.columns}')
-
-            # print(f'\nsol_cont before appending var({req_var}, seq {seq_req}):\n{self.sol_cont[seq_req]}')
-            self.sol_cont[seq_req].append(s)
-            # print(f'\nsol_cont after append var: {req_var} (seq in sol_cont: {seq_req}):\n{self.sol_cont[seq_req]}\n')
-
-        print('--------------------------------------------------------------------------------')
-        # end of add_itr()
-        '''
-
+    # generate and store df's with info on criteria and the variables requested for report/plots
     def summary(self):
         # todo: correct info on current and previous iterations
-        print(f'\nResults of {self.cur_itr} currently made iters added to results of {self.prev_itr} previously made.')
+        # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_itr_df, index=True)
-        print(f'Summary results of iterations are stored in the DataFrane "{self.f_itr_df}" file.')
+        print(f'Criteria attributes at each iteration are stored in the DataFrane "{self.f_itr_df}" file.')
+        self.df_vars = pd.DataFrame(self.sol_vars)
+        self.df_vars.to_csv(self.f_df_vars, index=True)
+        print(f'Values of core-model variables requested to be reported are stored in the DataFrane '
+              f'"{self.f_df_vars}" file.')
         # raise Exception(f'Report::summary() not implemented yet.')
