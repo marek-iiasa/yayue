@@ -39,8 +39,9 @@ def driver(m1, ana_dir):    # m1 (core model) defined in main (mcma.py)
 
     rep_vars = ['prod', 'emi', 'act']  # list of variables, values of which shall be included in the report
     # rep_vars = ['act']  # list of variables, values of which shall be returned
-    rep = Report(mc, m1, rep_vars)    # Report ctor
+    # rep_vars = ['x']  # list of variables, values of which shall be returned
     # rep_vars = []  # list of variables, values of which shall be returned
+    rep = Report(mc, m1, rep_vars)    # Report ctor
     # todo: current version the report works only for indexded vars
 
     # select solver

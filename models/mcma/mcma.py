@@ -8,8 +8,11 @@ Prototype of the MCMA
 """
 # import sys		# needed for sys.exit()
 import os
+from os import R_OK, access
+from os.path import isfile
 # import pandas as pd
-# import pickle     # pickle does not work correctly
+# import pickle     # pickle does not process relations defined with decorations (without decorations processed ok)
+import dill     # stores and retrieves pyomo models into/from binary file (porting between different OSs not tested yet)
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
@@ -35,6 +38,7 @@ def mk_mod1():  # generate the core model
     # mod1 = pipa_ins(abst)  # pipa model instance
     # abst = sms3()  # tiny test abstract model (SMS)
     # mod1 = ins3(abst)  # tiny test model instance
+    # mod1 = conc4()  # tiny test (Pipa-like) model instance (without its abstract model)
     mod1 = sbPipa()  # tiny test (Pipa-like) model instance (without its abstract model)
     return mod1
 
@@ -62,17 +66,28 @@ if __name__ == '__main__':
         fn_out = None
         f_out = None
 
-    print(f'\nGenerating instance of the core model.')
-    m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
+    print(f'\nLoading or generating instance of the core model.')
+    # m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
+    m_name = 'Models/sbPipa'
+    f_name = m_name + '.pkl'
+    if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
+        m2store = mk_mod1()  # generate core model:
+        # Serialize and save the Pyomo model
+        with open(f_name, 'wb') as f:
+            dill.dump(m2store, f)
+        print(f'Model "{m_name}" generated and stored.')
+    # Load the serialized Pyomo model
+    with open(f_name, 'rb') as f:
+        m1 = dill.load(f)
+    print(f'The stored model "{m_name}" loaded.')
 
     '''
     # exploring storing the model by pickle; negative:
     # pickle.dump(m2store, f)
     # AttributeError: Can't pickle local object 'sbPipa.<locals>.actC'
-    m2store = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
-    if hasattr(m2store, 'goal'):
-        del m2store.goal
-        print('Objective function removed from the model to be stored by pickle.')
+    # if hasattr(m2store, 'goal'):  # not needed, if m2store specified without decorations
+    #     del m2store.goal
+    #     print('Objective function removed from the model to be stored by pickle.')
     with open("m1.pkl", "wb") as f:     # store for testing
         pickle.dump(m2store, f)
 
@@ -97,8 +112,8 @@ if __name__ == '__main__':
     #     print(f'Objective function {obj_name} removed from the core model')
     #     del m1.obj_name
 
-    # driver(m1, './Data/test1')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
     driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
+    # driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
