@@ -12,6 +12,9 @@ def plot2D(df, dir_name):
 
     cols = df.columns   # columns of the df defined in the report() using the criteria names
     n_sol = len(df.index)   # number of solutions defined in the df
+    seq = df[cols[0]]
+    norm = plt.Normalize(seq.min(), seq.max())
+    cmap = plt.get_cmap('viridis')
 
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used
@@ -23,7 +26,10 @@ def plot2D(df, dir_name):
     ax1 = fig.add_subplot(121)  # per-col, per_row, subplot number (starts from 1)
     ax1.set_title(f'Criteria values')   # title of the subplot
     # scatter = ax1.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')   # scatter unused but useful for debug
-    ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+    # ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+    scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=seq, cmap=cmap, norm=norm, marker='o',
+                label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+    cbar = fig.colorbar(scat1, ax=ax1, label='itr_id')
     ax1.legend()    # legend within the subplot (defined by the label param of scatter)
     ax1.set_xlabel(cols[1])     # Labels of the axis
     ax1.set_ylabel(cols[2])
