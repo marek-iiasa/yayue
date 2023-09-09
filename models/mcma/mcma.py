@@ -68,18 +68,18 @@ if __name__ == '__main__':
 
     print(f'\nLoading or generating instance of the core model.')
     # m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
-    m_name = 'Models/sbPipa'
-    f_name = m_name + '.pkl'
+    m_name = 'sbPipa'
+    f_name = f'Models/{m_name}.dll'     # alternatively the 'dill' file extension is used
     if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
         m2store = mk_mod1()  # generate core model:
         # Serialize and save the Pyomo model
         with open(f_name, 'wb') as f:
             dill.dump(m2store, f)
-        print(f'Model "{m_name}" generated and stored.')
+        print(f'Model "{m_name}" generated and dumpped to: {f_name}')
     # Load the serialized Pyomo model
     with open(f_name, 'rb') as f:
         m1 = dill.load(f)
-    print(f'The stored model "{m_name}" loaded.')
+    print(f'The stored model "{m_name}" loaded from {f_name}')
 
     '''
     # exploring storing the model by pickle; negative:
