@@ -1,45 +1,103 @@
 # import sys      # needed from stdout
 # import os
 # import numpy as np
-# import pandas as pd
+import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import seaborn as sns
 import mplcursors
+sns.set()   # settings for seaborn plotting style
 
 
 # noinspection PySingleQuotedDocstring
 def plot2D(df, dir_name):
     """df: solutions to be plotted, dir_name: dir for saving the plot"""
 
-    cols = df.columns   # columns of the df defined in the report() using the criteria names
-    n_sol = len(df.index)   # number of solutions defined in the df
+    cols = df.columns  # columns of the df defined in the report() using the criteria names
+    n_sol = len(df.index)  # number of solutions defined in the df
     seq = df[cols[0]]
     norm = plt.Normalize(seq.min(), seq.max())
-    cmap = plt.get_cmap('viridis')
+
+    heat_map = False     # if True then use the heat map; alternative: use discrete colors, e.g., from a ListedColormap
+    if heat_map:
+        norm = plt.Normalize(seq.min(), seq.max())
+        cmap = plt.get_cmap('viridis')
+        cat_num = None
+    else:       # define categories of the iterations
+        # cmap = sns.color_palette('Set1', 4)   # works with sns plots, not with plt
+        # cmap = ListedColormap(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'])
+        # cmap = ListedColormap(['green', 'blue', 'red', 'magenta'])  # ignores! blue or green, if it is on second pos.
+        # cmap = ListedColormap(['blue', 'green', 'red', 'gray', 'magenta'])    # ignores green
+        cmap = ListedColormap(['green', 'blue', 'red'])  # takes every item, if no more specified
+        # cmap = plt.get_cmap('viridis')  # ok
+        # cmap = plt.get_cmap('Set1')  # ok
+        # cmap = plt.get_cmap('Set3')  # ok
+        # cmap = plt.get_cmap('Dark2')  # ok
+        # cat = pd.Series(index=range(n_sol), dtype='string')  # category id for selecting colors from discrete colormap
+        # cut_num contains (for each data item) data category id, to be used as the color index in the cmap
+        cat_num = pd.Series(index=range(n_sol), dtype='Int64')
+        # cat = pd.Series(data='?', index=range(n_sol), dtype=None)   # works ok
+        n_cat = 3   # number of categories
+        n_members = int(n_sol/n_cat)     # number of items in each category
+        i_memb = 0  # current number of members already assigned to a category
+        i_cat = 0   # id of the current category
+        for (i, item) in enumerate(cat_num):
+            cat_num[i] = i_cat
+            # cat[i] = str(i_cat)
+            i_memb += 1
+            if i_memb == n_members:
+                i_cat += 1
+                i_memb = 0
+            # cat_map.update({i: cat[i]})
+        # cat_num = cat.map(cat_map)
 
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used
-    fig = plt.figure(figsize=(16, 8))    # (width, height)
+    fig = plt.figure(figsize=(16, 8))  # (width, height)
     fig.canvas.set_window_title(f'Scatter plots of criteria attributes for {n_sol} solutions.')  # the window title
     fig.subplots_adjust(wspace=0.3, hspace=0.5)
+    m_size = 70     # marker size
 
     # define the first subplot
     ax1 = fig.add_subplot(121)  # per-col, per_row, subplot number (starts from 1)
-    ax1.set_title(f'Criteria values')   # title of the subplot
-    # scatter = ax1.scatter(df[cols[1]], df[cols[2]], label='Pareto solutions')   # scatter unused but useful for debug
+    ax1.set_title(f'Criteria values')  # title of the subplot
     # ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
-    scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=seq, cmap=cmap, norm=norm, marker='o',
-                label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
-    cbar = fig.colorbar(scat1, ax=ax1, label='itr_id')
-    ax1.legend()    # legend within the subplot (defined by the label param of scatter)
-    ax1.set_xlabel(cols[1])     # Labels of the axis
+    if heat_map:
+        scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=seq, cmap=cmap, norm=norm, marker='o', s=m_size,
+                            label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        # cbar = fig.colorbar(scat1, ax=ax1, label='itr_id')    # cbar not used here
+        fig.colorbar(scat1, ax=ax1, label='itr_id')
+    else:
+        # scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=cat_num, cmap=cmap, marker='o', s=m_size,
+        ax1.scatter(df[cols[1]], df[cols[2]], c=cat_num, cmap=cmap, marker='o', s=m_size,
+                    label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        # todo: add legend of the marker-colors
+        # fig.colorbar(scat1, ax=ax1, label='itr_id')   # does not work
+        # todo: sns.scatterplot does not work yet.
+        '''
+        scat1 = sns.scatterplot(data=df, x=cols[1], y=cols[2], legend='full') # , c=cat_num, cmap=cmap, marker='o',
+                            s=m_size,
+                            # legend=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        '''
+    ax1.legend()  # legend within the subplot (defined by the label param of scatter)
+    ax1.set_xlabel(cols[1])  # labels of the axis
     ax1.set_ylabel(cols[2])
-    crs1 = mplcursors.cursor(ax1, hover=True)     # mplcursors for interactive labels
-    crs1.connect("add", lambda sel: sel.annotation.set_text(    # 1st value taken from the df, others from the axes
+    crs1 = mplcursors.cursor(ax1, hover=True)  # mplcursors for interactive labels
+    crs1.connect("add", lambda sel: sel.annotation.set_text(  # 1st value taken from the df, others from the axes
         f"{df[cols[0]][sel.index]}: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
 
     # define the second subplot
     ax2 = fig.add_subplot(122)  # per-col, per_row, subplot number (starts from 1)
-    ax2.scatter(df[cols[3]], df[cols[4]], label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
+    # ax2.scatter(df[cols[3]], df[cols[4]], label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
+    if heat_map:
+        scat1 = ax2.scatter(df[cols[3]], df[cols[4]], c=seq, cmap=cmap, norm=norm, marker='o', s=m_size,
+                            label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
+        # cbar = fig.colorbar(scat1, ax=ax2, label='itr_id')    # cbar not used here
+        fig.colorbar(scat1, ax=ax2, label='itr_id')
+    else:
+        # scat1 = ax2.scatter(df[cols[3]], df[cols[4]], c=cat_num, cmap=cmap, marker='o', s=m_size,
+        ax2.scatter(df[cols[3]], df[cols[4]], c=cat_num, cmap=cmap, marker='o', s=m_size,
+                    label=f'Pareto solutions\n{cols[0]}: ({cols[3]}, {cols[4]})')
     ax2.legend()
     ax2.set_xlabel(cols[1])
     ax2.set_ylabel(cols[2])
