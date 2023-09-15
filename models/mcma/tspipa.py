@@ -15,7 +15,8 @@ def sbPipa():
 
     # outcome variables
     m.prod = pe.Var(domain=pe.NonNegativeReals, doc='total production')
-    m.emi = pe.Var(doc='emission')
+    m.emi = pe.Var(domain=pe.NonNegativeReals, doc='emission')
+    m.exp = pe.Var(domain=pe.NonNegativeReals, doc='export')
 
     # objective:
     @m.Objective(sense=pe.maximize)
@@ -32,12 +33,16 @@ def sbPipa():
     m.frac = pe.Param(domain=pe.NonNegativeReals, default=70., doc='fraction of total cap. available to each tech')
     m.pr = pe.Param(m.T, domain=pe.NonNegativeReals, mutable=True, default=1., doc='unit prod. of act')
     m.em = pe.Param(m.T, domain=pe.NonNegativeReals, mutable=True, default=1., doc='unit emission of act')
+    m.ex = pe.Param(m.T, domain=pe.NonNegativeReals, mutable=True, default=0., doc='unit export by act')
     m.pr['BTL'] = 5.
     m.pr['STL'] = 15.
     m.pr['OTL'] = 25.
     m.em['BTL'] = 0.1
     m.em['STL'] = 10.
     m.em['OTL'] = 100.
+    m.ex['BTL'] = 50.
+    m.ex['STL'] = 10.
+    m.ex['OTL'] = 1.
 
     # relations (constraints)
     @m.Constraint(m.T)
@@ -56,6 +61,10 @@ def sbPipa():
     def emiT(mx):
         return mx.emi == sum(mx.em[t] * mx.act[t] for t in mx.T)
 
-    m.pprint()
+    @m.Constraint()
+    def expT(mx):
+        return mx.exp == sum(mx.ex[t] * mx.act[t] for t in mx.T)
+
+    # m.pprint()
     print(f"sbPipa(): concrete model {m.name} generated.")
     return m
