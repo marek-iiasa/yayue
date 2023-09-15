@@ -39,7 +39,7 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
 
     # list of variables, values of which shall be included in the report
     # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
-    rep_vars = ['prod', 'emi', 'act']
+    rep_vars = ['prod', 'emi', 'exp', 'act']
     # rep_vars = ['act']
     # rep_vars = ['x']
     # rep_vars = []
@@ -68,7 +68,13 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
             print('Generate preferences for exploration of the Pareto set representation.')
             mc.par_pref()   # set preferences in Pareto reprentation mode
         else:
-            print('Get user preferences provided in a file.')
+            if i_stage < 4:
+                # fixme: Nadir wrongly updated for criterion export in iter 5
+                print('Setting preferences for next step in Payoff table computations.')
+            elif i_stage == 4:
+                print('Setting preferences for computing neutral solution.')
+            else:
+                print('Get user preferences provided in a file.')
             mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
             print(f'\nFinished the analysis for all specified preferences.')
