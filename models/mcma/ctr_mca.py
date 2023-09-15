@@ -192,6 +192,7 @@ class CtrMca:
             print('Switch to get and process user-preferences.')
             self.cur_stage = 5
             self.cur_cr = None  # should no longer be used
+            self.hotStart = True
             return self.cur_stage   # return to set pref for gor neutral solution and compute it
         elif self.cur_stage == 5:  # comes here after comptuting neutral solution
             # nothing to do here
