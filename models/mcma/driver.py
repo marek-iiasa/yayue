@@ -33,11 +33,13 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
 
     is_par_rep = True   # switch to Pareto-representation mode (set to False for providing preferences in a file)
     # is_par_rep = False   # uncomment for providing user-preferences in a file
+    # todo: fix the problem caused by is_par_rep == True on initial model analysis
     mc = CtrMca(ana_dir, is_par_rep)    # CtrMca ctor
     # todo: improve handling og verbosity levels
     mc.verb = 1    # verbosity (affecting mainly message-printouts) level
 
     # list of variables, values of which shall be included in the report
+    # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
     rep_vars = ['prod', 'emi', 'act']
     # rep_vars = ['act']
     # rep_vars = ['x']
@@ -53,8 +55,8 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
-    # max_itr = 16
-    max_itr = 7
+    max_itr = 16
+    # max_itr = 7
     while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nAnalysis stage: {i_stage}, start iteration {n_iter}  -----------------------------------------------')

@@ -12,6 +12,7 @@ Data/test1/*.csv
 Data/test1/*.jpg
 Data/test1/*.png
 Data/test2/
+Data/test3/
 # links to pipa
 dat1.dat
 inst.py
