@@ -29,7 +29,7 @@ def sbPipa():
     m.goal2.deactivate()
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
-    m.capT = pe.Param(domain=pe.NonNegativeReals, default=1000., doc='sum of capcities of all techn.')
+    m.capT = pe.Param(domain=pe.NonNegativeReals, default=1000., doc='sum of capacities over all techn.')
     m.frac = pe.Param(domain=pe.NonNegativeReals, default=70., doc='fraction of total cap. available to each tech')
     m.pr = pe.Param(m.T, domain=pe.NonNegativeReals, mutable=True, default=1., doc='unit prod. of act')
     m.em = pe.Param(m.T, domain=pe.NonNegativeReals, mutable=True, default=1., doc='unit emission of act')
