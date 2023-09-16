@@ -59,7 +59,7 @@ if __name__ == '__main__':
     if redir_stdo:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir, mode=0o755)
-        fn_out = out_dir + 'stdout.txt'  # file for redirected stdout
+        fn_out = f'{out_dir}stdout.txt'  # file for redirected stdout
         print(f'Stdout redirected to: {fn_out}')
         f_out = open(fn_out, 'w')
         sys.stdout = f_out

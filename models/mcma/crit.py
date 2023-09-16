@@ -42,7 +42,7 @@ class Crit:     # definition and attributes of a single criterion
         self.utopia = val
         print(f'utopia of crit "{self.name}" set to {val}.')
 
-    def updNadir(self, stage, val):
+    def updNadir(self, stage, val, minDiff):
         """Update nadir value, if val is a better approximation."""
         if self.nadir is None or stage == 0:    # set initial value
             self.nadir = val
@@ -55,6 +55,12 @@ class Crit:     # definition and attributes of a single criterion
         # stage 2: first appr. of nadir, regularized selfish opt. for each crit. in a row
         # tigthen (move closer to U) "too bad" value from selfish opt. in stage 1
         if stage == 2:
+            delta = 2. * minDiff * max(abs(self.utopia), abs(val))
+            if abs(self.utopia - val) < delta:
+                v = val     # v only for the below printout
+                val = self.utopia - self.mult * delta
+                print(f'updNadir(): crit "{self.name}", value {v:.2e} closer to utopia {self.utopia:.2e} '
+                      f'than {delta:.2e}; nadir can be moved only to {val:.4e}.')
             if self.mult == 1:  # max-crit, tight to larger values
                 if old_val + eps < val:
                     shift = True    # move closer to U

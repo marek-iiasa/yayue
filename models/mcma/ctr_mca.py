@@ -387,7 +387,7 @@ class CtrMca:
                 crit.val = val
                 if crit.is_active:
                     crit.setUtopia(val)  # utopia computed
-                crit.updNadir(self.cur_stage, val)
+                crit.updNadir(self.cur_stage, val, self.minDiff)
         elif 1 < self.cur_stage < 6:  # update nadir values
             print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
             for crit in self.cr:
@@ -396,7 +396,7 @@ class CtrMca:
                 if crit.is_active:  # nothing to store/update
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
                 else:
-                    change = crit.updNadir(self.cur_stage, val)  # update nadir value (processing depends on stage)
+                    change = crit.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
                     if change:
                         self.payOffChange = True
             if self.par_rep:

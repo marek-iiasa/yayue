@@ -54,11 +54,12 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
-    max_itr = 16
+    # max_itr = 16
     # max_itr = 7
+    max_itr = 12
     while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
-        print(f'\nAnalysis stage: {i_stage}, start iteration {n_iter}  -----------------------------------------------')
+        print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
@@ -69,7 +70,6 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
             mc.par_pref()   # set preferences in Pareto reprentation mode
         else:
             if i_stage < 4:
-                # fixme: Nadir wrongly updated for criterion export in iter 5
                 print('Setting preferences for next step in Payoff table computations.')
             elif i_stage == 4:
                 print('Setting preferences for computing neutral solution.')
@@ -97,7 +97,7 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
         # todo: clarify exception (uncomment next line) while loading the results
         # m1.load(results)  # Loading solution into results object
 
-        print('\nprocessing solution --------------------------------')
+        print('processing solution ----')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)
         # m.del_component(m.mc_part)   # need not be deleted (a new mc_part needs to be generated for new preferences)

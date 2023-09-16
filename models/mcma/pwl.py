@@ -39,7 +39,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
         minDiff = mc.minDiff * maxVal
         assert self.mc.diffOK(i, self.cr.utopia, self.cr.nadir), f'utopia {self.cr.utopia:.2e} and nadir ' \
-            f'{self.cr.nadir:.2e} closer then {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
+            f'{self.cr.nadir:.2e} closer than {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
         if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
             self.is_asp = False
             print(f'A {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
