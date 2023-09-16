@@ -84,7 +84,19 @@ class PWL:  # representation of caf(x) for i-th criterion
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
         # see: Bronsztejn p. 245
-        mid_slope = (y1 - y2) / (x1 - x2)
+        # if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
+        #     print(f'Numerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
+        #           f'is_res {self.is_res}, x1 = {x1:.2e}, x2 = {x2:.2e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+        #     raise Exception(f'Numerical problem.')
+        # print(f'mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, x1 = {x1:.2e}, x2 = {x2:.2e}')
+        if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
+            print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
+                  f'is_res {self.is_res},\n\tx1 = {x1:.2e}, x2 = {x2:.2e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+            print('The problem might be caused by degenerated cuboid.')
+            mid_slope = 1.
+            print(f'----- midslope set to: {mid_slope}')
+        else:
+            mid_slope = (y1 - y2) / (x1 - x2)
         b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         if self.mc.verb > 2:
