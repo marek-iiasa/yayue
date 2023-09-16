@@ -97,9 +97,9 @@ if __name__ == '__main__':
     with open("m1.pkl", "rb") as f:
         m1 = pickle.load(f)
     '''
-    print('\ncore model display: -----------------------------------------------------------------------------')
-    m1.pprint()
-    print('end of model display: ------------------------------------------------------------------------\n')
+    # print('\ncore model display: -----------------------------------------------------------------------------')
+    # m1.pprint()
+    # print('end of model display: ------------------------------------------------------------------------\n')
 
     for obj in m1.component_data_objects(pe.Objective):
         print(f'Objective "{obj}" deactivated.')

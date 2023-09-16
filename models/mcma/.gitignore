@@ -14,6 +14,7 @@ Data/test1/*.png
 Data/test2/
 Data/test2a/
 Data/test3/
+Out_dir/
 # links to pipa
 dat1.dat
 inst.py
