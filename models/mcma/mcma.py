@@ -1,11 +1,18 @@
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
-# PyCharm > select "File" menu > select "Invalidate Caches / Restart" menu option
 #   noinspection PyUnresolvedReferences
 #   infty = float('inf')
 
-"""
-Prototype of the MCMA
-"""
+""" Main function of the MCMA prototype """
+
+# todo: criteria scaling: round, i.e. by order of magnitude
+# todo: handle degenerated cubes (set the corresponding criterion inactive? )
+# todo: check consistency of using scaled and not-scaled entities
+# todo: add/print info:
+#   on values of scaling coeffs.
+#   on degenerated cubes (criterion/criteria with A == R)
+#   A/R undefined for Pareto set corners (virtual solutions, i.e., no values of model variables)
+#   size of cubes in scaled coordinates, values of A/R in native (model-vars) scales
+
 # import sys		# needed for sys.exit()
 import os
 from os import R_OK, access
@@ -69,19 +76,19 @@ if __name__ == '__main__':
 
     print(f'\nLoading or generating instance of the core model.')
     # m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
+    # todo: define the model and the corresponding wrk-dir "together" (i.e., in the same place), as a dict?
     m_name = 'sbPipa'
     # m_name = 'pipa0'
     f_name = f'Models/{m_name}.dll'     # alternatively the 'dill' file extension is used
     if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
-        m2store = mk_mod1()  # generate core model:
-        # Serialize and save the Pyomo model
-        with open(f_name, 'wb') as f:
+        m2store = mk_mod1()  # generate core model
+        with open(f_name, 'wb') as f:   # Serialize and save the Pyomo model
             dill.dump(m2store, f)
-        print(f'Model "{m_name}" generated and dumpped to: {f_name}')
+        print(f'Model "{m_name}" generated and dill-dumpped to: {f_name}')
     # Load the serialized Pyomo model
     with open(f_name, 'rb') as f:
         m1 = dill.load(f)
-    print(f'\nThe stored model "{m_name}" loaded from {f_name}')
+    print(f'\nThe stored model "{m_name}" loaded from the dill file "{f_name}"')
 
     '''
     # exploring storing the model by pickle; negative:

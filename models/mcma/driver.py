@@ -55,7 +55,8 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 1
     # max_itr = 16
-    max_itr = 9
+    # max_itr = 9
+    max_itr = 4
     while n_iter <= max_itr:   # just for safety; should not be needed now
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
