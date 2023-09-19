@@ -3,6 +3,7 @@ Handle data structure and control flows of the MCMA
 """
 import sys      # needed from stdout
 import os
+import math
 from os import R_OK, access
 from os.path import isfile
 # import numpy as np
@@ -144,9 +145,12 @@ class CtrMca:
     def scale(self):    # define scaling-coeffs (for scaling criteria values to the same range of values)
         for cr in self.cr:
             diff = abs(cr.utopia - cr.nadir)
-            assert diff > self.minDiff, f'Criterion "{cr.name}" utopia {cr.utopia} too close to nadir {cr.nadir}.'
-            cr.sc_var = self.critScale / diff
-            print(f'Criterion "{cr.name}": scale {cr.sc_var:.2e}, utopia {cr.utopia}, nadir {cr.nadir}.')
+            assert diff > self.minDiff, f'Crit. "{cr.name}" utopia {cr.utopia:.4e} too close to nadir {cr.nadir}:.4e.'
+            sc_tmp = self.critScale / diff
+            magn = int(math.log10(sc_tmp))
+            cr.sc_var = math.pow(10, magn)
+            print(f'Criterion "{cr.name}": scaling coef = {cr.sc_var:.1e}, utopia {cr.utopia:.2e}, nadir {cr.nadir:.2e}'
+                  f'\n\tnot rounded scaling (to range {self.critScale:.1e}) would be = {sc_tmp:.4e}.')
 
     def set_stage(self):
         """Define and return analysis stage; provide (in self.cur_cr) info for mc.set_pref()."""
@@ -393,9 +397,9 @@ class CtrMca:
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val
-                if crit.is_active:  # nothing to store/update
-                    print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
-                else:
+                if crit.is_active and self.cur_stage < 4:  # don't update nadir
+                    print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
+                else:   # after payOff definition update nadir for all criteria
                     change = crit.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
                     if change:
                         self.payOffChange = True

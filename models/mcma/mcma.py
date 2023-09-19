@@ -6,6 +6,7 @@
 
 # todo: criteria scaling: round, i.e. by order of magnitude
 # todo: handle degenerated cubes (set the corresponding criterion inactive? )
+# todo: define a separate category (for coloring plots) for corner solutions
 # todo: check consistency of using scaled and not-scaled entities
 # todo: add/print info:
 #   on values of scaling coeffs.
