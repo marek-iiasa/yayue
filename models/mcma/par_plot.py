@@ -6,13 +6,15 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import seaborn as sns
 import mplcursors
+# from crit import Crit
 sns.set()   # settings for seaborn plotting style
 
 
 # noinspection PySingleQuotedDocstring
-def plot2D(df, dir_name):
+def plot2D(df, cr_defs, dir_name):
     """df: solutions to be plotted, dir_name: dir for saving the plot"""
 
+    n_crit = len(cr_defs)
     cols = df.columns  # columns of the df defined in the report() using the criteria names
     n_sol = len(df.index)  # number of solutions defined in the df
     seq = df[cols[0]]
@@ -37,10 +39,20 @@ def plot2D(df, dir_name):
         # cut_num contains (for each data item) data category id, to be used as the color index in the cmap
         cat_num = pd.Series(index=range(n_sol), dtype='Int64')
         # cat = pd.Series(data='?', index=range(n_sol), dtype=None)   # works ok
-        n_cat = 3   # number of categories
-        n_members = int(n_sol/n_cat)     # number of items in each category
+        n_cat = 3   # number of categories (including the virtual corner-solutions)
+        n_members = int((n_sol - n_crit)/(n_cat - 1))  # number of non-corner items in each category
         i_memb = 0  # current number of members already assigned to a category
-        i_cat = 0   # id of the current category
+        i_cat = 1   # id of the current category (excluding corner-solutions, which are in 0-th category)
+        for (i, sol) in enumerate(df[cols[0]]):
+            if i < n_crit:  # corner solution
+                cat_num[i] = 0
+            else:
+                cat_num[i] = i_cat
+                i_memb += 1
+                if i_memb == n_members:
+                    i_cat += 1
+                    i_memb = 0
+        '''
         for (i, item) in enumerate(cat_num):
             cat_num[i] = i_cat
             # cat[i] = str(i_cat)
@@ -50,6 +62,7 @@ def plot2D(df, dir_name):
                 i_memb = 0
             # cat_map.update({i: cat[i]})
         # cat_num = cat.map(cat_map)
+        '''
 
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used

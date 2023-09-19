@@ -287,7 +287,7 @@ class ParRep:     # representation of Pareto set
         print(f'Solutions stored in the csv file: {f_name}.')
 
         # plot solutions
-        plot2D(self.df_sol, self.mc.ana_dir)    # 2D plot
+        plot2D(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 2D plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
