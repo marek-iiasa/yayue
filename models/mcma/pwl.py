@@ -8,6 +8,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.mc = mc    # CtrMca object
         self.cr = mc.cr[i]
         self.cr_name = self.cr.name
+        self.is_act = self.cr.is_active
         self.is_max = self.cr.mult == 1  # 1 for max-crit, -1 for min.
         self.is_asp = self.cr.asp is not None   # Asp. defined?
         self.is_res = self.cr.res is not None   # Res. defined?
@@ -15,10 +16,10 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
         if 0 < self.mc.verb <= 2:
-            print(f"PWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
+            print(f"PWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         elif self.mc.verb > 2:
-            print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
+            print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
         #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
@@ -91,7 +92,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         # print(f'mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, x1 = {x1:.2e}, x2 = {x2:.2e}')
         if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
             print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
-                  f'is_res {self.is_res},\n\tx1 = {x1:.2e}, x2 = {x2:.2e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+                  f'is_res {self.is_res},\n\tx1 = {x1:.6e}, x2 = {x2:.6e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
             print('The problem might be caused by degenerated cuboid.')
             mid_slope = 1.
             print(f'----- midslope set to: {mid_slope}')

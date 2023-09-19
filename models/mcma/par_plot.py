@@ -14,6 +14,7 @@ sns.set()   # settings for seaborn plotting style
 def plot2D(df, cr_defs, dir_name):
     """df: solutions to be plotted, dir_name: dir for saving the plot"""
 
+    # todo: indexing needs to be modified (does not work for more than 2 criteria)
     n_crit = len(cr_defs)
     cols = df.columns  # columns of the df defined in the report() using the criteria names
     n_sol = len(df.index)  # number of solutions defined in the df
@@ -52,17 +53,6 @@ def plot2D(df, cr_defs, dir_name):
                 if i_memb == n_members:
                     i_cat += 1
                     i_memb = 0
-        '''
-        for (i, item) in enumerate(cat_num):
-            cat_num[i] = i_cat
-            # cat[i] = str(i_cat)
-            i_memb += 1
-            if i_memb == n_members:
-                i_cat += 1
-                i_memb = 0
-            # cat_map.update({i: cat[i]})
-        # cat_num = cat.map(cat_map)
-        '''
 
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used

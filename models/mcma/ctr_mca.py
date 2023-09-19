@@ -143,14 +143,15 @@ class CtrMca:
         return -1
 
     def scale(self):    # define scaling-coeffs (for scaling criteria values to the same range of values)
+        print(f'\nDefining criteria scaling coefficients.')
         for cr in self.cr:
             diff = abs(cr.utopia - cr.nadir)
             assert diff > self.minDiff, f'Crit. "{cr.name}" utopia {cr.utopia:.4e} too close to nadir {cr.nadir}:.4e.'
             sc_tmp = self.critScale / diff
             magn = int(math.log10(sc_tmp))
             cr.sc_var = math.pow(10, magn)
-            print(f'Criterion "{cr.name}": scaling coef = {cr.sc_var:.1e}, utopia {cr.utopia:.2e}, nadir {cr.nadir:.2e}'
-                  f'\n\tnot rounded scaling (to range {self.critScale:.1e}) would be = {sc_tmp:.4e}.')
+            print(f'Criterion "{cr.name}", {cr.attr}: scaling coef. = {cr.sc_var:.1e}, utopia {cr.utopia:.2e}, ' 
+                  f'nadir {cr.nadir:.2e}\n\tnot-rounded scaling (to range {self.critScale:.1e}) = {sc_tmp:.4e}.')
 
     def set_stage(self):
         """Define and return analysis stage; provide (in self.cur_cr) info for mc.set_pref()."""

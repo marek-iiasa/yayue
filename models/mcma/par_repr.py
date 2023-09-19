@@ -20,7 +20,9 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         self.s1 = s1    # first solution defining the cube
         self.s2 = s2    # second solution defining the cube
         self.size = 0.    # cube size = L1 distance(s1, s2), for scaled crit values
-        self.edges = []    # distance components (lenghes of edges for each criterion)
+        self.edges = []    # distance components (lengthes of edges for each criterion)
+        self.degen = []    # True, if the corresponding edge was too small
+        self.is_degen = False   # set to True, if any edge is too small
         self.sc_asp = []   # list of scaled A values (used in defining solutions that define the cube)
         self.sc_res = []   # list of scaled R values
         self.asp = []   # list of A values (to be used in the MCMA preferences)
@@ -31,6 +33,20 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
             dist = abs(a1 - a2)
             self.size += dist  # Manhattan (L1) distance in criteria scaled-values
             self.edges.append(dist)
+            if dist < mc.minDiff:
+                self.is_degen = True
+                self.degen.append(True)
+            else:
+                self.degen.append(False)
+        # if self.is_degen:
+        #     self.fix_degen()
+
+    # def fix_degen(self):    # fix degenerations (expand empty egdes) by moving A (the crit will be set to inactive)
+    #     for (i, cr) in enumerate(self.mc.cr):
+    #         if self.degen[i]:
+    #             move = max(10., cr.sc_var) * self.mc.minDiff
+    #             print(f'Crit. {cr.name}: edge {self.edges[i]:.2e} expanded by moving A by {move:.2e}.')
+    #             cr.asp = cr.res + cr.mult * move
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
@@ -40,19 +56,34 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
             if cr.isBetter(v1, v2):     # s1 has better crit. value than s2
                 cr.asp = v1
                 cr.res = v2
-                self.asp.append(v1)
-                self.res.append(v2)
-                self.sc_asp.append(cr.sc_var * v1)
-                self.sc_res.append(cr.sc_var * v2)
-            else:           # s2 has better crit. value than s1
+            else:  # s2 has better crit. value than s1
                 cr.asp = v2
                 cr.res = v1
-                self.asp.append(v2)
-                self.res.append(v1)
-                self.sc_asp.append(cr.sc_var * v2)
-                self.sc_res.append(cr.sc_var * v1)
-            cr.is_active = True
-            # print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
+            if self.degen[i]:
+                # move = max(10., 1. / cr.sc_var) * self.mc.minDiff
+                # move = max(10., 1. / cr.sc_var)
+                move = 0.5 * abs(cr.utopia - cr.nadir)
+                print(f'Crit. {cr.name}: edge {self.edges[i]:.2e} expanded by moving A by {move:.2e}.')
+                cr.asp = cr.res + cr.mult * move
+                cr.is_active = False
+            else:
+                cr.is_active = True
+            self.asp.append(cr.asp)
+            self.res.append(cr.res)
+            self.sc_asp.append(cr.sc_var * cr.asp)
+            self.sc_res.append(cr.sc_var * cr.res)
+            #     self.asp.append(v1)
+            #     self.res.append(v2)
+            #     self.sc_asp.append(cr.sc_var * v1)
+            #     self.sc_res.append(cr.sc_var * v2)
+            # else:           # s2 has better crit. value than s1
+            #     cr.asp = v2
+            #     cr.res = v1
+            #     self.asp.append(v2)
+            #     self.res.append(v1)
+            #     self.sc_asp.append(cr.sc_var * v2)
+            #     self.sc_res.append(cr.sc_var * v1)
+            print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
 
     # print: itr_ids of solutions defining the cube, cube size, lengths of cube edges (i.e., components of the size),
     # scaled criteria values defining the diameter-corners, scaled A/R values defining preferences for next iter.
@@ -66,7 +97,8 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         for dim in self.edges:
             edges += f'{dim:.2e} '
         edges += ']'
-        print(f'cube[{seq}] sol_itrIds: ({self.s1.itr_id}, {self.s2.itr_id}), size={self.size:.2e}, edges={edges}, '
+        print(f'cube[{seq}] sol_itr: ({self.s1.itr_id}, {self.s2.itr_id}), size={self.size:.2e}, '
+              f'is_degen {self.is_degen}, edges={edges}, '
               f'\n\tcorners: ([{val1}], [{val2}])')
 
         # the below are for info only; not-scaled A/R values are used for actual preferences
@@ -95,7 +127,7 @@ class ParRep:     # representation of Pareto set
         # explore cubes generated by all pairs of solutions, skip cubes with inside solution(s)
         # fixme: make a list of alredy used cubes, and don't generate them again (the latter causes looping)
         # fixme: don't generate empty/"too small" cubes
-        cube_lst = []   # list of all cubes without any solution inside
+        cube_lst = []   # list of all cubes without any solution inside amd not used yet
         for (i, s1) in enumerate(self.sols):
             j = i + 1
             while j < len(self.sols):
@@ -129,15 +161,16 @@ class ParRep:     # representation of Pareto set
                 mx_size = c.size
             else:
                 if c.size > mx_size:
-                    print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} replaces '
-                          f'cube ({c_best.s1.itr_id}, {c_best.s2.itr_id}), size={c_best.size:.2e}')
+                    # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} replaces '
+                    #       f'cube ({c_best.s1.itr_id}, {c_best.s2.itr_id}), size={c_best.size:.2e}')
                     c_best = c
                     mx_size = c.size
-                else:
-                    print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} not larger than {mx_size:.2e} ')
+                # else:
+                    # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} not larger than {mx_size:.2e} ')
         if c_best is None:
             raise Exception(f'ParRep::pref(): no cube defined.')
-        print(f'Cube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), size={c_best.size:.2e}')
+        print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
+              f'size={c_best.size:.2e}')
         c_best.setAR()  # set in mc.cr the AR (in the solutions scale); store the AR also in the cube
         c_best.lst(len(self.cubes))
 
@@ -173,28 +206,6 @@ class ParRep:     # representation of Pareto set
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
         # raise Exception(f'ParRep::chk_inside() not implemented yeYt.')
 
-    '''
-    def cube(self):     # not good, therefore no longer used
-        # define new cube (in ASF space), set A/R (in both ASF and A/R scales)
-        mx_dis = 0.    # initialize distance
-        s1 = None   # initialize solutions to undefined
-        s2 = None
-        itr1 = None
-        itr2 = None
-        for (i, n1) in enumerate(self.neigh):
-            dis = n1[2]  # distance is the third arg in the list element (itr1, utr2, distanse)
-            if dis > mx_dis:
-                itr1 = n1[0]    # itr_id of the "from" solution
-                itr2 = n1[1]    # itr_id of the "to" solution
-                s1 = self.sol_seq(itr1)   # sol_seq of the first solution
-                s2 = self.sol_seq(itr2)   # sol_seq of the second solution
-                mx_dis = dis
-        assert mx_dis > 0., f'ParRep::cube(): empty cube.'
-        print(f'Largest cube defined by solutions: {s1} (itr {itr1}), {s2} (itr {itr2}); cube size = {mx_dis}.')
-        self.cubes.append(Cube(self.mc, self.sols[s1], self.sols[s2]))     # ctor sets A/R values in mc.cr
-        print(f'Cube added to ParRep. There are {len(self.cubes)} cubes defined.')
-    '''
-
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr)
         vals = []     # crit values
         a_vals = []     # crit values
@@ -220,6 +231,7 @@ class ParRep:     # representation of Pareto set
     def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
         # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
         #   this can be done rather in the driver than here.
+        print(f'\nGenerating {self.mc.n_crit} virtual solutions (defining corners of the Pareto set).')
         cur_uto = 0     # index of the current utopia
         for (k, crit) in enumerate(self.mc.cr):     # one corner for each criterion
             vals = []  # crit values
