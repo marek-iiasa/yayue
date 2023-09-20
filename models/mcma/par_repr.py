@@ -11,7 +11,7 @@ class ParSol:     # one Pareto solution
         self.vals = vals  # list of (not scaled) criteria values of the itr_id solution
         self.a_vals = a_vals  # list of achievement values
         self.sc_vals = sc_vals  # list of scaled criteria values
-        print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
+        # print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
 
 
 class Cube:     # defined (in scaled values) by the given pair of neighbor solutions
@@ -38,15 +38,6 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
                 self.degen.append(True)
             else:
                 self.degen.append(False)
-        # if self.is_degen:
-        #     self.fix_degen()
-
-    # def fix_degen(self):    # fix degenerations (expand empty egdes) by moving A (the crit will be set to inactive)
-    #     for (i, cr) in enumerate(self.mc.cr):
-    #         if self.degen[i]:
-    #             move = max(10., cr.sc_var) * self.mc.minDiff
-    #             print(f'Crit. {cr.name}: edge {self.edges[i]:.2e} expanded by moving A by {move:.2e}.')
-    #             cr.asp = cr.res + cr.mult * move
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
@@ -59,12 +50,29 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
             else:  # s2 has better crit. value than s1
                 cr.asp = v2
                 cr.res = v1
-            if self.degen[i]:
-                # move = max(10., 1. / cr.sc_var) * self.mc.minDiff
-                # move = max(10., 1. / cr.sc_var)
-                move = 0.5 * abs(cr.utopia - cr.nadir)
-                print(f'Crit. {cr.name}: edge {self.edges[i]:.2e} expanded by moving A by {move:.2e}.')
-                cr.asp = cr.res + cr.mult * move
+            if self.degen[i]:   # expand the degenrated edge
+                span = 0.5 * abs(cr.utopia - cr.nadir)  # new span of the degenerated edge
+                span2 = span / 2.   # A and R by span2, if possible within [U, N]
+                distU = abs(cr.utopia - cr.asp)
+                distN = abs(cr.nadir - cr.res)
+                oldA = cr.asp
+                oldR = cr.res
+                if distU < distN:  # empty edge closer to utopia
+                    if span2 < distU:   # A can be moved towards U by dist2
+                        cr.asp = oldA + cr.mult * span2
+                        cr.res = oldR - cr.mult * span2
+                    else:       # A can be moved to U by only a part of the dist2, thus R is moved more than span2
+                        cr.asp = cr.utopia
+                        cr.res = oldR - cr.mult * abs(span - distU)
+                else:   # empty edge closer to nadir
+                    if span2 < distN:   # R can be moved towards N by dist2
+                        cr.asp = oldA + cr.mult * span2
+                        cr.res = oldR - cr.mult * span2
+                    else:       # R can be moved to N by only a part of the dist2, thus A is moved more than span2
+                        cr.res = cr.nadir
+                        cr.asp = oldA + cr.mult * abs(span - distN)
+                print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {span:.2e} by moving:'
+                      f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')
                 cr.is_active = False
             else:
                 cr.is_active = True
@@ -72,22 +80,11 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
             self.res.append(cr.res)
             self.sc_asp.append(cr.sc_var * cr.asp)
             self.sc_res.append(cr.sc_var * cr.res)
-            #     self.asp.append(v1)
-            #     self.res.append(v2)
-            #     self.sc_asp.append(cr.sc_var * v1)
-            #     self.sc_res.append(cr.sc_var * v2)
-            # else:           # s2 has better crit. value than s1
-            #     cr.asp = v2
-            #     cr.res = v1
-            #     self.asp.append(v2)
-            #     self.res.append(v1)
-            #     self.sc_asp.append(cr.sc_var * v2)
-            #     self.sc_res.append(cr.sc_var * v1)
-            print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
+            # print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
 
     # print: itr_ids of solutions defining the cube, cube size, lengths of cube edges (i.e., components of the size),
     # scaled criteria values defining the diameter-corners, scaled A/R values defining preferences for next iter.
-    def lst(self, seq):     # seq: externally defined seq_no on the list of cubes
+    def lst(self, seq):     # seq: externally defined seq_no of the list of cubes
         val1 = ''
         val2 = ''
         for (v1, v2) in zip(self.s1.vals, self.s2.vals):    # criteria values
@@ -134,7 +131,7 @@ class ParRep:     # representation of Pareto set
                 # print(f'checking cube generated by solutions: ({i}, {j}).')
                 s2 = self.sols[j]
                 if self.cube_used(s1, s2):
-                    print(f'Cube defined by solutions ({s1.itr_id}, {s2.itr_id}) was already used.')
+                    print(f'Cube defined by solutions ({s1.itr_id}, {s2.itr_id}) skipped (was already used).')
                     j += 1
                     continue
                 is_inside = False   # solution inside the cube exists
@@ -169,10 +166,12 @@ class ParRep:     # representation of Pareto set
                     # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} not larger than {mx_size:.2e} ')
         if c_best is None:
             raise Exception(f'ParRep::pref(): no cube defined.')
-        print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
-              f'size={c_best.size:.2e}')
+        # print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
+        #       f'size={c_best.size:.2e}')
+        print(f'\nChecking the largested generated cube, setting the criteria activity and the A/R.')
         c_best.setAR()  # set in mc.cr the AR (in the solutions scale); store the AR also in the cube
         c_best.lst(len(self.cubes))
+        print(f'Proceed to generation of the optimization problem.\n')
 
         self.cubes.append(c_best)   # add the cube to the list of cubes defining the corresponding iterations
         # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
@@ -223,7 +222,8 @@ class ParRep:     # representation of Pareto set
             a_val = abs(cr.mult * sc * (cr.utopia - cr.val))
             a_vals.append(a_val)
             a_frac = abs(sc * cr.val)  # value as a fraction of the range
-            print(f'crit {cr.name} ({cr.attr}): {a_val=}, val = {cr.val}, {a_frac}, U {cr.utopia}, N {cr.nadir}')
+            print(f'crit {cr.name} ({cr.attr}): a_val={a_val:.2e}, val={cr.val:.2e}, a_frac={a_frac:.2e}, '
+                  f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
         self.sols.append(ParSol(itr_id, vals, a_vals, sc_vals))
         print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} Pareto solutions.')
         # raise Exception(f'ParRep::addSol() not implemented yet.')

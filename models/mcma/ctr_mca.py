@@ -385,7 +385,7 @@ class CtrMca:
 
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
-        print(f'Processing criteria values of the current iteration: {crit_val}')
+        # print(f'Processing criteria values of the current iteration: {crit_val}')
         if self.cur_stage == 1:     # utopia computed for the only one active criterion
             for crit in self.cr:
                 val = crit_val.get(crit.name)

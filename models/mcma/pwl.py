@@ -43,10 +43,10 @@ class PWL:  # representation of caf(x) for i-th criterion
             f'{self.cr.nadir:.2e} closer than {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
         if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
             self.is_asp = False
-            print(f'A {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
+            print(f'\tA {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
         if self.is_res and self.is_nadir and not self.mc.diffOK(i, self.cr.nadir, self.cr.res):
             self.is_res = False
-            print(f'R {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
+            print(f'\tR {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
 
         self.set_vert()  # define coordinates of the vertices
 
