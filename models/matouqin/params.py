@@ -8,7 +8,7 @@ class Params:
         # todo: define the needed data structures, e.g., dict, lists, df (DataFrames)
         self.ver = '0.1'  # version of data
         self.cat = {}     # catalog of data items (might be useful, but you may prefer other solutions)
-        self.pPrice = None  # price of something
+        self.price = {'ePrice': self.ePrice, 'eBprice': self.eBprice}  # price of something
         self.inDf = None    # DataFrame with data from excel file
         self.eff = {}    # efficiences of several processes, the dict-key would help to used them
 
@@ -22,9 +22,25 @@ class Params:
         assert self.inDf is not None, f'reading excel not implemented yet df_inp = {self.df_inp}.'
 
     def prices(self):
-        self.pPrice = 20.
+        self.ePrice = 0.8   # contract price.
+        self.penalty = 2    # penalty factor, used to define the price for buying the electricity.
+        self.eBprice = self.penalty * self.ePrice
+
+    def unit_conversion(self):  # set unit conversion factor.
+        self.cH2 = 0.0899   # the conversion factor between hydrogen gas volume and weight, unit in kg/m3.
+        self.cEle = 1000    # the conversion factor between MW and kW.
+
+    def set_h2Ratio(self):  # the ratio of hydrogen and electricity consumed, to produce the same amount of heat, unit in MWh/kg.
+        self.hCal = 1.42351e5  # the calorific value of hydrogen, unit in kJ/kg.
+        self.eCal = 3.6e3    # the calorific value of electricity, unit in kJ/kWh.
+        self.h2Ratio = self.hCal/self.eCal * 1/self.cEle    # unit in MWh/kg
 
     def set_eff(self):
         self.eff.update({'el2h': 20})
+    def set_Invcost(self):
+        self.sInvcost =
+
+
+    def
 
     # another comment (not in seen in to_do)
