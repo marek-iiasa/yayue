@@ -57,7 +57,8 @@ def plot2D(df, cr_defs, dir_name):
     # Create two scatter plots using Matplotlib
     # fig, ax = plt.subplots()  # not good, when subplots are used
     fig = plt.figure(figsize=(16, 8))  # (width, height)
-    fig.canvas.set_window_title(f'Scatter plots of criteria attributes for {n_sol} solutions.')  # the window title
+    fig.canvas.manager.set_window_title(f'Scatter plots of criteria attributes for {n_sol} solutions.')  # window title
+    # fig.canvas.set_window_title(f'Scatter plots of criteria attributes for {n_sol} solutions.')  # the window title
     fig.subplots_adjust(wspace=0.3, hspace=0.5)
     m_size = 70     # marker size
 
