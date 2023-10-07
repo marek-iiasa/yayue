@@ -2,6 +2,8 @@
 #   noinspection PyUnresolvedReferences
 #   infty = float('inf')
 
+# Modified by JG
+
 """ Main function of the MCMA prototype """
 
 # todo: handle degenerated cubes (set the corresponding criterion inactive? )
