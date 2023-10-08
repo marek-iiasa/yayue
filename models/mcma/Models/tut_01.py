@@ -7,26 +7,26 @@ def tut_01():
     """The sand-box Pipa-like ConcreteModel for testing mcma"""
     m = pe.ConcreteModel(name='Tutorial 0.1')
 
-    m.T = pe.Set(initialize=['BTL', 'STL', 'OTL'])
+    m.T = pe.Set(initialize=['W', 'L'])
 
     # variables
-    m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='level of activity')
+    m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='decision variables')
     # m.z = pe.Var(domain=pe.NonNegativeReals, bounds=(0, 100), doc='level of z activity')
 
     # outcome variables
-    m.prod = pe.Var(domain=pe.NonNegativeReals, doc='total production')
-    m.emi = pe.Var(domain=pe.NonNegativeReals, doc='emission')
-    m.exp = pe.Var(domain=pe.NonNegativeReals, doc='export')
+    m.work = pe.Var(domain=pe.NonNegativeReals, doc='hours in work')
+    m.leisure = pe.Var(domain=pe.NonNegativeReals, doc='hours in leisure')
+
 
     # objective:
     @m.Objective(sense=pe.maximize)
     def goal(mx):
-        return mx.prod
+        return mx.work
 
     @m.Objective(sense=pe.minimize)
     def goal2(mx):
-        return mx.emi
-    m.goal2.deactivate()
+        return mx.leisure
+    # m.goal2.deactivate()
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.capT = pe.Param(domain=pe.NonNegativeReals, default=1000., doc='sum of capacities over all techn.')
@@ -66,5 +66,5 @@ def tut_01():
         return mx.exp == sum(mx.ex[t] * mx.act[t] for t in mx.T)
 
     # m.pprint()
-    print(f"sbPipa(): concrete model {m.name} generated.")
+    print(f"tut_01(): concrete model {m.name} generated.")
     return m
