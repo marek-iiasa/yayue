@@ -7,8 +7,8 @@ def mod_jg1():
     """The sand-box Pipa-like ConcreteModel for testing mcma"""
     m = pe.ConcreteModel(name='Model testowy JG1 0.1')
 
-    W - working hours
-    L - leisure hours
+    # W - working hours
+    # L - leisure hours
     m.T = pe.Set(initialize=['W', 'L'])
     # variables
     m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='variables')
@@ -37,12 +37,12 @@ def mod_jg1():
     # relations (constraints)
     @m.Constraint()
     def satisf(mx):
-        return mx.satisfaction == mx.sp * mx.act[m.T[1]] + mx.sl * mx.act[m.T[2]]
+        return mx.satisfaction == mx.sw.value * mx.act['W'].value + mx.sl.value * mx.act['L'].value
         # return mx.satisfaction == mx.sw * mx.W + mx.sl * mx.L
 
     @m.Constraint()
     def inc(mx):
-        return mx.satisfaction == mx.sp * mx.act['W']
+        return mx.satisfaction == mx.sw * mx.act['W']
         # return mx.income == mx.h * mx.W
 
     @m.Constraint()
