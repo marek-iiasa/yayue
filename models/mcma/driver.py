@@ -39,7 +39,8 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
 
     # list of variables, values of which shall be included in the report
     # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
-    rep_vars = ['prod', 'emi', 'exp', 'act']
+    #rep_vars = ['prod', 'emi', 'exp', 'act']
+    rep_vars = ['act']
     # rep_vars = ['act']
     # rep_vars = ['x']
     # rep_vars = []
@@ -78,7 +79,7 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
             mc.set_pref()   # set preferences (crit activity, optionally A/R values)
         if mc.cur_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
             print(f'\nFinished the analysis for all specified preferences.')
-            break       # exxit the iteration loop
+            break       # exit the iteration loop
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)      # McMod ctor (model representing the MC-part, i.e. the Achievement Function of MCMA)
         mc_part = mc_gen.mc_itr()   # concrete model of the MC-part (based on the current preferences)

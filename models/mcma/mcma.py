@@ -38,8 +38,8 @@ from driver import *  # driver (run the analysis set-up and iterations)
 # from t3sms import mk_sms as sms3  # tiny, testing model
 # from t3inst import mk_inst as ins3  # ditto
 # from t4conc import mk_conc as conc4  # tiny testing model, developed as concrete (without abstract)
-from tspipa import sbPipa as sbPipa  # sand-box tiny Pipa testing model, developed as concrete (without abstract)
-
+#from tspipa import sbPipa as sbPipa  # sand-box tiny Pipa testing model, developed as concrete (without abstract)
+from mod_tut1 import mod_tut1 as mod_tut1  # JG tutorial model, developed as concrete (without abstract)
 
 def mk_mod1():  # generate the core model
     # abst = pipa_sms()  # pipa abstract model (SMS)
@@ -47,7 +47,8 @@ def mk_mod1():  # generate the core model
     # abst = sms3()  # tiny test abstract model (SMS)
     # mod1 = ins3(abst)  # tiny test model instance
     # mod1 = conc4()  # tiny test (Pipa-like) model instance (without its abstract model)
-    mod1 = sbPipa()  # tiny test (Pipa-like) model instance (without its abstract model)
+    #mod1 = sbPipa()  # tiny test (Pipa-like) model instance (without its abstract model)
+    mod1 = mod_tut1()  # JG tutorial model instance (without its abstract model)
     return mod1
     # raise Exception(f'mk_mod1(): no model specified.')
 
@@ -78,13 +79,13 @@ if __name__ == '__main__':
     print(f'\nLoading or generating instance of the core model.')
     # m1 = mk_mod1()  # generate core model: first an abstract model and then the corresponding concerete model
     # todo: define the model and the corresponding wrk-dir "together" (i.e., in the same place), as a dict?
-    m_name = 'sbPipa'
+    # m_name = 'sbPipa'
+    m_name = 'mod_tut1'
     # m_name = 'pipa0'
     f_name = f'Models/{m_name}.dll'     # alternatively the 'dill' file extension is used
     if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
-        m2store = mk_mod1()  # generate core model
-        with open(f_name, 'wb') as f:   # Serialize and save the Pyomo model
-            dill.dump(m2store, f)
+        m2store = mk_mod1()  # generate core model     with open(f_name, 'wb') as f:   # Serialize and save the Pyomo model
+        dill.dump(m2store, f)
         print(f'Model "{m_name}" generated and dill-dumpped to: {f_name}')
     # Load the serialized Pyomo model
     with open(f_name, 'rb') as f:
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     #     del m1.obj_name
     '''
 
-    driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
+    driver(m1, './Data/test3')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
     # driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
 
     tend = dt.now()
