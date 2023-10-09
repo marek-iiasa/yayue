@@ -64,18 +64,3 @@ def mod_tut1():
     print(f"mod_jg2(): concrete model {m.name} generated.")
 
     return m
-
-model = mod_jg2()
-# call solver
-opt = pe.SolverFactory('glpk')
-opt.solve(model)
-
-# display results
-model.display()
-print('-------------------------')
-print('work=',pe.value(model.act['W']))
-print('leisure=',pe.value(model.act['L']))
-print('satisfaction=', model.satisfaction.value)
-print('income=', model.income.value)
-print('obj=', model.goal.expr.value)
-print('-------------------------')
