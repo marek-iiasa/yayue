@@ -3,7 +3,7 @@ import pyomo.environ as pe       # more robust than using import *
 
 
 # noinspection PyUnresolvedReferences
-def mod_jg2():
+def mod_tut1():
     """The sand-box Pipa-like ConcreteModel for testing mcma"""
     m = pe.ConcreteModel(name='Model tutorial JG1 0.1')
 
