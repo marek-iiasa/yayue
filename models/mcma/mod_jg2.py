@@ -7,14 +7,12 @@ def mod_jg1():
     """The sand-box Pipa-like ConcreteModel for testing mcma"""
     m = pe.ConcreteModel(name='Model testowy JG1 0.1')
 
-    # W - working hours
-    # L - leisure hours
-    #m.T = pe.Set(initialize=['W', 'L'])
-    m.W = pe.Var(domain=pe.NonNegativeReals, doc='working hours')
-    m.L = pe.Var(domain=pe.NonNegativeReals, doc='leisure hours')
+    W - working hours
+    L - leisure hours
+    m.T = pe.Set(initialize=['W', 'L'])
     # variables
-    #m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='variables')
-    # m.z = pe.Var(domain=pe.NonNegativeReals, bounds=(0, 100), doc='level of z activity')
+    m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='variables')
+
 
     # outcome variables
     m.satisfaction = pe.Var(domain=pe.NonNegativeReals, doc='satisfaction level')
@@ -39,28 +37,28 @@ def mod_jg1():
     # relations (constraints)
     @m.Constraint()
     def satisf(mx):
-        #return mx.satisfaction == mx.sp * mx.act[m.T[1]] + mx.sl * mx.act[m.T[2]]
-        return mx.satisfaction == mx.sw * mx.W + mx.sl * mx.L
+        return mx.satisfaction == mx.sp * mx.act[m.T[1]] + mx.sl * mx.act[m.T[2]]
+        # return mx.satisfaction == mx.sw * mx.W + mx.sl * mx.L
 
     @m.Constraint()
     def inc(mx):
-        #return mx.satisfaction == mx.sp * mx.act['W']
-        return mx.income == mx.h * mx.W
+        return mx.satisfaction == mx.sp * mx.act['W']
+        # return mx.income == mx.h * mx.W
 
     @m.Constraint()
     def con1(mx):
-        #return mx.act['P'] + mx.act['W'] <= 14
-        return mx.W + mx.L <= 14
+        return mx.act['P'] + mx.act['W'] <= 14
+        # return mx.W + mx.L <= 14
 
     @m.Constraint()
     def con2(mx):
-        #return mx.act['P'] >= 5
-        return mx.W >= 5
+        return mx.act['P'] >= 5
+        # return mx.W >= 5
 
     @m.Constraint()
     def con3(mx):
-        # return mx.act['P'] <= 5
-        return mx.L <= 8
+        return mx.act['P'] <= 5
+        # return mx.L <= 8
 
     # m.pprint()
     print(f"mod_jg1(): concrete model {m.name} generated.")
