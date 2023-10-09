@@ -61,16 +61,14 @@ def mod_jg2():
         # return mx.L <= 8
 
     # m.pprint()
-    print(f"mod_jg1(): concrete model {m.name} generated.")
-
-    # call solver
-    opt = pe.SolverFactory('glpk')
-    opt.solve(m)
-
+    print(f"mod_jg2(): concrete model {m.name} generated.")
 
     return m
 
 model = mod_jg2()
+# call solver
+opt = pe.SolverFactory('glpk')
+opt.solve(model)
 
 # display results
 model.display()
