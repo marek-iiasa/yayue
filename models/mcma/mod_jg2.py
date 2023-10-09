@@ -3,9 +3,9 @@ import pyomo.environ as pe       # more robust than using import *
 
 
 # noinspection PyUnresolvedReferences
-def mod_jg1():
+def mod_jg2():
     """The sand-box Pipa-like ConcreteModel for testing mcma"""
-    m = pe.ConcreteModel(name='Model testowy JG1 0.1')
+    m = pe.ConcreteModel(name='Model testowy JG1 0.2')
 
     # W - working hours
     # L - leisure hours
@@ -37,27 +37,27 @@ def mod_jg1():
     # relations (constraints)
     @m.Constraint()
     def satisf(mx):
-        return mx.satisfaction == mx.sw.value * mx.act['W'].value + mx.sl.value * mx.act['L'].value
+        return mx.satisfaction == mx.sw * mx.act['W'] + mx.sl * mx.act['L']
         # return mx.satisfaction == mx.sw * mx.W + mx.sl * mx.L
 
     @m.Constraint()
     def inc(mx):
-        return mx.satisfaction == mx.sw * mx.act['W']
+        return mx.income == mx.h * mx.act['W']
         # return mx.income == mx.h * mx.W
 
     @m.Constraint()
     def con1(mx):
-        return mx.act['P'] + mx.act['W'] <= 14
+        return mx.act['W'] + mx.act['L'] <= 14
         # return mx.W + mx.L <= 14
 
     @m.Constraint()
     def con2(mx):
-        return mx.act['P'] >= 5
+        return mx.act['W'] >= 5
         # return mx.W >= 5
 
     @m.Constraint()
     def con3(mx):
-        return mx.act['P'] <= 5
+        return mx.act['L'] <= 8
         # return mx.L <= 8
 
     # m.pprint()
@@ -66,16 +66,18 @@ def mod_jg1():
     # call solver
     opt = pe.SolverFactory('glpk')
     opt.solve(m)
-    # display results
-    m.display()
-    print('-------------------------')
-    print('work=', m.W.value)
-    print('leisure=', m.L.value)
-    print('satisfaction=', m.satisfaction.value)
-    print('income=', m.income.value)
-    print('obj=', m.goal.expr.value)
-    print('-------------------------')
+
 
     return m
 
-model = mod_jg1()
+model = mod_jg2()
+
+# display results
+model.display()
+print('-------------------------')
+print('work=',pe.value(model.act['W']))
+print('leisure=',pe.value(model.act['L']))
+print('satisfaction=', model.satisfaction.value)
+print('income=', model.income.value)
+print('obj=', model.goal.expr.value)
+print('-------------------------')
