@@ -63,18 +63,20 @@ def plot2D(df, cr_defs, dir_name):
     m_size = 70     # marker size
 
     # define the first subplot
-    ax1 = fig.add_subplot(121)  # per-col, per_row, subplot number (starts from 1)
+    ax1 = fig.add_subplot(121, projection='3d')  # per-col, per_row, subplot number (starts from 1)
     ax1.set_title(f'Criteria values')  # title of the subplot
     # ax1.scatter(df[cols[1]], df[cols[2]], label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
     if heat_map:
-        scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=seq, cmap=cmap, norm=norm, marker='o', s=m_size,
-                            label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        #scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=seq, cmap=cmap, norm=norm, marker='o', s=m_size,
+        #                    label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
         # cbar = fig.colorbar(scat1, ax=ax1, label='itr_id')    # cbar not used here
+        scat1 = ax1.scatter(df[cols[1]], df[cols[2]],  df[cols[3]], marker='o')
         fig.colorbar(scat1, ax=ax1, label='itr_id')
     else:
         # scat1 = ax1.scatter(df[cols[1]], df[cols[2]], c=cat_num, cmap=cmap, marker='o', s=m_size,
-        ax1.scatter(df[cols[1]], df[cols[2]], c=cat_num, cmap=cmap, marker='o', s=m_size,
-                    label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        #ax1.scatter(df[cols[1]], df[cols[2]], c=cat_num, cmap=cmap, marker='o', s=m_size,
+        #           label=f'Pareto solutions\n{cols[0]}: ({cols[1]}, {cols[2]})')
+        scat1 = ax1.scatter(df[cols[1]], df[cols[2]], df[cols[3]], marker='o')
         # todo: add legend of the marker-colors
         # fig.colorbar(scat1, ax=ax1, label='itr_id')   # does not work
         # todo: sns.scatterplot does not work yet.

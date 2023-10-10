@@ -9,7 +9,7 @@ def mod_tut2():
 
     m.T = pe.Set(initialize=[1, 2, 3])
     # variables
-    m.act = pe.Var(m.T, domain=pe.NonNegativeReals, doc='variables')
+    m.act = pe.Var(m.T, domain=pe.NonNegativeReals, bounds=(0, 1), doc='variables')
 
 
     # outcome variables
@@ -29,16 +29,28 @@ def mod_tut2():
     m.goal2.deactivate()
     """
     # parameters  (declared in the sequence corresponding to their use in SMS)
-    m.s = pe.Param(domain=pe.NonNegativeReals, default=10., doc='sum')
+    m.s = pe.Param(domain=pe.NonNegativeReals, default=1., doc='sum')
 
 
 
     # relations (constraints)
+
+
     @m.Constraint()
-    def constr(mx):
-        return mx.q1+ mx.q2 + mx.q3 <= mx.s
+    def constr1(mx):
+        return mx.q1 == mx.act[1]
 
+    @m.Constraint()
+    def constr2(mx):
+        return mx.q2 == mx.act[2]
 
+    @m.Constraint()
+    def constr3(mx):
+        return mx.q3 == mx.act[3]
+
+    @m.Constraint()
+    def constr4(mx):
+        return mx.act[1] + mx.act[2] + mx.act[3] <= mx.s
     # m.pprint()
     print(f"mod_tut2(): concrete model {m.name} generated.")
 
