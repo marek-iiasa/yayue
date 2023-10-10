@@ -1,0 +1,3 @@
+q1 max q1
+q2 max q2
+q3 max q3
