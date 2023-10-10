@@ -117,7 +117,37 @@ def plot2D(df, cr_defs, dir_name):
     plt.show()
     print(f'Plot of Pareto solutions stored in file: {f_name}')
 
-    '''
+
+def plot3D(df, cr_defs, dir_name):
+    n_crit = len(cr_defs)
+    cols = df.columns
+
+    fig = plt.figure(figsize=(9, 7))
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter(xs=df[cols[4]], ys=df[cols[5]], zs=df[cols[6]])  # , title='Criteria Achievements Plot',
+               # labels={'x': cols[1], 'y': cols[2], 'z': cols[3]})
+
+    # Show the plot
+    plt.show()
+
+'''
+Needs WebGL browser
+def plot3D(df, cr_defs, dir_name):
+    # Create a sample DataFrame with 3D data
+    import plotly.express as px
+
+    n_crit = len(cr_defs)
+    cols = df.columns
+
+    # Create an interactive 3D scatter plot using Plotly
+    fig = px.scatter_3d(df, x=df[cols[1]], y=df[cols[2]], z=df[cols[3]], title='Criteria Achievements Plot',
+                        labels={'x': cols[1], 'y': cols[2], 'z': cols[3]})
+
+    # Show the plot
+    fig.show()
+'''
+
+'''
     # examples/temples below
     def plot2D_ex(self):
         import pandas as pd
@@ -187,7 +217,7 @@ def plot2D(df, cr_defs, dir_name):
         fig.show()
     '''
 
-    '''
+'''
     # version without hints extended by the content of another df column
     # plt displays in a pop-up window, 
     def plot2Da(self):
