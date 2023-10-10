@@ -3,6 +3,7 @@
 # import numpy as np
 # import pandas as pd
 from par_plot import *
+from par_plot3D import *
 
 
 class ParSol:     # one Pareto solution
@@ -300,6 +301,8 @@ class ParRep:     # representation of Pareto set
 
         # plot solutions
         plot2D(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 2D plot
+        # plot solutions
+        plot3D(self.df_sol, self.mc.cr, self.mc.ana_dir)  # 3D plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
