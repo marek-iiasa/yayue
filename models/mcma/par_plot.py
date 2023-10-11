@@ -112,7 +112,7 @@ def plot2D(df, cr_defs, dir_name):
 
     # Show the plot in a pop-up window and store it
     # plt.legend()
-    f_name = dir_name + '/par_sol.png'
+    f_name = dir_name + f'/par_sol{n_crit}.png'
     fig.savefig(f_name)
     plt.show()
     print(f'Plot of Pareto solutions stored in file: {f_name}')
@@ -121,14 +121,23 @@ def plot2D(df, cr_defs, dir_name):
 def plot3D(df, cr_defs, dir_name):
     n_crit = len(cr_defs)
     cols = df.columns
+    # cmap = ListedColormap(['green', 'blue', 'red'])  # takes every item, if no more specified
 
     fig = plt.figure(figsize=(9, 7))
     ax = fig.add_subplot(projection='3d')
-    ax.scatter(xs=df[cols[4]], ys=df[cols[5]], zs=df[cols[6]])  # , title='Criteria Achievements Plot',
-               # labels={'x': cols[1], 'y': cols[2], 'z': cols[3]})
+    ax.set_xlabel(cols[1])
+    ax.set_ylabel(cols[2])
+    ax.set_zlabel(cols[3])
+    # noinspection PyArgumentList
+    # warning supressed here (complains on unfilled params x and y)
+    ax.scatter(xs=df[cols[4]], ys=df[cols[5]], zs=df[cols[6]], label='Criteria Achievements', c='blue', s=50)
 
     # Show the plot
+    f_name = dir_name + f'/par_sol{n_crit}.png'
+    fig.savefig(f_name)
     plt.show()
+    print(f'Plot of Pareto solutions stored in file: {f_name}')
+
 
 '''
 Needs WebGL browser
