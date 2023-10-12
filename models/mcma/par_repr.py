@@ -15,7 +15,19 @@ class ParSol:     # one Pareto solution
         self.vals = vals  # list of (not scaled) criteria values of the itr_id solution
         self.a_vals = a_vals  # list of achievement values
         self.sc_vals = sc_vals  # list of scaled criteria values
+        self.closeTo = None     # None replaced by itr_id of a first solution that is close
         # print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
+
+    def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
+        for (a1, a2) in zip(self.sc_vals, s2.sc_vals):  # loop over scaled values of criteria
+            dist = abs(a1 - a2)
+            # todo: define a sensible minDist below
+            minDist = 0.01
+            if dist > minDist:   # L-inf (Tchebushev) norm used for defining close/duplicated solutions
+                return False
+        self.closeTo = s2.itr_id
+        return True
+
 
 # todo: add to Cube:
 #   skip almost duplictated solution during cube generation
@@ -30,25 +42,31 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         self.mc = mc    # CtrMca object
         self.s1 = s1    # first solution defining the cube
         self.s2 = s2    # second solution defining the cube
-        self.size = 0.    # cube size = L1 distance(s1, s2), for scaled crit values
-        self.edges = []    # distance components (lengthes of edges for each criterion)
-        self.degen = []    # True, if the corresponding edge was too small
+        self.size = 0.      # cube size = currently L1 distance(s1, s2), for scaled crit values
+        self.sizeL1 = 0.    # L1-norm size
+        self.sizeL2 = 0.    # L2-norm size
+        self.sizeLinf = 0.  # Linf (Tchebyshev)-norm size
+        self.edges = []     # distance components (lengthes of edges for each criterion)
+        self.degen = []     # True, if the corresponding edge was too small
         self.is_degen = False   # set to True, if any edge is too small
         self.sc_asp = []   # list of scaled A values (used in defining solutions that define the cube)
         self.sc_res = []   # list of scaled R values
         self.asp = []   # list of A values (to be used in the MCMA preferences)
         self.res = []   # list of R values
 
-        # calculate the cube size, and distance components (diffs for each printerion)
+        # calculate the cube size, and distance components (diffs for each criterion)
         for (a1, a2) in zip(s1.sc_vals, s2.sc_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
-            self.size += dist  # Manhattan (L1) distance in criteria scaled-values
+            self.sizeL1 += dist  # Manhattan (L1) distance in criteria scaled-values
+            self.sizeL2 += dist * dist  # L2 distance
+            self.sizeLinf = max(dist, self.sizeLinf)  # Tchebyshev (Linf) distance
             self.edges.append(dist)
             if dist < mc.minDiff:
                 self.is_degen = True
                 self.degen.append(True)
             else:
                 self.degen.append(False)
+        self.size = self.sizeL1     # currently, L1 is used as the cube size
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
@@ -121,7 +139,8 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):         # initialize corners by regularized selfish solutions
         self.mc = mc        # CtrMca object
-        self.sols = []      # Pareto-solutions (ParSol objects)
+        self.sols = []      # Pareto-solutions (ParSol objects), exluding duplicated/close solutions
+        self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.cubes = []     # list of cubes (Cube objects, one cube for each iteration)
         self.df_sol = None  # df with solutions prepared for plots; defined in the self.summary()
 
