@@ -26,6 +26,8 @@ class Crit:     # definition and attributes of a single criterion
             self.mult = 1.
         else:
             raise Exception(f'Unknown criterion type "{typ}" for criterion "{cr_name}".')
+        self.sc_ach = 100.   # U/N scale of achievements [0, sc_ach]
+        self.minRange = 0.01  # min U/N range
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None
@@ -33,9 +35,26 @@ class Crit:     # definition and attributes of a single criterion
         self.nadir = None   # checked, and possibly updated, every iteration, see self.updNadir()
         self.asp = None     # aspiration value (not scaled)
         self.res = None     # reservation value (not scaled)
-        self.val = None     # last computed value
+        self.val = None     # current computed value (from last solution)
+        self.a_val = None   # achievement of the current value
         #
         print(f"Criterion: name = '{cr_name}', var_name = '{var_name}', {self.attr} created.")
+
+    def val2ach(self):   # set a_val corresponding to the current val
+        if self.nadir is None:  # don't attempt to compute achievements in initial stages
+            self.a_val = 0.
+            return
+        diffUN = abs(self.utopia - self.nadir)
+        assert diffUN / max(abs(self.utopia), abs(self.nadir)) > self.minRange, f'val2ach(): crit {self.name} has '\
+            f'too small difference between U {self.utopia} and nadir {self.nadir}.'
+        sc = self.sc_ach / diffUN
+        self.a_val = abs(self.mult * sc * (self.utopia - self.val))
+
+    def ach2val(self, achiv):   # return criterion value corresponding to CAF = achiv
+        rng = abs(self.utopia - self.nadir)
+        val = self.nadir + self.mult * achiv / 100. * rng
+        print(f'Crit "{self.name}": {achiv=:.2f}, {val=:.2e}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        return val
 
     def setUtopia(self, val):   # to be called only once for each criterion
         assert self.utopia is None, f'utopia of crit {self.name} already set.'
@@ -86,7 +105,8 @@ class Crit:     # definition and attributes of a single criterion
         else:
             no_yes = 'not'
 
-        print(f'\tnadir appr. of crit "{self.name}": {old_val:.2e} {no_yes} changed to {val:.2e} (in {stage=}).')
+        if shift:
+            print(f'\tnadir appr. of crit "{self.name}": {old_val:.2e} {no_yes} changed to {val:.2e} (in {stage=}).')
         return shift
 
     def isBetter(self, val1, val2):   # return true if val1 is better or equal to than val2

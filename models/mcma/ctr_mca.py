@@ -28,7 +28,7 @@ class CtrMca:
         self.pay_upd = False  # set to true, if current payOff differs from the store one
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
-        self.critScale = 1000.   # range [utopia, nadir] of scaled values
+        self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
         self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
@@ -118,7 +118,7 @@ class CtrMca:
         # to create a dir: os.makedirs(dir_name, mode=0o755)
         # create file for writing (over-writes previous, if exists)
         if not self.payOffChange:
-            print('payOff table values not changed.')
+            # print('payOff table values not changed.')
             return
         print('PayOff table:')
         lines = []
@@ -398,6 +398,7 @@ class CtrMca:
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val
+                crit.a_val = crit.val2ach()
                 if crit.is_active and self.cur_stage < 4:  # don't update nadir
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
                 else:   # after payOff definition update nadir for all criteria

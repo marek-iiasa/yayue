@@ -125,7 +125,8 @@ class Report:
         if self.mc.cur_stage > 1:
             cafMin = pe.value(m.cafMin)
             cafReg = pe.value(m.cafReg)
-            print(f'af = {af:.3e}, cafMin = {cafMin:3e}, cafReg = {cafReg:3e}')
+            if self.mc.verb > 2:
+                print(f'af = {af:.3e}, cafMin = {cafMin:3e}, cafReg = {cafReg:3e}')
             cafMin = round(cafMin, 1)
             cafReg = round(cafReg, 1)
             new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
@@ -194,10 +195,10 @@ class Report:
                     idx = f'{item[0]}_{ind}'
                     new_row.update({idx: f'{val:.2e}'})
         self.sol_vars.append(new_row)   # append to the list of rows
-        print(f'Values of (the to be reported) core-model variables for the current iter:\n{new_row}.')
+        # print(f'Values of (the to be reported) core-model variables for the current iter:\n{new_row}.')
 
         # sign-off
-        print(f'Report::itr_id({self.itr_id}) finished.')
+        # print(f'Report::itr_id({self.itr_id}) finished.')
 
     # generate and store df's with info on criteria and the variables requested for report/plots
     def summary(self):

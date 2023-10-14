@@ -2,6 +2,7 @@
 # import os
 # import numpy as np
 # import pandas as pd
+import math
 from par_plot import *
 
 # todo: add to ParSol:
@@ -10,21 +11,26 @@ from par_plot import *
 
 
 class ParSol:     # one Pareto solution
-    def __init__(self, itr_id, vals, a_vals, sc_vals):
-        self.itr_id = itr_id    # iteration id (negative for corners)
+    def __init__(self, itr_id, vals, a_vals):
+        self.itr_id = itr_id    # iter. id: positive indicates cube-seq, negative for Pareto-set corners
         self.vals = vals  # list of (not scaled) criteria values of the itr_id solution
         self.a_vals = a_vals  # list of achievement values
-        self.sc_vals = sc_vals  # list of scaled criteria values
+        # self.sc_vals = sc_vals  # list of scaled criteria values
         self.closeTo = None     # None replaced by itr_id of a first solution that is close
+        self.distMx = None      # None replaced by L-inf distance for close/duplicated solutions
         # print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
 
     def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
-        for (a1, a2) in zip(self.sc_vals, s2.sc_vals):  # loop over scaled values of criteria
+        self.distMx = 0.
+        for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
             # todo: define a sensible minDist below
             minDist = 0.01
-            if dist > minDist:   # L-inf (Tchebushev) norm used for defining close/duplicated solutions
+            if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
+                self.distMx = None
                 return False
+            self.distMx = max(self.distMx, dist)
+        # scaled values of all criteria differ less than minDist
         self.closeTo = s2.itr_id
         return True
 
@@ -49,43 +55,79 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge was too small
         self.is_degen = False   # set to True, if any edge is too small
-        self.sc_asp = []   # list of scaled A values (used in defining solutions that define the cube)
-        self.sc_res = []   # list of scaled R values
-        self.asp = []   # list of A values (to be used in the MCMA preferences)
-        self.res = []   # list of R values
+        # self.sc_asp = []   # list of scaled A values (used in selecting solutions that define the cube)
+        # self.sc_res = []   # list of scaled R values
+        self.asp = []   # list of A values in model units (to be used in the MCMA preferences)
+        self.res = []   # list of R values in model units
+        self.aspAch = []   # list of A values in Achievement scale (used to define self.asp/res)
+        self.resAch = []   # list of R values in Achievement scale
 
         # calculate the cube size, and distance components (diffs for each criterion)
-        for (a1, a2) in zip(s1.sc_vals, s2.sc_vals):  # loop over scaled values of criteria
+        for (a1, a2) in zip(s1.a_vals, s2.a_vals):  # loop over achievements of criteria
             dist = abs(a1 - a2)
             self.sizeL1 += dist  # Manhattan (L1) distance in criteria scaled-values
             self.sizeL2 += dist * dist  # L2 distance
             self.sizeLinf = max(dist, self.sizeLinf)  # Tchebyshev (Linf) distance
             self.edges.append(dist)
-            if dist < mc.minDiff:
-                self.is_degen = True
-                self.degen.append(True)
+            if dist < mc.minDiff:   # difference between achivements too small --> cube dimension degenered
+                self.is_degen = True    # the cube degenerated
+                self.degen.append(True)  # current dimension degenerated
             else:
-                self.degen.append(False)
-        self.size = self.sizeL1     # currently, L1 is used as the cube size
+                self.degen.append(False)   # current dimension not degenerated
+        self.sizeL2 = math.sqrt(self.sizeL2)     # cube size define by L2
+        # diverse norms used for the size
+        # self.size = self.sizeL1     # cube size define by L1
+        # self.size = self.sizeL2     # cube size define by L2
+        self.size = self.sizeLinf   # cube size define by Linf
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
         for (i, cr) in enumerate(self.mc.cr):
-            v1 = self.s1.vals[i]
-            v2 = self.s2.vals[i]
-            if cr.isBetter(v1, v2):     # s1 has better crit. value than s2
-                cr.asp = v1
-                cr.res = v2
-            else:  # s2 has better crit. value than s1
-                cr.asp = v2
-                cr.res = v1
-            if self.degen[i]:   # expand the degenrated edge
+            if not self.degen[i]:   # not degenerated edge
+                cr.is_active = True
+                v1 = self.s1.vals[i]
+                v2 = self.s2.vals[i]
+                a1 = self.s1.a_vals[i]
+                a2 = self.s2.a_vals[i]
+                if cr.isBetter(v1, v2):     # s1 has better crit. value than s2
+                    cr.asp = v1
+                    cr.res = v2
+                    self.aspAch.append(a1)
+                    self.resAch.append(a2)
+                else:  # s2 has better crit. value than s1
+                    cr.asp = v2
+                    cr.res = v1
+                    self.aspAch.append(a2)
+                    self.resAch.append(a1)
+            else:   # expand the degenerated edge (only for the AF regularizing term)
+                cr.is_active = False
+                # todo: the below is ad-hoc fix, needs to be improved
+                # oldA = cr.val
+                # oldR = cr.val
+                oldA = self.s1.vals[i]
+                oldR = self.s1.vals[i]
+                achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
+                expAch = 5.    # A/R expansion-span (in the achivements scale, i.e., [0, 100])
+                if achiv < 50.:     # closer to Nadir, move A
+                    new_ach = achiv + expAch
+                    cr.asp = cr.ach2val(new_ach)     # get A value corresponding to achievement new_ach
+                    self.aspAch.append(new_ach)
+                    self.resAch.append(achiv)
+                else:           # closer to Utopia, move R
+                    new_ach = achiv - expAch
+                    cr.res = cr.ach2val(new_ach)
+                    self.aspAch.append(achiv)
+                    self.resAch.append(new_ach)
+                print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.1f} expanded to {expAch:.1f} by moving:'
+                      f'\n\tA from {oldA} to {cr.asp},  R from {oldR} to {cr.res}.')
+                '''
+                print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {expAch:.2e} by moving:'
+                      f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')
+                # old version, not good (too much A/R span
                 span = 0.5 * abs(cr.utopia - cr.nadir)  # new span of the degenerated edge
                 span2 = span / 2.   # A and R by span2, if possible within [U, N]
                 distU = abs(cr.utopia - cr.asp)
                 distN = abs(cr.nadir - cr.res)
-                oldA = cr.asp
-                oldR = cr.res
                 if distU < distN:  # empty edge closer to utopia
                     if span2 < distU:   # A can be moved towards U by dist2
                         cr.asp = oldA + cr.mult * span2
@@ -100,15 +142,11 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
                     else:       # R can be moved to N by only a part of the dist2, thus A is moved more than span2
                         cr.res = cr.nadir
                         cr.asp = oldA + cr.mult * abs(span - distN)
-                print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {span:.2e} by moving:'
-                      f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')
-                cr.is_active = False
-            else:
-                cr.is_active = True
+                '''
             self.asp.append(cr.asp)
             self.res.append(cr.res)
-            self.sc_asp.append(cr.sc_var * cr.asp)
-            self.sc_res.append(cr.sc_var * cr.res)
+            # self.sc_asp.append(cr.sc_var * cr.asp)
+            # self.sc_res.append(cr.sc_var * cr.res)
             # print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
 
     # print: itr_ids of solutions defining the cube, cube size, lengths of cube edges (i.e., components of the size),
@@ -121,19 +159,24 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
             val2 += f'{v2:.2e}, '
         edges = '['
         for dim in self.edges:
-            edges += f'{dim:.2e} '
+            edges += f'{dim:.1f} '
         edges += ']'
-        print(f'cube[{seq}] sol_itr: ({self.s1.itr_id}, {self.s2.itr_id}), size={self.size:.2e}, '
+        print(f'cube[{seq}] sol_itr: ({self.s1.itr_id}, {self.s2.itr_id}), size={self.size:.1f}, '
               f'is_degen {self.is_degen}, edges={edges}, '
               f'\n\tcorners: ([{val1}], [{val2}])')
 
         # the below are for info only; not-scaled A/R values are used for actual preferences
         val1 = ''
         val2 = ''
-        for (v1, v2) in zip(self.sc_asp, self.sc_res):    # scaled A/R values
-            val1 += f'{v1:.2e} '
-            val2 += f'{v2:.2e} '
+        # todo: aspAch, resAch for degenerated criteria
+        for (v1, v2) in zip(self.aspAch, self.resAch):    # CAF values for A/R
+            val1 += f'{v1:.1f} '
+            val2 += f'{v2:.1f} '
         print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
+
+    def lst_size(self, seq):  # seq: externally defined seq_no of the list of cubes
+        print(f'cube[{seq}] sol_itr: [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
+              f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.is_degen}')
 
 
 class ParRep:     # representation of Pareto set
@@ -238,25 +281,38 @@ class ParRep:     # representation of Pareto set
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr)
         vals = []     # crit values
         a_vals = []     # crit values
-        sc_vals = []  # scaled crit values
+        # sc_vals = []  # scaled crit values
         for cr in self.mc.cr:
             vals.append(cr.val)
-            sc_vals.append(cr.sc_var * cr.val)
-        for cr in self.mc.cr:   # compute achievement values
-            sc = self.mc.cafAsp / abs(cr.utopia - cr.nadir)
-            # if cr.mult == 1:    # maximized crit.
-            #     a_val = sc * (cr.utopia - cr.val)
-            # else:
-            #     a_val = sc * (cr.val - cr.utopia)
-            # todo: check if correct also for negative U, N
-            a_val = abs(cr.mult * sc * (cr.utopia - cr.val))
-            a_vals.append(a_val)
-            a_frac = abs(sc * cr.val)  # value as a fraction of the range
-            print(f'crit {cr.name} ({cr.attr}): a_val={a_val:.2e}, val={cr.val:.2e}, a_frac={a_frac:.2e}, '
+            # sc_vals.append(cr.sc_var * cr.val)
+            cr.val2ach()    # compute and set achievement value
+            a_vals.append(cr.a_val)
+        # for cr in self.mc.cr:   # compute achievement values
+        #     sc = self.mc.cafAsp / abs(cr.utopia - cr.nadir)
+        #     # if cr.mult == 1:    # maximized crit.
+        #     #     a_val = sc * (cr.utopia - cr.val)
+        #     # else:
+        #     #     a_val = sc * (cr.val - cr.utopia)
+        #     # todo: check if correct also for negative U, N
+        #     # todo: check consistency a_val and val for all criteria
+        #     a_val = abs(cr.mult * sc * (cr.utopia - cr.val))
+        #     a_vals.append(a_val)
+        #     a_frac = abs(sc * cr.val)  # value as a fraction of the range
+            print(f'crit {cr.name} ({cr.attr}): a_val={cr.a_val:.2f}, val={cr.val:.2e}, '  # a_frac={a_frac:.2e}, '
                   f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
-        self.sols.append(ParSol(itr_id, vals, a_vals, sc_vals))
-        print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} Pareto solutions.')
-        # raise Exception(f'ParRep::addSol() not implemented yet.')
+        new_sol = ParSol(itr_id, vals, a_vals)
+        is_close = False
+        for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
+            if new_sol.is_close(s2):
+                is_close = True
+                break
+        if is_close:
+            self.clSols.append(new_sol)
+            print(f'Solution {itr_id = } duplicates itr_id {new_sol.closeTo} (L-inf = {new_sol.distMx:.1e}. '
+                  f'There are {len(self.clSols)} duplicated Pareto solutions.')
+        else:
+            self.sols.append(new_sol)
+            print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
 
     def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
         # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
@@ -266,21 +322,21 @@ class ParRep:     # representation of Pareto set
         for (k, crit) in enumerate(self.mc.cr):     # one corner for each criterion
             vals = []  # crit values
             a_vals = []  # achievement values
-            sc_vals = []  # scaled crit values (one utopia, others nadir)
+            # sc_vals = []  # scaled crit values (one utopia, others nadir)
             itr_id = -1 - k  # itr_id negative, start with -1
             for (i, cr) in enumerate(self.mc.cr):
                 if i == cur_uto:
                     val = cr.utopia
                     a_val = self.mc.cafAsp  # value of CAF at A
-                    sc_val = cr.sc_var * val
+                    # sc_val = cr.sc_var * val
                 else:
                     val = cr.nadir
                     a_val = 0.
-                    sc_val = cr.sc_var * val
+                    # sc_val = cr.sc_var * val
                 vals.append(val)
                 a_vals.append(a_val)
-                sc_vals.append(sc_val)
-            self.sols.append(ParSol(itr_id, vals, a_vals, sc_vals))
+                # sc_vals.append(sc_val)
+            self.sols.append(ParSol(itr_id, vals, a_vals))
             cur_uto += 1
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
@@ -292,6 +348,9 @@ class ParRep:     # representation of Pareto set
     def lst_cubes(self):  # list cubes
         for (i, c) in enumerate(self.cubes):
             c.lst(i)
+        print()
+        for (i, c) in enumerate(self.cubes):
+            c.lst_size(i)
 
     def summary(self):  # summary report
         print('\nList of cubes:')
@@ -326,7 +385,8 @@ class ParRep:     # representation of Pareto set
         # self.df_sol = pd.DataFrame.from_dict(rows)
         f_name = self.mc.ana_dir + '/df_sol.csv'
         self.df_sol.to_csv(f_name, index=True)
-        print(f'Solutions stored in the csv file: {f_name}.')
+        print(f'{len(self.sols)} unique solutions stored in {f_name}. '
+              f'{len(self.clSols)} duplicated solutions not stored.')
 
         # plot solutions
         # plot2D(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 2D plot
