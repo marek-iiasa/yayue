@@ -398,7 +398,7 @@ class CtrMca:
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val
-                crit.a_val = crit.val2ach()
+                crit.a_val = crit.val2ach(crit.val)
                 if crit.is_active and self.cur_stage < 4:  # don't update nadir
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
                 else:   # after payOff definition update nadir for all criteria

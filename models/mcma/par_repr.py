@@ -83,29 +83,22 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
         for (i, cr) in enumerate(self.mc.cr):
+            v1 = self.s1.vals[i]
+            v2 = self.s2.vals[i]
+            if cr.isBetter(v1, v2):  # s1 has better crit. value than s2
+                cr.asp = v1
+                cr.res = v2
+            else:  # s2 has better crit. value than s1
+                cr.asp = v2
+                cr.res = v1
             if not self.degen[i]:   # not degenerated edge
                 cr.is_active = True
-                v1 = self.s1.vals[i]
-                v2 = self.s2.vals[i]
-                a1 = self.s1.a_vals[i]
-                a2 = self.s2.a_vals[i]
-                if cr.isBetter(v1, v2):     # s1 has better crit. value than s2
-                    cr.asp = v1
-                    cr.res = v2
-                    self.aspAch.append(a1)
-                    self.resAch.append(a2)
-                else:  # s2 has better crit. value than s1
-                    cr.asp = v2
-                    cr.res = v1
-                    self.aspAch.append(a2)
-                    self.resAch.append(a1)
-            else:   # expand the degenerated edge (only for the AF regularizing term)
+                self.aspAch.append(cr.val2ach(cr.asp))
+                self.resAch.append(cr.val2ach(cr.res))
+            else:   # expand the degenerated edge (used only in the AF regularizing term)
                 cr.is_active = False
-                # todo: the below is ad-hoc fix, needs to be improved
-                # oldA = cr.val
-                # oldR = cr.val
-                oldA = self.s1.vals[i]
-                oldR = self.s1.vals[i]
+                oldA = cr.val
+                oldR = cr.val
                 achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
                 expAch = 5.    # A/R expansion-span (in the achivements scale, i.e., [0, 100])
                 if achiv < 50.:     # closer to Nadir, move A
@@ -239,9 +232,9 @@ class ParRep:     # representation of Pareto set
                     # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} not larger than {mx_size:.2e} ')
         if c_best is None:
             raise Exception(f'ParRep::pref(): no cube defined.')
-        # print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
-        #       f'size={c_best.size:.2e}')
-        print(f'\nChecking the largested generated cube, setting the criteria activity and the A/R.')
+        print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
+              f'size={c_best.size:.2e}')
+        print(f'\nChecking the largest generated cube, setting the criteria activity and the A/R.')
         c_best.setAR()  # set in mc.cr the AR (in the solutions scale); store the AR also in the cube
         c_best.lst(len(self.cubes))
         print(f'Proceed to generation of the optimization problem.\n')
@@ -285,7 +278,7 @@ class ParRep:     # representation of Pareto set
         for cr in self.mc.cr:
             vals.append(cr.val)
             # sc_vals.append(cr.sc_var * cr.val)
-            cr.val2ach()    # compute and set achievement value
+            cr.a_val = cr.val2ach(cr.val)    # compute and set achievement value
             a_vals.append(cr.a_val)
         # for cr in self.mc.cr:   # compute achievement values
         #     sc = self.mc.cafAsp / abs(cr.utopia - cr.nadir)
@@ -336,7 +329,14 @@ class ParRep:     # representation of Pareto set
                 vals.append(val)
                 a_vals.append(a_val)
                 # sc_vals.append(sc_val)
-            self.sols.append(ParSol(itr_id, vals, a_vals))
+            new_sol = ParSol(itr_id, vals, a_vals)
+            for s2 in self.sols:  # check if the new sol is close to any previous unique (i.e., not-close) sol
+                if new_sol.is_close(s2):
+                    print(f'Selfish solution {new_sol.itr_id} too close to another selfish solution: {new_sol.closeTo} '
+                          f'(L-inf = {new_sol.distMx:.1e}).')
+                    raise Exception('The problem not suitable for MCMA.')
+            self.sols.append(new_sol)
+            print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
             cur_uto += 1
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
