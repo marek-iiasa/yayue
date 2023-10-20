@@ -68,7 +68,7 @@ class Plots:
             for i_second in range(i_first + 1, self.n_crit):
                 name2 = self.cr_name[i_second]
                 # print('Plot', i_plot + 1, 'pair (', name1, ',', name2, ')')
-                print(f'Plot {i_plot}, criteria: ({name1}, {name2})')
+                print(f'Subplot {i_plot}, criteria: ({name1}, {name2})')
                 ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # subplots numbered from 1
                 ax[i_plot].set_xlabel(name1)
                 ax[i_plot].set_ylabel(name2)
@@ -100,7 +100,12 @@ class Plots:
     #                             f'\nCoordinates: ({sel.target[0]:.2f}, {sel.target[1]:.2f})')
 
     def plot3D(self):
+        if self.n_crit < 3:
+            return
+        assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
         fig2 = plt.figure(figsize=(9, 7))
+        fig2.canvas.manager.set_window_title(
+            f'Criteria achievements for {self.n_sol} solutions.')  # window title
         ax = fig2.add_subplot(projection='3d')
         ax.set_xlabel(self.cr_name[0])
         ax.set_ylabel(self.cr_name[1])
