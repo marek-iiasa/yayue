@@ -3,7 +3,7 @@
 # import numpy as np
 # import pandas as pd
 import math
-from par_plot import *
+from plots import *
 
 # todo: add to ParSol:
 #   prune marker (to close to another solution) to skip (almost) duplictated solutions during cube generation
@@ -76,9 +76,9 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
                 self.degen.append(False)   # current dimension not degenerated
         self.sizeL2 = math.sqrt(self.sizeL2)     # cube size define by L2
         # diverse norms used for the size
-        # self.size = self.sizeL1     # cube size define by L1
-        # self.size = self.sizeL2     # cube size define by L2
-        self.size = self.sizeLinf   # cube size define by Linf
+        self.size = self.sizeL1     # cube size defined by L1
+        # self.size = self.sizeL2     # cube size defined by L2
+        # self.size = self.sizeLinf   # cube size defined by Linf
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
@@ -301,7 +301,7 @@ class ParRep:     # representation of Pareto set
                 break
         if is_close:
             self.clSols.append(new_sol)
-            print(f'Solution {itr_id = } duplicates itr_id {new_sol.closeTo} (L-inf = {new_sol.distMx:.1e}. '
+            print(f'Solution {itr_id = } duplicates itr_id {new_sol.closeTo} (L-inf = {new_sol.distMx:.1e}). '
                   f'There are {len(self.clSols)} duplicated Pareto solutions.')
         else:
             self.sols.append(new_sol)
@@ -389,8 +389,9 @@ class ParRep:     # representation of Pareto set
               f'{len(self.clSols)} duplicated solutions not stored.')
 
         # plot solutions
-        # plot2D(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 2D plot
-        plot3D(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 3D plot
+        plots = Plots(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 3D plot
+        plots.plot2D()    # 2D plot
+        plots.plot3D()    # 3D plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)

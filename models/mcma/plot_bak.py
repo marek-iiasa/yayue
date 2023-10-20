@@ -2,12 +2,124 @@
 # import os
 # import numpy as np
 import pandas as pd
+from scipy.special import comb    # for computing number of combinations
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import seaborn as sns
 import mplcursors
 # from crit import Crit
 sns.set()   # settings for seaborn plotting style
+
+
+class Plots:
+    def __init__(self, df, cr_defs, dir_name):   # driver for plots
+        self.df = df
+        self.cr_defs = cr_defs
+        self.dir_name = dir_name
+        self.n_crit = len(cr_defs)
+        self.cols = df.columns  # columns of the df defined in the report() using the criteria names
+        self.cr_name = []   # criteria names
+        self.cr_col = []   # col-names containing criteria achievements values
+        self.n_sol = len(df.index)  # number of solutions defined in the df
+        self.seq = df[self.cols[0]]
+        self.cmap = ListedColormap(['green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
+        self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
+
+        for cr in cr_defs:
+            self.cr_name.append(cr.name)
+            self.cr_col.append(f'a_{cr.name}')
+
+        n_cat = 4  # number of categories (including the virtual corner-solutions)
+        n_members = int((self.n_sol - self.n_crit) / (n_cat - 1))  # number of non-corner items in each category
+        i_memb = 0  # current number of members already assigned to a category
+        i_cat = 1  # id of the current category (excluding corner-solutions, which are in 0-th category)
+        for (i, sol) in enumerate(df[self.cols[0]]):
+            if i < self.n_crit:  # corner solution
+                self.cat_num[i] = 0
+            else:
+                self.cat_num[i] = i_cat
+                i_memb += 1
+                if i_memb == n_members:
+                    i_cat += 1
+                    i_memb = 0
+
+    def plot2D(self):
+        n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
+        n_perrow = 3
+        # n_percol_ = float(n_plots) / flot(n_perrow)
+        n_percol = int(float(n_plots) / float(n_perrow))
+        if n_percol * n_perrow < n_plots:
+            n_percol += 1
+        # fig_heig = 3.5 * n_percol
+        fig_heig = 4.
+        print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
+
+        fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
+        fig1.canvas.manager.set_window_title(
+            f'Criteria achievements for {self.n_sol} solutions.')  # window title
+        fig1.subplots_adjust(wspace=0.3, hspace=0.3)
+
+        i_plot = 0  # current plot number (subplots numbers from 1)
+        ax = []
+        # crs = []
+        m_size = 50  # marker size
+        for i_first in range(self.n_crit):
+            name1 = self.cr_name[i_first]
+            for i_second in range(i_first + 1, self.n_crit):
+                name2 = self.cr_name[i_second]
+                # print('Plot', i_plot + 1, 'pair (', name1, ',', name2, ')')
+                print(f'Plot {i_plot}, criteria: ({name1}, {name2})')
+                ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # subplots numbered from 1
+                ax[i_plot].set_xlabel(name1)
+                ax[i_plot].set_ylabel(name2)
+                ax[i_plot].set_title(name1 + ' vs ' + name2)
+                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
+                                   cmap=self.cmap, s=m_size)
+                # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
+                for (i, seq) in enumerate(self.seq):
+                    ax[i_plot].text(self.df[self.cr_col[i_first]][i] + 2, self.df[self.cr_col[i_second]][i] + 2,
+                                    f'{seq}')
+                    if i > 20:
+                        break
+                '''
+                # mplcursors don't work with subplots
+                crs.append(mplcursors.cursor(ax[i_plot], hover=True))  # mplcursors for interactive labels
+                crs[i_plot].connect("add", lambda sel: self.set_tooltip(sel, i_plot))
+                lambda sel: sel.annotation.set_text(  # 1st value taken from the df, others from the axes
+                f"{self.df[self.cols[0]] [sel.index]}: ({sel.target[0]:.2e}, {sel.target[1]:.2e})"))
+                '''
+                i_plot += 1
+
+        f_name = self.dir_name + f'/plot2D.png'
+        fig1.savefig(f_name)
+        # plt.show()
+        print(f'Plot of Pareto solutions stored in file: {f_name}')
+
+    # def set_tooltip(self, sel, i):
+    #     sel.annotation.set_text(f'Label: {self.df[self.cols[0]][sel.target.index]} (Subplot {i})'
+    #                             f'\nCoordinates: ({sel.target[0]:.2f}, {sel.target[1]:.2f})')
+
+    def plot3D(self):
+        fig2 = plt.figure(figsize=(9, 7))
+        ax = fig2.add_subplot(projection='3d')
+        ax.set_xlabel(self.cr_name[0])
+        ax.set_ylabel(self.cr_name[1])
+        ax.set_zlabel(self.cr_name[2])
+        # noinspection PyArgumentList
+        # warning supressed here (complains on unfilled params x and y)
+        ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
+                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+        #            label='Criteria Achievements', c='blue', s=50)
+        for (i, seq) in enumerate(self.seq):
+            ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
+                    f'{seq}')
+            if i > 20:
+                break
+        # Show the plot
+        f_name = self.dir_name + f'/par3D.png'
+        fig2.savefig(f_name)
+        plt.show()
+        print(f'3D plot of Pareto solutions stored in file: {f_name}')
 
 
 # noinspection PySingleQuotedDocstring

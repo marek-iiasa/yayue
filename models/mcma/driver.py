@@ -39,7 +39,8 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
 
     # list of variables, values of which shall be included in the report
     # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
-    rep_vars = ['prod', 'emi', 'exp', 'act']
+    rep_vars = ['x1', 'x2', 'x3']
+    # rep_vars = ['prod', 'emi', 'exp', 'act']
     # rep_vars = ['act']
     # rep_vars = ['x']
     # rep_vars = []
@@ -57,7 +58,7 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # max_itr = 4
     # max_itr = 9
     max_itr = 16
-    # max_itr = 200
+    # max_itr = 500
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
