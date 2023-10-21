@@ -16,8 +16,9 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
         if 0 < self.mc.verb <= 2:
-            print(f"PWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
-                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
+            pass
+            # print(f"PWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
+            #       f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         elif self.mc.verb > 2:
             print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
@@ -43,10 +44,12 @@ class PWL:  # representation of caf(x) for i-th criterion
             f'{self.cr.nadir:.2e} closer than {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
         if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
             self.is_asp = False
-            print(f'\tA {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
+            if self.mc.verb > 2:
+                print(f'\tA {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
         if self.is_res and self.is_nadir and not self.mc.diffOK(i, self.cr.nadir, self.cr.res):
             self.is_res = False
-            print(f'\tR {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
+            if self.mc.verb > 2:
+                print(f'\tR {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
 
         self.set_vert()  # define coordinates of the vertices
 

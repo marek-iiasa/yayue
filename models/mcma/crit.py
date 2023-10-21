@@ -38,7 +38,7 @@ class Crit:     # definition and attributes of a single criterion
         self.val = None     # current computed value (from last solution)
         self.a_val = None   # achievement of the current value
         #
-        print(f"Criterion: name = '{cr_name}', var_name = '{var_name}', {self.attr} created.")
+        print(f"criterion '{cr_name}' ({self.attr}), core-model variable = '{var_name}'.")
 
     def val2ach(self, val):   # set a_val corresponding to the current val
         if self.nadir is None:  # don't attempt to compute achievements in initial stages
@@ -47,18 +47,15 @@ class Crit:     # definition and attributes of a single criterion
         rng = abs(self.utopia - self.nadir)
         assert rng / max(abs(self.utopia), abs(self.nadir)) > self.minRange, f'val2ach(): crit {self.name} has '\
             f'too small difference between U {self.utopia} and N {self.nadir}.'
-        # sc = self.sc_ach / rng
-        # a_val = sc * val
         a_val = self.sc_ach * abs(val - self.nadir) / rng
-        print(f'val2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        # print(f'val2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
     def ach2val(self, achiv):   # return criterion value corresponding to CAF = achiv
         rng = abs(self.utopia - self.nadir)
-        # val = self.nadir + rng * achiv / 100.
         rng_fr = rng * achiv / self.sc_ach
         val = self.nadir + self.mult * rng_fr
-        print(f'ach2val(): crit "{self.name}": {achiv=:.2f}, {val=:.2e}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        # print(f'ach2val(): crit "{self.name}": {achiv=:.2f}, {val=:.2e}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return val
 
     def setUtopia(self, val):   # to be called only once for each criterion

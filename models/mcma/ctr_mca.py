@@ -282,7 +282,7 @@ class CtrMca:
         return
 
     def rdCritSpc(self):    # read specification of criteria
-        print(f"\nInitializing criteria defined in file '{self.f_crit}':")
+        print(f"\nCreating criteria defined in file '{self.f_crit}':")
         self.n_crit = 0
         with open(self.f_crit) as reader:  # read and store specs of criteria
             for n_line, line in enumerate(reader):

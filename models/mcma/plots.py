@@ -125,5 +125,5 @@ class Plots:
         # Show the plot
         f_name = self.dir_name + f'/par3D.png'
         fig2.savefig(f_name)
-        plt.show()
+        # plt.show()
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
