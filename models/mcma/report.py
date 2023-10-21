@@ -1,5 +1,5 @@
 """
-Reporting results of iterations of the regret function applied to the China liquid fuel production model.
+Reporting results of the MCMA iterations. Handling core-model is generic, i.e., any variable can be seleted for report.
 """
 
 import warnings
