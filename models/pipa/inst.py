@@ -9,7 +9,7 @@ def instance(m):
     # data.load(filename='data0.json')  # works with DataPortal() and DataPortal(model=m)
     data = pe.DataPortal(model=m)  # parameter (model=m) needed for loading *.dat
     # dat-format requires DataPortal(model=m)
-    data.load(filename='Data/dat2.dat')
+    data.load(filename='Data/dat3.dat')  # dat3 prepared by JZ, Oct 21, 2023
     inst = m.create_instance(data)
 
     # # add here other precomputed parameters, if they will be introduced

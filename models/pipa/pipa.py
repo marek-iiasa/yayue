@@ -5,19 +5,17 @@
 #   noinspection PyUnresolvedReferences
 #   infty = float('inf')
 
-"""
-Prototype of the China liquid fuel production model.
-The prototype is in the initial development stage.
-Substantial changes are forthcoming; therefore, please use it with care.
-"""
+""" Prototype of the Pipa model. """
 import sys		# needed for sys.exit()
 import os
 # import pandas as pd
+import dill
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
 from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
 from inst import *      # return model instance
+from report import *    # report and store results
 
 # noinspection SpellCheckingInspection
 if __name__ == '__main__':
@@ -64,6 +62,16 @@ if __name__ == '__main__':
     model.pprint()
     print('end of model printout          -----------------------------------------------------------------\n')
 
+    m_name = 'pipa'
+    f_name = f'{m_name}.dll'
+    with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
+        dill.dump(model, f)
+    print(f'Model "{m_name}" generated and dill-dumpped to: {f_name}')
+
+    # report ctor
+    rep_vars = ['cost', 'oilImp', 'carb']  # list of variables to be reported and stored in df
+    rep = Report(model, './Rep', rep_vars)
+
     # opt = SolverFactory('gams')  # gams can be used as a solver
     opt = pe.SolverFactory('glpk')
     result_obj = opt.solve(model, tee=True)
@@ -77,7 +85,8 @@ if __name__ == '__main__':
     print(f'Carbon emission = {carb}')
     print(f'Carbon emission (discounted) cost = {carbC}')
 
-    # TODO: add storing selected (tdb which are needed) variables
+    rep.var_vals()  # extract from the solution values of the requessted variables
+    rep.summary()   # store the extracted values in a df
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
