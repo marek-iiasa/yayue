@@ -7,5 +7,5 @@ dat2.dat, by Marek, Jul 30, 2023
 Data set for testing on a small example SMS (1) refactorized (for applying decorators),
 and (2) modified to harmonize it with the modified documentation developed in Overleaf.
 
-dat3.dat, by Bingqing and Jinyang, to be prepared
-Initial test data
+dat3.dat, by Jinyang, posted on Oct 21, 2023
+Data set for the pipa 1.2.x (handling multiple inputs/outputs to/from technologies)
