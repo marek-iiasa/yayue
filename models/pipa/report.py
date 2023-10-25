@@ -49,11 +49,11 @@ class Report:
             if m1_var.is_indexed():
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
                 vals.append([var_name, True, val_dict])
-                print(f'Values of indexed variable {var_name} = {val_dict}')
+                # print(f'Values of indexed variable {var_name} = {val_dict}')
             else:
                 val = m1_var.value
                 vals.append([var_name, False, val])
-                print(f'Value of the report variable {var_name} = {val}')
+                # print(f'Value of the report variable {var_name} = {val}')
 
         # parse the extracted values into entries of a row to be included by the self.summary() in the df_vars
         new_row = {}
@@ -75,5 +75,5 @@ class Report:
     def summary(self):
         self.df_vars = pd.DataFrame(self.sol_vars)
         self.df_vars.to_csv(self.f_df_vars, index=True)
-        print(f'Values of core-model variables requested to be reported are stored in the DataFrane '
+        print(f'\nValues of core-model variables requested to be reported are stored in the DataFrane '
               f'"{self.f_df_vars}" file.')
