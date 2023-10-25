@@ -2,6 +2,6 @@ pipa0/
 Rep/
 Results/
 Out_dir/
+# below are working/back-up versions
 report?.py
 sms*.py
-*.dll
