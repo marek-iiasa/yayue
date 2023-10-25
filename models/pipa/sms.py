@@ -120,6 +120,7 @@ def mk_sms():
     m.costAn = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # trajectories of total costs
     #
     # secondary auxiliary variables
+    m.invT = pe.Var()   # total investments
     m.excarbC = pe.Var()   # total cost excludidng carbon emission cost
     m.carbEv = pe.Var(m.TV, within=pe.NonNegativeReals)   # carbon emissions (by act[t, p, v]) caused by cap[v]
     m.actvS = pe.Var(m.T, m.P, within=pe.NonNegativeReals)  # activities summed over v act[t, p]
@@ -134,9 +135,10 @@ def mk_sms():
     # TODO: clarify error (reported in model display): ERROR: evaluating object as numeric value: goal
     @m.Objective(sense=pe.minimize)
     def goal(mx):
-        return mx.cost      # total cost
+        # return mx.cost      # total cost
+        return mx.invT      # total investments
         # return mx.carb    # total carbon emission
-        # return mx.oilImp  # total oil import
+        # return mx.oilImp  # total oil import  (same/similar solution as carb min.)
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
@@ -180,6 +182,10 @@ def mk_sms():
     @m.Constraint(m.T, m.P)  # trajectory of inv cost for building capacities (in planning periods)
     def invCD(mx, t, p):
         return mx.invC[t, p] == mx.invP[t] * mx.cap[t, p]
+
+    @m.Constraint()  # total investments
+    def invTD(mx):
+        return mx.invT == sum(mx.invC[t, p] for t in mx.T for p in mx.P)
 
     @m.Constraint(m.T, m.P)  # trajectory of costs of all inputs to each technology
     def inpCD(mx, t, p):
