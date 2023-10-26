@@ -49,16 +49,15 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # select solver
     opt = pe.SolverFactory('glpk')
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
-    # opt = SolverFactory('gams')  # gams can be used as a solver
 
     # todo: implement scaling of vars defining criteria.
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 0
     # max_itr = 4
-    max_itr = 9
+    # max_itr = 9
     # max_itr = 16
-    # max_itr = 500
+    max_itr = 30
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
@@ -92,19 +91,19 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
             m.pprint()
 
         # solve the model instance composed of two blocks: (1) core model m1, (2) MC-part (Achievement Function)
-        print('\nsolving --------------------------------')
+        # print('\nsolving --------------------------------')
         # results = opt.solve(m, tee=True)
         results = opt.solve(m, tee=False)
         chk_sol(results)  # check the status of the solution
         # todo: clarify exception (uncomment next line) while loading the results
         # m1.load(results)  # Loading solution into results object
 
-        print('processing solution ----')
+        # print('processing solution ----')
         rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)
         # m.del_component(m.mc_part)   # need not be deleted (a new mc_part needs to be generated for new preferences)
 
-        print(f'Finished current itr, count: {n_iter}.')
+        # print(f'Finished current itr, count: {n_iter}.')
         n_iter += 1
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')

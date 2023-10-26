@@ -102,7 +102,7 @@ class CtrMca:
                     n_words = len(words)
                     # assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
                     # self.set_payOff(words[0], words[1], words[2])
-                    assert(n_words == 5), f'line {line} has {n_words} instead of the required five.'
+                    assert n_words == 5, f'line {line} has {n_words} instead of the required five.'
                     self.set_payOff(words[0], words[2], words[4])
                     n_def += 1
             assert (self.n_crit == n_def), f'stored payOff table has {n_def} values for {self.n_crit} defined criteria.'
@@ -292,7 +292,7 @@ class CtrMca:
                     continue
                 words = line.split()
                 n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
-                assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
+                assert n_words == 3, f'line {line} has {n_words} instead of the required three.'
                 self.addCrit(words[0], words[1], words[2])    # store the criterion specs
         assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
 
@@ -319,7 +319,7 @@ class CtrMca:
                 else:
                     words = line.split()
                     n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
-                    assert(3 <= n_words <= 4), f'line {line} has {n_words}; required are either three or four.'
+                    assert 3 <= n_words <= 4, f'line {line} has {n_words}; required are either three or four.'
                     for i in [1, 2]:
                         assert type(float(words[i])) == float and words[i] is not None, \
                             f'line "{line}": "{words[i]}" should be a float number.'
@@ -394,7 +394,7 @@ class CtrMca:
                     crit.setUtopia(val)  # utopia computed
                 crit.updNadir(self.cur_stage, val, self.minDiff)
         elif 1 < self.cur_stage < 6:  # update nadir values
-            print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
+            # print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val

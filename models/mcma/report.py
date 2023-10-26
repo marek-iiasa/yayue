@@ -95,7 +95,7 @@ class Report:
 
         self.itr_id += 1
         self.mc.cur_itr_id = self.itr_id
-        print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
+        # print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         cri_val = {}    # all criteria values in current solution
         '''

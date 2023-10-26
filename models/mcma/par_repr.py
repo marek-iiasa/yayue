@@ -18,19 +18,35 @@ class ParSol:     # one Pareto solution
         # self.sc_vals = sc_vals  # list of scaled criteria values
         self.closeTo = None     # None replaced by itr_id of a first solution that is close
         self.distMx = None      # None replaced by L-inf distance for close/duplicated solutions
-        # print(f'Solution of itr_id {itr_id}: criteria values: {self.vals}, (scaled: {self.sc_vals})')
+        # print(f'Solution of itr_id {itr_id}: crit. values: {self.vals}, (achievements: {self.a_vals})')
+        print(f'Solution of itr_id {itr_id}, a_vals: {self.a_vals}')
+
+    def neigh_inf(self, cube):     # print info on distances to corners of the parent cube
+        s1 = cube.s1
+        s2 = cube.s2
+        for (i, cr) in enumerate(cube.mc.cr):
+            res = min(s1.a_vals[i], s2.a_vals[i])
+            asp = max(s1.a_vals[i], s2.a_vals[i])
+            val = self.a_vals[i]
+            is_act = cr.is_active
+            print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
+                  f's[{s2.itr_id}] {s2.a_vals[i]}')
+            if not res <= val <= asp:
+                print(f'WARNING: Parsol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
+            # The below occurs when the corresponding criterion is inactive
+            # assert res <= val <= asp, f'Parsol:neigh_inf():: crit {cr.name} {val=} outside [{res=}, {asp=}]'
 
     def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
         self.distMx = 0.
         for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
             # todo: define a sensible minDist below
-            minDist = 0.01
+            minDist = 0.5   # was 0.01
             if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
                 self.distMx = None
                 return False
             self.distMx = max(self.distMx, dist)
-        # scaled values of all criteria differ less than minDist
+        # achievements of all criteria differ less than minDist
         self.closeTo = s2.itr_id
         return True
 
@@ -53,7 +69,7 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         self.sizeL2 = 0.    # L2-norm size
         self.sizeLinf = 0.  # Linf (Tchebyshev)-norm size
         self.edges = []     # distance components (lengthes of edges for each criterion)
-        self.degen = []     # True, if the corresponding edge was too small
+        self.degen = []     # True, if the corresponding edge is too small
         self.is_degen = False   # set to True, if any edge is too small
         # self.sc_asp = []   # list of scaled A values (used in selecting solutions that define the cube)
         # self.sc_res = []   # list of scaled R values
@@ -97,22 +113,25 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
                 self.resAch.append(cr.val2ach(cr.res))
             else:   # expand the degenerated edge (used only in the AF regularizing term)
                 cr.is_active = False
-                oldA = cr.val
-                oldR = cr.val
+                # oldA = cr.val
+                # oldR = cr.val
                 achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
+                oldAch = cr.val2ach(achiv)
                 expAch = 5.    # A/R expansion-span (in the achivements scale, i.e., [0, 100])
                 if achiv < 50.:     # closer to Nadir, move A
                     new_ach = achiv + expAch
+                    mark = 'A'
                     cr.asp = cr.ach2val(new_ach)     # get A value corresponding to achievement new_ach
                     self.aspAch.append(new_ach)
                     self.resAch.append(achiv)
                 else:           # closer to Utopia, move R
                     new_ach = achiv - expAch
+                    mark = 'R'
                     cr.res = cr.ach2val(new_ach)
                     self.aspAch.append(achiv)
                     self.resAch.append(new_ach)
-                print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.1f} expanded to {expAch:.1f} by moving:'
-                      f'\n\tA from {oldA} to {cr.asp},  R from {oldR} to {cr.res}.')
+                print(f'Crit. {cr.name} edge {self.edges[i]:.1f} expanded to {expAch:.1f} by moving '
+                      f'{mark} from {oldAch} to {new_ach}')
                 '''
                 print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {expAch:.2e} by moving:'
                       f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')
@@ -168,7 +187,7 @@ class Cube:     # defined (in scaled values) by the given pair of neighbor solut
         print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
 
     def lst_size(self, seq):  # seq: externally defined seq_no of the list of cubes
-        print(f'cube[{seq}] sol_itr: [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
+        print(f'cube[{seq}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
               f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.is_degen}')
 
 
@@ -203,7 +222,7 @@ class ParRep:     # representation of Pareto set
                 is_inside = False   # solution inside the cube exists
                 for (k, s) in enumerate(self.sols):     # check, if any solution is inside cube(s1, s2)
                     if k == i or k == j:
-                        continue    # skip checking the corners
+                        continue    # skip checking the corner solutions
                     # check, if k-th solution is inside cube generated by solutions (i, j)
                     is_inside = self.chk_inside(s, s1, s2)
                     if is_inside:
@@ -232,9 +251,9 @@ class ParRep:     # representation of Pareto set
                     # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} not larger than {mx_size:.2e} ')
         if c_best is None:
             raise Exception(f'ParRep::pref(): no cube defined.')
-        print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
-              f'size={c_best.size:.2e}')
-        print(f'\nChecking the largest generated cube, setting the criteria activity and the A/R.')
+        # print(f'\nCube selected: ({c_best.s1.itr_id}, {c_best.s2.itr_id}), is_degen = {c_best.is_degen}, '
+        #       f'size={c_best.size:.2e}')
+        print(f'\nSetting the criteria activity and the A/R for the selected cube.')
         c_best.setAR()  # set in mc.cr the AR (in the solutions scale); store the AR also in the cube
         c_best.lst(len(self.cubes))
         print(f'Proceed to generation of the optimization problem.\n')
@@ -262,8 +281,8 @@ class ParRep:     # representation of Pareto set
             v = s.vals[i]
             v1 = s1.vals[i]
             v2 = s2.vals[i]
-            if not min(v1, v2) < v < max(v1, v2):
-                # print(f'crit {cr.name}: {v} is outside range of ({v1}, {v2}).')
+            if not min(v1, v2) <= v <= max(v1, v2):
+                # print(f'sol {it} is NOT between sols ({it1}, {it2}): crit {cr.name}: {v} is outside ({v1}, {v2}).')
                 return False  # v outside the range [v1, v2]
             # else:
             #     print(f'crit {cr.name}: {v} is in the range of ({v1}, {v2}); continue check.')
@@ -280,20 +299,13 @@ class ParRep:     # representation of Pareto set
             # sc_vals.append(cr.sc_var * cr.val)
             cr.a_val = cr.val2ach(cr.val)    # compute and set achievement value
             a_vals.append(cr.a_val)
-        # for cr in self.mc.cr:   # compute achievement values
-        #     sc = self.mc.cafAsp / abs(cr.utopia - cr.nadir)
-        #     # if cr.mult == 1:    # maximized crit.
-        #     #     a_val = sc * (cr.utopia - cr.val)
-        #     # else:
-        #     #     a_val = sc * (cr.val - cr.utopia)
-        #     # todo: check if correct also for negative U, N
-        #     # todo: check consistency a_val and val for all criteria
-        #     a_val = abs(cr.mult * sc * (cr.utopia - cr.val))
-        #     a_vals.append(a_val)
-        #     a_frac = abs(sc * cr.val)  # value as a fraction of the range
             print(f'crit {cr.name} ({cr.attr}): a_val={cr.a_val:.2f}, val={cr.val:.2e}, '  # a_frac={a_frac:.2e}, '
                   f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
         new_sol = ParSol(itr_id, vals, a_vals)
+        if itr_id >= 0:
+            c = self.cubes[len(self.cubes) - 1]     # parent cube
+            new_sol.neigh_inf(c)   # info on location within the solutions of the parent cube
+
         is_close = False
         for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
             if new_sol.is_close(s2):

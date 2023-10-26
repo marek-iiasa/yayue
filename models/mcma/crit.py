@@ -48,6 +48,7 @@ class Crit:     # definition and attributes of a single criterion
         assert rng / max(abs(self.utopia), abs(self.nadir)) > self.minRange, f'val2ach(): crit {self.name} has '\
             f'too small difference between U {self.utopia} and N {self.nadir}.'
         a_val = self.sc_ach * abs(val - self.nadir) / rng
+        a_val = round(a_val, 2)
         # print(f'val2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 

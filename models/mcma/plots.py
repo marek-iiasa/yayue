@@ -103,7 +103,7 @@ class Plots:
         if self.n_crit < 3:
             return
         assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
-        fig2 = plt.figure(figsize=(9, 7))
+        fig2 = plt.figure(figsize=(12, 9))
         fig2.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
         ax = fig2.add_subplot(projection='3d')
@@ -115,7 +115,8 @@ class Plots:
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
                    label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
-        ax.view_init(elev=3, azim=-135, roll=0)
+        # ax.view_init(elev=3, azim=-135, roll=0)
+        ax.view_init(elev=15, azim=45, roll=0)
         for (i, seq) in enumerate(self.seq):
             # noinspection PyTypeChecker
             ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
@@ -123,7 +124,7 @@ class Plots:
             if i > 20:
                 break
         # Show the plot
-        f_name = self.dir_name + f'/par3D.png'
+        f_name = self.dir_name + f'/plot3D.png'
         fig2.savefig(f_name)
         # plt.show()
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
