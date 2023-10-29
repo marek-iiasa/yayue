@@ -109,6 +109,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.seq_id = None    # seq_nr in the list of all cubes, assigned when the cube is added to Cubes
         self.used = False   # set to True, when the cube was used for generating a solution inside
         self.empty = None   # set to True/False if a solution is/isNot inside
+        self.min_edge = 0.5     # min achievement A/R difference
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge is too small
         self.is_degen = False   # set to True, if any edge is too small
@@ -130,16 +131,16 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             self.sizeL2 += dist * dist  # L2 distance
             self.sizeLinf = max(dist, self.sizeLinf)  # Tchebyshev (Linf) distance
             self.edges.append(dist)
-            if dist < mc.minDiff:   # difference between achivements too small --> cube dimension degenered
+            if dist < self.min_edge:   # difference between achivements too small --> cube dimension degenered
                 self.is_degen = True    # the cube degenerated
                 self.degen.append(True)  # current dimension degenerated
             else:
                 self.degen.append(False)   # current dimension not degenerated
         self.sizeL2 = math.sqrt(self.sizeL2)     # cube size define by L2
         # diverse norms used for the size
-        self.size = self.sizeL1     # cube size defined by L1
+        # self.size = self.sizeL1     # cube size defined by L1
         # self.size = self.sizeL2     # cube size defined by L2
-        # self.size = self.sizeLinf   # cube size defined by Linf
+        self.size = self.sizeLinf   # cube size defined by Linf
 
     # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
@@ -156,7 +157,30 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 cr.is_active = True
                 self.aspAch.append(cr.val2ach(cr.asp))
                 self.resAch.append(cr.val2ach(cr.res))
-            else:   # expand the degenerated edge (used only in the AF regularizing term)
+            else:   # expand the degenerated dimension (too small edge) by moving R, if possible
+                '''
+                '''
+                achivOld = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
+                # todo: change min_edge to a sensible value
+                if achivOld < self.min_edge:  # too close to Nadir to relax R
+                    cr.is_active = False    # set the crit to inactive, define A/R for the AF regularizing term
+                    achivA = self.min_edge
+                    achivR = 0.
+                    print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} cannot be expanded; '
+                          f'crit. set in-active, A/R for AF reg.-term: [{achivA:.1f}, {achivR:.1f}]')
+                else:   # relax R
+                    cr.is_active = True
+                    n_crit = len(self.mc.cr)
+                    new_edge = (self.sizeL1 - self.sizeLinf) / n_crit   # average of the other edges
+                    achivA = achivOld
+                    achivR = max(achivOld - new_edge, 0.)
+                    print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} expanded to: '
+                          f'A/R [{achivA:.1f}, {achivR:.1f}]')
+                cr.asp = cr.ach2val(achivA)
+                cr.res = cr.ach2val(achivR)
+                self.aspAch.append(achivA)
+                self.resAch.append(achivR)
+                '''
                 cr.is_active = False
                 # oldA = cr.val
                 # oldR = cr.val
@@ -177,6 +201,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                     self.resAch.append(new_ach)
                 print(f'Crit. {cr.name} edge {self.edges[i]:.1f} expanded to {expAch:.1f} by moving '
                       f'{mark} from {oldAch} to {new_ach}')
+                '''
                 '''
                 print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {expAch:.2e} by moving:'
                       f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')

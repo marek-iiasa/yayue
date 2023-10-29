@@ -90,10 +90,10 @@ class Plots:
                 '''
                 i_plot += 1
 
-        f_name = self.dir_name + f'/plot2D.png'
+        f_name = self.dir_name + f'/p2D.png'
         fig1.savefig(f_name)
         # plt.show()
-        print(f'Plot of Pareto solutions stored in file: {f_name}')
+        print(f'2D plot of Pareto solutions stored in file: {f_name}')
 
     # def set_tooltip(self, sel, i):
     #     sel.annotation.set_text(f'Label: {self.df[self.cols[0]][sel.target.index]} (Subplot {i})'
@@ -124,7 +124,8 @@ class Plots:
             if i > 20:
                 break
         # Show the plot
-        f_name = self.dir_name + f'/plot3D.png'
+        f_name = self.dir_name + f'/p3D.png'
         fig2.savefig(f_name)
         # plt.show()
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
+        # print('L2-norm used for the cube-size.')

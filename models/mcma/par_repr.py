@@ -16,8 +16,10 @@ class ParRep:     # representation of Pareto set
         self.cur_cube = None  # cube_id of the last used cube
         self.df_sol = None  # df with solutions prepared for plots; defined in the self.summary()
 
+        print('Initializing Pareto-set exploration. --------------------')
         mc.scale()          # (re)define scales for criteria values
         self.ini_corners()  # initialize corner solutions
+        print('Initialization completed. Start the exploration --------------------\n')
         # raise Exception(f'ParRep ctor not implemented yet.')
 
     def pref(self):     # entry point for each new iteration
@@ -25,10 +27,10 @@ class ParRep:     # representation of Pareto set
         if cube is None:
             raise Exception(f'ParRep::pref(): no cube defined.')
         self.cur_cube = cube.seq_id
-        print(f'\nSetting the criteria activity and the A/R for the selected cube.')
+        # print(f'\nSetting the criteria activity and the A/R for the selected cube.')
         cube.setAR()     # set AR values (directly in the Crit objects)
         cube.lst(self.cur_cube)
-        print(f'Proceed to generation of the optimization problem.\n')
+        print(f'Proceed to generation of the optimization problem.')
         # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
 
     def chk_inside(self, s, s1, s2):    # return True if s is inside cube(s1, s2)

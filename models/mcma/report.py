@@ -205,7 +205,7 @@ class Report:
         # todo: correct info on current and previous iterations
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_itr_df, index=True)
-        print(f'Criteria attributes at each iteration are stored in the DataFrane "{self.f_itr_df}" file.')
+        print(f'\nCriteria attributes at each iteration are stored in the DataFrane "{self.f_itr_df}" file.')
         self.df_vars = pd.DataFrame(self.sol_vars)
         self.df_vars.to_csv(self.f_df_vars, index=True)
         print(f'Values of core-model variables requested to be reported are stored in the DataFrane '
