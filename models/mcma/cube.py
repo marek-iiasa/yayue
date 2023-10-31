@@ -1,4 +1,5 @@
 import math
+from operator import itemgetter  # , attrgetter
 
 # todo: add to ParSol:
 #   prune marker (to close to another solution) to skip (almost) duplictated solutions during cube generation
@@ -59,46 +60,104 @@ class Cubes:     # collection of aCubes
     def __init__(self, parRep):
         self.parRep = parRep    # Pareto-set representation object
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
-        self.all_cubes = []     # list of all generated cubes
+        self.min_size = 2.      # cube's min. LInf size for including the cube to analysis
+        self.all_cubes = {}     # all generated cubes: key = id
+        self.cand = []          # cubes that are candidates for next iteration
 
-    def add(self, cube):    # add a new cube to the collection
-        cube.seq_id = len(self.all_cubes)
-        self.all_cubes.append(cube)
+    def add(self, cube):    # add a new cube to the dictionary
+        cube.id = len(self.all_cubes)
+        self.all_cubes.update({cube.id: cube})
+        if cube.size >= self.min_size:
+            self.cand.append((cube.id, cube.size))
 
-    def get(self, seq):    # return the seq_no cube
-        assert seq < len(self.all_cubes), f'Cubes::get(): requested {seq}-th cube, only {len(self.all_cubes)} defined.'
-        return self.all_cubes[seq]
+    def get(self, c_id):    # return the cube by its id
+        assert c_id < len(self.all_cubes), f'Cubes::get(): requested cube[{c_id}], only {len(self.all_cubes)} defined.'
+        return self.all_cubes[c_id]
+
+    def cand_ok(self, c_id):  # check, if c can be used
+        c = self.get(c_id)
+        assert not c.used, f'candidate cube[{c_id}] was already used.'
+        for s in self.sols:     # check, if any solution is in the c-cube
+            if s.itr_id == c.s1.itr_id or s.itr_id == c.s2.itr_id:
+                continue
+            if self.parRep.is_inside(s, c.s1, c.s2):
+                # print(f'sol {s.itr_id} is between sols [{c.s1.itr_id}, {c.s2.itr_id}].')
+                c.empty = False
+                return False    # the cube cannot be used
+        return True    # the cube can be used
 
     def select(self):    # select a cube for generating a new Pareto solution
-        best = None
-        for c in self.all_cubes:
-            if c.used or not c.empty:
-                continue
-            if best is not None:
-                if c.size > best.size:
-                    # print(f'Cube ({c.s1.itr_id}, {c.s2.itr_id}), size={c.size:.2e} replaces '
-                    #       f'cube ({best.s1.itr_id}, {best.s2.itr_id}), size={best.size:.2e}')
-                    best = c
-            else:
-                best = c
-                continue
-        if best is None:
+        if len(self.cand) == 0:
             print(f'\nNo cube is available for defining preferences.')
-            self.lst_cubes()
-            raise Exception(f'Cubes::select(): handling not implemented yet.')
-        else:
-            # print(f'\nCube selected: ({best.s1.itr_id}, {best.s2.itr_id}), is_degen = {best.is_degen}, '
-            #       f'size={best.size:.2e}')
+            return None
+        # print(f'cand-list before sorting: {self.cand}')
+        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort the cand. id-list by decreasing cube-size
+        # print(f'after: {self.cand}')
+
+        # sub-list of candidates of the same size
+        lst = []    # list of cubes having the same size
+        id2prune = []
+        size = self.cand[0][1]
+        for (c_id, c_size) in self.cand:
+            if c_size < size:    # no more candidate of the same size
+                if len(lst) > 0:    # break, if at least one candidate was found
+                    break
+                else:   # make list of cubes of a smaller size
+                    size = c_size
+                    continue
+            if self.cand_ok(c_id):
+                lst.append(c_id)
+            else:
+                id2prune.append(c_id)
+
+        best = None
+        if len(lst) > 0:
+            # todo: consider other selection criteria, currently the first cube is used
+            best_id = lst[0]
+            best = self.get(best_id)
             best.used = True
+            id2prune.append(best.id)
+            print(f'\nBest (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
+                  f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
+        else:
+            print(f'\nNo cube is available for defining preferences.')
+        # prune the candidate list
+        for c_id in id2prune:
+            # print(f'\ncand-list before removing c_id = {c_id}: {self.cand}')
+            for item in self.cand:
+                i_id = item[0]
+                if i_id == c_id:
+                    self.cand.remove(item)
+                    # print(f'cube_id {c_id} removed from the candidate list.')
+                    break   # remove() destriys list indexing, the loop must exited
+                # else:
+                #     print(f'c_ind {i_id} skipped')
+            # print(f'after: {self.cand}\n')
+
+        # if len(self.sols) > 10:
+        #     print(f'Test iteration break')
+        #     return None
         return best
 
     def lst_cubes(self):  # list cubes
+        print('\nList of cubes remaining for analysis:')
+        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort by size (just for the listing)
+        for (i, c) in enumerate(self.cand):
+            c_id = c[0]
+            cube = self.get(c_id)
+            cube.lst_size(c_id)
+        print('\nSummary of cubes:')
+        print(f'\t{len(self.sols)} Pareto solutions generated.')
+        print(f'\t{len(self.all_cubes)} cubes generated.')
+        print(f'\t{len(self.cand)} cubes remain for exploration.')
+        '''
         print('\nList of cubes:')
         for (i, c) in enumerate(self.all_cubes):
             c.lst(i)
         print()
         for (i, c) in enumerate(self.all_cubes):
             c.lst_size(i)
+        '''
 
 
 class aCube:     # a Cube defined (in achievement values) by the given pair of neighbor solutions
@@ -106,14 +165,14 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.mc = mc    # CtrMca object (provides the needed info on criteria)
         self.s1 = s1    # first solution defining the cube
         self.s2 = s2    # second solution defining the cube
-        self.seq_id = None    # seq_nr in the list of all cubes, assigned when the cube is added to Cubes
+        self.id = None  # id corresponds to the sequence of the cubes generation
         self.used = False   # set to True, when the cube was used for generating a solution inside
         self.empty = None   # set to True/False if a solution is/isNot inside
         self.min_edge = 0.5     # min achievement A/R difference
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge is too small
         self.is_degen = False   # set to True, if any edge is too small
-        self.size = 0.      # cube size = currently L1 distance(s1, s2), for scaled crit values
+        self.size = 0.      # cube size = currently LInf distance(s1, s2), for scaled crit values
         self.sizeL1 = 0.    # L1-norm size
         self.sizeL2 = 0.    # L2-norm size
         self.sizeLinf = 0.  # Linf (Tchebyshev)-norm size
@@ -256,10 +315,11 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             val2 += f'{v2:.1f} '
         print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
 
-    def lst_size(self, seq):  # seq: externally defined seq_no of the list of cubes
-        print(f'cube[{seq}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
+    def lst_size(self, c_ind):  # seq: externally defined seq_no of the list of cubes
+        print(f'cube[{c_ind}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
               f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.is_degen}')
 
+    '''
     def chk_inside(self, s, s1, s2):    # return True if s is inside cube(s1, s2)
         # it = s.itr_id
         # it1 = s1.itr_id
@@ -276,3 +336,4 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         # print(f'solution {it} is between solutions ({it1}, {it2}).')
         # raise Exception(f'ParRep::chk_inside() not implemented yet.')
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
+    '''
