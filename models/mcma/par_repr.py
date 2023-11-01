@@ -25,7 +25,7 @@ class ParRep:     # representation of Pareto set
     def pref(self):     # entry point for each new iteration
         cube = self.cubes.select()  # the cube defining A/R for new iteration
         if cube is None:
-            self.mc.stages = 6  # terminate the analysis
+            self.mc.cur_stage = 6  # terminate the analysis
             return
             # raise Exception(f'ParRep::pref(): no cube defined.')
         self.cur_cube = cube.id

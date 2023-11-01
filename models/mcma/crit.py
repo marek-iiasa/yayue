@@ -31,6 +31,7 @@ class Crit:     # definition and attributes of a single criterion
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None
+        self.is_fixed = False   # if True, then the crit. value is fixed at the self.asp value
         self.utopia = None  # set only once
         self.nadir = None   # checked, and possibly updated, every iteration, see self.updNadir()
         self.asp = None     # aspiration value (not scaled)

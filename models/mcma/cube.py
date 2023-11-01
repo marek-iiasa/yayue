@@ -38,7 +38,7 @@ class ParSol:     # one Pareto solution
         for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
             # todo: define a sensible minDist below
-            minDist = 0.5   # was 0.01
+            minDist = 1.0   # was 0.01
             if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
                 self.distMx = None
                 return False
@@ -60,15 +60,34 @@ class Cubes:     # collection of aCubes
     def __init__(self, parRep):
         self.parRep = parRep    # Pareto-set representation object
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
-        self.min_size = 2.      # cube's min. LInf size for including the cube to analysis
+        self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
+        self.min_size = 5.      # cube's min. LInf size for including the cube to analysis
         self.all_cubes = {}     # all generated cubes: key = id
         self.cand = []          # cubes that are candidates for next iteration
+        self.small = 0      # number of small ignored
+        self.filled = 0     # number of non-empty ignored
 
-    def add(self, cube):    # add a new cube to the dictionary
-        cube.id = len(self.all_cubes)
-        self.all_cubes.update({cube.id: cube})
+    def add(self, cube):    # add a new cube, if it large enough and non-empty
         if cube.size >= self.min_size:
-            self.cand.append((cube.id, cube.size))
+            if self.is_empty(cube):
+                cube.id = len(self.all_cubes)
+                self.all_cubes.update({cube.id: cube})
+                self.cand.append((cube.id, cube.size))
+            else:
+                self.filled += 1
+        else:
+            self.small += 1
+
+    def is_empty(self, cube):    # return True if no solution is inside the cube
+        for s in self.sols:     # check, if any solution is in the c-cube
+            if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:
+                continue
+            if self.parRep.is_inside(s, cube.s1, cube.s2):
+                # print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
+                cube.empty = False
+                return False    # the cube has a solution inside
+        cube.empty = True
+        return True    # the cube is empty
 
     def get(self, c_id):    # return the cube by its id
         assert c_id < len(self.all_cubes), f'Cubes::get(): requested cube[{c_id}], only {len(self.all_cubes)} defined.'
@@ -77,18 +96,14 @@ class Cubes:     # collection of aCubes
     def cand_ok(self, c_id):  # check, if c can be used
         c = self.get(c_id)
         assert not c.used, f'candidate cube[{c_id}] was already used.'
-        for s in self.sols:     # check, if any solution is in the c-cube
-            if s.itr_id == c.s1.itr_id or s.itr_id == c.s2.itr_id:
-                continue
-            if self.parRep.is_inside(s, c.s1, c.s2):
-                # print(f'sol {s.itr_id} is between sols [{c.s1.itr_id}, {c.s2.itr_id}].')
-                c.empty = False
-                return False    # the cube cannot be used
-        return True    # the cube can be used
+        if self.is_empty(c):
+            return True    # the cube can be used
+        else:
+            return False    # the cube cannot be used
 
     def select(self):    # select a cube for generating a new Pareto solution
         if len(self.cand) == 0:
-            print(f'\nNo cube is available for defining preferences.')
+            print(f'\nEmpty list of cubes: no more preferences can be defined.')
             return None
         # print(f'cand-list before sorting: {self.cand}')
         self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort the cand. id-list by decreasing cube-size
@@ -120,7 +135,8 @@ class Cubes:     # collection of aCubes
             print(f'\nBest (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
                   f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
         else:
-            print(f'\nNo cube is available for defining preferences.')
+            print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
+            print('Termination2')
         # prune the candidate list
         for c_id in id2prune:
             # print(f'\ncand-list before removing c_id = {c_id}: {self.cand}')
@@ -147,9 +163,12 @@ class Cubes:     # collection of aCubes
             cube = self.get(c_id)
             cube.lst_size(c_id)
         print('\nSummary of cubes:')
-        print(f'\t{len(self.sols)} Pareto solutions generated.')
+        print(f'\t{len(self.sols)} unique Pareto solutions generated.')
+        print(f'\t{len(self.clSols)} duplicate/close Pareto solutions generated.')
         print(f'\t{len(self.all_cubes)} cubes generated.')
         print(f'\t{len(self.cand)} cubes remain for exploration.')
+        print(f'\t{self.small} small cubes ignored.')
+        print(f'\t{self.filled} non-empty cubes ignored.')
         '''
         print('\nList of cubes:')
         for (i, c) in enumerate(self.all_cubes):
@@ -214,31 +233,41 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 cr.res = v1
             if not self.degen[i]:   # not degenerated edge
                 cr.is_active = True
+                cr.is_fixed = False
                 self.aspAch.append(cr.val2ach(cr.asp))
                 self.resAch.append(cr.val2ach(cr.res))
             else:   # expand the degenerated dimension (too small edge) by moving R, if possible
                 '''
                 '''
-                achivOld = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
-                # todo: change min_edge to a sensible value
-                if achivOld < self.min_edge:  # too close to Nadir to relax R
-                    cr.is_active = False    # set the crit to inactive, define A/R for the AF regularizing term
-                    achivA = self.min_edge
-                    achivR = 0.
-                    print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} cannot be expanded; '
-                          f'crit. set in-active, A/R for AF reg.-term: [{achivA:.1f}, {achivR:.1f}]')
-                else:   # relax R
-                    cr.is_active = True
-                    n_crit = len(self.mc.cr)
-                    new_edge = (self.sizeL1 - self.sizeLinf) / n_crit   # average of the other edges
-                    achivA = achivOld
-                    achivR = max(achivOld - new_edge, 0.)
-                    print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} expanded to: '
-                          f'A/R [{achivA:.1f}, {achivR:.1f}]')
-                cr.asp = cr.ach2val(achivA)
-                cr.res = cr.ach2val(achivR)
-                self.aspAch.append(achivA)
-                self.resAch.append(achivR)
+                if self.mc.deg_exp:     # expand degenerated dimension:
+                    achivOld = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
+                    cr.is_fixed = False
+                    if achivOld < self.min_edge:  # too close to Nadir to relax R
+                        cr.is_active = False    # set the crit to inactive, define A/R for the AF regularizing term
+                        achivA = self.min_edge
+                        achivR = 0.
+                        print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} cannot be expanded; '
+                              f'crit. set in-active, A/R for AF reg.-term: [{achivA:.1f}, {achivR:.1f}]')
+                    else:   # relax R
+                        cr.is_active = True
+                        n_crit = len(self.mc.cr)
+                        new_edge = (self.sizeL1 - self.sizeLinf) / n_crit   # average of the other edges
+                        achivA = achivOld
+                        achivR = max(achivOld - new_edge, 0.)
+                        print(f'Crit. {cr.name}, achiv {achivOld:.1f}, edge {self.edges[i]:.1f} expanded to: '
+                              f'A/R [{achivA:.1f}, {achivR:.1f}]')
+                    cr.asp = cr.ach2val(achivA)
+                    cr.res = cr.ach2val(achivR)
+                    self.aspAch.append(achivA)
+                    self.resAch.append(achivR)
+                else:   # don't relax: the cr will not enter AF, value of the corresponding m1 var will be fixed
+                    cr.is_active = False
+                    cr.is_fixed = True
+                    cr.res = cr.asp
+                    achiv = cr.val2ach(self.s1.a_vals[i])  # CAF (same/similar for both solutions)
+                    self.aspAch.append(achiv)
+                    self.resAch.append(achiv)
+                    print(f'Crit. {cr.name}, edge {self.edges[i]:.1f}: crit achiv. fixed at A/R = {achiv:.1f}')
                 '''
                 cr.is_active = False
                 # oldA = cr.val

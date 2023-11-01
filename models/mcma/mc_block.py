@@ -57,6 +57,10 @@ class McMod:
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
         m.A = pe.Set(initialize=act_cr)   # set of active criteria indices (defined above)
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
+        if self.mc.deg_exp is False:    # fix the crit value at the degenerated cube dimension
+            for (i, cr) in enumerate(self.mc.cr):
+                if cr.is_fixed:
+                    raise Exception(f'not implemented yet: var[{i}] should be fixed at {cr.asp:.2e}.')
         m.m1_cr_vars = []    # list of variables (objects) of m1 (core model) defining criteria
         for crit in self.mc.cr:
             var_name = crit.var_name
@@ -153,7 +157,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb > 2:
+        if self.mc.verb >= 0:   # after debug replace back: 0 for 2
             print('\nMC_block (returned to driver):')
             m.pprint()
 
