@@ -57,12 +57,19 @@ class McMod:
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
         m.A = pe.Set(initialize=act_cr)   # set of active criteria indices (defined above)
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
-        if self.mc.deg_exp is False:    # fix the crit value at the degenerated cube dimension
+        n_pwls = self.mc.n_crit     # number of CAFs and PWLs
+        if self.mc.deg_exp is False:    # fix the vars corresponding the degenerated cube dimension(s)
             for (i, cr) in enumerate(self.mc.cr):
                 if cr.is_fixed:
-                    raise Exception(f'not implemented yet: var[{i}] should be fixed at {cr.asp:.2e}.')
+                    n_pwls -= 1
+                    assert not cr.is_active, f'Crit. {cr.name} has fixed value; therefore, it must be in_active.'
+                    m.x[i].fix(cr.asp)
+                    # m.x[i].setlb(cr.asp)
+                    # m.x[i].setub(cr.asp)
+                    # raise Exception(f'not implemented yet: var[{i}] should be fixed at {cr.asp:.2e}.')
+        m.P = pe.RangeSet(0, n_pwls - 1)   # seq_index of PWLs & m.caf[]
         m.m1_cr_vars = []    # list of variables (objects) of m1 (core model) defining criteria
-        for crit in self.mc.cr:
+        for crit in self.mc.cr:     # get m1-vars representing criteria
             var_name = crit.var_name
             m1_var = m1_vars[var_name]  # select from all core-model vars the object named var_name
             m.m1_cr_vars.append(m1_var)
@@ -75,21 +82,27 @@ class McMod:
         # m.xLink = pe.Constraint(m.C, rule=link_rule)
 
         # remaining variables of mc-block; AF and m1_vars defined above
-        m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m_var])
+        m.caf = pe.Var(m.P)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m_var])
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
 
-        # generate and store params [a, b] of all segments of PWL function y = ax + b, for each criterion
+        # generate and store params [a, b] of all segments of PWL function y = ax + b, for each not-fixed criterion
         pwls = []
         segs = []
-        for (i, crit) in enumerate(self.mc.cr):
-            pwl = PWL(self.mc, i)   # PWL of i-th criterion
-            ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
-            pwls.append(ab)
-            n_seg = len(ab)
-            segs.append(n_seg)
-            # print(f'PWL of {i}-th crit. {crit.name}: {n_seg} segments, each defined by [a, b] of '
-            #       f'y = ax + b: {ab = }.')
+        var_seq = []    # seq_no of var corresponding to the pwl
+        for (i, cr) in enumerate(self.mc.cr):
+            if not cr.is_fixed:
+                pwl = PWL(self.mc, i)   # PWL of i-th criterion
+                ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
+                pwls.append(ab)
+                n_seg = len(ab)
+                segs.append(n_seg)
+                var_seq.append(i)
+                # print(f'PWL of {i}-th crit. {cr.name}: {n_seg} segments, each defined by [a, b] of '
+                #       f'y = ax + b: {ab = }.')
+            else:
+                print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
+                pass
         if self.mc.verb > 2:
             print(f'\nParams of s-th segment defining PWL for i-th CAF:')
             for (i, pwl) in enumerate(pwls):
@@ -119,7 +132,7 @@ class McMod:
             if self.mc.verb > 2:
                 print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
                 print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-            cons_item = mx.caf[ix] <= abx[0] * mx.x[ix] + abx[1]
+            cons_item = mx.caf[ix] <= abx[0] * mx.x[var_seq[ix]] + abx[1]
             return cons_item
 
         # the version below also works; it assigns consecutive numbers as the constraint index
@@ -138,7 +151,7 @@ class McMod:
         #     m.pprint()
         #     print(f'---  end of specs of the MC_blok.\n')
 
-        @m.Constraint(m.A)
+        @m.Constraint(m.P)
         def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
             return mx.cafMin <= mx.caf[ii]
 
@@ -146,8 +159,8 @@ class McMod:
         # print(f'----------------------------------------------------- {reg_scale = }')
 
         @m.Constraint()
-        def cafRegD(mx):    # regularizing term (without the scaling coef.)
-            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
+        def cafRegD(mx):    # regularizing term
+            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.P)
 
         @m.Constraint()
         def afDef(mx):
@@ -157,7 +170,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb >= 0:   # after debug replace back: 0 for 2
+        if self.mc.verb > 2:
             print('\nMC_block (returned to driver):')
             m.pprint()
 

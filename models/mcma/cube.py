@@ -136,7 +136,7 @@ class Cubes:     # collection of aCubes
                   f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
         else:
             print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
-            print('Termination2')
+            # print('Termination2')
         # prune the candidate list
         for c_id in id2prune:
             # print(f'\ncand-list before removing c_id = {c_id}: {self.cand}')
@@ -145,7 +145,7 @@ class Cubes:     # collection of aCubes
                 if i_id == c_id:
                     self.cand.remove(item)
                     # print(f'cube_id {c_id} removed from the candidate list.')
-                    break   # remove() destriys list indexing, the loop must exited
+                    break   # remove() destroys the list indexing, the loop must be re-entered
                 # else:
                 #     print(f'c_ind {i_id} skipped')
             # print(f'after: {self.cand}\n')
@@ -236,7 +236,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 cr.is_fixed = False
                 self.aspAch.append(cr.val2ach(cr.asp))
                 self.resAch.append(cr.val2ach(cr.res))
-            else:   # expand the degenerated dimension (too small edge) by moving R, if possible
+            else:   # handle the degenerated dimension (too small edge)
                 '''
                 '''
                 if self.mc.deg_exp:     # expand degenerated dimension:

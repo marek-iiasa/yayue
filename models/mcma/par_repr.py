@@ -28,7 +28,7 @@ class ParRep:     # representation of Pareto set
             self.mc.cur_stage = 6  # terminate the analysis
             return
             # raise Exception(f'ParRep::pref(): no cube defined.')
-        self.cur_cube = cube.id
+        self.cur_cube = cube.id     # remember cur_cube to attach its id to the solution (after it will be provided)
         # print(f'\nSetting the criteria activity and the A/R for the selected cube.')
         cube.setAR()     # set AR values (directly in the Crit objects)
         cube.lst(self.cur_cube)
