@@ -34,7 +34,7 @@ from driver import *  # driver (run the analysis set-up and iterations)
 # from t3inst import mk_inst as ins3  # ditto
 # from t4conc import mk_conc as conc4  # tiny testing model, developed as concrete (without abstract)
 # from tspipa import sbPipa as sbPipa  # sand-box tiny Pipa testing model, developed as concrete (without abstract)
-# from tsjg1 import jg1 as jg1  # sand-box tiny jg1 model
+from tsjg1 import jg1 as jg1  # sand-box tiny jg1 model
 
 
 def mk_mod1():  # generate the core model
@@ -44,8 +44,8 @@ def mk_mod1():  # generate the core model
     # mod1 = ins3(abst)  # tiny test model instance
     # mod1 = conc4()  # tiny test (Pipa-like) model instance (without its abstract model)
     # mod1 = sbPipa()  # tiny test (Pipa-like) model instance (without its abstract model)
-    # mod1 = jg1()  # tiny test (Pipa-like) model instance (without its abstract model)
-    # return mod1
+    mod1 = jg1()  # tiny test (Pipa-like) model instance (without its abstract model)
+    return mod1
     raise Exception(f'mk_mod1(): no model specified.')
 
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     #     del m1.obj_name
     '''
 
-    driver(m1, './Data/test2b')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
+    driver(m1, './Data/test4')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
     # driver(m1, './Data/test2')  # m1 - core model, str: persistent data repository (dedicated for each MC-analysis)
 
     tend = dt.now()

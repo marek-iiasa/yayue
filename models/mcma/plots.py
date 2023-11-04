@@ -113,7 +113,9 @@ class Plots:
         # noinspection PyArgumentList
         # warning supressed here (complains on unfilled params x and y)
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
-                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+                    label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+        # ax.scatter(xs=self.df[self.cr_name[0]], ys=self.df[self.cr_name[1]], zs=self.df[self.cr_name[2]],
+        #            label='Criteria Values', c=self.cat_num, cmap=self.cmap, s=50)
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
         # ax.view_init(elev=3, azim=-135, roll=0)
         ax.view_init(elev=15, azim=45, roll=0)
