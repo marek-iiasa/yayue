@@ -12,17 +12,18 @@ sns.set()   # settings for seaborn plotting style
 
 
 class Plots:
-    def __init__(self, df, cr_defs, dir_name):   # driver for plots
+    def __init__(self, cfg, df, cr_defs):   # driver for plots
+        self.cfg = cfg
         self.df = df
         self.cr_defs = cr_defs
-        self.dir_name = dir_name
+        self.dir_name = cfg.get('resDir')
         self.n_crit = len(cr_defs)
         self.cols = df.columns  # columns of the df defined in the report() using the criteria names
         self.cr_name = []   # criteria names
         self.cr_col = []   # col-names containing criteria achievements values
         self.n_sol = len(df.index)  # number of solutions defined in the df
         self.seq = df[self.cols[0]]
-        self.cmap = ListedColormap(['green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
+        self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
 
         for cr in cr_defs:
@@ -124,8 +125,9 @@ class Plots:
             if i > 20:
                 break
         # Show the plot
-        f_name = self.dir_name + f'/p3D.png'
+        f_name = f'{self.dir_name}p3D.png'
         fig2.savefig(f_name)
-        # plt.show()
+        if self.cfg.get('showPlot'):
+            plt.show()
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
         # print('L2-norm used for the cube-size.')

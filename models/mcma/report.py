@@ -26,10 +26,13 @@ sns.set()   # settings for seaborn plotting style
 
 class Report:
     # cf regret::report() for extensive processing
-    def __init__(self, mc, m1, rep_vars):
+    def __init__(self, cfg, mc, m1):
         self.mc = mc    # CtrMca
         self.m1 = m1    # core-model (used only for extracting solutions in stage one
-        self.rep_dir = mc.ana_dir  # repository of MCMA analysis instance configuration and results
+        self.rep_dir = cfg.get('resDir')  # repository of MCMA analysis instance configuration and results
+        sub_dir = cfg.get('run_id')
+        if sub_dir is not None:
+            self.rep_dir = f'{self.rep_dir}{sub_dir}/'
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of mc_block variables defining criteria
         # crit-attributes: v: value, Y: y/n is_active marker, M: 1/-1 (max/min mult.)
@@ -42,10 +45,10 @@ class Report:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
         self.f_itr_df = mc.ana_dir + '/df_itr.csv'  # file name of the stored df
-        self.rep_vars = rep_vars    # names of the core-model variables to be included in the report
+        self.rep_vars = []    # names of the core-model variables to be included in the report
         self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
-        self.f_df_vars = mc.ana_dir + '/df_vars.csv'  # file name of the stored df
+        self.f_df_vars = f'{self.rep_dir}df_vars.csv'  # file name of the stored df
 
         #
         self.itr_id = -1

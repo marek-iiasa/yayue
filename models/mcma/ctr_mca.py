@@ -12,17 +12,18 @@ from par_repr import ParRep
 
 
 class CtrMca:
-    def __init__(self, ana_dir, par_rep):   # par_rep False/True controls no/yes Pareto-repres. mode
-        self.ana_dir = ana_dir  # wrk dir for the current analysis
-        self.f_crit = ana_dir + '/config.txt'   # file with criteria specification
-        self.f_payoff = ana_dir + '/payoff.txt'     # file with payoff values
-        self.f_pref = ana_dir + '/pref.txt'     # file with defined preferences' set
+    def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto-repres. mode
+        self.cfg = cfg
+        self.ana_dir = cfg.get('home')  # wrk dir for the current analysis
+        self.f_crit = self.ana_dir + 'config.txt'   # file with criteria specification
+        self.f_payoff = self.ana_dir + 'payoff.txt'     # file with payoff values
+        self.f_pref = self.ana_dir + 'pref.txt'     # file with defined preferences' set
         self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6}
         self.cur_stage = 0  # initialization
         self.cur_itr_id = None  # id of the current iteration
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
-        self.is_par_rep = par_rep    # if True, then switch to ParetoRepresentation mode
+        self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         self.cur_cr = None  # cr_index passed to self.set_pref()
