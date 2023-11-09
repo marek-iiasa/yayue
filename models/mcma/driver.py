@@ -62,6 +62,7 @@ def driver(cfg):
     # max_itr = 16
     # max_itr = 100
     # max_itr = 35020
+    # todo: payoff table not stored!
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')

@@ -178,7 +178,7 @@ class CtrMca:
                 self.cur_cr += 1    # use next (not yet used) criterion
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
             else:   # move to the 2nd stage of nadir appr.
-                print('Finished first nadir approximations. Start the 2nd nadir approximations.')
+                print('Finished first nadir approximations. Start the 2nd nadir approximation.')
                 self.cur_stage = 3
                 self.cur_cr = 0     # start 2nd nedir appr with 0-th criterion
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
@@ -189,22 +189,21 @@ class CtrMca:
                 self.cur_cr += 1    # use next (not yet used) criterion
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
             else:   # move to the 2nd stage of nadir appr.
-                print('Finished 2nd nadir approximations.')
+                print('Finished 2nd nadir approximation.')
                 print('Aproximation of PayOff table ready. Preferences for neutral solution set automatically.')
                 self.cur_stage = 4
                 self.cur_cr = None     # should no longer be used
             return self.cur_stage
-        elif self.cur_stage == 4:  # comes here after comptuting neutral solution
+        elif self.cur_stage == 4:  # comes here after computing neutral solution
             print('Finished computation of neutral Pareto solution.')
             print('Switch to get and process user-preferences.')
             self.cur_stage = 5
             self.cur_cr = None  # should no longer be used
             self.hotStart = True
             return self.cur_stage   # return to set pref for gor neutral solution and compute it
-        elif self.cur_stage == 5:  # comes here after comptuting neutral solution
-            # nothing to do here
+        elif self.cur_stage == 5:  # comes here while processing preferences
+            # after debugging, nothing to do here
             # print('Continue to get and handle user preferences.')
-            # self.usrPref()   #  get user preferences; called from driver, (should set stage to 6 for finish)
             return self.cur_stage
         else:
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
@@ -217,6 +216,7 @@ class CtrMca:
         assert self.cur_stage > 0, f'CtrMca::set_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.cur_stage == 1:  # set only currently computed utopia criterion to be active
             for (i, crit) in enumerate(self.cr):
+                crit.is_fixed = False
                 if self.cur_cr == i:
                     crit.is_active = True
                 else:
@@ -226,6 +226,7 @@ class CtrMca:
             if self.verb > 2:
                 print(f'---\nMcma::set_pref(): stage {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
+                crit.is_fixed = False
                 if self.cur_cr == i:
                     crit.is_active = True
                 else:
@@ -235,6 +236,7 @@ class CtrMca:
             if self.verb > 2:
                 print(f'---\nMcma::set_pref(): stage: {self.cur_stage}.')
             for (i, crit) in enumerate(self.cr):
+                crit.is_fixed = False
                 if self.cur_cr == i:
                     crit.is_active = True
                 else:
@@ -396,17 +398,17 @@ class CtrMca:
                     crit.setUtopia(val)  # utopia computed
                 crit.updNadir(self.cur_stage, val, self.minDiff)
         elif 1 < self.cur_stage < 6:  # update nadir values
-            # print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
+            print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val
                 crit.a_val = crit.val2ach(crit.val)
+                print(f'\tCrit {crit.name}: val {crit.val:.2f}, a_val {crit.a_val:.2f}')
                 if crit.is_active and self.cur_stage < 4:  # don't update nadir
                     print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
                 else:   # after payOff definition update nadir for all criteria
                     change = crit.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
-                    if change:
-                        self.payOffChange = True
+                    self.payOffChange = change
             if self.par_rep:
                 self.par_rep.addSol(self.cur_itr_id)   # add solution to ParRep solutions
         else:

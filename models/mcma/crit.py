@@ -50,14 +50,14 @@ class Crit:     # definition and attributes of a single criterion
             f'too small difference between U {self.utopia} and N {self.nadir}.'
         a_val = self.sc_ach * abs(val - self.nadir) / rng
         a_val = round(a_val, 2)
-        # print(f'val2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        # print(f'\tval2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
     def ach2val(self, achiv):   # return criterion value corresponding to CAF = achiv
         rng = abs(self.utopia - self.nadir)
         rng_fr = rng * achiv / self.sc_ach
         val = self.nadir + self.mult * rng_fr
-        # print(f'ach2val(): crit "{self.name}": {achiv=:.2f}, {val=:.2e}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        # print(f'\tach2val(): crit "{self.name}": {achiv=:.2f}, {val=:.2e}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return val
 
     def setUtopia(self, val):   # to be called only once for each criterion
@@ -145,6 +145,7 @@ class Crit:     # definition and attributes of a single criterion
 
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
+        self.is_fixed = False
         is_max = self.mult == 1  # 1 for max-crit, -1 for min.
         delta = abs(self.utopia - self.nadir) / 3.  # equal distance between U, A, R, N
         self.asp = self.utopia - self.mult * delta

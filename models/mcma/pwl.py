@@ -9,6 +9,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.cr = mc.cr[i]
         self.cr_name = self.cr.name
         self.is_act = self.cr.is_active
+        self.is_fx = self.cr.is_fixed
         self.is_max = self.cr.mult == 1  # 1 for max-crit, -1 for min.
         self.is_asp = self.cr.asp is not None   # Asp. defined?
         self.is_res = self.cr.res is not None   # Res. defined?
@@ -17,10 +18,10 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_y = []    # y-values of vertices
         if 0 < self.mc.verb <= 2:
             pass
-            # print(f"PWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
+            # print(f"PWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
             #       f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         elif self.mc.verb > 2:
-            print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_act = {self.is_act}, is_max = {self.is_max}, "
+            print(f"\n----\nPWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
         #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "

@@ -134,7 +134,7 @@ class Report:
             cafReg = round(cafReg, 1)
             new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
         else:   # cafMin, cafReg not defined in stage 1
-            print(f'af = {af:.3e}')
+            # print(f'af = {af:.3e}')
             new_row = {'itr_id': self.itr_id, 'af': af}
         cur_col = 4
         for crit in self.mc.cr:
