@@ -45,8 +45,18 @@ if __name__ == '__main__':
     # wrk_dir = '/Users/marek/Documents/GitHub/yayue/models/mcma'
 
     # configure the working space
-    config = Config('./Data/simple0/cfg.yml')    # yaml configuration file
-    cfg = config.data   # dict with configuration options
+    # todo: enable the cli option for the f_cfg specs
+    f_cfg = './Data/cfg_home.yml'    # yaml file defining location of mcma conf file
+    print(f'\nConfiguration file location is defined in file "{f_cfg}".')
+    assert os.path.exists(f_cfg), f'the home YAML configuration file "{f_cfg}" is not readable.'
+    with open(f_cfg) as f:
+        cfg_dict = yaml.load(f, Loader=SafeLoader)
+    f_name = cfg_dict.get('f_cfg')
+    assert f_name is not None, f'location of MCMA config. is undefined in home YAML config. file "{f_cfg}".'
+
+    # process the run configuration options
+    config = Config(f_name)    # process yaml config. file
+    cfg = config.data   # dict with config. options
     # working dir
     wrk_dir = cfg.get('wrkDir')
     if wrk_dir != './':
