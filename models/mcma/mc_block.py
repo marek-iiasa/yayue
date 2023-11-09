@@ -67,7 +67,7 @@ class McMod:
                     # m.x[i].setlb(cr.asp)
                     # m.x[i].setub(cr.asp)
                     # raise Exception(f'not implemented yet: var[{i}] should be fixed at {cr.asp:.2e}.')
-        m.P = pe.RangeSet(0, n_pwls - 1)   # seq_index of PWLs & m.caf[]
+        # m.P = pe.RangeSet(0, n_pwls - 1)   # seq_index of PWLs & m.caf[]
         m.m1_cr_vars = []    # list of variables (objects) of m1 (core model) defining criteria
         for crit in self.mc.cr:     # get m1-vars representing criteria
             var_name = crit.var_name
@@ -82,32 +82,36 @@ class McMod:
         # m.xLink = pe.Constraint(m.C, rule=link_rule)
 
         # remaining variables of mc-block; AF and m1_vars defined above
-        m.caf = pe.Var(m.P)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m_var])
+        m.caf = pe.Var(m.C)    # CAF (value of criterion/component achievement function, i.e., PWL(cr[m_var])
         m.cafMin = pe.Var()     # min of CAFs
         m.cafReg = pe.Var()     # regularizing term (scaled sum of all CAFs)
 
         # generate and store params [a, b] of all segments of PWL function y = ax + b, for each not-fixed criterion
-        pwls = []
+        pwls = []   # list of PWLs; None is inserted for non-generated PWLs (to provide same indices for CAFs and PWLs)
         segs = []
-        var_seq = []    # seq_no of var corresponding to the pwl
+        var_seq = []    # seq_no of m-var corresponding to the pwl (-1 for undefined PWL)
         for (i, cr) in enumerate(self.mc.cr):
             if not cr.is_fixed:
                 pwl = PWL(self.mc, i)   # PWL of i-th criterion
                 ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
                 pwls.append(ab)
-                n_seg = len(ab)
-                segs.append(n_seg)
-                var_seq.append(i)
+                n_seg = len(ab)     # currently: 1 <= n_seg <= 3
+                segs.append(n_seg)  # order of segments: middle (always), optional: above A, below R
+                var_seq.append(i)   # indices of vars are the same as of all crit & PWLs
                 # print(f'PWL of {i}-th crit. {cr.name}: {n_seg} segments, each defined by [a, b] of '
                 #       f'y = ax + b: {ab = }.')
             else:
+                pwls.append(None)
+                var_seq.append(-1)
                 print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
-                pass
         if self.mc.verb > 2:
             print(f'\nParams of s-th segment defining PWL for i-th CAF:')
             for (i, pwl) in enumerate(pwls):
-                for (s, ab) in enumerate(pwl):
-                    print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
+                if pwl is None:
+                    print(f'No segments for undefined PWL.')
+                else:
+                    for (s, ab) in enumerate(pwl):
+                        print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
 
         # m.S = pe.Set(initialize=segs)   # NOT suitable: 1-dim set stores only unique numbers of segments of each PWL
         # s_pairs = [(0, 1), (1, 1)]  # works for predefined list of pairs: (i, nseq)
@@ -115,11 +119,15 @@ class McMod:
             print(f'\nGenerating pairs defining two-dimensiol set m.S')
         s_pairs = []    # list of pairs: (i, ns), i = index of CAF/PWL, ns = number of segments of the PWL
         for (i, pwl) in enumerate(pwls):
-            for (ns, ab) in enumerate(pwl):
-                pair = (i, ns)
-                s_pairs.append(pair)
-                if self.mc.verb > 2:
-                    print(f'{pair = }')
+            if pwl is None:
+                s_pairs.append((i, -1))  # illegal segment index -1 indicates no segments
+                print(f'No segments for undefined PWL.')
+            else:
+                for (ns, ab) in enumerate(pwl):
+                    pair = (i, ns)
+                    s_pairs.append(pair)
+                    if self.mc.verb > 2:
+                        print(f'{pair = }')
         m.S = pe.Set(dimen=2, initialize=s_pairs)   # m.S initialized by list of pairs of indices
 
         # print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
@@ -127,16 +135,21 @@ class McMod:
         # todo: the below version generates constraints for all segments in all PWLs
         #   more testing is desired
         def cafD(mx, ix, sx):   # is called for each (ix, sx) in m.S; indexes each constraint by (ix, sx)
-            pwlx = pwls[ix]     # pwlx: ix-item from the pwls list of all PWLs
-            abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
-            if self.mc.verb > 2:
-                print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
-                print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-            cons_item = mx.caf[ix] <= abx[0] * mx.x[var_seq[ix]] + abx[1]
-            return cons_item
+            if var_seq[ix] >= 0:
+                pwlx = pwls[ix]  # pwlx: ix-item from the pwls list of all PWLs
+                abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
+                if self.mc.verb > 2:
+                    print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
+                    print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+                cons_item = mx.caf[ix] <= abx[0] * mx.x[var_seq[ix]] + abx[1]
+                return cons_item
+            else:   # PWL not generated for fixed criteria; the corresponding caf shall be fixed
+                # todo: CAF needs to be defined, but it enters only the reg. term
+                return mx.caf[ix] == 0.
+                # return pe.Constraint.Skip
 
-        # the version below also works; it assigns consecutive numbers as the constraint index
         '''
+        # the version below also works; it assigns consecutive numbers as the constraint index
         m.cafD = pe.ConstraintList()
         for (ix, sx) in m.S:
             print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
@@ -151,16 +164,18 @@ class McMod:
         #     m.pprint()
         #     print(f'---  end of specs of the MC_blok.\n')
 
-        @m.Constraint(m.P)
+        @m.Constraint(m.A)
         def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
             return mx.cafMin <= mx.caf[ii]
+            # return pe.Constraint.Skip
 
         reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit       # scaling coef of regularizing term
         # print(f'----------------------------------------------------- {reg_scale = }')
 
         @m.Constraint()
         def cafRegD(mx):    # regularizing term
-            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.P)
+            # todo: correct the summation, if caf[fix_crit] will not be equal to 0.
+            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
 
         @m.Constraint()
         def afDef(mx):
