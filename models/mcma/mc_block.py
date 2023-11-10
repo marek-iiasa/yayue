@@ -121,7 +121,8 @@ class McMod:
         for (i, pwl) in enumerate(pwls):
             if pwl is None:
                 s_pairs.append((i, -1))  # illegal segment index -1 indicates no segments
-                print(f'No segments for undefined PWL.')
+                if self.mc.verb > 2:
+                    print(f'No segments for undefined PWL.')
             else:
                 for (ns, ab) in enumerate(pwl):
                     pair = (i, ns)

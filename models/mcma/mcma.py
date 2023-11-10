@@ -58,35 +58,24 @@ if __name__ == '__main__':
     config = Config(f_name)    # process yaml config. file
     cfg = config.data   # dict with config. options
     # working dir
-    wrk_dir = cfg.get('wrkDir')
-    if wrk_dir != './':
-        assert os.path.exists(wrk_dir), f'Working directory {wrk_dir} does not exists.'
-        os.chdir(wrk_dir)
-        # print(f'wrk_dir: {wrk_dir}')
-    # optional standard output redirection
-    stdOut = cfg.get('outRedir')
-    if stdOut is None:
-        redir_stdo = False  # no redirection of stdout to a file
-        pass
-    else:
-        redir_stdo = True  # optional redirection of stdout to the stdOut file
-        pass
-    out_dir = './Out_dir/'
 
+    # optional standard output redirection
     default_stdout = sys.stdout
-    if redir_stdo:
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir, mode=0o755)
-        fn_out = f'{out_dir}v9.txt'  # file for redirected stdout
-        assert not os.path.exists(fn_out), f'Rename/remove the already used file: {fn_out}'
-        print(f'Stdout redirected to: {fn_out}')
-        f_out = open(fn_out, 'w')
-        sys.stdout = f_out
-    else:
+    # stdOut = cfg.get('outRedir')
+    fn_name = cfg.get('fn_out')  # file-name for redirected stdout
+    if fn_name is None:
+        redir_stdo = False  # no redirection of stdout to a file
         fn_out = None
         f_out = None
+    else:
+        redir_stdo = True  # optional redirection of stdout to the stdOut file
+        fn_out = f'{cfg.get("resDir")}{fn_name}'  # path to the file for redirected stdout
+        # assert not os.path.exists(fn_out), f'Rename/remove the already used file: {fn_out}'
+        print(f'Stdout redirected to: "{fn_out}".')
+        f_out = open(fn_out, 'w')
+        sys.stdout = f_out
 
-    driver(cfg)  # get all needed info from the cfg dict
+    driver(cfg)  # driver and all classes get all needed info from the cfg dict
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))

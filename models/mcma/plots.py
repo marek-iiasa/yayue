@@ -17,6 +17,7 @@ class Plots:
         self.df = df
         self.cr_defs = cr_defs
         self.dir_name = cfg.get('resDir')
+        self.show_plot = cfg.get('showPlot')
         self.n_crit = len(cr_defs)
         self.cols = df.columns  # columns of the df defined in the report() using the criteria names
         self.cr_name = []   # criteria names
@@ -25,6 +26,9 @@ class Plots:
         self.seq = df[self.cols[0]]
         self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
+
+        if self.show_plot is None:  # just in case the option is missed in cfg
+            self.show_plot = False
 
         for cr in cr_defs:
             self.cr_name.append(cr.name)
@@ -91,7 +95,7 @@ class Plots:
                 '''
                 i_plot += 1
 
-        f_name = self.dir_name + f'/p2D.png'
+        f_name = f'{self.dir_name}p2D.png'
         fig1.savefig(f_name)
         # plt.show()
         print(f'2D plot of Pareto solutions stored in file: {f_name}')
@@ -126,8 +130,9 @@ class Plots:
                 break
         # Show the plot
         f_name = f'{self.dir_name}p3D.png'
+        # f_name = f'{self.cfg.get("resDir")}p3D.png'
         fig2.savefig(f_name)
-        if self.cfg.get('showPlot'):
+        if self.show_plot:
             plt.show()
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
         # print('L2-norm used for the cube-size.')

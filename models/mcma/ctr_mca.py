@@ -14,7 +14,7 @@ from par_repr import ParRep
 class CtrMca:
     def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto-repres. mode
         self.cfg = cfg
-        self.ana_dir = cfg.get('home')  # wrk dir for the current analysis
+        self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis
         self.f_crit = self.ana_dir + 'config.txt'   # file with criteria specification
         self.f_payoff = self.ana_dir + 'payoff.txt'     # file with payoff values
         self.f_pref = self.ana_dir + 'pref.txt'     # file with defined preferences' set
@@ -35,7 +35,7 @@ class CtrMca:
         self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse
-        self.verb = 2   # printout verbosity: 0 - only basic flow, 1 - key infos, 2 - intermediate, 3 - detailed
+        self.verb = self.opt('verb', 1)   # print verbosity: 0 - min., 1 - key, 2 - debug, 3 - detailed
         self.pref = []    # list of preferences defined for each blocks
         self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
@@ -44,6 +44,13 @@ class CtrMca:
 
         self.rdCritSpc()    # read criteria specs from the config file
         self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
+
+    def opt(self, key_id, def_val):
+        val = self.cfg.get(key_id)
+        if val is None:
+            return def_val
+        else:
+            return val
 
     def addCrit(self, cr_name, typ, var_name):
         """
@@ -398,17 +405,21 @@ class CtrMca:
                     crit.setUtopia(val)  # utopia computed
                 crit.updNadir(self.cur_stage, val, self.minDiff)
         elif 1 < self.cur_stage < 6:  # update nadir values
-            print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
+            if self.verb > 2:
+                print(f'---\nMcma::store_sol(): stage {self.cur_stage}.')
             for crit in self.cr:
                 val = crit_val.get(crit.name)
                 crit.val = val
                 crit.a_val = crit.val2ach(crit.val)
-                print(f'\tCrit {crit.name}: val {crit.val:.2f}, a_val {crit.a_val:.2f}')
+                if self.verb > 2:
+                    print(f'\tCrit {crit.name}: val {crit.val:.2f}, a_val {crit.a_val:.2f}')
                 if crit.is_active and self.cur_stage < 4:  # don't update nadir
-                    print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
+                    if self.verb > 2:
+                        print(f'NOT updating nadir for active crit "{crit.name}" = {val} at stage {self.cur_stage}.')
                 else:   # after payOff definition update nadir for all criteria
                     change = crit.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
-                    self.payOffChange = change
+                    if change:
+                        self.payOffChange = True
             if self.par_rep:
                 self.par_rep.addSol(self.cur_itr_id)   # add solution to ParRep solutions
         else:

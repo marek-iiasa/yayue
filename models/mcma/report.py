@@ -28,11 +28,9 @@ class Report:
     # cf regret::report() for extensive processing
     def __init__(self, cfg, mc, m1):
         self.mc = mc    # CtrMca
+        self.cfg = mc.cfg
         self.m1 = m1    # core-model (used only for extracting solutions in stage one
         self.rep_dir = cfg.get('resDir')  # repository of MCMA analysis instance configuration and results
-        sub_dir = cfg.get('run_id')
-        if sub_dir is not None:
-            self.rep_dir = f'{self.rep_dir}{sub_dir}/'
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of mc_block variables defining criteria
         # crit-attributes: v: value, Y: y/n is_active marker, M: 1/-1 (max/min mult.)
@@ -44,10 +42,10 @@ class Report:
             for idx in self.id_attr:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
-        self.f_itr_df = mc.ana_dir + '/df_itr.csv'  # file name of the stored df
         self.rep_vars = []    # names of the core-model variables to be included in the report
         self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
+        self.f_itr_df = f'{self.rep_dir}df_itr.csv'  # file name of the stored df
         self.f_df_vars = f'{self.rep_dir}df_vars.csv'  # file name of the stored df
 
         #
@@ -61,7 +59,7 @@ class Report:
         # todo: initialize self.itr_df with previously stored df, if exists
         #   modify self.itr_id to a subsequent number
 
-        print(f'\nReport ctor: handling results MCMA iters.     -------------')
+        print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
 
         '''
         # data space for the summary df with values of each iteration (to be used in the summary report)
@@ -116,7 +114,7 @@ class Report:
             cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
             if self.mc.verb > 2:
                 print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val:.2e}')
-        if self.mc.verb > 1:
+        if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
 
         self.mc.updCrit(cri_val)    # update crit attributes (value, optionally: nadir, utopia)
