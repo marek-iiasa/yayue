@@ -10,6 +10,7 @@ from plots import *
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):         # initialize corners by regularized selfish solutions
         self.mc = mc        # CtrMca object
+        self.cfg = mc.cfg        # CtrMca object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.cubes = Cubes(self)  # the object handling all cubes
@@ -188,7 +189,7 @@ class ParRep:     # representation of Pareto set
               f'{len(self.clSols)} duplicated solutions not stored.')
 
         # plot solutions
-        plots = Plots(self.df_sol, self.mc.cr, self.mc.ana_dir)    # 3D plot
+        plots = Plots(self.cfg, self.df_sol, self.mc.cr)    # 3D plot
         plots.plot2D()    # 2D plot
         plots.plot3D()    # 3D plot
 

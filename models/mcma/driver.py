@@ -10,6 +10,7 @@ import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
+from mk_inst import mk_inst  # model instance provider
 from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
 from report import Report  # handles submodel/block of AF and links to the core/substantive model
 
@@ -28,12 +29,13 @@ def chk_sol(res):  # check status of the solution
             raise Exception('Optimization failed.')
 
 
-def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
+def driver(cfg):
+    m1 = mk_inst(cfg)    # upload or generate m1 (core model)
     print(f'\nMCMA of the core-model instance: {m1.name}.')
 
-    is_par_rep = True   # switch to Pareto-representation mode (set to False for providing preferences in a file)
+    # is_par_rep = True   # switch to Pareto-representation mode (set to False for providing preferences in a file)
     # is_par_rep = False   # uncomment for providing user-preferences in a file
-    mc = CtrMca(ana_dir, is_par_rep)    # CtrMca ctor
+    mc = CtrMca(cfg)    # CtrMca ctor
     # todo: improve handling og verbosity levels
     mc.verb = 1    # verbosity (affecting mainly message-printouts) level
 
@@ -44,7 +46,7 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # rep_vars = ['act']
     # rep_vars = ['x']
     # rep_vars = []
-    rep = Report(mc, m1, rep_vars)    # Report ctor
+    rep = Report(cfg, mc, m1)    # Report ctor
 
     # select solver
     opt = pe.SolverFactory('glpk')
@@ -54,10 +56,13 @@ def driver(m1, ana_dir):    # m1 (core model) uploaded in main() (mcma.py)
     # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 0
+    max_itr = cfg.get('mxIter')
     # max_itr = 4
     # max_itr = 9
-    max_itr = 16
+    # max_itr = 16
+    # max_itr = 100
     # max_itr = 35020
+    # todo: payoff table not stored!
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
