@@ -132,7 +132,8 @@ class Plots:
         f_name = f'{self.dir_name}p3D.png'
         # f_name = f'{self.cfg.get("resDir")}p3D.png'
         fig2.savefig(f_name)
+        print(f'3D plot of Pareto solutions stored in file: {f_name}')
         if self.show_plot:
             plt.show()
-        print(f'3D plot of Pareto solutions stored in file: {f_name}')
-        # print('L2-norm used for the cube-size.')
+        else:
+            print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')

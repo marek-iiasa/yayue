@@ -45,17 +45,17 @@ if __name__ == '__main__':
     # wrk_dir = '/Users/marek/Documents/GitHub/yayue/models/mcma'
 
     # configure the working space
-    # todo: enable the cli option for the f_cfg specs
-    f_cfg = './Data/cfg_home.yml'    # yaml file defining location of mcma conf file
-    print(f'\nConfiguration file location is defined in file "{f_cfg}".')
-    assert os.path.exists(f_cfg), f'the home YAML configuration file "{f_cfg}" is not readable.'
-    with open(f_cfg) as f:
-        cfg_dict = yaml.load(f, Loader=SafeLoader)
-    f_name = cfg_dict.get('f_cfg')
-    assert f_name is not None, f'location of MCMA config. is undefined in home YAML config. file "{f_cfg}".'
+    # todo: enable the cli option for _usr specs
+    ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
+    print(f'\nAnalysis directory is defined in file "{ana_def}".')
+    assert os.path.exists(ana_def), f'the home YAML configuration file "{ana_def}" is not readable.'
+    with open(ana_def) as f:
+        dir_def = yaml.load(f, Loader=SafeLoader)
+    d_name = dir_def.get('ana_dir')
+    assert d_name is not None, f'Undefined key "ana_dir" defining analysis config. in user config. file "{ana_def}".'
 
     # process the run configuration options
-    config = Config(f_name)    # process yaml config. file
+    config = Config(f'{d_name}cfg_usr.yml')    # process yaml config. file
     cfg = config.data   # dict with config. options
     # working dir
 

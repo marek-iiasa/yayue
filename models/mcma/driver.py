@@ -31,17 +31,16 @@ def chk_sol(res):  # check status of the solution
 
 def driver(cfg):
     m1 = mk_inst(cfg)    # upload or generate m1 (core model)
-    print(f'\nMCMA of the core-model instance: {m1.name}.')
+    print(f'MCMA of the core-model instance: {m1.name}.')
 
     # is_par_rep = True   # switch to Pareto-representation mode (set to False for providing preferences in a file)
     # is_par_rep = False   # uncomment for providing user-preferences in a file
     mc = CtrMca(cfg)    # CtrMca ctor
     # todo: improve handling og verbosity levels
-    mc.verb = 1    # verbosity (affecting mainly message-printouts) level
 
     # list of variables, values of which shall be included in the report
     # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
-    rep_vars = ['x1', 'x2', 'x3']
+    # rep_vars = ['x1', 'x2', 'x3']
     # rep_vars = ['prod', 'emi', 'exp', 'act']
     # rep_vars = ['act']
     # rep_vars = ['x']
