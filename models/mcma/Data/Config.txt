@@ -1,0 +1,21 @@
+The configuration of MCMA is now done through YAML file (instead of the
+previously specs embedded into the code).
+Here is the summary of the step-by-step preparation of the MCMA analysis
+
+1. Prepare the core model in the dill format and store it in the Models dir.
+   This dir contains several already prepared models. New models should have
+	names composed of unique (within the Models dir) root-name and dll extension,
+	e.g., jg2.dll
+2. For each MCMA analysis create a subdirectory of the Data dir. This sub-dir
+   is referred to as ana_dir
+3. Copy the config template file Data/Sample/cfg_templa.yml to ana_dir/cfg_usr.yml
+4. Modify the ana_dir/cfg_usr.yml file to specify your analysis. In the template
+   all entries are commented. One needs to uncomment and properly define three
+	items of the specs:
+	- model_id; replace the jg1 by the root name of your core model, e.g., jg2
+	- ana_dir;  replace simple0 by the name of your analysis sub-directory
+	- crit_def; define the criteria
+5. Modify the Data/ana_def.yml file by replacing in
+   cfg_usr: ./Data/simple0/
+   the word simple0 by the name of your analysis sub-dir
+
