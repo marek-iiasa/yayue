@@ -1,6 +1,0 @@
-# Define dir containing location of the user configuration of the MCMA analysis
-# Read the Config.txt for more info
----
-# modify the line below to define the actual name of the current analysis dir
-ana_dir: ./Data/simple0/
-
