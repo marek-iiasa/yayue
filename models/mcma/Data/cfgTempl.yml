@@ -1,0 +1,53 @@
+# Template of the MCMA analysis configuration.
+# Please don't modify this file; copy it to your analysis dir and modify the copy
+# Configuration info is available in the Data/Readme.txt file
+---
+
+# The following two specs are necessary.   ------------------------------------------
+# Therefore, the below (goven as example) value of each yaml/dict key should be
+# replaced by a proper value.
+
+# root-name of the core/substantive model instance; the corresponding *dll file has to
+# be provided in the Models dir
+model_id: jg1
+
+# criteria definition
+# each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
+crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
+
+
+# The following specs are optional.  --------------------------------------------
+# If the option is desired, then uncomment the line with {key: value} pair and
+# modify the value
+
+# Directories. Each dir-name needs for finish with the / char          -----------
+# Dir with models; each model prepared by dill, using extension dll (eg., jg1.dll)
+# modDir: Models/
+
+# Sub-directory of the corresponding ana_dir containing results (df's and plots)
+# resDir: Results/
+
+# A sub-directory of the resDir for results of the corresponding execution run.
+# Note: many subdirectories can be defined to organize outcomes of diverse runs.
+# run_id: large0/
+
+# file-names          -----------
+# To redirect the stdout (e.g., of a long run) define the corresponding file name
+# (the option identified by the key: fn_out) 
+# fn_out: stdOut.txt
+
+# Control options     -----------
+
+# max number of iterations
+# mxIter: 16
+
+# parRep: True for generating Pareto representation, False for predefined preferences
+# parRep: True
+
+# verbosity level (controls print detail-level) [0, 3]
+# verb: 0
+
+# set to either True or False to show/no-show plots
+# showPlot: True
+
+---

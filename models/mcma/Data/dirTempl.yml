@@ -1,0 +1,9 @@
+# Define the dir containing the current MCMA analysis
+# Read the Data/Readme.txt for more info
+---
+# uncomment the line with the ana_dir key, and replace "xxx" by your name used for
+# all analysis and "yyy" by the directory name of your current analysis.
+# Make sure that the trailing / char is not removed.
+# ana_dir: ./Data/xxx/yyy/
+---
+
