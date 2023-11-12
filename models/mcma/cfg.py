@@ -9,19 +9,32 @@ import os
 
 class Config:
     def __init__(self, f_cfg):
-        self.f_cfg = f_cfg    # full path to the yaml config file
+        self.f_sys = './Sys/cfg_sys.yml'    # full path to the system config file
+        self.f_usr = f_cfg    # full path to the user yaml config file
         self.data = None      # config data read from the config file
-        self.rd_cfg()
-        print(f'Configuration options read:\n\t{self.data}')
+        self.rd_cfg(self.f_sys)
+        self.rd_cfg(self.f_usr)
+        # print(f'Configuration options read:\n\t{self.data}')
         self.chk_dirs()       # check the needed dirs
         print(f'Configuration options after processing:\n\t{self.data}')
         # raise Exception('test stop')
 
-    def rd_cfg(self):       # upload yaml config file
-        assert os.path.exists(self.f_cfg), f'YAML configuration file "{self.f_cfg}" is not readable.'
-        print(f'Processing yaml configuration file "{self.f_cfg}".')
-        with open(self.f_cfg) as f:
-            self.data = yaml.load(f, Loader=SafeLoader)
+    def rd_cfg(self, f_name):       # upload yaml config file
+        if f_name == self.f_sys:
+            cfg_id = 'sys_config'
+            sys_data = True
+        else:
+            cfg_id = 'usr_config'
+            sys_data = False
+        assert os.path.exists(f_name), f'YAML configuration file "{f_name}" is not readable.'
+        print(f'Processing yaml "{cfg_id}" file "{f_name}".')
+        with open(f_name) as f:
+            if sys_data:
+                self.data = yaml.load(f, Loader=SafeLoader)
+            else:
+                usr_data = yaml.load(f, Loader=SafeLoader)
+                for k, v in usr_data.items():   # add or over-write options by options defined in cfg_usr
+                    self.data.update({k: v})
 
     def chk_dirs(self):       # check, if the needed dirs are writeable
         home_root = self.data.get('wrkDir')

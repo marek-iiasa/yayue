@@ -293,6 +293,16 @@ class CtrMca:
         return
 
     def rdCritSpc(self):    # read specification of criteria
+        print(f'\nCreating criteria defined in cfg_usr.yml file.')
+        cr_def = self.cfg.get('crit_def')
+        assert cr_def is not None, f'Criteria not defined in the cfg_usr.yml file.'
+        self.n_crit = len(cr_def)
+        for i, cr in enumerate(cr_def):
+            n_words = len(cr)  # crit-name, type (min or max), name of core-model var defining the crit.
+            assert n_words == 3, f'definition of {i}-th criterion has {n_words} elements instead of the required three.'
+            self.addCrit(cr[0], cr[1], cr[2])  # store the criterion specs
+        assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
+        '''
         print(f"\nCreating criteria defined in file '{self.f_crit}':")
         self.n_crit = 0
         with open(self.f_crit) as reader:  # read and store specs of criteria
@@ -305,7 +315,7 @@ class CtrMca:
                 n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
                 assert n_words == 3, f'line {line} has {n_words} instead of the required three.'
                 self.addCrit(words[0], words[1], words[2])    # store the criterion specs
-        assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
+        '''
 
     def readPref(self):  # read preferences provided in file self.f_pref
         # each line defines: cr_name, A, R, optionally activity for a criterion

@@ -16,6 +16,7 @@ class ParRep:     # representation of Pareto set
         self.cubes = Cubes(self)  # the object handling all cubes
         self.cur_cube = None  # cube_id of the last used cube
         self.df_sol = None  # df with solutions prepared for plots; defined in the self.summary()
+        self.dir_name = self.cfg.get('resDir')
 
         print('Initializing Pareto-set exploration. --------------------')
         mc.scale()          # (re)define scales for criteria values
@@ -183,7 +184,8 @@ class ParRep:     # representation of Pareto set
         self.df_sol = pd.DataFrame(rows)
         # self.df_sol = pd.DataFrame.from_dict(rows)
         # f_name = self.mc.ana_dir + '/df_sol.csv'
-        f_name = self.mc.ana_dir + '/df_sol1M.csv'
+        # f_name = self.mc.ana_dir + '/df_sol1M.csv'
+        f_name = f'{self.dir_name}df_sol.csv'
         self.df_sol.to_csv(f_name, index=True)
         print(f'{len(self.sols)} unique solutions stored in {f_name}. '
               f'{len(self.clSols)} duplicated solutions not stored.')

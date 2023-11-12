@@ -1,0 +1,91 @@
+# Template of the MCMA analysis configuration.
+# Please don't modify this file; copy it to your analysis dir and modify the copy
+# Configuration info is available in the ../Config.txt
+---
+
+# the following specs are necessary   ------------------------------------------
+# therefore, the entries have to be properly filled
+
+# root-name of the core/substantive model
+# model_id: jg1
+
+# dir containing the analysis data and results (config, preferences, payoff table)
+# the dir must exist because the cfg_usr.yml should be located here
+# ana_dir: Data/simple0/
+
+# criteria definition
+# each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
+# crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
+
+
+# the following specs are optional  --------------------------------------------
+# uncomment and modify the value, if desired
+
+# directories         -----------
+# dir with models; each model prepared by dill, using extension dll (eg., jg1.dll)
+# modDir: Models/
+
+# sub-directory of ana_dir for results (df's and plots)
+# resDir: Results/
+
+# uncomment run_id to define a sub-dir of the resDir for results
+# run_id: tst0/
+
+# file-names          -----------
+# if the stdout should be redirected, then uncomment next line
+# fn_out: stdOut.txt
+
+# Control options     -----------
+
+# max number of iterations
+# mxIter: 16
+
+# parRep: True for generating Pareto representation, False for predefined preferences
+# parRep: True
+
+# set to either True or False to show/no-show plots
+# showPlot: True
+
+# verbosity level (controls print detail-level) [0, 3]
+# verb: 2
+
+
+
+
+
+
+# the following specs are necessary   ------------------------------------------
+# therefore, the entries have to be properly filled
+
+# root-name of the core/substantive model
+model_id: jg1
+
+# dir containing the analysis data and results (config, preferences, payoff table)
+# the dir must exist because the cfg_usr.yml should be located here
+ana_dir: Data/simple0/
+
+
+# the following specs are optional  --------------------------------------------
+# uncomment and modify the value, if desired
+
+# directories
+# dir with models
+# modDir: Models/
+# directory for results (df's and plots)
+# resDir: Results/
+# uncomment run_id to define a sub-dir of the resDir for results
+# run_id: tst0/
+
+# file-names
+# if the stdout should be redirected, then uncomment next line
+# fn_out: stdOut.txt
+
+# Control options
+# max number of iterations
+mxIter: 16
+# parRep: True for generating Pareto representation, False for predefined preferences
+parRep: True
+# set to either True or False to show/no-show plots
+showPlot: True
+# verbosity level (controls print detail-level) [0, 3]
+verb: 2
