@@ -42,26 +42,15 @@ from cfg import *  # configuration (dir/file location, parameter values, etc
 if __name__ == '__main__':
     tstart = dt.now()
     # print('Started at:', str(tstart))
-    # wrk_dir = '/Users/marek/Documents/GitHub/yayue/models/mcma'
 
-    # configure the working space
     # todo: enable the cli option for _usr specs
+    # process the run configuration options and configure the working space
     ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
-    print(f'\nAnalysis directory is defined in file "{ana_def}".')
-    assert os.path.exists(ana_def), f'the home YAML configuration file "{ana_def}" is not readable.'
-    with open(ana_def) as f:
-        dir_def = yaml.load(f, Loader=SafeLoader)
-    d_name = dir_def.get('ana_dir')
-    assert d_name is not None, f'Undefined key "ana_dir" defining analysis config. in user config. file "{ana_def}".'
-
-    # process the run configuration options
-    config = Config(f'{d_name}cfg_usr.yml')    # process yaml config. file
+    config = Config(ana_def)    # process yaml config. file
     cfg = config.data   # dict with config. options
-    # working dir
 
     # optional standard output redirection
     default_stdout = sys.stdout
-    # stdOut = cfg.get('outRedir')
     fn_name = cfg.get('fn_out')  # file-name for redirected stdout
     if fn_name is None:
         redir_stdo = False  # no redirection of stdout to a file
