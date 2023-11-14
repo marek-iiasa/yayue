@@ -1,14 +1,14 @@
 # Template of the MCMA analysis configuration.
 # Please don't modify this file; copy it to your analysis dir and modify the copy
-# Configuration info is available in the Data/Readme.txt file
+# Please consult the configuration info summarized in ./Data/Readme.txt file.
 ---
 
 # The following two specs are necessary.   ------------------------------------------
-# Therefore, the below (goven as example) value of each yaml/dict key should be
-# replaced by a proper value.
+# Therefore, the (given as example) values of each of the two below specified
+# yaml/dict key should be replaced by values correct for each analysis.
 
-# root-name of the core/substantive model instance; the corresponding *dll file has to
-# be provided in the Models dir
+# root-name of the core/substantive model instance; the corresponding *dll file
+# has to be provided in the Models dir
 model_id: jg1
 
 # criteria definition
@@ -50,4 +50,3 @@ crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
 # set to either True or False to show/no-show plots
 # showPlot: True
 
----

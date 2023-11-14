@@ -1,9 +1,10 @@
-# Define the dir containing the current MCMA analysis
-# Read the Data/Readme.txt for more info
----
-# uncomment the line with the ana_dir key, and replace "xxx" by your name used for
-# all analysis and "yyy" by the directory name of your current analysis.
-# Make sure that the trailing / char is not removed.
-# ana_dir: ./Data/xxx/yyy/
----
+# Template of the definition specs of the dir containing a specific analysis.
+# Please don't modify this file; copy it to ./Data/ana_dir.yml and modify as follows.
+# Info on the analysis configuration is summarized in the ./Data/Readme.txt file
 
+# Replace in the last line:
+# - "xxx" by your usr_name to be used for your all analyses, and
+# - "yyy" by the dir-name created for your new analysis.
+# Make sure that the trailing / char is not removed.
+---
+ana_dir: xxx/yyy/
