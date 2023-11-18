@@ -1,2 +1,0 @@
-income max inc
-emission min emi

@@ -1,0 +1,99 @@
+# place holder for the test data to be prepared by Bingqing and Jinyang
+
+# the default values (set in SMS) are: periods=6, life=0, discr=0.05
+param periods := 5 ;
+param life := 
+BTL 2
+CTL 2
+OTL 2
+PTL 2
+;
+# the default (set in SMS) discr=0.04
+param discr := 0.05 ;
+
+# technologies
+set T := BTL CTL OTL PTL;
+
+# inputs and outputs
+set J := co2 h2 biom coal crude;
+set K := fuel;
+#
+
+# demand: from Fig. 2, p. 12
+param dem :=
+0 fuel 399
+1 fuel 497
+2 fuel 562
+3 fuel 603
+4 fuel 622
+;
+
+# from assumption that act are in the same energy-units as output
+param inpU :=
+BTL biom 12
+CTL coal 4.1
+OTL crude 1.1
+PTL h2 5340
+PTL co2 1400
+;
+
+# emission factor, Tab. 3, p. 14
+param ef :=
+BTL 0.18
+CTL 4.75
+OTL 0.33
+PTL 0.05
+;
+
+# historical capacities, default 0.
+param hcap :=
+BTL -1 1.4
+CTL -1 12.5
+OTL -1 748
+;
+
+# capacity utilization factor: Tab 3, p. 14
+param cuf :=
+BTL 0.9
+CTL 0.9
+OTL 0.85
+PTL 0.9
+;
+
+# outputs
+param outU :=
+BTL fuel 0.7
+CTL fuel 0.8
+OTL fuel 0.9
+PTL fuel 0.9
+;
+
+
+# inv cost, Tab. 3, p. 13
+param invP :=
+BTL 2770
+CTL 15495
+OTL 2579
+PTL 16000
+;
+
+# feedstock prices
+param inpP :=
+h2 0.45
+co2 132
+biom 300
+coal 500 
+crude 6000
+;
+
+param omcP :=
+BTL 3595
+CTL 4775
+OTL 2830
+PTL 3711
+;
+
+# carbon price
+param carbP := 50 ;
+
+

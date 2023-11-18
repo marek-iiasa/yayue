@@ -8,6 +8,8 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.mc = mc    # CtrMca object
         self.cr = mc.cr[i]
         self.cr_name = self.cr.name
+        self.is_act = self.cr.is_active
+        self.is_fx = self.cr.is_fixed
         self.is_max = self.cr.mult == 1  # 1 for max-crit, -1 for min.
         self.is_asp = self.cr.asp is not None   # Asp. defined?
         self.is_res = self.cr.res is not None   # Res. defined?
@@ -15,10 +17,11 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
         if 0 < self.mc.verb <= 2:
-            print(f"PWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
-                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
+            pass
+            # print(f"PWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
+            #       f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         elif self.mc.verb > 2:
-            print(f"\n----\nPWL ctor for crit '{self.cr_name}': is_max = {self.is_max}, "
+            print(f"\n----\nPWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
         #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
@@ -38,14 +41,16 @@ class PWL:  # representation of caf(x) for i-th criterion
         # the below relations introduced due to both numerical and methodological reasons
         maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
         minDiff = mc.minDiff * maxVal
-        assert self.mc.diffOK(i, self.cr.utopia, self.cr.nadir), f'utopia and nadir closer then ' \
-            f'{minDiff:.2e}. Criterion unsuitable for MCA.'
+        assert self.mc.diffOK(i, self.cr.utopia, self.cr.nadir), f'utopia {self.cr.utopia:.2e} and nadir ' \
+            f'{self.cr.nadir:.2e} closer than {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
         if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
             self.is_asp = False
-            print(f'A {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
+            if self.mc.verb > 2:
+                print(f'\tA {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
         if self.is_res and self.is_nadir and not self.mc.diffOK(i, self.cr.nadir, self.cr.res):
             self.is_res = False
-            print(f'R {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
+            if self.mc.verb > 2:
+                print(f'\tR {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
 
         self.set_vert()  # define coordinates of the vertices
 
@@ -84,7 +89,19 @@ class PWL:  # representation of caf(x) for i-th criterion
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
         # see: Bronsztejn p. 245
-        mid_slope = (y1 - y2) / (x1 - x2)
+        # if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
+        #     print(f'Numerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
+        #           f'is_res {self.is_res}, x1 = {x1:.2e}, x2 = {x2:.2e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+        #     raise Exception(f'Numerical problem.')
+        # print(f'mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, x1 = {x1:.2e}, x2 = {x2:.2e}')
+        if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
+            print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
+                  f'is_res {self.is_res},\n\tx1 = {x1:.3e}, x2 = {x2:.3e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+            print('The problem might be caused by degenerated cuboid.')
+            mid_slope = 100.    # was 1.
+            print(f'----- midslope set to: {mid_slope}')
+        else:
+            mid_slope = (y1 - y2) / (x1 - x2)
         b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         if self.mc.verb > 2:

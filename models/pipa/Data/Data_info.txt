@@ -2,3 +2,10 @@ The content of each data-file should be briefly described here.
 
 dat1.dat, by Marek, Feb 4, 2023
 Initial data set, derived from Bingqing paper, 4 technologies, 12 periods
+
+dat2.dat, by Marek, Jul 30, 2023
+Data set for testing on a small example SMS (1) refactorized (for applying decorators),
+and (2) modified to harmonize it with the modified documentation developed in Overleaf.
+
+dat3.dat, by Jinyang, posted on Oct 21, 2023
+Data set for the pipa 1.2.x (handling multiple inputs/outputs to/from technologies)
