@@ -6,12 +6,16 @@ Manage parameters of the model defined in model.py
 class Params:
     def __init__(self):
         # todo: define the needed data structures, e.g., dict, lists, df (DataFrames)
-        self.ver = '0.1'  # version of data
-        self.cat = {}     # catalog of data items (might be useful, but you may prefer other solutions)
-        self.price = {'ePrice': self.ePrice, 'eBprice': self.eBprice}  # price of something
-        self.inDf = None    # DataFrame with data from excel file
-        self.eff = {}    # efficiences of several processes, the dict-key would help to used them
+        self.ver = '0.1'    # version of data
+        self.cat = {}   # catalog of data items (might be useful, but you may prefer other solutions)
 
+        self.price = {'ePrice': self.ePrice, 'eBprice': self.eBprice}   # price of something
+        self.inDf = None    # DataFrame with data from excel file
+        self.eff = {'h2Res': self.h2Res}    # coefficients of several processes, the dict-key would help to used them
+        self.cvf = {'eh2': self.eh2, 'eph2': self.eph2, 'h2e': self.h2e}    # conversion factors of several processes.
+        self.eltro = {'sCap': self.sCap} # parameters of electrolyzers.
+        self.htank ={'sCap': self.sCap, 'hMin': self.hMin, 'mxIn': self.mxIn, 'mxOut': self.mxOut} # parameters of hydrogen tanks.
+        self.fuelcell = {}  # parameters of fuel cells.
         # self.df_inp()   # read excel data into data frame
         self.set_eff()  # define efficiencies
         print(f'el2h efficiency: {self.eff.get("el2h")}')
