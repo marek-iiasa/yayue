@@ -98,6 +98,9 @@ class Report:
         self.mc.cur_itr_id = self.itr_id
         # print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
+        if not self.mc.is_opt:
+            return
+
         cri_val = {}    # all criteria values in current solution
         '''
         if self.mc.cur_stage > 1:
@@ -206,9 +209,9 @@ class Report:
         # todo: correct info on current and previous iterations
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_itr_df, index=True)
-        print(f'\nCriteria attributes at each iteration are stored in the DataFrane "{self.f_itr_df}" file.')
+        print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_itr_df}" file.')
         self.df_vars = pd.DataFrame(self.sol_vars)
         self.df_vars.to_csv(self.f_df_vars, index=True)
-        print(f'Values of core-model variables requested to be reported are stored in the DataFrane '
+        print(f'Values of core-model variables requested to be reported are stored in the DataFrame '
               f'"{self.f_df_vars}" file.')
         # raise Exception(f'Report::summary() not implemented yet.')

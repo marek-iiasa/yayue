@@ -19,14 +19,19 @@ def chk_sol(res):  # check status of the solution
     # print(f'solver status: {res.solver.status}, termination condition: {res.solver.termination_condition}.')
     if ((res.solver.status != SolverStatus.ok) or
             (res.solver.termination_condition != TerminationCondition.optimal)):
-        print(f'{res.solver.termination_condition = }')
+        print(f'optimization failed; termination condition: {res.solver.termination_condition}')
         sys.stdout.flush()  # desired for assuring printing exception at the output end
+        '''
         if res.solver.termination_condition == TerminationCondition.infeasible:
             raise Exception('Optimization problem is infeasible.')
         elif res.solver.termination_condition == TerminationCondition.unbounded:
             raise Exception('Optimization problem is unbounded.')
         else:
             raise Exception('Optimization failed.')
+        '''
+        return False     # optimization failed
+    else:
+        return True     # optimization OK
 
 
 def driver(cfg):
@@ -98,12 +103,16 @@ def driver(cfg):
         # print('\nsolving --------------------------------')
         # results = opt.solve(m, tee=True)
         results = opt.solve(m, tee=False)
-        chk_sol(results)  # check the status of the solution
         # todo: clarify exception (uncomment next line) while loading the results
         # m1.load(results)  # Loading solution into results object
-
+        mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
+        if mc.is_opt:  # optimal solution found
+            print(f'\nOptimimal solution found.')
+        else:   # optimization failed
+            # todo: process correctly iterations with failed optimization
+            print(f'\nOptimization failed, solution disregarded.         --------------------------------------------')
         # print('processing solution ----')
-        rep.itr(mc_part)    # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
+        rep.itr(mc_part)  # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)
         # m.del_component(m.mc_part)   # need not be deleted (a new mc_part needs to be generated for new preferences)
 

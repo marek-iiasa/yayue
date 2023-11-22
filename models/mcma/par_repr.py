@@ -54,7 +54,8 @@ class ParRep:     # representation of Pareto set
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
         # raise Exception(f'ParRep::chk_inside() not implemented yeYt.')
 
-    def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr)
+    def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+        assert self.mc.is_opt, f'addSol called for non-optimal solution'
         vals = []     # crit values
         a_vals = []     # crit values
         # sc_vals = []  # scaled crit values
