@@ -17,9 +17,9 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.vert_x = []    # x-values of vertices
         self.vert_y = []    # y-values of vertices
         if 0 < self.mc.verb <= 2:
-            pass
-            # print(f"PWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
-            #       f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
+            # pass
+            print(f"PWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
+                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
         elif self.mc.verb > 2:
             print(f"\n----\nPWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
@@ -31,7 +31,8 @@ class PWL:  # representation of caf(x) for i-th criterion
         assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
         assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
         # the below relations must hold to conform to the approach assumptions (in particular, concave, increasing CAFs)
-        assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'A {self.cr.asp} must be worse than U {self.cr.utopia}.'
+        # todo: modify the below (A can be (almost) equal to U; also check below)
+        # assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'A {self.cr.asp} must be worse than U {self.cr.utopia}.'
         assert self.cr.isBetter(self.cr.utopia, self.cr.res), f'R {self.cr.res} must be worse than U {self.cr.utopia}.'
         assert self.cr.isBetter(self.cr.utopia, self.cr.nadir), f'N {self.cr.nadir} must be worse than U ' \
             f'{self.cr.utopia}.'

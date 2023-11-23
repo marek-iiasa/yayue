@@ -107,7 +107,8 @@ def driver(cfg):
         # m1.load(results)  # Loading solution into results object
         mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
         if mc.is_opt:  # optimal solution found
-            print(f'\nOptimimal solution found.')
+            # print(f'\nOptimal solution found.')
+            pass
         else:   # optimization failed
             # todo: process correctly iterations with failed optimization
             print(f'\nOptimization failed, solution disregarded.         --------------------------------------------')
