@@ -111,9 +111,10 @@ def driver(cfg):
             pass
         else:   # optimization failed
             # todo: process correctly iterations with failed optimization
+            #   done but check/tests still needed
             print(f'\nOptimization failed, solution disregarded.         --------------------------------------------')
         # print('processing solution ----')
-        rep.itr(mc_part)  # update crit. attr. {nadir, utopia, payOff}, handle storing itr-info
+        rep.itr(mc_part)  # update crit. attr. {N, U, payOff}, reporting; checks domination & close solutions
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)
         # m.del_component(m.mc_part)   # need not be deleted (a new mc_part needs to be generated for new preferences)
 

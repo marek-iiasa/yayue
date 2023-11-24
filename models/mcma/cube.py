@@ -122,23 +122,27 @@ class Cubes:     # collection of aCubes
             return None
         # print(f'cand-list before sorting: {self.cand}')
         self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort the cand. id-list by decreasing cube-size
-        # print(f'after: {self.cand}')
+        # print(f'after sorting {len(self.cand)}: {self.cand}')
 
         # sub-list of candidates of the same size
         lst = []    # list of cubes having the same size
         id2prune = []
-        size = self.cand[0][1]
+        # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
+            '''
             if c_size < size:    # no more candidate of the same size
                 if len(lst) > 0:    # break, if at least one candidate was found
                     break
                 else:   # make list of cubes of a smaller size
                     size = c_size
                     continue
+            '''
             if self.cand_ok(c_id):
                 lst.append(c_id)
+                break   # take the first found empty cube
             else:
                 id2prune.append(c_id)
+                print(f'non-empty cube [{c_id}]')
 
         best = None
         if len(lst) > 0:
