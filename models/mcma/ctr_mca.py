@@ -23,6 +23,7 @@ class CtrMca:
         self.cur_itr_id = None  # id of the current iteration
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
+        self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         self.deg_exp = False    # expansion of degenerated cube dimensions

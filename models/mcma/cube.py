@@ -13,6 +13,7 @@ class ParSol:     # one Pareto solution
         self.vals = vals  # list of (not scaled) criteria values of the itr_id solution
         self.a_vals = a_vals  # list of achievement values
         # self.sc_vals = sc_vals  # list of scaled criteria values
+        self.domin = 0  # >= 0: is Pareto, domin > 0: itr_id of dominated, domin < 0: itr_id of dominating solution
         self.closeTo = None     # None replaced by itr_id of a first solution that is close
         self.distMx = None      # None replaced by L-inf distance for close/duplicated solutions
         # print(f'Solution of itr_id {itr_id}: crit. values: {self.vals}, (achievements: {self.a_vals})')
@@ -32,6 +33,20 @@ class ParSol:     # one Pareto solution
                 print(f'WARNING: Parsol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
             # The below occurs when the corresponding criterion is inactive
             # assert res <= val <= asp, f'Parsol:neigh_inf():: crit {cr.name} {val=} outside [{res=}, {asp=}]'
+
+    def cmp(self, mc, s2):     # compare (for domination) current solution with a previous
+        is_better = None
+        is_worse = None
+        for (cr, a1, a2) in zip(mc.cr, self.a_vals, s2.a_vals):  # loop over criteria achievements
+            if a1 < a2:
+                is_worse = True
+            else:
+                is_better = True    # self.a1 is better (or equal) than s2.a2
+        if is_worse is None:    # self is better than s2 on all criteria
+            return s2.itr_id    # current sol is Pareto but also dominates s2
+        if is_better is None:   # self is worse than s2 on all criteria
+            return -s2.itr_id   # current sol is dominated by s2
+        return 0    # self is Pareto, i.e., neither dominating nor dominated
 
     def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
         self.distMx = 0.
@@ -107,23 +122,27 @@ class Cubes:     # collection of aCubes
             return None
         # print(f'cand-list before sorting: {self.cand}')
         self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort the cand. id-list by decreasing cube-size
-        # print(f'after: {self.cand}')
+        # print(f'after sorting {len(self.cand)}: {self.cand}')
 
         # sub-list of candidates of the same size
         lst = []    # list of cubes having the same size
         id2prune = []
-        size = self.cand[0][1]
+        # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
+            '''
             if c_size < size:    # no more candidate of the same size
                 if len(lst) > 0:    # break, if at least one candidate was found
                     break
                 else:   # make list of cubes of a smaller size
                     size = c_size
                     continue
+            '''
             if self.cand_ok(c_id):
                 lst.append(c_id)
+                break   # take the first found empty cube
             else:
                 id2prune.append(c_id)
+                print(f'non-empty cube [{c_id}]')
 
         best = None
         if len(lst) > 0:

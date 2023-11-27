@@ -106,6 +106,8 @@ class Plots:
 
     def plot3D(self):
         if self.n_crit < 3:
+            if self.show_plot:
+                plt.show()
             return
         assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
         fig2 = plt.figure(figsize=(12, 9))

@@ -15,27 +15,43 @@ class ParRep:     # representation of Pareto set
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.cubes = Cubes(self)  # the object handling all cubes
         self.cur_cube = None  # cube_id of the last used cube
+        self.from_cube = False   # next preferences from a cube
+        self.n_corner = 0       # number of already generated selfish solutions
         self.df_sol = None  # df with solutions prepared for plots; defined in the self.summary()
         self.dir_name = self.cfg.get('resDir')
 
         print('Initializing Pareto-set exploration. --------------------')
         mc.scale()          # (re)define scales for criteria values
-        self.ini_corners()  # initialize corner solutions
-        print('Initialization completed. Start the exploration --------------------\n')
+        # self.ini_corners()  # selfish solutions must be generated and computed one-by-one
+        # print('Initialization completed. Start the exploration --------------------\n')
         # raise Exception(f'ParRep ctor not implemented yet.')
 
     def pref(self):     # entry point for each new iteration
-        cube = self.cubes.select()  # the cube defining A/R for new iteration
-        if cube is None:
-            self.mc.cur_stage = 6  # terminate the analysis
-            return
-            # raise Exception(f'ParRep::pref(): no cube defined.')
-        self.cur_cube = cube.id     # remember cur_cube to attach its id to the solution (after it will be provided)
-        # print(f'\nSetting the criteria activity and the A/R for the selected cube.')
-        cube.setAR()     # set AR values (directly in the Crit objects)
-        cube.lst(self.cur_cube)
-        print(f'Proceed to generation of the optimization problem.')
-        # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
+        if not self.from_cube:  # no cubes yet, generate and compute selfish solution
+            for (i, cr) in enumerate(self.mc.cr):
+                if i == self.n_corner:  # selfish sol. for i-th criterion
+                    print(f'Computing selfish solution for crit: {cr.name}.')
+                    cr.is_active = True
+                    cr.asp = cr.utopia
+                else:
+                    cr.is_active = False
+                    delta = abs(cr.utopia - cr.nadir) / 2.  # take half of the (utopia, nadir) range
+                    cr.asp = cr.utopia - cr.mult * delta
+                cr.is_fixed = False
+                cr.res = cr.nadir
+            self.n_corner += 1
+        else:   # all selfish solutions ready
+            cube = self.cubes.select()  # the cube defining A/R for new iteration
+            if cube is None:
+                self.mc.cur_stage = 6  # terminate the analysis
+                return
+                # raise Exception(f'ParRep::pref(): no cube defined.')
+            self.cur_cube = cube.id     # remember cur_cube to attach its id to the solution (after it will be provided)
+            # print(f'\nSetting the criteria activity and the A/R for the selected cube.')
+            cube.setAR()     # set AR values (directly in the Crit objects)
+            cube.lst(self.cur_cube)
+            print(f'Proceed to generation of the optimization problem.')
+            # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
         # it = s.itr_id
@@ -54,7 +70,8 @@ class ParRep:     # representation of Pareto set
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
         # raise Exception(f'ParRep::chk_inside() not implemented yeYt.')
 
-    def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr)
+    def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+        assert self.mc.is_opt, f'addSol called for non-optimal solution'
         vals = []     # crit values
         a_vals = []     # crit values
         # sc_vals = []  # scaled crit values
@@ -66,7 +83,7 @@ class ParRep:     # representation of Pareto set
             # print(f'crit {cr.name} ({cr.attr}): a_val={cr.a_val:.2f}, val={cr.val:.2e}, '  # a_frac={a_frac:.2e}, '
             #       f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
         new_sol = ParSol(itr_id, self.cur_cube, vals, a_vals)
-        if itr_id >= 0:
+        if self.cur_cube is not None:
             c = self.cubes.get(self.cur_cube)     # parent cube
             new_sol.neigh_inf(c)   # info on location within the solutions of the parent cube
 
@@ -79,10 +96,26 @@ class ParRep:     # representation of Pareto set
             self.clSols.append(new_sol)
             print(f'Solution {itr_id = } duplicates itr_id {new_sol.closeTo} (L-inf = {new_sol.distMx:.1e}). '
                   f'There are {len(self.clSols)} duplicated Pareto solutions.')
-        else:
-            self.sols.append(new_sol)
-            print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
-            self.mk_cubes(new_sol)    # define cubes generated by this solution
+        else:   # check dominance with all sols found so far
+            is_pareto = True
+            for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
+                cmp_ret = new_sol.cmp(self.mc, s2)
+                if cmp_ret == 0:    # is Pareto
+                    continue    # check next solution
+                elif cmp_ret > 0:   # new_sol dominates s2
+                    print(f'\t-------------     current solution[{itr_id}] dominates solution[{s2.itr_id}].')
+                    s2.domin = -itr_id      # mark s2 as dominated by the new solution, and continue checking next sol.
+                else:           # new_sol is dominated by s2
+                    print(f'\t-------------     current solution[{itr_id}] is dominated by solution[{s2.itr_id}].')
+                    is_pareto = False
+                    break
+            if is_pareto:
+                self.sols.append(new_sol)
+                print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
+                self.mk_cubes(new_sol)    # define cubes generated by this solution
+
+        if self.n_corner == len(self.mc.cr):
+            self.from_cube = True   # next preferences to be generated from cubes
 
     def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
         # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
@@ -154,7 +187,7 @@ class ParRep:     # representation of Pareto set
         raise Exception(f'ParRep::sol_seq(): {itr_id} not in the solution set.')
 
     def summary(self):  # summary report
-        self.cubes.lst_cubes()  # list cubes
+        # self.cubes.lst_cubes()  # list cubes
         print('\n')
 
         # prepare df with solutions for plot2D
@@ -174,6 +207,13 @@ class ParRep:     # representation of Pareto set
                 new_row.update({cr.name: s.vals[i]})
             for (i, cr) in enumerate(self.mc.cr):   # cols with crit achievements
                 new_row.update({'a_' + cr.name: s.a_vals[i]})
+            cube_id = s.cube_id
+            if cube_id is None:     # selfish solutions are not generated from a cube
+                new_row.update({'parents': f'[none]'})
+            else:
+                cube = self.cubes.get(cube_id)  # parent cube
+                new_row.update({'parents': f'[{cube.s1.itr_id}, {cube.s2.itr_id}]'})
+            new_row.update({'domin': s.domin})
             rows.append(new_row)
             # df2 = pd.DataFrame(new_row, index=list(range(1)))
             # self.df_sol = pd.concat([self.df_sol, df2], axis=0, ignore_index=True)    # results in compatibility warn.
