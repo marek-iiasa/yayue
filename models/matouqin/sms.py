@@ -16,6 +16,29 @@ class Model:
         # print(f'Dictionary of prepared parameters contains  {len(p.cat)} items.')
 
         # print(f'xx = {p.xx}')
+        '''
+        @m.Constraint(m.C)
+        def xLink(mx, ii):  # link the corresponding m1 and mc_core variables
+            return mx.x[ii] == p.eff.get('el2h') * mx.y[ii]
+        # def link_rule(m, i):  # traditional (without decorations) constraint using a rule, just for illustration
+        #     return m.x[i] == m.m1_cr_vars[i]
+        # m.xLink = pe.Constraint(m.C, rule=link_rule)
+
+        # AF and m1_vars defined above
+        m.caf = pe.Var(m.C)    # CAF value
+        m.cafMin = pe.Var()     # min of CAFs
+
+        @m.Constraint(m.C)
+        def cafMinD(mx, ii):
+            return mx.cafMin <= mx.caf[ii]
+
+        @m.Objective(sense=pe.maximize)
+        def obj(mx):
+            return mx.cafMin
+
+        if self.verb:
+            m.pprint()
+        '''
 
         # sets
         m.Se = pe.Set()     # set of electrolyzers
@@ -165,29 +188,7 @@ class Model:
 
         print('mk_sms(): finished')
 
-        '''
-        @m.Constraint(m.C)
-        def xLink(mx, ii):  # link the corresponding m1 and mc_core variables
-            return mx.x[ii] == p.eff.get('el2h') * mx.y[ii]
-        # def link_rule(m, i):  # traditional (without decorations) constraint using a rule, just for illustration
-        #     return m.x[i] == m.m1_cr_vars[i]
-        # m.xLink = pe.Constraint(m.C, rule=link_rule)
-        
-        # AF and m1_vars defined above
-        m.caf = pe.Var(m.C)    # CAF value
-        m.cafMin = pe.Var()     # min of CAFs
-        
-        @m.Constraint(m.C)
-        def cafMinD(mx, ii):
-            return mx.cafMin <= mx.caf[ii]
 
-        @m.Objective(sense=pe.maximize)
-        def obj(mx):
-            return mx.cafMin
-
-        if self.verb:
-            m.pprint()
-        '''
 
         return m
 
