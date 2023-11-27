@@ -9,7 +9,7 @@ import sys		# needed for sys.exit()
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from model import Model  # handles submodel/block of AF and links to the core/substantive model
+from sms import Model  # handles submodel/block of AF and links to the core/substantive model
 from params import Params
 from report import report
 
