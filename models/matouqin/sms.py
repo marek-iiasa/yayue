@@ -1,6 +1,5 @@
 """Matouqin model generator"""
 import pyomo.environ as pe      # more robust than using import *
-import sys
 
 
 class Model:
@@ -186,9 +185,9 @@ class Model:
         def obj(m):
             return m.revenue == m.income - m.invCost - m.OMC - m.balCost
 
+
         print('mk_sms(): finished')
-
-
+        # m.pprint()
 
         return m
 
