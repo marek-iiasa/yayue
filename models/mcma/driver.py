@@ -82,6 +82,8 @@ def driver(cfg):
             if i_stage < 4:
                 print('Setting preferences for next step in Payoff table computations.')
             elif i_stage == 4:
+                # todo: move/remove solutions (mostly dominated!) from payoff computation.
+                #   currently these solutions are used for generating cubes!
                 print('Setting preferences for computing neutral solution.')
             else:
                 print('Get user preferences provided in a file.')
