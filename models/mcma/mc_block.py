@@ -18,8 +18,8 @@ class McMod:
         """sub-model gnerator, called at each itr having preferences defined through criteria attributes."""
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
-        for (i, crit) in enumerate(self.mc.cr):
-            if crit.is_active:
+        for (i, cr) in enumerate(self.mc.cr):
+            if cr.is_active:
                 act_cr.append(i)
         # print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
 
@@ -69,8 +69,8 @@ class McMod:
                     # raise Exception(f'not implemented yet: var[{i}] should be fixed at {cr.asp:.2e}.')
         # m.P = pe.RangeSet(0, n_pwls - 1)   # seq_index of PWLs & m.caf[]
         m.m1_cr_vars = []    # list of variables (objects) of m1 (core model) defining criteria
-        for crit in self.mc.cr:     # get m1-vars representing criteria
-            var_name = crit.var_name
+        for cr in self.mc.cr:     # get m1-vars representing criteria
+            var_name = cr.var_name
             m1_var = m1_vars[var_name]  # select from all core-model vars the object named var_name
             m.m1_cr_vars.append(m1_var)
 
@@ -116,7 +116,7 @@ class McMod:
         # m.S = pe.Set(initialize=segs)   # NOT suitable: 1-dim set stores only unique numbers of segments of each PWL
         # s_pairs = [(0, 1), (1, 1)]  # works for predefined list of pairs: (i, nseq)
         if self.mc.verb > 2:
-            print(f'\nGenerating pairs defining two-dimensiol set m.S')
+            print(f'\nGenerating pairs defining two-dimensional set m.S')
         s_pairs = []    # list of pairs: (i, ns), i = index of CAF/PWL, ns = number of segments of the PWL
         for (i, pwl) in enumerate(pwls):
             if pwl is None:

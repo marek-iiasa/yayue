@@ -106,7 +106,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         if self.mc.verb > 2:
-            print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2}:.2e).')
+            print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2:.2e}).')
             # print(f'ab: {ab}.')
             print(f'parameters of the mid-segment line y = ax +b: a = {mid_slope:.2e}, b ={b:.2e}.')
 
