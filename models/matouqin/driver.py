@@ -4,13 +4,14 @@ Prototype of the Matouqin driver
 # import os.path
 
 import sys		# needed for sys.exit()
-# import os
+import os
 # import pandas as pd
 import pyomo.environ as pe
+import inst
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from sms import Model  # handles submodel/block of AF and links to the core/substantive model
-from params import Params
+from sms import Model  # handles sub model/block of AF and links to the core/substantive model
+# from params import Params
 from report import report
 
 
@@ -29,9 +30,17 @@ def chk_sol(res):  # check status of the solution
 
 
 def driver():
-    model = Model(False)    # initialize Model class that generates model instance (ConcreteModel)
-    par = Params()  # prepare all model parameters
-    m = model.mk_model(par)
+
+    # path
+    path = '.'
+    os.chdir(path)
+    data_dir = f'{path}/Data/'
+
+    # make model
+    abst = Model(False)    # initialize Model class that generates model instance (ConcreteModel)
+    # par = Params()  # prepare all model parameters
+    data_v1 = f'{data_dir}v1.dat'
+    m = inst.mk_model(abst, data_v1)
     print(f'\nAnalysing instance of model {m.name}.')
 
     m.pprint()
