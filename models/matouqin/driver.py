@@ -39,7 +39,7 @@ def driver():
     # make model
     abst = Model(False)    # initialize Model class that generates model instance (ConcreteModel)
     # par = Params()  # prepare all model parameters
-    data_v1 = f'{data_dir}v1.dat'
+    data_v1 = f'{data_dir}dat1.dat'
     m = inst.mk_model(abst, data_v1)
     print(f'\nAnalysing instance of model {m.name}.')
 
