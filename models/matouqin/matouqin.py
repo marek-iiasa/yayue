@@ -29,7 +29,7 @@ if __name__ == '__main__':
         fn_out = None
         f_out = None
 
-    driver()    # run generatation of parameters and their them for generating pe.ConcreteModel
+    driver()    # run generation of parameters and their them for generating pe.ConcreteModel
 
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
