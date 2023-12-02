@@ -4,14 +4,14 @@ Handling of the CAF-PWL
 
 
 class PWL:  # representation of caf(x) for i-th criterion
-    def __init__(self, mc, i):  # cr: specs of a criterion
+    def __init__(self, mc, i, verb = -1):
         # todo: implement assumptions:
         #   actually we need only A (use U, if not provided) and R (use N, if not provided)
         #   remove/ignore A, if too close to U, ditto for R
         #   handle (report as error?, ignore iter?) close A & R
         #   ditto steep and flat slopes
         self.mc = mc    # CtrMca object
-        self.cr = mc.cr[i]
+        self.cr = mc.cr[i]  # cr: specs of a criterion
         self.cr_name = self.cr.name
         self.is_act = self.cr.is_active
         self.is_fx = self.cr.is_fixed
@@ -19,26 +19,69 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.is_asp = self.cr.asp is not None   # Asp. defined?
         self.is_res = self.cr.res is not None   # Res. defined?
         self.is_nadir = self.cr.nadir is not None   # Nadir defined?
-        self.vert_x = []    # x-values of vertices
-        self.vert_y = []    # y-values of vertices
-        # todo: move asserts to a verify/chk()
-        if 0 < self.mc.verb <= 2:
-            # pass
-            print(f"PWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
-                  f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
-        elif self.mc.verb > 2:
+        self.verb = verb
+        self.asp_val = self.cr.utopia
+        self.res_val = self.cr.nadir
+        self.up_seg = False   # if True, then generate up-PWL segment
+        self.lo_seg = False   # if True, then generate lo-PWL segment
+        # self.vert_x = []    # x-values of vertices
+        # self.vert_y = []    # y-values of vertices
+        self.chk_ok = self.chk_param()
+
+    # noinspection PyUnreachableCode
+    def chk_param(self):
+        if self.verb < 0:
+            self.verb = self.mc.verb
+
+        if 0 < self.verb > 1:
+            # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
+            #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
+            #   f"N = {self.cr.nadir:.2e}.")
             print(f"\n----\nPWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
                   f"U = {self.cr.utopia}, A = {self.cr.asp}, R = {self.cr.res}, N = {self.cr.nadir}.")
-        # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
-        #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
-        #   f"N = {self.cr.nadir:.2e}.")
-        # at least two points are needed
-        # todo: make sure in setting prefence that the below not happen (here any violation causes exception)
+
+        # at least two (out of U, A, R, N) are needed
         assert self.cr.utopia is not None, f'PWL ctor: utopia of criterion "{self.cr_name}" is undefined.'
         assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
-        # the below relations must hold to conform to the approach assumptions (in particular, concave, increasing CAFs)
-        # todo: modify the below (A can be (almost) equal to U; also check below)
-        # assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'A {self.cr.asp} must be worse than U {self.cr.utopia}.'
+
+        if self.is_nadir:
+            maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
+        else:
+            maxVal = max(abs(self.cr.utopia), (abs(self.cr.res)))  # value used as basis for min-differences
+        minDiff = self.mc.minDiff * maxVal
+        # check if U (set in ctor) can be replaced by the provided A
+        if self.is_asp:
+            if abs(self.cr.utopia - self.cr.asp) > minDiff:
+                assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'crit {self.cr_name} (is_max {self.is_max}): '
+                f' A {self.cr.asp:.2e} is worse than U {self.cr.utopia:.2e}.'
+                self.asp_val = self.cr.asp
+                self.up_seg = True
+            else:
+                print(f'crit {self.cr_name}: ignoring A {self.cr.asp:.2e} as too close to U {self.cr.utopia:.2e}. '
+                      f'U used as A.')
+                self.is_asp = False     # ignore A, too close to U
+
+        # check if N (set in ctor) can be replaced by the provided R
+        if self.is_res and self.is_nadir:
+            if abs(self.cr.nadir - self.cr.res) > minDiff:
+                assert self.cr.isBetter(self.cr.res, self.cr.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
+                f' R {self.cr.res:.2e} is worse than N {self.cr.nadir:.2e}.'
+                self.res_val = self.cr.res
+                self.lo_seg = True
+            else:
+                print(f'crit {self.cr_name}: ignoring R {self.cr.res:.2e} as too close to N {self.cr.nadir:.2e}. '
+                      f'N used as R.')
+                self.is_res = False     # ignore R, too close to N
+
+        # check, if the selected A/R (replaced, if required, by U/N) sufficiently differ
+        if abs(self.asp_val - self.res_val) < minDiff:
+            print(f'crit {self.cr_name}: the provided A/R pair ({self.asp_val:.2e}, {self.res_val:.2e}) is too close '
+                  f'to define a PWL.')
+            return False
+
+        return True
+
+        '''
         assert self.cr.isBetter(self.cr.utopia, self.cr.res), f'R {self.cr.res} must be worse than U {self.cr.utopia}.'
         assert self.cr.isBetter(self.cr.utopia, self.cr.nadir), f'N {self.cr.nadir} must be worse than U ' \
             f'{self.cr.utopia}.'
@@ -46,17 +89,15 @@ class PWL:  # representation of caf(x) for i-th criterion
         assert self.cr.isBetter(self.cr.asp, self.cr.nadir), f'N {self.cr.nadir} must be worse than A {self.cr.asp}.'
         assert self.cr.isBetter(self.cr.res, self.cr.nadir), f'N {self.cr.nadir} must be worse than R {self.cr.res}.'
         # the below relations introduced due to both numerical and methodological reasons
-        maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
-        minDiff = mc.minDiff * maxVal
         assert self.mc.diffOK(i, self.cr.utopia, self.cr.nadir), f'utopia {self.cr.utopia:.2e} and nadir ' \
             f'{self.cr.nadir:.2e} closer than {minDiff:.1e}. Criterion "{self.cr.name}" unsuitable for MCA.'
         if self.is_asp and not self.mc.diffOK(i, self.cr.utopia, self.cr.asp):
             self.is_asp = False
-            if self.mc.verb > 2:
+            if self.verb > 2:
                 print(f'\tA {self.cr.asp} ignored: it is too close to U {self.cr.utopia}.')
         if self.is_res and self.is_nadir and not self.mc.diffOK(i, self.cr.nadir, self.cr.res):
             self.is_res = False
-            if self.mc.verb > 2:
+            if self.verb > 2:
                 print(f'\tR {self.cr.res} ignored: it is too close to N {self.cr.nadir}.')
 
         self.set_vert()  # define coordinates of the vertices
@@ -75,16 +116,14 @@ class PWL:  # representation of caf(x) for i-th criterion
         if self.is_nadir:
             self.vert_x.append(self.cr.nadir)
             self.vert_y.append(0)   # the value shall be later replaced or ignored, if is_res == True
-        if self.mc.verb > 2:
+        if self.verb > 2:
             print(f"PWL of crit. '{self.cr.name}' has {len(self.vert_x)} vertices: x = {self.vert_x}, "
                   f"y = {self.vert_y}")
+        '''
 
     def segments(self):
-
-        # start with the middle segment defined by two points: asp or utopia, and res or nadir
-        # Note: vertices stored in the same way (U, A, R, N) for min/max, this works OK for both types of criteria
-        #   because values of both slope and b are invariant in regard of order of points (x1, y1) and (x2, y2)
-        ab = []     # list of (a, b, sc) parameters of segments, each defining line: y = ax + b, and core-var scaling
+        # start with the middle segment defined by the pair (self.asp_val, self.res_val) set in chk_param()
+        '''
         if self.is_asp:
             x1 = self.vert_x[1]     # utopia not defining mid-segm, if A defined
             y1 = self.vert_y[1]
@@ -95,35 +134,40 @@ class PWL:  # representation of caf(x) for i-th criterion
             y1 = self.vert_y[0]
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]
-        # see: Bronsztejn p. 245
-        # if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
-        #     print(f'Numerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
-        #           f'is_res {self.is_res}, x1 = {x1:.2e}, x2 = {x2:.2e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
-        #     raise Exception(f'Numerical problem.')
+        '''
         # print(f'mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, x1 = {x1:.2e}, x2 = {x2:.2e}')
+        ab = []     # list of (a, b, sc) parameters of segments, each defining line: y = ax + b, and core-var scaling
+        x1 = self.asp_val   # serves as A
+        x2 = self.res_val   # serves as R
+        y1 = self.mc.cafAsp  # y(A)
+        y2 = 0.  # y(R) = 0.
+        y_delta = y1 - y2
         if self.mc.scVar:   # PWL based on scaled core-model var defining the criterion
-            # todo: compted slope as ub the non-scaled version
-            mid_slope = 1.
-            x_delta = abs(x1 - x2)
-            y_delta = self.mc.cafAsp    # y(R) = 0.
-            var_sc = y_delta / x_delta
-            slope_chk = y_delta / (var_sc * x_delta)
-            b = 1.
+            var_sc = y_delta / abs(x1 - x2)      # scaling coef. of the core-model var defining the criterion
+            x1 *= var_sc
+            x2 *= var_sc
+            # mid_slope = 1.    # the calculated below should be close to 1,
+            # mid_slope = self.cr.mult * y_delta / (var_sc * x_delta)     # negative for min.-criterion
         else:       # PWL based on NOT scaled core-model var
-            if abs(x1 - x2) < self.mc.minDiff * max(abs(x1), abs(x2), 0.01):    # both x1, x2 can be 0.0
-                print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
-                      f'is_res {self.is_res},\n\tx1 = {x1:.3e}, x2 = {x2:.3e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
-                print('The problem might be caused by degenerated cuboid.')
-                mid_slope = 100.    # was 1.
-                print(f'----- midslope set to: {mid_slope}')
-            else:
-                mid_slope = (y1 - y2) / (x1 - x2)
-            b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
             var_sc = 1.
-        ab.append([mid_slope, b, var_sc])   # mid-segment is first in the list of segment specs.
-        if self.mc.verb > 2:
+
+        x_delta = x1 - x2
+        mid_slope = y_delta / x_delta
+        # todo: define sensible values of mmin/max_slope
+        min_slope = 1.e-5
+        max_slope = 1.e6
+        if abs(mid_slope) < min_slope or abs(mid_slope) > max_slope:
+            print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
+                  f'is_res {self.is_res},\n\tx1 = {x1:.3e}, x2 = {x2:.3e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+            print('PWL not generated.')
+            # mid_slope = 100.    # rather give-up than attempt to redefine the slope
+            return None, None
+
+        # see: Bronsztejn p. 245
+        b = y1 - mid_slope * x1     # alternatively: b = y2 - slope * x2
+        ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
+        if self.verb > 2:
             print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2:.2e}).')
-            # print(f'ab: {ab}.')
             print(f'params of the mid-segment line y = ax +b: a = {mid_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
 
         # assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} vertices not implemented yet.'
@@ -133,21 +177,21 @@ class PWL:  # representation of caf(x) for i-th criterion
 
         if self.is_asp:  # generate segment above Asp
             up_slope = mid_slope / self.mc.slopeR    # flatter than mid_slop
-            up_b = y1 - up_slope * var_sc * x1  # defined as above but by A point
-            ab.append([up_slope, up_b, var_sc])  # up-segment is second in the list of segment specs.
-            if self.mc.verb > 2:
+            up_b = y1 - up_slope * x1  # defined as above but by A point
+            ab.append([up_slope, up_b])  # up-segment is second (if generated) in the list of segment specs.
+            if self.verb > 2:
                 print(f'parameters of the up-segment line y = ax +b: a = {up_slope:.2e}, b ={up_b:.2e}.')
                 print(f'params of the up-segment line y = ax +b: a = {up_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
 
         if self.is_res:  # generate segment below Res
             lo_slope = mid_slope * self.mc.slopeR    # steeper than mid_slop
-            lo_b = y2 - lo_slope * var_sc * x2  # defined as above but by R point
-            ab.append([lo_slope, lo_b, var_sc])  # lo-segment is second in the list of segment specs.
-            if self.mc.verb > 2:
+            lo_b = y2 - lo_slope * x2  # defined as above but by R point
+            ab.append([lo_slope, lo_b])  # lo-segment is next (either third or second) in the list of segment specs.
+            if self.verb > 2:
                 print(f'parameters of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b ={lo_b:.2e}.')
                 print(f'params of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
 
-        return ab
+        return var_sc, ab
 
         # noinspection PyUnreachableCode
         '''

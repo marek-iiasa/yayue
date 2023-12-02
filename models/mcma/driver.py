@@ -94,27 +94,32 @@ def driver(cfg):
         # print(f'\nGenerating instance of the MC-part model (representing the MCMA Achievement Function).')
         mc_gen = McMod(mc, m1)      # McMod ctor (model representing the MC-part, i.e. the Achievement Function of MCMA)
         mc_part = mc_gen.mc_itr()   # concrete model of the MC-part (based on the current preferences)
-        # print('mc-part generated.\n')
-        # mc_part.pprint()
-        m.add_component('mc_part', mc_part)  # add_component() used instead of simple assignment
-        if mc.verb > 2:
-            print('core-model and mc-part blocks added to the model instance; ready for optimization.')
-            m.pprint()
+        if mc_part is None:
+            print(f'\nThe defined preferences cannot be used for defining the mc-block')
+            print('Optimization problem not generated.     ---------------------------------------------------------')
+            mc.is_opt = False
+        else:
+            # print('mc-part generated.\n')
+            # mc_part.pprint()
+            m.add_component('mc_part', mc_part)  # add_component() used instead of simple assignment
+            if mc.verb > 2:
+                print('core-model and mc-part blocks added to the model instance; ready for optimization.')
+                m.pprint()
 
-        # solve the model instance composed of two blocks: (1) core model m1, (2) MC-part (Achievement Function)
-        # print('\nsolving --------------------------------')
-        # results = opt.solve(m, tee=True)
-        results = opt.solve(m, tee=False)
-        # todo: clarify exception (uncomment next line) while loading the results
-        # m1.load(results)  # Loading solution into results object
-        mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
-        if mc.is_opt:  # optimal solution found
-            # print(f'\nOptimal solution found.')
-            pass
-        else:   # optimization failed
-            # todo: process correctly iterations with failed optimization
-            #   done but check/tests still needed
-            print(f'\nOptimization failed, solution disregarded.         --------------------------------------------')
+            # solve the model instance composed of two blocks: (1) core model m1, (2) MC-part (Achievement Function)
+            # print('\nsolving --------------------------------')
+            # results = opt.solve(m, tee=True)
+            results = opt.solve(m, tee=False)
+            # todo: clarify exception (uncomment next line) while loading the results
+            # m1.load(results)  # Loading solution into results object
+            mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
+            if mc.is_opt:  # optimal solution found
+                # print(f'\nOptimal solution found.')
+                pass
+            else:   # optimization failed
+                # todo: process correctly iterations with failed optimization
+                #   done but check/tests still needed
+                print(f'\nOptimization failed, solution disregarded.         ----------------------------------------')
         # print('processing solution ----')
         rep.itr(mc_part)  # update crit. attr. {N, U, payOff}, reporting; checks domination & close solutions
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)

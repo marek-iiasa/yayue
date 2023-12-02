@@ -90,10 +90,16 @@ class McMod:
         pwls = []   # list of PWLs; None is inserted for non-generated PWLs (to provide same indices for CAFs and PWLs)
         segs = []
         var_seq = []    # seq_no of m-var corresponding to the pwl (-1 for undefined PWL)
+        sc_var = []     # scaling coef. for the corresponding var
         for (i, cr) in enumerate(self.mc.cr):
             if not cr.is_fixed:
                 pwl = PWL(self.mc, i)   # PWL of i-th criterion
-                ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
+                if not pwl.chk_ok:  # PWL cannot be generated
+                    return None     # don't generate the mc-part block
+                sc_coef, ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
+                if sc_coef is None:     # the mid-segment cannot be generated
+                    return None     # don't generate the mc-part block
+                sc_var.append(sc_coef)
                 pwls.append(ab)
                 n_seg = len(ab)     # currently: 1 <= n_seg <= 3
                 segs.append(n_seg)  # order of segments: middle (always), optional: above A, below R
@@ -186,7 +192,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb > 2:
+        if self.mc.verb > 0:    # was 2
             print('\nMC_block (returned to driver):')
             m.pprint()
 
