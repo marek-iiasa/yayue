@@ -93,7 +93,7 @@ class McMod:
         sc_var = []     # scaling coef. for the corresponding var
         for (i, cr) in enumerate(self.mc.cr):
             if not cr.is_fixed:
-                pwl = PWL(self.mc, i)   # PWL of i-th criterion
+                pwl = PWL(self.mc, i, 3)   # PWL of i-th criterion
                 if not pwl.chk_ok:  # PWL cannot be generated
                     return None     # don't generate the mc-part block
                 sc_coef, ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
@@ -104,10 +104,11 @@ class McMod:
                 n_seg = len(ab)     # currently: 1 <= n_seg <= 3
                 segs.append(n_seg)  # order of segments: middle (always), optional: above A, below R
                 var_seq.append(i)   # indices of vars are the same as of all crit & PWLs
-                # print(f'PWL of {i}-th crit. {cr.name}: {n_seg} segments, each defined by [a, b] of '
-                #       f'y = ax + b: {ab = }.')
+                print(f'PWL of {i}-th crit. {cr.name}: sc_var {sc_coef:.2e}, {n_seg} segments, each defined '
+                      f'by [a, b] of: y = ax + b: {ab = }.')
             else:
                 pwls.append(None)
+                sc_var.append(None)
                 var_seq.append(-1)
                 print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
         if self.mc.verb > 2:
@@ -117,7 +118,7 @@ class McMod:
                     print(f'No segments for undefined PWL.')
                 else:
                     for (s, ab) in enumerate(pwl):
-                        print(f'({i = }, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
+                        print(f'({i = }, sc_var {sc_var[i]:.2e}, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
 
         # m.S = pe.Set(initialize=segs)   # NOT suitable: 1-dim set stores only unique numbers of segments of each PWL
         # s_pairs = [(0, 1), (1, 1)]  # works for predefined list of pairs: (i, nseq)
@@ -144,11 +145,17 @@ class McMod:
         def cafD(mx, ix, sx):   # is called for each (ix, sx) in m.S; indexes each constraint by (ix, sx)
             if var_seq[ix] >= 0:
                 pwlx = pwls[ix]  # pwlx: ix-item from the pwls list of all PWLs
+                sc_len = len(sc_var)
+                print(f'{ix = }, {sc_len = }')
+                if ix >= sc_len:
+                    print('bug here')
+                    print('bug here')
+                sc_coe = sc_var[ix]
                 abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
                 if self.mc.verb > 2:
                     print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
-                    print(f'({ix = }, {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
-                cons_item = mx.caf[ix] <= abx[0] * mx.x[var_seq[ix]] + abx[1]
+                    print(f'({ix = }, sc_coef {sc_coe:.2e},  {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
+                cons_item = mx.caf[ix] <= abx[0] * sc_coe * mx.x[var_seq[ix]] + abx[1]
                 return cons_item
             else:   # PWL not generated for fixed criteria; the corresponding caf shall be fixed
                 # todo: CAF needs to be defined, but it enters only the reg. term

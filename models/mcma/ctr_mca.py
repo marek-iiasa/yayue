@@ -33,10 +33,11 @@ class CtrMca:
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
         self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
-        self.minDiff = 0.01  # min. relative differences between (U, N), (U, A), (A, R), (R, N)
+        self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse
-        self.scVar = self.opt('scVar', True)   # scale core-model vars defining CAFs
+        # self.scVar = self.opt('scVar', True)   # scale core-model vars defining CAFs
+        self.scVar = self.opt('scVar', False)   # scale core-model vars defining CAFs
         self.verb = self.opt('verb', 1)   # print verbosity: 0 - min., 1 - key, 2 - debug, 3 - detailed
         self.pref = []    # list of preferences defined for each blocks
         self.n_pref = 0     # number of blocks of read-in preferences

@@ -154,11 +154,12 @@ class PWL:  # representation of caf(x) for i-th criterion
         x_delta = x1 - x2
         mid_slope = y_delta / x_delta
         # todo: define sensible values of mmin/max_slope
-        min_slope = 1.e-5
+        min_slope = 1.e-8
         max_slope = 1.e6
         if abs(mid_slope) < min_slope or abs(mid_slope) > max_slope:
             print(f'\nNumerical problem in defining mid_slope for crit. "{self.cr_name}": is_asp {self.is_asp}, '
                   f'is_res {self.is_res},\n\tx1 = {x1:.3e}, x2 = {x2:.3e}, y1 = {y1:.2e}, y2 = {y2:.2e}')
+            print(f'slope {mid_slope:.2e}, min_slope {min_slope:.2e}, max_slope {max_slope:.2e}.')
             print('PWL not generated.')
             # mid_slope = 100.    # rather give-up than attempt to redefine the slope
             return None, None
@@ -168,7 +169,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         ab.append([mid_slope, b])   # mid-segment is first in the list of segment specs.
         if self.verb > 2:
             print(f'Middle PWL segment is defined by: ({x1:.2e}, {y1:.2e}) and ({x2:.2e}, {y2:.2e}).')
-            print(f'params of the mid-segment line y = ax +b: a = {mid_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
+            print(f'params of the mid-segment line y = ax + b: a = {mid_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
 
         # assert len(self.vert_x) == 2, f'Processing PWL having {len(self.vert_x)} vertices not implemented yet.'
         # segments above A (if A defined) and below R (if R defined and not used for mid-segment):
@@ -180,16 +181,20 @@ class PWL:  # representation of caf(x) for i-th criterion
             up_b = y1 - up_slope * x1  # defined as above but by A point
             ab.append([up_slope, up_b])  # up-segment is second (if generated) in the list of segment specs.
             if self.verb > 2:
-                print(f'parameters of the up-segment line y = ax +b: a = {up_slope:.2e}, b ={up_b:.2e}.')
-                print(f'params of the up-segment line y = ax +b: a = {up_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
+                print(f'params of up-segment line y = ax + b: a = {up_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:.2e}.')
+        else:
+            if self.verb > 2:
+                print(f'upper segment of PWL not generated.')
 
         if self.is_res:  # generate segment below Res
             lo_slope = mid_slope * self.mc.slopeR    # steeper than mid_slop
             lo_b = y2 - lo_slope * x2  # defined as above but by R point
             ab.append([lo_slope, lo_b])  # lo-segment is next (either third or second) in the list of segment specs.
             if self.verb > 2:
-                print(f'parameters of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b ={lo_b:.2e}.')
-                print(f'params of the lo-segment line y = ax +b: a = {lo_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:2e}.')
+                print(f'params of lo-segment line y = ax + b: a = {lo_slope:.2e}, b = {b:.2e}, var_sc = {var_sc:.2e}.')
+        else:
+            if self.verb > 2:
+                print(f'lower segment of PWL not generated.')
 
         return var_sc, ab
 
