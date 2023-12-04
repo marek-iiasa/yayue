@@ -2,26 +2,32 @@
 
 # decision periods
 param nHrs := 10 ;
+param nHrs_ := 9 ;
 
 # inflow to the model
 param inflow :=
-1 2760
-2 2850
-3 2860
-4 3020
-5 3370
-6 3770
-7 4010
-8 4320
-9 4360
-10 3930
+1 3020
+2 3370
+3 3770
+4 4010
+5 4320
+6 4360
+7 3930
+8 2760
+9 2850
+10 2860
 ;
 
 # storage devices
-set Se := Elec1 Elec2;
-set Sh := Tank1 Tank2;
-set Sc := Cell1 Cell2 Cell3;
-# set S := Elec1 Elec2 Tank1 Tank2 Cell1 Cell2 Cell3;
+set Se_init := Elec1 Elec2 ;
+set Sh_init := Tank1 Tank2 ;
+set Sc_init := Cell1 Cell2 Cell3;
+
+# storage devices
+# set Se := Elec1 Elec2 ;
+# set Sh := Tank1 Tank2 ;
+# set Sc := Cell1 Cell2 Cell3 ;
+
 
 # unit storage capacity of each storage device
 param mxCap :=
@@ -35,12 +41,12 @@ Cell3 50
 ;
 
 # maximn hydrogen incoming/outflow to/from the tank
-param hMxIns :=
+param hMxIn :=
 Tank1 5
 Tank2 8
 ;
 
-param hMxOuts :=
+param hMxOut :=
 Tank1 5
 Tank2 8
 ;
@@ -56,7 +62,7 @@ param eh2 :=
 Elec1 4.5e-3
 Elec2 4.2e-3 ;
 
-param sph2 :=
+param eph2 :=
 Tank1 1e-3
 Tank2 1.5e-3
 ;
