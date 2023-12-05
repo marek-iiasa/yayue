@@ -190,6 +190,23 @@ def mk_sms():      # p: model parameters prepared in the Params class
         return (mx.balCost == mx.overCost * sum(m.eSurplus[t] for t in mx.T) +
                 mx.eBprice * sum(m.eBought[t] for t in mx.T))
 
+    # Relations defining auxiliary variables
+    @m.Constraint(m.S)     # Total capacity of s-th type of storage device
+    def sCapC(mx, s):
+        return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)      # Lowest amount of hydrogen needed in s-th of tank
+    def hMinC(mx, s):
+        return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)     # Maximum hydrogen inflow of s-th tank (per hour)
+    def mxInC(mx, s):
+        return mx.mxIn[s] == mx.hMxIn[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)
+    def mxOutC(mx, s):
+        return mx.mxOut[s] == mx.hMxOut[s] * mx.sNum[s]
+
     @m.Objective(sense=pe.maximize)     # Revenue (used as a Goal-Function/Objective in single-criterion analysis)
     def obj(mx):
         return mx.revenue == mx.income - mx.invCost - mx.OMC - mx.balCost
