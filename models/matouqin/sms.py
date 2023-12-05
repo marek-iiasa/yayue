@@ -43,13 +43,15 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.Sh_init = set()     # set of hydrogen tanks
     m.Sc_init = set()     # set of fuel cell
     m.S_init = m.Se_init | m.Sh_init | m.Sc_init        # a composed set of storage devices
-    # m.Se = pe.Set()
-    # m.Sh = pe.Set()
-    # m.Sc = pe.Set()
     m.Se = pe.Set(initialize=m.Se_init)
     m.Sh = pe.Set(initialize=m.Sh_init)
     m.Sc = pe.Set(initialize=m.Sc_init)
     m.S = pe.Set(initialize=m.S_init)
+
+    # m.Se = pe.Set()
+    # m.Sh = pe.Set()
+    # m.Sc = pe.Set()
+    # m.S = pe.Set()
     m.nHrs = pe.Param()
     m.nHrs_ = pe.Param()
     # m.nHrs = pe.Param(domain=pe.PositiveIntegers, default=10)       # the number of hours (time periods) in a year
@@ -57,9 +59,12 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.T = pe.RangeSet(0, m.nHrs_)       # set of time periods (hour)
 
     # define variables needed for demonstrating decorators
+
     # decision variables
     m.Num = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
-    m.supply = pe.Var(within=pe.NonNegativeReals)       # energy committed to be provided in each hour, [MWh]
+    m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
+
+    #todo: Variables check
 
     # control variables
     m.dOut = pe.Var(m.T, within=pe.NonNegativeReals)        # electricity directly meet the commitment, [MWh]
@@ -158,7 +163,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.T)      # The committed supply is composed of three parts
     def supply_blc(mx, t):
-        return mx.supply == mx.dOut[t] + mx.sOut[t] + mx.eBought[t]
+        return mx.supply[t] == mx.dOut[t] + mx.sOut[t] + mx.eBought[t]
 
     @m.Constraint(m.T)      # electricity outflow from the storage is defined by the sum of outflows from fuel cells
     def sOut_blc(mx, t):
@@ -175,7 +180,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # relations defining outcome variables
     @m.Constraint()     # Income from supplying
     def incomeC(mx):
-        return mx.income == mx.ePrice * mx.supply
+        return mx.income == mx.ePrice * sum(mx.supply[t] for t in mx.T)
 
     @m.Constraint()     # Annualized investment cost of the storage system
     def invCostC(mx):
