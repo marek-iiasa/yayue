@@ -21,13 +21,13 @@ param inflow :=
 # storage devices
 set Se_init := Elec1 Elec2 ;
 set Sh_init := Tank1 Tank2 ;
-set Sc_init := Cell1 Cell2 Cell3;
+set Sc_init := Cell1 Cell2 Cell3 ;
 
 # storage devices
 # set Se := Elec1 Elec2 ;
 # set Sh := Tank1 Tank2 ;
 # set Sc := Cell1 Cell2 Cell3 ;
-
+# set S := Elec1 Elec2 Tank1 Tank2 Cell1 Cell2 Cell3 ;
 
 # unit storage capacity of each storage device
 param mxCap :=
@@ -60,7 +60,8 @@ Tank2 5
 # conversion factors
 param eh2 :=
 Elec1 4.5e-3
-Elec2 4.2e-3 ;
+Elec2 4.2e-3
+;
 
 param eph2 :=
 Tank1 1e-3
