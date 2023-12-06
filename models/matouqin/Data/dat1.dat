@@ -1,33 +1,22 @@
 # test data for Matouqin
 
 # decision periods
-param nHrs := 10 ;
-param nHrs_ := 9 ;
+param nHrs := 5 ;
+# param nHrs_ := 4 ;
 
 # inflow to the model
 param inflow :=
 1 3020
-2 3370
-3 3770
-4 4010
-5 4320
-6 4360
-7 3930
-8 2760
-9 2850
-10 2860
+2 3770
+3 4010
+4 4320
+5 2760
 ;
 
 # storage devices
-set Se_init := Elec1 Elec2 ;
-set Sh_init := Tank1 Tank2 ;
-set Sc_init := Cell1 Cell2 Cell3 ;
-
-# storage devices
-# set Se := Elec1 Elec2 ;
-# set Sh := Tank1 Tank2 ;
-# set Sc := Cell1 Cell2 Cell3 ;
-# set S := Elec1 Elec2 Tank1 Tank2 Cell1 Cell2 Cell3 ;
+set Se := Elec1 Elec2 ;
+set Sh := Tank1 Tank2 ;
+set Sc := Cell1 Cell2 Cell3 ;
 
 # unit storage capacity of each storage device
 param mxCap :=
