@@ -6,6 +6,7 @@ All functions used in the m model are defined before mk_sms() to avoid warnings 
 import pyomo.environ as pe      # more robust than using import *
 
 
+# noinspection PyTypeChecker
 def mk_sms():      # p: model parameters prepared in the Params class
     m = pe.AbstractModel(name='Matouqin v. 0.1')   # instance of the concrete model
     # print(f'Generating AbstractModel model for parameters (version: {p.ver}')
@@ -26,7 +27,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # m.nHrs_ = pe.Param()
     m.nHrs = pe.Param(domain=pe.PositiveIntegers)       # the number of hours (time periods) in a year
 
-    # noinspection typeInspection on line28
+    # noinspection typeInspection on line31
     m.nHrs_ = pe.Param(initialize=m.nHrs - 1)     # index of the last time periods (hour)
     m.T = pe.RangeSet(0, m.nHrs_)       # set of time periods (hour)
 
