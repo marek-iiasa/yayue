@@ -19,18 +19,21 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.Se = pe.Set()
     m.Sh = pe.Set()
     m.Sc = pe.Set()
+
     # noinspection ClassSet. The union function works.
     m.S = pe.Set(initialize=m.Se | m.Sh | m.Sc)
     # m.nHrs = pe.Param()
     # m.nHrs_ = pe.Param()
     m.nHrs = pe.Param(domain=pe.PositiveIntegers)       # the number of hours (time periods) in a year
+
+    # noinspection typeInspection on line28
     m.nHrs_ = pe.Param(initialize=m.nHrs - 1)     # index of the last time periods (hour)
     m.T = pe.RangeSet(0, m.nHrs_)       # set of time periods (hour)
 
     # define variables needed for demonstrating decorators
 
     # decision variables
-    m.Num = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
+    m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
     # todo: Variables check
@@ -42,7 +45,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.sOut = pe.Var(m.T, within=pe.NonNegativeReals)        # electricity from storage to meet commitment, [MWh]
     m.eIn = pe.Var(m.Se, m.T, within=pe.NonNegativeReals)       # electricity inflow to each electrolyzer,[MWh].
     m.eSurplus = pe.Var(m.T, within=pe.NonNegativeReals)        # the loss of electricity while overproduction.
-    m.eBought = pe.Var(m.T, within=pe.NonNegativeReals)     # amount of electricity bought on the market
+    m.eBought = pe.Var(m.T, within=pe.NonNegativeReals)  # amount of electricity bought on the market
     m.hIn = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)       # hydrogen inflow to each hydrogen tank, [kg]
     m.hOut = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # hydrogen outflow from each hydrogen tank, [kg]
     m.hVol = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # amount of hydrogen stored in s-th device
@@ -70,21 +73,47 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.hMxIn = pe.Param(m.Sh, domain=pe.NonNegativeReals)       # maximum hydrogen incoming to the tank [kg]
     m.hMxOut = pe.Param(m.Sh, domain=pe.NonNegativeReals)       # maximum hydrogen outflow from the tank [kg]
     m.hmi = pe.Param(m.Sh, domain=pe.NonNegativeReals)      # minimum hydrogen needed in hydrogen tank [kg]
-    m.eh2 = pe.Param(m.Sh, domain=pe.NonNegativeReals)      # converting electricity to hydrogen, [kg/MWh]
+    m.eh2 = pe.Param(m.Se, domain=pe.NonNegativeReals)      # converting electricity to hydrogen, [kg/MWh]
     m.eph2 = pe.Param(m.Sh, domain=pe.NonNegativeReals)     # making high pressure, [MWh/kg]
     m.h2Res = pe.Param(m.Sh, domain=pe.NonNegativeReals)        # hydrogen retention rate, unit in percentage
-    m.h2e = pe.Param(m.Se, domain=pe.NonNegativeReals)      # converting hydrogen to electricity [MWh/kg]
+    m.h2e = pe.Param(m.Sc, domain=pe.NonNegativeReals)      # converting hydrogen to electricity [MWh/kg]
     # m.Hrs = pe.Param(domain=pe.NonNegativeIntegers)     # the during of decision time (hour)
     # m.ann = pe.Param(m.S, domain=pe.NonNegativeReals)       # annualization factor
-    m.ePrice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]
+    m.ePrice = pe.Param(domain=pe.NonNegativeReals)     # contract price
+    m.eBprice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]       
     m.overCost = pe.Param(domain=pe.NonNegativeReals)       # unit price of electricity surplus, [million RMB]
     m.sInv = pe.Param(m.S, domain=pe.NonNegativeReals)      # per unit investment cost of storage, [million RMB]
-    m.Omc = pe.Param(m.S, domain=pe.NonNegativeReals)       # per unit operation cost of storage, [million RMB]
+    m.sOmc = pe.Param(m.S, domain=pe.NonNegativeReals)       # per unit operation cost of storage, [million RMB]
 
+    # Relations defining auxiliary variables
+    @m.Constraint(m.S)     # Total capacity of s-th type of storage device
+    def sCapC(mx, s):
+        return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)      # Lowest amount of hydrogen needed in s-th of tank
+    def hMinC(mx, s):
+        return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)     # Maximum hydrogen inflow of s-th tank (per hour)
+    def mxInC(mx, s):
+        return mx.mxIn[s] == mx.hMxIn[s] * mx.sNum[s]
+
+    @m.Constraint(m.Sh)
+    def mxOutC(mx, s):
+        return mx.mxOut[s] == mx.hMxOut[s] * mx.sNum[s]
+    
+    @m.Constraint(m.T)
+    def eSurplusC(mx, t):
+        return mx.eSurplus[t] == mx.inflow[t] - mx.dOut[t] - mx.sIn[t] - mx.ePrs[t]
+    
+    @m.Constraint(m.T)
+    def eBoughtC(mx, t):
+        return mx.eBought[t] == mx.supply - mx.dOut[t] - mx.sOut[t]
+    
     # relations defining energy flows
     @m.Constraint(m.T)      # energy inflow is divided into four energy flows
     def inflow_blc(mx, t):
-        return mx.inflow[t] == mx.dOut[t] + mx.sIn[t] + mx.Prs[t] + mx.Surplus[t]
+        return mx.inflow[t] == mx.dOut[t] + mx.sIn[t] + mx.ePrs[t] + mx.eSurplus[t]
 
     @m.Constraint(m.T)      # total electricity used to store hydrogen equal to the sum of inflows to electrolyzers
     def sin_blc(mx, t):
@@ -108,11 +137,18 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.Sh, m.T)        # Amount of hydrogen in each tank type
     def hVol_bal(mx, s, t):
-        return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t-1)] + mx.hIn[s, t] - mx.hOut[s, t]
+        if t == 0:
+            return mx.hVol[s, t] == mx.hMin[s]
+        else:
+            return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t-1)] + mx.hIn[s, t] - mx.hOut[s, t]
 
     @m.Constraint(m.Sh, m.T)        # Amount of hydrogen in tanks of each type
-    def hVol_bon(mx, s, t):
-        return mx.hMin[s] <= mx.hVol[s, t] <= mx.sCap[s]
+    def hVol_lower(mx, s, t):
+        return mx.hVol[s, t] >= mx.hMin[s]   
+
+    @m.Constraint(m.Sh, m.T)        # Amount of hydrogen in tanks of each type
+    def hVol_upper(mx, s, t):
+        return mx.hVol[s, t] <= mx.sCap[s]
 
     @m.Constraint(m.Sh, m.T)        # Maximum flow to each type of tank
     def hIn_upper(mx, s, t):
@@ -122,6 +158,10 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def hOut_upper(mx, s, t):
         return mx.hOut[s, t] <= mx.hMxOut[s]
 
+    @m.Constraint(m.Sh, m.T)      # Constraint on one tank cannot support inflow and outflow at the same time
+    def htankC(mx, s, t):
+        return mx.hIn[s, t] * mx.hOut[s, t] == 0
+    
     @m.Constraint(m.T)      # Hydrogen flow from tanks to all fuel cells
     def h2C_blc1(mx, t):
         return mx.h2C[t] == sum(mx.hOut[s, t] for s in mx.Sh)
@@ -132,7 +172,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.T)      # The committed supply is composed of three parts
     def supply_blc(mx, t):
-        return mx.supply[t] == mx.dOut[t] + mx.sOut[t] + mx.eBought[t]
+        return mx.supply == mx.dOut[t] + mx.sOut[t] + mx.eBought[t]
 
     @m.Constraint(m.T)      # electricity outflow from the storage is defined by the sum of outflows from fuel cells
     def sOut_blc(mx, t):
@@ -143,13 +183,13 @@ def mk_sms():      # p: model parameters prepared in the Params class
         return mx.cOut[s, t] == mx.h2e[s] * mx.hInc[s, t]
 
     @m.Constraint(m.Sc, m.T)        # The electricity outflow from the fuel cell
-    def eOut_upper(mx, s, t):
+    def cOut_upper(mx, s, t):
         return mx.cOut[s, t] <= mx.sCap[s]
-
+    
     # relations defining outcome variables
     @m.Constraint()     # Income from supplying
     def incomeC(mx):
-        return mx.income == mx.ePrice * sum(mx.supply[t] for t in mx.T)
+        return mx.income == mx.ePrice * mx.nHrs * mx.supply
 
     @m.Constraint()     # Annualized investment cost of the storage system
     def invCostC(mx):
@@ -163,23 +203,6 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def balCostC(mx):
         return (mx.balCost == mx.overCost * sum(m.eSurplus[t] for t in mx.T) +
                 mx.eBprice * sum(m.eBought[t] for t in mx.T))
-
-    # Relations defining auxiliary variables
-    @m.Constraint(m.S)     # Total capacity of s-th type of storage device
-    def sCapC(mx, s):
-        return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
-
-    @m.Constraint(m.Sh)      # Lowest amount of hydrogen needed in s-th of tank
-    def hMinC(mx, s):
-        return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
-
-    @m.Constraint(m.Sh)     # Maximum hydrogen inflow of s-th tank (per hour)
-    def mxInC(mx, s):
-        return mx.mxIn[s] == mx.hMxIn[s] * mx.sNum[s]
-
-    @m.Constraint(m.Sh)
-    def mxOutC(mx, s):
-        return mx.mxOut[s] == mx.hMxOut[s] * mx.sNum[s]
 
     @m.Objective(sense=pe.maximize)     # Revenue (used as a Goal-Function/Objective in single-criterion analysis)
     def obj(mx):
