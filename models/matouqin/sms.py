@@ -13,49 +13,18 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # print(f'Dictionary of prepared parameters contains  {len(p.cat)} items.')
 
     # print(f'xx = {p.xx}')
-    '''
-    @m.Constraint(m.C)
-    def xLink(mx, ii):  # link the corresponding m1 and mc_core variables
-        return mx.x[ii] == p.eff.get('el2h') * mx.y[ii]
-    # def link_rule(m, i):  # traditional (without decorations) constraint using a rule, just for illustration
-    #     return m.x[i] == m.m1_cr_vars[i]
-    # m.xLink = pe.Constraint(m.C, rule=link_rule)
-
-    # AF and m1_vars defined above
-    m.caf = pe.Var(m.C)    # CAF value
-    m.cafMin = pe.Var()     # min of CAFs
-
-    @m.Constraint(m.C)
-    def cafMinD(mx, ii):
-        return mx.cafMin <= mx.caf[ii]
-
-    @m.Objective(sense=pe.maximize)
-    def obj(mx):
-        return mx.cafMin
-
-    if self.verb:
-        m.pprint()
-    '''
 
     # sets
     # noinspection SpellCheckingInspection
-    m.Se_init = set()    # set of electrolyzer
-    m.Sh_init = set()     # set of hydrogen tanks
-    m.Sc_init = set()     # set of fuel cell
-    m.S_init = m.Se_init | m.Sh_init | m.Sc_init        # a composed set of storage devices
-    m.Se = pe.Set(initialize=m.Se_init)
-    m.Sh = pe.Set(initialize=m.Sh_init)
-    m.Sc = pe.Set(initialize=m.Sc_init)
-    m.S = pe.Set(initialize=m.S_init)
-
-    # m.Se = pe.Set()
-    # m.Sh = pe.Set()
-    # m.Sc = pe.Set()
-    # m.S = pe.Set()
-    m.nHrs = pe.Param()
-    m.nHrs_ = pe.Param()
-    # m.nHrs = pe.Param(domain=pe.PositiveIntegers, default=10)       # the number of hours (time periods) in a year
-    # m.nHrs_ = pe.Param(initialize=m.nHrs - 1)     # index of the last time periods (hour)
+    m.Se = pe.Set()
+    m.Sh = pe.Set()
+    m.Sc = pe.Set()
+    # noinspection ClassSet. The union function works.
+    m.S = pe.Set(initialize=m.Se | m.Sh | m.Sc)
+    # m.nHrs = pe.Param()
+    # m.nHrs_ = pe.Param()
+    m.nHrs = pe.Param(domain=pe.PositiveIntegers)       # the number of hours (time periods) in a year
+    m.nHrs_ = pe.Param(initialize=m.nHrs - 1)     # index of the last time periods (hour)
     m.T = pe.RangeSet(0, m.nHrs_)       # set of time periods (hour)
 
     # define variables needed for demonstrating decorators
@@ -64,7 +33,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.Num = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
-    #todo: Variables check
+    # todo: Variables check
 
     # control variables
     m.dOut = pe.Var(m.T, within=pe.NonNegativeReals)        # electricity directly meet the commitment, [MWh]
