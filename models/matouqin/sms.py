@@ -91,6 +91,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def sCapC(mx, s):
         return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
 
+    '''
     @m.Constraint(m.Sh)      # Lowest amount of hydrogen needed in s-th of tank
     def hMinC(mx, s):
         return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
@@ -211,4 +212,5 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     print('mk_sms(): finished')
     # m.pprint(）
+    '''
     return m

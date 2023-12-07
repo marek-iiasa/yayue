@@ -2,7 +2,11 @@
 
 # decision periods
 param nHrs := 5 ;
-# param nHrs_ := 4 ;
+
+# storage devices
+set Se := Elec1 Elec2 ;
+set Sh := Tank1 Tank2 ;
+set Sc := Cell1 Cell2 Cell3 ;
 
 # inflow to the model
 param inflow :=
@@ -12,11 +16,6 @@ param inflow :=
 3 4320
 4 2760
 ;
-
-# storage devices
-set Se := Elec1 Elec2 ;
-set Sh := Tank1 Tank2 ;
-set Sc := Cell1 Cell2 Cell3 ;
 
 # unit storage capacity of each storage device
 param mxCap :=
