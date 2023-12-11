@@ -57,6 +57,8 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.revenue = pe.Var(within=pe.Reals)     # the annual revenue of the system
     m.income = pe.Var(within=pe.Reals)      # the annual income from satisfying the commitment
     m.invCost = pe.Var(within=pe.Reals)     # the annualized investment cost of the storage system
+    m.overCost = pe.Var(within=pe.Reals)    # the cost of management of surplus
+    m.buyCost = pe.Var(within=pe.Reals)     # the cost of management of shortage
     m.balCost = pe.Var(within=pe.Reals)     # the cost of management of electricity surplus and shortage
     m.OMC = pe.Var(within=pe.Reals)     # the operation and maintenance costs
 
@@ -81,8 +83,8 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # m.Hrs = pe.Param(domain=pe.NonNegativeIntegers)     # the during of decision time (hour)
     # m.ann = pe.Param(m.S, domain=pe.NonNegativeReals)       # annualization factor
     m.ePrice = pe.Param(domain=pe.NonNegativeReals)     # contract price
-    m.eBprice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]       
-    m.overCost = pe.Param(domain=pe.NonNegativeReals)       # unit price of electricity surplus, [million RMB]
+    m.eBprice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]
+    m.eOver = pe.Param(domain=pe.NonNegativeReals)       # unit price of electricity surplus, [million RMB]
     m.sInv = pe.Param(m.S, domain=pe.NonNegativeReals)      # per unit investment cost of storage, [million RMB]
     m.sOmc = pe.Param(m.S, domain=pe.NonNegativeReals)       # per unit operation cost of storage, [million RMB]
 
@@ -91,7 +93,6 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def sCapC(mx, s):
         return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
 
-    '''
     @m.Constraint(m.Sh)      # Lowest amount of hydrogen needed in s-th of tank
     def hMinC(mx, s):
         return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
@@ -103,26 +104,26 @@ def mk_sms():      # p: model parameters prepared in the Params class
     @m.Constraint(m.Sh)
     def mxOutC(mx, s):
         return mx.mxOut[s] == mx.hMxOut[s] * mx.sNum[s]
-    
+
     @m.Constraint(m.T)
     def eSurplusC(mx, t):
         return mx.eSurplus[t] == mx.inflow[t] - mx.dOut[t] - mx.sIn[t] - mx.ePrs[t]
-    
+
     @m.Constraint(m.T)
     def eBoughtC(mx, t):
         return mx.eBought[t] == mx.supply - mx.dOut[t] - mx.sOut[t]
-    
+
     # relations defining energy flows
     @m.Constraint(m.T)      # energy inflow is divided into four energy flows
     def inflow_blc(mx, t):
         return mx.inflow[t] == mx.dOut[t] + mx.sIn[t] + mx.ePrs[t] + mx.eSurplus[t]
 
     @m.Constraint(m.T)      # total electricity used to store hydrogen equal to the sum of inflows to electrolyzers
-    def sin_blc(mx, t):
+    def sIn_blc(mx, t):
         return mx.sIn[t] == sum(mx.eIn[s, t] for s in mx.Se)
 
     @m.Constraint(m.Se, m.T)        # Inflows to all electrolyzers are constrained by the sum of their capacities
-    def ein_upper(mx, s, t):
+    def eIn_upper(mx, s, t):
         return mx.eIn[s, t] <= mx.sCap[s]
 
     @m.Constraint(m.T)      # The amount of hydrogen produced by all electrolyzers
@@ -146,7 +147,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.Sh, m.T)        # Amount of hydrogen in tanks of each type
     def hVol_lower(mx, s, t):
-        return mx.hVol[s, t] >= mx.hMin[s]   
+        return mx.hVol[s, t] >= mx.hMin[s]
 
     @m.Constraint(m.Sh, m.T)        # Amount of hydrogen in tanks of each type
     def hVol_upper(mx, s, t):
@@ -160,10 +161,10 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def hOut_upper(mx, s, t):
         return mx.hOut[s, t] <= mx.hMxOut[s]
 
-    @m.Constraint(m.Sh, m.T)      # Constraint on one tank cannot support inflow and outflow at the same time
-    def htankC(mx, s, t):
-        return mx.hIn[s, t] * mx.hOut[s, t] == 0
-    
+    # @m.Constraint(m.Sh, m.T)      # Constraint on one tank cannot support inflow and outflow at the same time
+    # def htankC(mx, s, t):
+    #    return mx.hIn[s, t] * mx.hOut[s, t] == 0
+
     @m.Constraint(m.T)      # Hydrogen flow from tanks to all fuel cells
     def h2C_blc1(mx, t):
         return mx.h2C[t] == sum(mx.hOut[s, t] for s in mx.Sh)
@@ -187,7 +188,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     @m.Constraint(m.Sc, m.T)        # The electricity outflow from the fuel cell
     def cOut_upper(mx, s, t):
         return mx.cOut[s, t] <= mx.sCap[s]
-    
+
     # relations defining outcome variables
     @m.Constraint()     # Income from supplying
     def incomeC(mx):
@@ -201,16 +202,27 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def OMCC(mx):
         return mx.OMC == sum(mx.sOmc[s] * mx.sNum[s] for s in mx.S)
 
+    @m.Constrant()      # Cost of handling surplus
+    def overCostC(mx):
+        return mx.overCost == mx.eOver * sum(mx.eSurplus[t] for t in mx.T)
+
+    @m.Constrant()  # Cost of handling surplus
+    def buyCostC(mx):
+        return mx.buyCost == mx.eBprice * sum(mx.eBought[t] for t in mx.T)
+
     @m.Constraint()     # Cost of balancing surplus and deficit
     def balCostC(mx):
-        return (mx.balCost == mx.overCost * sum(m.eSurplus[t] for t in mx.T) +
-                mx.eBprice * sum(m.eBought[t] for t in mx.T))
+        return mx.balCost == mx.overCost + mx.buyCost
+
+    @m.Constraint()     # Total revenue of the system
+    def revenueC(mx):
+        return mx.revenue == mx.income - mx.invCost - mx.OMC - mx.balCost
 
     @m.Objective(sense=pe.maximize)     # Revenue (used as a Goal-Function/Objective in single-criterion analysis)
     def obj(mx):
-        return mx.revenue == mx.income - mx.invCost - mx.OMC - mx.balCost
+        return mx.revenue
 
     print('mk_sms(): finished')
-    # m.pprint(）
-    '''
+    # m.pprint()    # does not work (needs lengths of sets)
+
     return m
