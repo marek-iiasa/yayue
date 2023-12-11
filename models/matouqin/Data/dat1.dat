@@ -69,9 +69,9 @@ Cell3 2.5e-2
 
 # price and cost
 param ePrice := 8e-4 ;
-param eBprice := 1.6e-3;
+param eBprice := 5e-3;
 
-param eOver := 2e-3 ;
+param eOver := 5e-3 ;
 
 param sInv :=
 Elec1 0.07
