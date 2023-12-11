@@ -35,6 +35,7 @@ def driver():
     path = '.'
     os.chdir(path)
     data_dir = f'{path}/Data/'
+    res_dir = f'{path}/Results/'  # repository of results
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
@@ -53,7 +54,7 @@ def driver():
     results = opt.solve(model, tee=False)   # True to pipe output to the terminal
     chk_sol(results)  # check the status of the solution
     # todo: clarify exception (uncomment next line) while loading the results
-    # m.load(results)  # Loading solution into results object
+    # model.load(results)  # Loading solution into results object
 
     print('\nprocessing solution --------------------------------')
     report(model)
