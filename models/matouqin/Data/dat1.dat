@@ -69,17 +69,18 @@ Cell3 2.5e-2
 
 # price and cost
 param ePrice := 8e-4 ;
+param eBprice := 1.6e-3;
 
 param overCost := 2e-3 ;
 
 param sInv :=
-Elec1 0.7
-Elec2 1
-Tank1 0.2
-Tank2 0.35
-Cell1 0.05
-Cell2 0.1
-Cell3 0.2
+Elec1 0.07
+Elec2 0.1
+Tank1 0.02
+Tank2 0.035
+Cell1 0.005
+Cell2 0.01
+Cell3 0.02
 ;
 
 param sOmc :=
