@@ -14,8 +14,13 @@ def report(m):
     # print(f'\nPlace holder for report results of model {m.name}.')
     # revenue = f'{pe.value(model.revenue):.3e}'      # scientific counting method, accurate to three decimal places
 
+    print('\nValues of inflow ----------------------------------------------------------------------------')
+    # print(f'Total storage capacity = {pe.value(m.inflow)}MW')
+    ave_inflow = sum(m.inflow[t] for t in m.T) / m.nHrs
+    print(f'Average inflow = {ave_inflow} MW')
+
     print('\nValues of decision variables ----------------------------------------------------------------------------')
-    # print(f'Total storage capacity = {pe.value(m.sCap)} MW')
+    print(f'Supply = {pe.value(m.supply)} MW')
     # print(f'Numbers of storage devices = {pe.value(m.sNum)}')
 
     print('\nValues of outcome variables -----------------------------------------------------------------------------')
