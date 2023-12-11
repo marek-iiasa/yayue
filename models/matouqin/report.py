@@ -12,9 +12,9 @@ import pyomo.environ as pe  # needed for extracting elements of the solution
 def report(m):
 
     # print(f'\nPlace holder for report results of model {m.name}.')
-    # revenue = f'{pe.value(model.revenue):.3e}'      # Using scientific counting method, accurate to three decimal places
+    # revenue = f'{pe.value(model.revenue):.3e}'      # scientific counting method, accurate to three decimal places
 
-    print('\nValues of decision variables -----------------------------------------------------------------------------')
+    print('\nValues of decision variables ----------------------------------------------------------------------------')
     # print(f'Total storage capacity = {pe.value(m.sCap)} MW')
     # print(f'Numbers of storage devices = {pe.value(m.sNum)}')
 
