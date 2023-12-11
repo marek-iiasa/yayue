@@ -202,11 +202,11 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def OMCC(mx):
         return mx.OMC == sum(mx.sOmc[s] * mx.sNum[s] for s in mx.S)
 
-    @m.Constrant()      # Cost of handling surplus
+    @m.Constraint()      # Cost of handling surplus
     def overCostC(mx):
         return mx.overCost == mx.eOver * sum(mx.eSurplus[t] for t in mx.T)
 
-    @m.Constrant()  # Cost of handling surplus
+    @m.Constraint()  # Cost of handling surplus
     def buyCostC(mx):
         return mx.buyCost == mx.eBprice * sum(mx.eBought[t] for t in mx.T)
 
