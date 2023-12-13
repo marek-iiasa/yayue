@@ -5,7 +5,8 @@
 
 # The following two specs are necessary.   ------------------------------------------
 # Therefore, the (given as example) values of each of the two below specified
-# yaml/dict key should be replaced by values correct for each analysis.
+# yaml/dict keys (model_id, crit_def) should be replaced by the values appropriate
+# for each analysis.
 
 # root-name of the core/substantive model instance; the corresponding *dll file
 # has to be provided in the Models dir
@@ -26,6 +27,9 @@ crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
 
 # Sub-directory of the corresponding ana_dir containing results (df's and plots)
 # resDir: Results/
+
+# core-model variables values of which shall be included in the report
+# rep_vars: ['cost', 'invT', 'carb', 'oilImp', 'capTot', 'actS']
 
 # A sub-directory of the resDir for results of the corresponding execution run.
 # Note: many subdirectories can be defined to organize outcomes of diverse runs.
