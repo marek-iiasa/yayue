@@ -38,35 +38,20 @@ def driver(cfg):
     m1 = mk_inst(cfg)    # upload or generate m1 (core model)
     print(f'MCMA of the core-model instance: {m1.name}.')
 
-    # is_par_rep = True   # switch to Pareto-representation mode (set to False for providing preferences in a file)
-    # is_par_rep = False   # uncomment for providing user-preferences in a file
+    # is_par_rep = True/False: can be specified in cfg_usr.yml
     mc = CtrMca(cfg)    # CtrMca ctor
-    # todo: improve handling og verbosity levels
 
-    # list of variables, values of which shall be included in the report
-    # rep_vars = ['cost', 'carb', 'co2C', 'oilImp']
-    # rep_vars = ['x1', 'x2', 'x3']
-    # rep_vars = ['prod', 'emi', 'exp', 'act']
-    # rep_vars = ['act']
-    # rep_vars = ['x']
-
+    # list of the core-model variables, values of which shall be included in the report can be specified in cfg_usr.yml
     rep = Report(cfg, mc, m1)    # Report ctor
 
     # select solver
     opt = pe.SolverFactory('glpk')
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
 
-    # todo: implement scaling of vars defining criteria.
-    # todo: consider log (complementary to *csv); open .../log.txt either for 'w' or 'a'
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 0
     max_itr = cfg.get('mxIter')
-    # max_itr = 4
-    # max_itr = 9
-    # max_itr = 16
-    # max_itr = 100
-    # max_itr = 35020
-    # todo: payoff table not stored!
+    # todo: verify conditions for storing the payoff table
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {i_stage} -----------------------------------------------')
