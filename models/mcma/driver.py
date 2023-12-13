@@ -49,7 +49,7 @@ def driver(cfg):
     # rep_vars = ['prod', 'emi', 'exp', 'act']
     # rep_vars = ['act']
     # rep_vars = ['x']
-    # rep_vars = []
+
     rep = Report(cfg, mc, m1)    # Report ctor
 
     # select solver

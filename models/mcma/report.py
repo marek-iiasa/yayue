@@ -42,7 +42,7 @@ class Report:
             for idx in self.id_attr:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
-        self.rep_vars = []    # names of the core-model variables to be included in the report
+        self.rep_vars = mc.opt('rep_vars', [])    # names of the core-model variables to be included in the report
         self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
         self.f_itr_df = f'{self.rep_dir}df_itr.csv'  # file name of the stored df
@@ -58,6 +58,7 @@ class Report:
 
         # todo: initialize self.itr_df with previously stored df, if exists
         #   modify self.itr_id to a subsequent number
+
 
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
 

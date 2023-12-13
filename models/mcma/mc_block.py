@@ -146,9 +146,9 @@ class McMod:
             if var_seq[ix] >= 0:
                 pwlx = pwls[ix]  # pwlx: ix-item from the pwls list of all PWLs
                 sc_len = len(sc_var)
-                print(f'{ix = }, {sc_len = }')
+                # print(f'{ix = }, {sc_len = }')
                 if ix >= sc_len:
-                    print('bug here')
+                    print(f'{ix = }, {sc_len = }')
                     print('bug here')
                 sc_coe = sc_var[ix]
                 abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
@@ -199,7 +199,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb > 0:    # was 2
+        if self.mc.verb > 2:    # was 2
             print('\nMC_block (returned to driver):')
             m.pprint()
 
