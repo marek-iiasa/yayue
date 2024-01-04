@@ -23,9 +23,9 @@ Elec1 5
 Elec2 10
 Tank1 30
 Tank2 50
-Cell1 10
-Cell2 20
-Cell3 50
+Cell1 50
+Cell2 100
+Cell3 200
 ;
 
 # maximn hydrogen incoming/outflow to/from the tank
@@ -74,10 +74,10 @@ param eBprice := 5e-3;
 param eOver := 5e-3 ;
 
 param sInv :=
-Elec1 0.07
+Elec1 0.7
 Elec2 0.1
 Tank1 0.02
-Tank2 0.035
+Tank2 0.35
 Cell1 0.005
 Cell2 0.01
 Cell3 0.02
