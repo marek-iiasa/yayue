@@ -6,18 +6,20 @@ import os
 from datetime import datetime as dt
 # from datetime import timedelta as td
 from driver import driver  # driver (run the analysis set-up and iterations)
-
+from report import *
 
 if __name__ == '__main__':
-    tstart = dt.now()
-    # print('Started at:', str(tstart))
-    # wrk_dir = '.'  # might be modified by each user
-    # os.chdir(wrk_dir)
+    tstart = dt.now()       # start time
+
+    # path
+    wrk_dir = '.'  # might be modified by each user
+    os.chdir(wrk_dir)
     # print(f'wrk_dir: {wrk_dir}')
-    out_dir = './Out_dir/'
+    out_dir = f'{wrk_dir}/Out_dir/'
 
     redir_stdo = False  # optional redirection of stdout to out_dir/stdout.txt
     default_stdout = sys.stdout
+
     if redir_stdo:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir, mode=0o755)
@@ -31,6 +33,8 @@ if __name__ == '__main__':
 
     driver()    # run generation of parameters and their them for generating pe.ConcreteModel
 
+
+    # time difference
     tend = dt.now()
     print('\nStarted at: ', str(tstart))
     print('Finished at:', str(tend))
