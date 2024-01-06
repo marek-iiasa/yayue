@@ -1,0 +1,101 @@
+# test data for Matouqin
+
+# decision periods
+# param nHrs := 12 ;
+param nHrs := 4 ;
+
+# storage devices
+# set Se := Elec1 Elec2 ;
+# set Sh := Tank1 ;
+# set Sc := Cell1 Cell2 Cell3 ;
+set Se := Elec1 ;
+set Sh := Tank1 ;
+set Sc := Cell1 ;
+
+# inflow to the model
+param inflow :=
+# 0	3620
+# 1	3710
+# 2	4010
+# 3	4570
+# 4	5480
+# 5	6200
+# 6	7000
+# 7	6300
+# 8	5820
+# 9	5130
+# 10	4410
+# 11	3520
+0 4000
+1 0
+2 2000
+3 0
+;
+
+# unit storage capacity of each storage device
+param mxCap :=
+Elec1 5
+# Elec2 10
+Tank1 1000
+Cell1 100
+# Cell2 30
+# Cell3 50
+;
+
+# maximum hydrogen incoming/outflow to/from the tank
+param hMxIn :=
+Tank1 30
+;
+
+param hMxOut :=
+Tank1 30
+;
+
+# minimum hydrogen needed in tank
+param hmi :=
+Tank1 10
+;
+
+# conversion factors
+param eh2 :=
+Elec1 20
+# Elec2 18
+;
+
+param eph2 :=
+Tank1 1e-4
+;
+
+param h2Res :=
+Tank1 1.0
+;
+
+param h2e :=
+Cell1 2.3e-2
+# Cell2 2e-2
+# Cell3 2.5e-2
+;
+
+# price and cost
+param ePrice := 8e-4 ;
+param eBprice := 5e-2;
+
+param eOver := 5e-2 ;
+
+param sInv :=
+Elec1 0.007
+# Elec2 0.01
+Tank1 0.02
+Cell1 0.05
+# Cell2 0.01
+# Cell3 0.02
+;
+
+param sOmc :=
+Elec1 5e-4
+# Elec2 5e-4
+Tank1 5e-4
+Cell1 5e-4
+# Cell2 5e-4
+# Cell3 5e-4
+;

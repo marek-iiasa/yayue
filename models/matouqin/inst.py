@@ -8,7 +8,8 @@ def inst(m, f_data):    # m: abstract/symbolic model, f_data: parameters in AMPL
     # data.load(filename='data0.json')  # works with DataPortal() and DataPortal(model=m)
     data = pe.DataPortal(model=m)  # parameter (model=m) needed for loading *.dat
     # dat-format requires DataPortal(model=m)
-    data.load(filename=f_data)  # dat1 prepared by Zixuan
+    print(f'Applying data defined in "{f_data}".')
+    data.load(filename=f_data)
     mod = m.create_instance(data)
 
     print('\n instance.pprint() follows      -----------------------------------------------------------------')

@@ -9,7 +9,6 @@ import pandas as pd
 import pyomo.environ as pe  # needed for extracting elements of the solution
 
 
-
 class Report:
     # cf regret::report() for extensive processing
     def __init__(self, m1, rep_dir, rep_vars):

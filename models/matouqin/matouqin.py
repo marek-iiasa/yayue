@@ -6,7 +6,7 @@ import os
 from datetime import datetime as dt
 # from datetime import timedelta as td
 from driver import driver  # driver (run the analysis set-up and iterations)
-from report import *
+# from report import *
 
 if __name__ == '__main__':
     tstart = dt.now()       # start time
@@ -32,7 +32,6 @@ if __name__ == '__main__':
         f_out = None
 
     driver()    # run generation of parameters and their them for generating pe.ConcreteModel
-
 
     # time difference
     tend = dt.now()
