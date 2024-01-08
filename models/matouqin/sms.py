@@ -35,8 +35,6 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
-    # todo: Variables check
-
     # control variables
     m.dOut = pe.Var(m.T, within=pe.NonNegativeReals)        # electricity directly meet the commitment, [MWh]
     m.sIn = pe.Var(m.T, within=pe.NonNegativeReals)     # electricity inflow redirected to storage, [MWh]

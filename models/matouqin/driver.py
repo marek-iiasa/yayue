@@ -60,12 +60,18 @@ def driver():
     print('\nprocessing solution --------------------------------')
 
     # reporting results
+
     rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income', 'invCost', 'OMC', 'overCost', 'buyCost', 'balCost']
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
 
     rep = Report(model, res_dir, rep_vars)      # report results
     rep.var_vals()  # extract from the solution values of the requessted variables
     rep.summary()  # store the extracted values in a df
+
+    # flow_vars = ['hVol']
+    # flow = Report(model, res_dir, flow_vars)
+    # flow.flow_report()
+    # flow.summary()
 
     print(f'\nPlace holder for report results of model {model.name}.')
     # revenue = f'{pe.value(model.revenue):.3e}'      # scientific counting method, accurate to three decimal place
@@ -98,7 +104,7 @@ def driver():
     model.cOut.display()
 
     print('\nValues of outcome variables -------------------------------------------------------------------------')
-    print(f'Total revenue  = {pe.value(model.revenue)} million RMB')
+    print(f'Total revenue  = {pe.value(model.revenue)} thousands RMB')
     print(f'Income  = {pe.value(model.income)} million RMB')
     print(f'Investment cost  = {pe.value(model.invCost)} million RMB')
     print(f'Operation and maintenance cost  = {pe.value(model.OMC)} million RMB')

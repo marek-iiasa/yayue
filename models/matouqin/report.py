@@ -32,7 +32,7 @@ class Report:
                 raise Exception(f'Variable {var_name} is not defined in the core model.')
             if m1_var.is_indexed():
                 val_dict = m1_var.extract_values()  # values returned in dict (indexes as keys)
-                vals.append([var_name, True, val_dict])     # True: if m1_var is is indexed
+                vals.append([var_name, True, val_dict])     # True: if m1_var is indexed
                 # print(f'Values of indexed variable {var_name} = {val_dict}')
             else:
                 val = m1_var.value
@@ -57,3 +57,32 @@ class Report:
         self.df_vars.to_csv(self.f_df_vars, index=True)
         print(f'\nValues of core-model variables requested to be reported are stored in the DataFrane '
               f'"{self.f_df_vars}" file.')
+
+'''
+    def flow_report(self):
+        flows = []  # tmp list of lists, each for one var: [var_name, is_indexed, val(s)]
+        m1_flows = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
+        for flow_name in self.rep_vars:  # loop over m1.vars of all requested flow var-names
+            m1_flow = m1_flows[flow_name]
+            if m1_flow is None:
+                raise Exception(f'Variable {flow_name} is not defined in the core model.')
+            if m1_flow.is_indexed():
+                for i, j in m1_flow.index_set():        # i: storage type, j: time series
+                    print(f'Key: {i}, {j}')
+                    val = m1_flow[i,j].value # values
+                    flows.append([flow_name, i, j, val])
+                    print(f'Flows = {flows}')
+                # print(f'Values of indexed variable {var_name} = {val_dict}')
+            else:
+                raise Exception(f'Variable {flow_name} is not energy flow.')
+
+        new_row = {}
+        for item in flows:
+            for i in item[1]:
+                col_name = f'{item[0]}_{item1}
+                df = pd.DataFrame('T':j)
+                time[i] = i
+                for v in item[3]:
+
+        self.sol_vars.append(flows)  # append to the list of rows
+'''
