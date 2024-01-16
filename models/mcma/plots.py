@@ -135,6 +135,34 @@ class Plots:
         # f_name = f'{self.cfg.get("resDir")}p3D.png'
         fig2.savefig(f_name)
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
+        # if self.show_plot:
+        #     plt.show()
+        # else:
+        #     print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+
+    def plot_parallel(self):
+        fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
+        fig3.canvas.manager.set_window_title(
+            f'Criteria achievements for {self.n_sol} solutions.')
+
+        ax.set_xlabel('Criteria names')
+        ax.set_ylabel('Criterion Achievement Function')
+
+        # TODO should we use some arbitrary ylim like 0-100 or we should derive it from the data?
+        # Draw vertical parallel lines
+        # TODO Are all criteria have same range? Maybe different vlines should be drawn with own scale and ticks?
+        # TODO If we need each vline have own ticks then we can disable background grid and external axes ticks
+        for i in range(self.n_crit):
+            ax.axvline(i, color='k', linewidth=2)
+        ax.set_xticks(range(self.n_crit), labels=self.cr_name)
+
+        # Draw all solutions
+        # TODO we can apply some kind of cluster analysis to color lines from different clusters in different colors
+        for i, row in self.df[self.cr_col].iterrows():
+            ax.plot(row, linewidth=2, marker='o', markersize=10)
+
+        f_name = f'{self.dir_name}pparallel.png'
+        fig3.savefig(f_name)
         if self.show_plot:
             plt.show()
         else:

@@ -234,6 +234,7 @@ class ParRep:     # representation of Pareto set
         plots = Plots(self.cfg, self.df_sol, self.mc.cr)    # 3D plot
         plots.plot2D()    # 2D plot
         plots.plot3D()    # 3D plot
+        plots.plot_parallel() # Parallel coordinates plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
