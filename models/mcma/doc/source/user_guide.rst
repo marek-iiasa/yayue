@@ -50,6 +50,8 @@ Results directory
 Report configuration
 ^^^^^^^^^^^^^^^^^^^^
 
+List of core-model variables which will be shown in the report.
+
 .. code-block:: YAML
 
     rep_vars: ['cost', 'invT', 'carb', 'oilImp', 'capTot', 'actS']
@@ -57,6 +59,10 @@ Report configuration
 
 Number of iterations
 ^^^^^^^^^^^^^^^^^^^^
+
+Number of iterations to make. This variables defines how many attempts to generate
+Pareto representations will be done. Notice, that actual number of the solution
+can be smaller because duplicated and close solutions are not included in the final set.
 
 .. code-block:: YAML
 
@@ -73,6 +79,8 @@ parRep
 
 Verbosity of report
 ^^^^^^^^^^^^^^^^^^^
+
+Verbosity level of the analysis report. Possible values are in range [0, 3].
 
 .. code-block:: YAML
 
