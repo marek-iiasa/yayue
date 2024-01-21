@@ -4,7 +4,9 @@
 import pandas as pd
 from scipy.special import comb    # for computing number of combinations
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, Normalize
+import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 # import mplcursors
 # from crit import Crit
@@ -148,18 +150,26 @@ class Plots:
         ax.set_xlabel('Criteria names')
         ax.set_ylabel('Criterion Achievement Function')
 
-        # TODO should we use some arbitrary ylim like 0-100 or we should derive it from the data?
+        # Colors configuration
+        cmap = plt.get_cmap(self.cfg.get('colorMap', 'viridis'))
+        scaler = Normalize(vmin=0, vmax=100)
+        main_crit_idx = self.cfg.get('mainCritIdx', 0)
+        main_crit = self.df[self.cr_col[main_crit_idx]]
+        colors = cmap(scaler(main_crit))
+
         # Draw vertical parallel lines
-        # TODO Are all criteria have same range? Maybe different vlines should be drawn with own scale and ticks?
-        # TODO If we need each vline have own ticks then we can disable background grid and external axes ticks
         for i in range(self.n_crit):
             ax.axvline(i, color='k', linewidth=2)
         ax.set_xticks(range(self.n_crit), labels=self.cr_name)
 
         # Draw all solutions
-        # TODO we can apply some kind of cluster analysis to color lines from different clusters in different colors
         for i, row in self.df[self.cr_col].iterrows():
-            ax.plot(row, linewidth=2, marker='o', markersize=10)
+            ax.plot(row, linewidth=2, marker='o', markersize=10, color=colors[i])
+
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes('left', size='5%', pad=0.5)
+        cbar = plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
+        cax.yaxis.set_ticks_position('left')
 
         f_name = f'{self.dir_name}pparallel.png'
         fig3.savefig(f_name)
