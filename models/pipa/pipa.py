@@ -85,9 +85,9 @@ if __name__ == '__main__':
     # model.display()     # displays only instance (not abstract model)
     # print('end of model display: ------------------------------------------------------------------------\n')
     # members of sets, then param values, then (populated by set-members) relations with actual coef-values
-    # print('\n model.pprint() follows:      -----------------------------------------------------------------')
-    # model.pprint()
-    # print('end of model printout          -----------------------------------------------------------------\n')
+    print('\n model.pprint() follows:      -----------------------------------------------------------------')
+    model.pprint()
+    print('end of model printout          -----------------------------------------------------------------\n')
 
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
         dill.dump(model, f)
@@ -110,11 +110,17 @@ if __name__ == '__main__':
     oil_imp = f'{pe.value(model.oilImp):.3e}'
     carb = f'{pe.value(model.carb):.3e}'  # amount of carbon emission
     carbC = f'{pe.value(model.carbC):.3e}'  # discounted cost of carbon emission
+    carbCap = f'{pe.value(model.carbCap):.3e}'  # total carbon captured
+    greenF = f'{pe.value(model.greenFTot):.3e}'  # total green fuel
+    water = f'{pe.value(model.water):.3e}'  # total water used
     print('\nValues of outcome variables -----------------------------------------------------------------------------')
     print(f'Total cost  = {cost}')
     print(f'Total investments  = {invT}')
     print(f'Imported crude oil = {oil_imp}')
     print(f'Carbon emission = {carb}')
+    print(f'Carbon captured = {carbCap}')
+    print(f'Green fuel = {greenF}')
+    print(f'Total water used = {water}')
     print(f'Carbon emission (discounted) cost = {carbC}')
 
     rep.var_vals()  # extract from the solution values of the requessted variables
