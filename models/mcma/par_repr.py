@@ -200,7 +200,7 @@ class ParRep:     # representation of Pareto set
         rows = []   # each row with crit attributes for a solution
         for s in self.sols:
             new_row = {'itr_id': s.itr_id}
-            # for (i, cr) in enumerate(self.mc.cr):     # results in different column seq. than the two loops bellow
+            # for (i, cr) in enumerate(self.mc.cr):     # results in different column seq. than the two loops below
             #     new_row.update({cr.name: s.vals[i]})
             #     new_row.update({'a_' + cr.name: s.a_vals[i]})
             for (i, cr) in enumerate(self.mc.cr):   # cols with crit values

@@ -3,8 +3,9 @@ Handling of the CAF-PWL
 """
 
 
+# noinspection PySingleQuotedDocstring
 class PWL:  # representation of caf(x) for i-th criterion
-    def __init__(self, mc, i, verb = -1):
+    def __init__(self, mc, i, verb=-1):
         # todo: implement assumptions:
         #   actually we need only A (use U, if not provided) and R (use N, if not provided)
         #   remove/ignore A, if too close to U, ditto for R
@@ -34,7 +35,7 @@ class PWL:  # representation of caf(x) for i-th criterion
             self.verb = self.mc.verb
 
         if 0 < self.verb > 1:
-            # todo: cannot format None; either tolerate unformatted or modify to differentiate formatting of elements
+            # todo: cannot format None; either tolerate not formatted or modify to differentiate formatting of elements
             #   f"U = {self.cr.utopia:.2e}, A = {self.cr.asp:.2e}, R = {self.cr.res:.2e}, "
             #   f"N = {self.cr.nadir:.2e}.")
             print(f"\n----\nPWL crit '{self.cr_name}': act/fix = {self.is_act}/{self.is_fx}, is_max = {self.is_max}, "
@@ -130,7 +131,7 @@ class PWL:  # representation of caf(x) for i-th criterion
             x2 = self.vert_x[2]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[2]
         else:
-            x1 = self.vert_x[0]     # utopia is defines mid-segment, if A iss not defined
+            x1 = self.vert_x[0]     # utopia defines mid-segment, if A is not defined
             y1 = self.vert_y[0]
             x2 = self.vert_x[1]     # second mid-segment point is either R or Nadir (if R not defined)
             y2 = self.vert_y[1]

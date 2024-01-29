@@ -2,7 +2,7 @@ import math
 from operator import itemgetter  # , attrgetter
 
 # todo: add to ParSol:
-#   prune marker (to close to another solution) to skip (almost) duplictated solutions during cube generation
+#   prune marker (to close to another solution) to skip (almost) duplicated solutions during cube generation
 #   improve info on CAF (global, in [U, N], vs itr in [A, R]
 
 
@@ -228,7 +228,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             self.sizeL2 += dist * dist  # L2 distance
             self.sizeLinf = max(dist, self.sizeLinf)  # Tchebyshev (Linf) distance
             self.edges.append(dist)
-            if dist < self.min_edge:   # difference between achivements too small --> cube dimension degenered
+            if dist < self.min_edge:   # difference between achievements too small --> cube dimension degenerated
                 self.is_degen = True    # the cube degenerated
                 self.degen.append(True)  # current dimension degenerated
             else:
@@ -239,7 +239,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         # self.size = self.sizeL2     # cube size defined by L2
         self.size = self.sizeLinf   # cube size defined by Linf
 
-    # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
+    # define A/R values for splitting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
         for (i, cr) in enumerate(self.mc.cr):
             v1 = self.s1.vals[i]
@@ -293,7 +293,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 # oldR = cr.val
                 achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
                 oldAch = cr.val2ach(achiv)
-                expAch = 5.    # A/R expansion-span (in the achivements scale, i.e., [0, 100])
+                expAch = 5.    # A/R expansion-span (in the achievements scale, i.e., [0, 100])
                 if achiv < 50.:     # closer to Nadir, move A
                     new_ach = achiv + expAch
                     mark = 'A'

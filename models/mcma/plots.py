@@ -118,7 +118,7 @@ class Plots:
         ax.set_ylabel(self.cr_name[1])
         ax.set_zlabel(self.cr_name[2])
         # noinspection PyArgumentList
-        # warning supressed here (complains on unfilled params x and y)
+        # warning suppressed here (complains on unfilled params x and y)
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
                    label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}

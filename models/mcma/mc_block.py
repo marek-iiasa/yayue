@@ -15,7 +15,7 @@ class McMod:
             self.var_names.append(mc.cr[i].var_name)
 
     def mc_itr(self):
-        """sub-model gnerator, called at each itr having preferences defined through criteria attributes."""
+        """sub-model generator, called at each itr having preferences defined through criteria attributes."""
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
         for (i, cr) in enumerate(self.mc.cr):
