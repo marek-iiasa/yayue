@@ -77,7 +77,7 @@ class Cubes:     # collection of aCubes
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
         self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
         self.min_size = 5.      # cube's min. LInf size for including the cube to analysis
-        self.all_cubes = {}     # all generated cubes: key = id
+        self.all_cubes = {}     # all generated cubes: keys defined by cube's id
         self.cand = []          # cubes that are candidates for next iteration
         self.small = 0      # number of small ignored
         self.filled = 0     # number of non-empty ignored
@@ -88,6 +88,9 @@ class Cubes:     # collection of aCubes
                 cube.id = len(self.all_cubes)
                 self.all_cubes.update({cube.id: cube})
                 self.cand.append((cube.id, cube.size))
+                # todo: add to the list of cubes defining neighbors
+                self.parRep.neigh_lst(cube.id, True)  # add=Trye means add to the list
+                print(f'cube {cube.id} added to the list of cubes defining neighbors.')
             else:
                 self.filled += 1
         else:
