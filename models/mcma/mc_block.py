@@ -93,7 +93,7 @@ class McMod:
         sc_var = []     # scaling coef. for the corresponding var
         for (i, cr) in enumerate(self.mc.cr):
             if not cr.is_fixed:
-                pwl = PWL(self.mc, i, 3)   # PWL of i-th criterion
+                pwl = PWL(self.mc, i, 0)   # PWL of i-th criterion
                 if not pwl.chk_ok:  # PWL cannot be generated
                     return None     # don't generate the mc-part block
                 sc_coef, ab = pwl.segments()     # list of [a, b] params defining line y = ax + b
@@ -104,8 +104,8 @@ class McMod:
                 n_seg = len(ab)     # currently: 1 <= n_seg <= 3
                 segs.append(n_seg)  # order of segments: middle (always), optional: above A, below R
                 var_seq.append(i)   # indices of vars are the same as of all crit & PWLs
-                print(f'PWL of {i}-th crit. {cr.name}: sc_var {sc_coef:.2e}, {n_seg} segments, each defined '
-                      f'by [a, b] of: y = ax + b: {ab = }.')
+                # print(f'PWL of {i}-th crit. {cr.name}: sc_var {sc_coef:.2e}, {n_seg} segments, each defined '
+                #       f'by [a, b] of: y = ax + b: {ab = }.')
             else:
                 pwls.append(None)
                 sc_var.append(None)

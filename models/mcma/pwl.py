@@ -58,8 +58,9 @@ class PWL:  # representation of caf(x) for i-th criterion
                 self.asp_val = self.cr.asp
                 self.up_seg = True
             else:
-                print(f'crit {self.cr_name}: ignoring A {self.cr.asp:.2e} as too close to U {self.cr.utopia:.2e}. '
-                      f'U used as A.')
+                if self.verb > 1:
+                    print(f'crit {self.cr_name}: ignoring A {self.cr.asp:.2e} as too close to U {self.cr.utopia:.2e}. '
+                          f'U used as A.')
                 self.is_asp = False     # ignore A, too close to U
 
         # check if N (set in ctor) can be replaced by the provided R
@@ -70,8 +71,9 @@ class PWL:  # representation of caf(x) for i-th criterion
                 self.res_val = self.cr.res
                 self.lo_seg = True
             else:
-                print(f'crit {self.cr_name}: ignoring R {self.cr.res:.2e} as too close to N {self.cr.nadir:.2e}. '
-                      f'N used as R.')
+                if self.verb > 1:
+                    print(f'crit {self.cr_name}: ignoring R {self.cr.res:.2e} as too close to N {self.cr.nadir:.2e}. '
+                          f'N used as R.')
                 self.is_res = False     # ignore R, too close to N
 
         # check, if the selected A/R (replaced, if required, by U/N) sufficiently differ
