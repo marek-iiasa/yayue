@@ -82,7 +82,7 @@ class Cubes:     # collection of aCubes
         self.small = 0      # number of small ignored
         self.filled = 0     # number of non-empty ignored
 
-    def add(self, cube):    # add a new cube, if it large enough and non-empty
+    def add(self, cube):    # add a new cube, if it is large enough and non-empty
         if cube.size >= self.min_size:
             if self.is_empty(cube):
                 cube.id = len(self.all_cubes)
@@ -94,8 +94,10 @@ class Cubes:     # collection of aCubes
             self.small += 1
 
     def is_empty(self, cube):    # return True if no solution is inside the cube
+        if cube.empty is False:
+            return False
         for s in self.sols:     # check, if any solution is in the c-cube
-            if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:
+            if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:  # skip solutions defining the cube
                 continue
             if self.parRep.is_inside(s, cube.s1, cube.s2):
                 # print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
@@ -111,7 +113,7 @@ class Cubes:     # collection of aCubes
     def cand_ok(self, c_id):  # check, if c can be used
         c = self.get(c_id)
         assert not c.used, f'candidate cube[{c_id}] was already used.'
-        if self.is_empty(c):
+        if self.is_empty(c):    # check, if after the cube creation a solution was insterted in the cube
             return True    # the cube can be used
         else:
             return False    # the cube cannot be used
