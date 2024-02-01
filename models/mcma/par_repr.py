@@ -7,6 +7,55 @@ from cube import *
 from plots import *
 
 
+class ParProg:     # progress in Pareto set representation
+    def __init__(self, parRep):     # initialize corners by regularized selfish solutions
+        self.parRep = parRep        # ParRep object
+        self.steps = []             # list of reporting steps (max distances between neighbors
+        self.cur_step = 0           # index of the current step
+        self.neigh = {}             # neighbors for each step
+
+        self.ini_steps()    # initialize steps
+
+    def ini_steps(self):  # steps of progress
+        self.steps = [50, 40, 30, 20, 10, 7, 5, 3, 2, 1]
+
+    def update(self, cube_size):     # store info of pairs of neighbors waiting for processing
+        if cube_size > self.steps[self.cur_step]:
+            return
+        itr = self.parRep.cur_itr
+        n_sol = len(self.parRep.sols)
+        pairs = self.parRep.neigh.copy()
+        print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbors remain for processing.')
+        if cube_size > 0.:
+            self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
+            print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
+            self.cur_step += 1
+        else:
+            if len(pairs) > 0:
+                self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
+                print(f'List of {len(pairs)} cubes not processed stored.')
+            else:
+                print(f'All cubes were processed.')
+
+    def summary(self):     # proccess info on the computation progress
+        cubes = self.parRep.cubes  # object of Cubes class
+        n_itrs = self.parRep.cur_itr + 1    # cur_itr counted from 0
+        print(f'\nOverall during {n_itrs} itrs {len(self.parRep.sols)} Pareto sols. were computed, '
+              f'{len(cubes.all_cubes)} hyper-cubes were generated.')
+        print(f'\nSummary data of {len(self.neigh)} computation stages.')
+        for step, info in self.neigh.items():
+            itr = info[0]
+            n_sol = info[1]
+            n_cubes = info[2]
+            mx_cube = info[3]
+            cubes_id = info[4]
+            print(f'Stage {step} (stage_UpBnd {self.steps[step]}, mxCubeSize {mx_cube}): during {itr} itrs '
+                  f'{n_sol} sols. computed, {n_cubes} remained for processing.')
+            for cube_id in cubes_id:
+                acube = cubes.get(cube_id)
+                print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
+
+
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):         # initialize corners by regularized selfish solutions
         self.mc = mc        # CtrMca object
@@ -15,7 +64,9 @@ class ParRep:     # representation of Pareto set
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.neigh = []     # list of cube's id currently defining neighbors
         self.cubes = Cubes(self)  # the object handling all cubes
+        self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
+        self.cur_itr = None   # current itr_id
         self.from_cube = False   # next preferences from a cube
         self.n_corner = 0       # number of already generated selfish solutions
         self.df_sol = None  # df with solutions prepared for plots; defined in the self.summary()
@@ -43,6 +94,10 @@ class ParRep:     # representation of Pareto set
             self.n_corner += 1
         else:   # all selfish solutions ready
             cube = self.cubes.select()  # the cube defining A/R for new iteration
+            if cube is not None:
+                self.progr.update(cube.size)
+            # else:
+            #     self.progr.update(0.)
             if cube is None:
                 self.mc.cur_stage = 6  # terminate the analysis
                 return
@@ -73,6 +128,7 @@ class ParRep:     # representation of Pareto set
 
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
         assert self.mc.is_opt, f'ParRep::addSol() called for non-optimal solution'
+        self.cur_itr = itr_id
         vals = []     # crit values
         a_vals = []     # crit values
         # sc_vals = []  # scaled crit values
@@ -122,6 +178,8 @@ class ParRep:     # representation of Pareto set
         if self.n_corner == len(self.mc.cr):
             self.from_cube = True   # next preferences to be generated from cubes
 
+    '''
+    ini_corners() no longer needed
     def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
         # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
         #   this can be done rather in the driver than here.
@@ -154,6 +212,7 @@ class ParRep:     # representation of Pareto set
             print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
             self.mk_cubes(new_sol)    # define cubes generated by this solution
             cur_uto += 1
+    '''
 
     def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous solutions
         # store_all = False
@@ -190,7 +249,7 @@ class ParRep:     # representation of Pareto set
             self.neigh.append(cube_id)
         else:
             self.neigh.remove(cube_id)
-        print(f'Currently there are {len(self.neigh)} pairs defining neighbor solutions.')
+        print(f'Currently {len(self.neigh)} pairs of neighbor solutions further than {self.cubes.min_size}.')
         print(f'List of cubes defining neighbor solutions: {self.neigh}')
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
@@ -202,6 +261,8 @@ class ParRep:     # representation of Pareto set
     def summary(self):  # summary report
         # self.cubes.lst_cubes()  # list cubes
         print('\n')
+        self.progr.update(0.)   # store info on the unprocessed cubes, if any remain
+        self.progr.summary()   # process info on the computation progress
 
         # prepare df with solutions for plot2D
         cols = ['itr_id']
