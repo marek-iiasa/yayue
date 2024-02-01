@@ -58,4 +58,6 @@ crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
 mainCritIdx: 0
 
 # Name of the colormap for parallel coordinate plot
-colorMap: viridis
+# Can be either string (colormap name) or list of strings (names of a colors)
+# colorMap: viridis
+colorMap: ['black', 'green', 'blue', 'red', 'orange']

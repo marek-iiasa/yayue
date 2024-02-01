@@ -27,7 +27,12 @@ class Plots:
         self.cr_col = []   # col-names containing criteria achievements values
         self.n_sol = len(df.index)  # number of solutions defined in the df
         self.seq = df[self.cols[0]]
-        self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
+        cmap = cfg.get('colorMap', 'jet')
+        if isinstance(cmap, list):
+            self.cmap = ListedColormap(cmap)  # takes every item, if no more specified
+        else:
+            self.cmap = cmap
+
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
 
         if self.show_plot is None:  # just in case the option is missed in cfg
@@ -50,6 +55,9 @@ class Plots:
                 if i_memb == n_members:
                     i_cat += 1
                     i_memb = 0
+
+        self.main_crit_idx = self.cfg.get('mainCritIdx', 0)
+        self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
@@ -81,7 +89,7 @@ class Plots:
                 ax[i_plot].set_xlabel(name1)
                 ax[i_plot].set_ylabel(name2)
                 ax[i_plot].set_title(name1 + ' vs ' + name2)
-                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
+                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.main_crit,
                                    cmap=self.cmap, s=m_size)
                 # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
                 for (i, seq) in enumerate(self.seq):
@@ -123,7 +131,7 @@ class Plots:
         # noinspection PyArgumentList
         # warning supressed here (complains on unfilled params x and y)
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
-                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+                   label='Criteria Achievements', c=self.main_crit, cmap=self.cmap, s=50)
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
         # ax.view_init(elev=3, azim=-135, roll=0)
         ax.view_init(elev=15, azim=45, roll=0)
@@ -152,11 +160,9 @@ class Plots:
         ax.set_ylabel('Criterion Achievement Function')
 
         # Colors configuration
-        cmap = plt.get_cmap(self.cfg.get('colorMap', 'viridis'))
+        cmap = self.cmap
         scaler = Normalize(vmin=0, vmax=100)
-        main_crit_idx = self.cfg.get('mainCritIdx', 0)
-        main_crit = self.df[self.cr_col[main_crit_idx]]
-        colors = cmap(scaler(main_crit))
+        colors = cmap(scaler(self.main_crit))
 
         # Draw vertical parallel lines
         for i in range(self.n_crit):
@@ -189,7 +195,7 @@ class Plots:
             min_val, max_val = val
 
             for line in lines:
-                if min_val <= line.get_ydata()[main_crit_idx] <= max_val:
+                if min_val <= line.get_ydata()[self.main_crit_idx] <= max_val:
                     line.set_alpha(1)
                 else:
                     line.set_alpha(0.1)
