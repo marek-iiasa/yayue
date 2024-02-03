@@ -13,6 +13,7 @@ param discr := 0.05 ;
 
 # technologies
 set T := BTL CTL OTL PTL;
+set GT := BTL PTL;
 set XT := PTL;
 
 # inputs and outputs
@@ -97,9 +98,15 @@ PTL 3711
 # carbon price
 param carbP := 50 ;
 
-# water 
+# carbon capture
+param ccf:=
+PTL 0.02
+;
+
+# water use
 param watf:=
-BTL 10
+# BTL 10
+BTL 3
 CTL 20
 OTL 15
 PTL 5

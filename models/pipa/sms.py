@@ -79,11 +79,12 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.2')  # PTX added, inputs/outputs to/from technologies
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.3')  # PTX added, inputs/outputs to/from technologies
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
     m.T = pe.Set()     # all technologies
-    m.XT = pe.Set()    # subset of PTX technologies
+    m.GT = pe.Set()    # subset of GreenFuel technologies (BTL + PTX)
+    m.XT = pe.Set()    # subset of PTX technologies (PTX) currently the only to capture CO2
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
     # noinspection PyTypeChecker
     # warning: pe.Param used instead of expected int (but a cast to the latter cannot be used in Abstract model)
@@ -107,6 +108,7 @@ def mk_sms():
     m.carbC = pe.Var()   # cost of the total carbon emission
     m.carb = pe.Var()   # total carbon emission
     m.carbCap = pe.Var()   # total carbon captured
+    m.carbBal = pe.Var()   # total carbon (emission - captured)
     m.oilImp = pe.Var()   # total amount of imported oil
     m.water = pe.Var()   # total water used
     m.greenFTot = pe.Var()   # total green fuel produced
@@ -142,15 +144,16 @@ def mk_sms():
     @m.Objective(sense=pe.minimize)
     def goalmin(mx):
         # return mx.cost      # total cost
+        # return mx.carbBal    # total carbon emission
+        return mx.water   # total water used
+        # return mx.carb    # total carbon emission
         # return mx.invT      # total investments
         # return mx.oilImp  # total oil import  (same/similar solution as carb min.)
-        # return mx.carb    # total carbon emission
-        # return mx.water   # total water used
     '''
     @m.Objective(sense=pe.maximize)
     def goalmax(mx):
-        # return mx.carbCap   # total carbon captured
         return mx.greenFTot   # total green fuel produced
+        # return mx.carbCap   # total carbon captured
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
@@ -162,7 +165,7 @@ def mk_sms():
     m.hcap = pe.Param(m.TH, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
     m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=0.8)         # capacity utilization factor
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)       # unit carbon emission
-    m.ccf = pe.Param(m.XT, within=pe.NonNegativeReals, default=1.0)     # unit carbon capture
+    m.ccf = pe.Param(m.XT, within=pe.NonNegativeReals, default=0.0)     # unit carbon capture
     m.watf = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)     # unit water use
     m.inpP = pe.Param(m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
     m.invP = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)     # unit inv cost
@@ -179,7 +182,7 @@ def mk_sms():
 
     @m.Constraint(m.P, m.K)  # green fuel trajectory (output from XT technologies)
     def greenFC(mx, p, k):
-        exp = sum(mx.outU[t, k] * mx.actvS[t, p] for t in mx.XT)  # green fuel from activ. of XT technology
+        exp = sum(mx.outU[t, k] * mx.actvS[t, p] for t in mx.GT)  # green fuel from activ. of GT technology
         return mx.greenF[p, k] == exp
 
     @m.Constraint(m.P, m.K)  # green fuel max (needed for greenFTot selfish optimization)
@@ -191,9 +194,13 @@ def mk_sms():
         exp = sum(sum(mx.greenF[p, k] for p in mx.P) for k in mx.K)  # sum of periods and fuel types
         return mx.greenFTot == exp
 
-    @m.Constraint()  # total carbon captured
+    @m.Constraint()  # total carbon captured (only by XT technologies)
     def carbCapC(mx):
         return mx.carbCap == sum(mx.ccf[t] * sum(mx.actvS[t, p] for p in mx.P) for t in mx.XT)
+
+    @m.Constraint()  # total carbon balance (emission - captured)
+    def carbBalC(mx):
+        return mx.carbBal == mx.carb - mx.carbCap
 
     @m.Constraint()  # total water used
     def waterC(mx):
