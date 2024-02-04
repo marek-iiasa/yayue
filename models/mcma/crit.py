@@ -27,7 +27,8 @@ class Crit:     # definition and attributes of a single criterion
         else:
             raise Exception(f'Unknown criterion type "{typ}" for criterion "{cr_name}".')
         self.sc_ach = 100.   # U/N scale of achievements [0, sc_ach]
-        self.minRange = 0.01  # min U/N range
+        # self.minRange = 0.01  # min U/N range
+        self.minRange = 0.001  # min U/N range
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None

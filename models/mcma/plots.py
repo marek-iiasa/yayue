@@ -109,7 +109,11 @@ class Plots:
             if self.show_plot:
                 plt.show()
             return
-        assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
+        # todo: plots for more than 3 criteria
+        if self.n_crit > 3:
+            print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
+            return
+        # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
         fig2 = plt.figure(figsize=(12, 9))
         fig2.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title

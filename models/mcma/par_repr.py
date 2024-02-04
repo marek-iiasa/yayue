@@ -28,12 +28,12 @@ class ParProg:     # progress in Pareto set representation
         print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbors remain for processing.')
         if cube_size > 0.:
             self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
-            print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
+            # print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
             self.cur_step += 1
         else:
             if len(pairs) > 0:
                 self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
-                print(f'List of {len(pairs)} cubes not processed stored.')
+                print(f'{len(pairs)} cubes not processed.')
             else:
                 print(f'All cubes were processed.')
 
@@ -48,12 +48,16 @@ class ParProg:     # progress in Pareto set representation
             n_sol = info[1]
             n_cubes = info[2]
             mx_cube = info[3]
-            cubes_id = info[4]
+            # todo: there is a bug in reporting (when all cubes are processed) number of cubes remained
             print(f'Stage {step} (stage_UpBnd {self.steps[step]}, mxCubeSize {mx_cube}): during {itr} itrs '
                   f'{n_sol} sols. computed, {n_cubes} remained for processing.')
+            '''
+            # uncomment only when needed (the below produces a lot of printouts)
+            cubes_id = info[4]
             for cube_id in cubes_id:
                 acube = cubes.get(cube_id)
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
+            '''
 
 
 class ParRep:     # representation of Pareto set
@@ -250,7 +254,7 @@ class ParRep:     # representation of Pareto set
         else:
             self.neigh.remove(cube_id)
         print(f'Currently {len(self.neigh)} pairs of neighbor solutions further than {self.cubes.min_size}.')
-        print(f'List of cubes defining neighbor solutions: {self.neigh}')
+        # print(f'List of cubes defining neighbor solutions: {self.neigh}')
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
         for (i, s) in enumerate(self.sols):
