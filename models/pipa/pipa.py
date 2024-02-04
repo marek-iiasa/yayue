@@ -80,15 +80,25 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
+    '''
+    import dill  # stores and retrieves pyomo models into/from binary file
+    f_pipa = 'pipa3'
+    f_name = f'{f_pipa}.dll'
+    with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
+        dill.dump(model, f)
+    print(f'Model "{f_pipa}" dill-dumpped to: {f_name}')
+    '''
+
     # print('\nmodel display: -----------------------------------------------------------------------------')
     # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
     # model.display()     # displays only instance (not abstract model)
     # print('end of model display: ------------------------------------------------------------------------\n')
     # members of sets, then param values, then (populated by set-members) relations with actual coef-values
-    print('\n model.pprint() follows:      -----------------------------------------------------------------')
-    model.pprint()
-    print('end of model printout          -----------------------------------------------------------------\n')
+    # print('\n model.pprint() follows:      -----------------------------------------------------------------')
+    # model.pprint()
+    # print('end of model printout          -----------------------------------------------------------------\n')
 
+    # ad-hoc dll atore
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
         dill.dump(model, f)
     print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
