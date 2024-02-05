@@ -62,7 +62,7 @@ def plot_finance(org_df, var_cost):
               '--------------------------------')
 
 
-def plot_capacity(org_df, var_names):
+def plot_capacity(org_df, var_names, fig_name, y_label):
     # check if var_names and dv_names are lists, pl_type is str
     if isinstance(var_names, str):
         var_names = [var_names]
@@ -98,9 +98,9 @@ def plot_capacity(org_df, var_names):
                 plt.bar(label, dv_df[col].values[i], label=f'{label}')
                 plt.text(label, dv_df[col].values[i], f'{dv_df[col].values[i]:.2f}', ha='center', va='bottom')
             plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
-            plt.title(f'Capacity of storage devices')
+            plt.title(fig_name)
             plt.xlabel(f'Storage devices')
-            plt.ylabel(f'Capacity (MW)')
+            plt.ylabel(y_label)
             plt.xticks(x_labels)
             plt.legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., edgecolor='black')
             plt.tight_layout()
@@ -362,7 +362,8 @@ dvflow_var = ['eIn', 'hIn', 'hOut', 'hVol', 'hInc', 'cOut']
 flow_var = ['dOut', 'sIn', 'ePrs', 'sOut', 'eSurplus', 'eBought']
 
 plot_finance(df, cost_var)
-plot_capacity(df, 'sNum')
+plot_capacity(df, 'sNum', 'Numbers of storage devices', 'Number')
+plot_capacity(df, 'sCap', 'Capacity of storage devices', 'Capacity (MW)')
 plot_flow(df, flow_var)
 plot_dv_flow(df, dvflow_var)
 print(f"supply = {df['supply'].values}")
