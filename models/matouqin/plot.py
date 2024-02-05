@@ -90,11 +90,11 @@ def plot_capacity(org_df, var_names, fig_name, y_label):
         for var_name in var_names:
             # print(f'var_name = {var_name}')
             plt.figure(figsize=(10, 8))
-            columns = [col for col in dv_df.columns if col.startswith(var_name)]
-            # print(f'{var_name} column: {columns}')
+            columns = dv_df.filter([col for col in dv_df.columns if col.startswith(f'{var_name}_')])
+            print(f'{var_name} column: {columns}')
             x_labels = [re.search(r'_(\w+)$', col).group(1) for col in columns]
             # print(f'{var_name} x_labels = {x_labels}')
-            for index, (col, label) in enumerate(zip(dv_df.columns, x_labels)):
+            for index, (col, label) in enumerate(zip(columns, x_labels)):
                 plt.bar(label, dv_df[col].values[i], label=f'{label}')
                 plt.text(label, dv_df[col].values[i], f'{dv_df[col].values[i]:.2f}', ha='center', va='bottom')
             plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
