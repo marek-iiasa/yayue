@@ -1,10 +1,10 @@
 """
-Reporting results of the MCMA iterations. Handling core-model is generic, i.e., any variable can be seleted for report.
+Reporting results of the MCMA iterations. Handling core-model is generic, i.e., any variable can be selected for report.
 """
 
 import warnings
 import pandas as pd
-import pyomo.environ as pe       # more robust than using import *
+import pyomo.environ as pe  # more robust than using import *
 # from ctr_mca import CtrMca
 # from crit import Crit
 
@@ -50,7 +50,7 @@ class Report:
 
         #
         self.itr_id = -1
-        self.prev_itr = 0   # number of previosly made iters
+        self.prev_itr = 0   # number of previously made iters
         self.cur_itr = 0   # number of currently made iters
 
         # todo: implement hot start
@@ -59,37 +59,37 @@ class Report:
         # todo: initialize self.itr_df with previously stored df, if exists
         #   modify self.itr_id to a subsequent number
 
-
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
 
+        # noinspection SpellCheckingInspection
         '''
-        # data space for the summary df with values of each iteration (to be used in the summary report)
-        cols = ['itr_id'] + self.par_id + ['cost', 'CO2', 'oilImp']     # 'slope', 'marker'
-        self.sum_df = pd.DataFrame(columns=cols)
-
-        # container of lists, each list a space for values of each requested variable
-        # sol_cont: list of lists, list each for values of one variable (for all params values)
-        self.sol_cont = []   # container of df's, each to hold extracted values of a variable for all params
-        model_vars = m.component_map(ctype=pe.Var)
-        # check, if each req_var is defined, make space for values
-        tmp_lst = var_lst.copy()    # must use copy(), assignement is a reference
-        for req_var in tmp_lst:     # use var_lst here would corrupt the loop, if the list element is removed
-            if req_var in model_vars:
-                # append empty list to mk_space in the container for df's with values of the req_var;
-                # each df appended in add_itr() for the corresponding iter defined by value(s) of one or more params
-                self.sol_cont.append([])
-                # print(f'space allocated for pd.df with values of the requested var {req_var}.')
-            else:   # the requested var is not defined in the SMS; remove it from the reported-vars list
-                self.var_lst.remove(req_var)
-                print(f'requested var {req_var} not defined in the model: its values will not be reported.')
-                print(f'modified list of the vars to be reported: {self.var_lst}.')
-
-        # declarations of data shared by functions of the summary report
-        self.costs = self.sum_df['cost']    # assignments here are to empty df, must be reassigned in summary(self)
-        self.prices = self.sum_df[self.par_id]
-
-        print('\nReport ctor finished.                                           --------------------------------')
-        '''
+                # data space for the summary df with values of each iteration (to be used in the summary report)
+                cols = ['itr_id'] + self.par_id + ['cost', 'CO2', 'oilImp']     # 'slope', 'marker'
+                self.sum_df = pd.DataFrame(columns=cols)
+        
+                # container of lists, each list a space for values of each requested variable
+                # sol_cont: list of lists, list each for values of one variable (for all params values)
+                self.sol_cont = []   # container of dfs, each to hold extracted values of a variable for all params
+                model_vars = m.component_map(ctype=pe.Var)
+                # check, if each req_var is defined, make space for values
+                tmp_lst = var_lst.copy()    # must use copy(), assignment is a reference
+                for req_var in tmp_lst:     # use var_lst here would corrupt the loop, if the list element is removed
+                    if req_var in model_vars:
+                        # append empty list to mk_space in the container for dfs with values of the req_var;
+                        # each df appended in add_itr() for the corresponding iter defined by value(s) of param(s)
+                        self.sol_cont.append([])
+                        # print(f'space allocated for pd.df with values of the requested var {req_var}.')
+                    else:   # the requested var is not defined in the SMS; remove it from the reported-vars list
+                        self.var_lst.remove(req_var)
+                        print(f'requested var {req_var} not defined in the model: its values will not be reported.')
+                        print(f'modified list of the vars to be reported: {self.var_lst}.')
+        
+                # declarations of data shared by functions of the summary report
+                self.costs = self.sum_df['cost'] # assignments here are to empty df, must be reassigned in summary(self)
+                self.prices = self.sum_df[self.par_id]
+        
+                print('\nReport ctor finished.                                        --------------------------------')
+                '''
 
     def itr(self, m):   # m: current mc_block (invariant core-model linked in the ctor)
         """Process values of criteria and other vars in the current solution."""
@@ -105,10 +105,10 @@ class Report:
         cri_val = {}    # all criteria values in current solution
         '''
         if self.mc.cur_stage > 1:
-            mx = m  # use the current mc_core model for accesing solution
+            mx = m  # use the current mc_core model for accessing solution
             m_vars = m.component_map(ctype=pe.Var)  # all variables of the mc_block
         else:
-            mx = self.m1  # use the core-model for accesing solution
+            mx = self.m1  # use the core-model for accessing solution
         '''
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
@@ -136,7 +136,7 @@ class Report:
             cafReg = round(cafReg, 1)
             new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
         else:   # cafMin, cafReg not defined in stage 1
-            # print(f'af = {af:.3e}')
+            # print(f' af = {af:.3e}')
             new_row = {'itr_id': self.itr_id, 'af': af}
         cur_col = 4
         for crit in self.mc.cr:
@@ -172,7 +172,7 @@ class Report:
         if len(self.rep_vars):
             self.req_vals()     # extract and store values of the core-model variables requested to be reported
 
-    # exctract and store values of the variables to be included in the report
+    # extract and store values of the variables to be included in the report
     def req_vals(self):
         vals = []   # tmp list of lists, each for one var: [var_name, is_indexed, val(s)]
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
@@ -205,7 +205,7 @@ class Report:
         # sign-off
         # print(f'Report::itr_id({self.itr_id}) finished.')
 
-    # generate and store df's with info on criteria and the variables requested for report/plots
+    # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
         # todo: correct info on current and previous iterations
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')

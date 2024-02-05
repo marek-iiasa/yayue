@@ -55,7 +55,7 @@ if __name__ == '__main__':
     m_name = 'pipa'     # model name (used for the dll-format file-name
     # files
     f_out = f'{out_dir}stdout.txt'    # optionally redirected stdout
-    f_data = f'{data_dir}dat3.dat'    # data for defining the model instance
+    f_data = f'{data_dir}dat4.dat'    # data for defining the model instance
     f_mod = f'{mod_dir}{m_name}.dll'  # concrete model in dill format
 
     assert isfile(f_data) and access(f_data, R_OK), f'Data file {f_data} not readable.'
@@ -80,6 +80,15 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
+    '''
+    import dill  # stores and retrieves pyomo models into/from binary file
+    f_pipa = 'pipa3'
+    f_name = f'{f_pipa}.dll'
+    with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
+        dill.dump(model, f)
+    print(f'Model "{f_pipa}" dill-dumpped to: {f_name}')
+    '''
+
     # print('\nmodel display: -----------------------------------------------------------------------------')
     # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
     # model.display()     # displays only instance (not abstract model)
@@ -89,12 +98,13 @@ if __name__ == '__main__':
     # model.pprint()
     # print('end of model printout          -----------------------------------------------------------------\n')
 
+    # ad-hoc dll atore
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
         dill.dump(model, f)
     print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
 
     # vars to be reported and stored in df (the list may include any variable name defined in the SMS)
-    rep_vars = ['cost', 'invT', 'oilImp', 'carb', 'actS', 'act', 'actvS', 'cap']
+    rep_vars = ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
     # report ctor
     rep = Report(model, res_dir, rep_vars)  # Report ctor
@@ -106,16 +116,24 @@ if __name__ == '__main__':
     chk_sol(results)  # check the status of the solution
 
     cost = f'{pe.value(model.cost):.3e}'
-    invT = f'{pe.value(model.invT):.3e}'
-    oil_imp = f'{pe.value(model.oilImp):.3e}'
-    carb = f'{pe.value(model.carb):.3e}'  # amount of carbon emission
-    carbC = f'{pe.value(model.carbC):.3e}'  # discounted cost of carbon emission
+    carbBal = f'{pe.value(model.carbBal):.3e}'
+    water = f'{pe.value(model.water):.3e}'  # total water used
+    greenF = f'{pe.value(model.greenFTot):.3e}'  # total green fuel
+    carb = f'{pe.value(model.carb):.3e}'  # total amount of carbon emission
+    carbCap = f'{pe.value(model.carbCap):.3e}'  # total carbon captured
+    # invT = f'{pe.value(model.invT):.3e}'
+    # oil_imp = f'{pe.value(model.oilImp):.3e}'
+    # carbC = f'{pe.value(model.carbC):.3e}'  # discounted cost of carbon emission
     print('\nValues of outcome variables -----------------------------------------------------------------------------')
-    print(f'Total cost  = {cost}')
-    print(f'Total investments  = {invT}')
-    print(f'Imported crude oil = {oil_imp}')
+    print(f'Cost (total)  = {cost}')
+    print(f'Carbon balance (emission - capture) = {carbBal}')
+    print(f'Total water used = {water}')
+    print(f'Green fuel = {greenF}')
     print(f'Carbon emission = {carb}')
-    print(f'Carbon emission (discounted) cost = {carbC}')
+    print(f'Carbon captured = {carbCap}')
+    # print(f'Total investments  = {invT}')
+    # print(f'Imported crude oil = {oil_imp}')
+    # print(f'Carbon emission (discounted) cost = {carbC}')
 
     rep.var_vals()  # extract from the solution values of the requessted variables
     rep.summary()   # store the extracted values in a df
