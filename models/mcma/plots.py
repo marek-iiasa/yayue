@@ -27,12 +27,7 @@ class Plots:
         self.cr_col = []   # col-names containing criteria achievements values
         self.n_sol = len(df.index)  # number of solutions defined in the df
         self.seq = df[self.cols[0]]
-        cmap = cfg.get('colorMap', 'jet')
-        if isinstance(cmap, list):
-            self.cmap = ListedColormap(cmap)  # takes every item, if no more specified
-        else:
-            self.cmap = cmap
-
+        self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
 
         if self.show_plot is None:  # just in case the option is missed in cfg
@@ -56,7 +51,8 @@ class Plots:
                     i_cat += 1
                     i_memb = 0
 
-        self.main_crit_idx = self.cfg.get('mainCritIdx', 0)
+        # Which criterion is considered as "main" for the parallel coordinates plot
+        self.main_crit_idx = 0
         self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
 
     def plot2D(self):
@@ -66,8 +62,8 @@ class Plots:
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
-        # fig_heig = 3.5 * n_percol
-        fig_heig = 4.
+        fig_heig = 4. * n_percol
+        # fig_heig = 4.
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
         fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
@@ -89,7 +85,7 @@ class Plots:
                 ax[i_plot].set_xlabel(name1)
                 ax[i_plot].set_ylabel(name2)
                 ax[i_plot].set_title(name1 + ' vs ' + name2)
-                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.main_crit,
+                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
                                    cmap=self.cmap, s=m_size)
                 # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
                 for (i, seq) in enumerate(self.seq):
@@ -107,6 +103,7 @@ class Plots:
                 i_plot += 1
 
         f_name = f'{self.dir_name}p2D.png'
+        plt.tight_layout()
         fig1.savefig(f_name)
         # plt.show()
         print(f'2D plot of Pareto solutions stored in file: {f_name}')
@@ -135,7 +132,7 @@ class Plots:
         # noinspection PyArgumentList
         # warning suppressed here (complains on unfilled params x and y)
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
-                   label='Criteria Achievements', c=self.main_crit, cmap=self.cmap, s=50)
+                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
         # ax.view_init(elev=3, azim=-135, roll=0)
         ax.view_init(elev=15, azim=45, roll=0)

@@ -54,10 +54,3 @@ crit_def: [ [q1, max, x1], [q2, max, x2], [q3, max, x3] ]
 # set to either True or False to show/no-show plots
 # showPlot: True
 
-# Index of the criterion which should be considered main for the parallel coordinates plot
-mainCritIdx: 0
-
-# Name of the colormap for parallel coordinate plot
-# Can be either string (colormap name) or list of strings (names of a colors)
-# colorMap: viridis
-colorMap: ['black', 'green', 'blue', 'red', 'orange']
