@@ -1,9 +1,10 @@
 # import sys      # needed from stdout
 # import os
-# import numpy as np
+import numpy as np
 # import pandas as pd
 # import math
 import matplotlib.pyplot as plt
+from matplotlib import mlab
 
 from cube import *
 from plots import *
@@ -65,6 +66,7 @@ class ParProg:     # progress in Pareto set representation
 
         summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
         self.summary_plot(summary_df)
+        self.progress_plot()
 
     def summary_plot(self, summary_df):
         fig = plt.figure(figsize=(14, 5))
@@ -106,6 +108,33 @@ class ParProg:     # progress in Pareto set representation
         plt.tight_layout()
         plt.pause(0.001) # Show the figure but not stop the script
 
+    def progress_plot(self):
+        fig = plt.figure(figsize=(7, 3 * len(self.neigh)))
+        fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
+
+        ax = None
+        for step in self.neigh:
+            ax = fig.add_subplot(len(self.neigh), 1, step + 1)
+            neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
+                                    for cube_id in self.neigh[step][-1]]
+
+            ax.hist(neighbour_cube_sizes,
+                    bins=50,
+                    range=(0, 100),
+                    density=True)
+
+            kde = mlab.GaussianKDE(neighbour_cube_sizes)
+            x = np.linspace(0, 100, 200)
+            y = kde(x)
+            ax.plot(x, y, color='k', linewidth=4)
+
+            ax.set_xticks(range(0, 110, 10))
+            ax.set_xlabel('Size of the cube')
+            ax.set_ylabel('Probability Density')
+            ax.set_title(f'Stage {step}')
+
+        plt.tight_layout()
+        plt.pause(0.001)
 
 
 
