@@ -27,7 +27,8 @@ class Crit:     # definition and attributes of a single criterion
         else:
             raise Exception(f'Unknown criterion type "{typ}" for criterion "{cr_name}".')
         self.sc_ach = 100.   # U/N scale of achievements [0, sc_ach]
-        self.minRange = 0.01  # min U/N range
+        # self.minRange = 0.01  # min U/N range
+        self.minRange = 0.001  # min U/N range
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None
@@ -53,6 +54,7 @@ class Crit:     # definition and attributes of a single criterion
         # print(f'\tval2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
+    # noinspection SpellCheckingInspection
     def ach2val(self, achiv):   # return criterion value corresponding to CAF = achiv
         rng = abs(self.utopia - self.nadir)
         rng_fr = rng * achiv / self.sc_ach
@@ -76,7 +78,7 @@ class Crit:     # definition and attributes of a single criterion
         old_val = self.nadir
 
         # stage 2: first appr. of nadir, regularized selfish opt. for each crit. in a row
-        # tigthen (move closer to U) "too bad" value from selfish opt. in stage 1
+        # tighten (move closer to U) "too bad" value from selfish opt. in stage 1
         if stage == 2:
             delta = 2. * minDiff * max(abs(self.utopia), abs(val))
             if abs(self.utopia - val) < delta:
@@ -124,7 +126,7 @@ class Crit:     # definition and attributes of a single criterion
                 return True
         return False
 
-    def chkAR(self, pref_item, n_line):   # check correctnes of A and R values
+    def chkAR(self, pref_item, n_line):   # check correctness of A and R values
         asp = pref_item.asp
         res = pref_item.res
         # print(f'chkAR(): crit "{self.name}" ({self.attr}), U {self.utopia}, {asp = }, {res = }, N {self.nadir}')

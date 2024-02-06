@@ -79,10 +79,12 @@ def bnd_cap(m, t, p):
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
-    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.1')  # multiple inputs/outputs to/from technologies
+    m: AbstractModel = pe.AbstractModel(name='pipa 1.2.3')  # PTX added, inputs/outputs to/from technologies
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
-    m.T = pe.Set()     # technologies
+    m.T = pe.Set()     # all technologies
+    m.GT = pe.Set()    # subset of GreenFuel technologies (BTL + PTX)
+    m.XT = pe.Set()    # subset of PTX technologies (PTX) currently the only to capture CO2
     m.periods = pe.Param(domain=pe.PositiveIntegers, default=3)   # number of planning periods
     # noinspection PyTypeChecker
     # warning: pe.Param used instead of expected int (but a cast to the latter cannot be used in Abstract model)
@@ -103,14 +105,19 @@ def mk_sms():
 
     # outcome variables
     m.cost = pe.Var()   # total cost, single-crit objective for the regret-function app.
-    m.carb = pe.Var()   # total carbon emission
-    m.oilImp = pe.Var()   # total amount of imported oil
     m.carbC = pe.Var()   # cost of the total carbon emission
+    m.carb = pe.Var()   # total carbon emission
+    m.carbCap = pe.Var()   # total carbon captured
+    m.carbBal = pe.Var()   # total carbon (emission - captured)
+    m.oilImp = pe.Var()   # total amount of imported oil
+    m.water = pe.Var()   # total water used
+    m.greenFTot = pe.Var()   # total green fuel produced
     # auxiliary variables, trajectories of amounts
     m.inp = pe.Var(m.T, m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs of each technology
     m.inpT = pe.Var(m.P, m.J, within=pe.NonNegativeReals)   # amounts of inputs by all technologies
     m.out = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # amounts of outputs
     m.carbE = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # carbon emissions (caused by act covering demand[p]
+    m.greenF = pe.Var(m.P, m.K, within=pe.NonNegativeReals)  # green fuel produced
     # auxiliary variables, trajectories of costs
     m.inpC = pe.Var(m.T, m.P, within=pe.NonNegativeReals)   # cost of all inputs
     # m.outC = pe.Var(m.T, m.P, m.K, within=pe.NonNegativeReals)   # value of outputs (undefined, not used)
@@ -133,12 +140,20 @@ def mk_sms():
 
     # objectives: three defined for MCA, only one activated here at a time
     # TODO: clarify error (reported in model display): ERROR: evaluating object as numeric value: goal
+    '''
     @m.Objective(sense=pe.minimize)
-    def goal(mx):
+    def goalmin(mx):
         # return mx.cost      # total cost
-        return mx.invT      # total investments
+        # return mx.carbBal    # total carbon emission
+        return mx.water   # total water used
         # return mx.carb    # total carbon emission
+        # return mx.invT      # total investments
         # return mx.oilImp  # total oil import  (same/similar solution as carb min.)
+    '''
+    @m.Objective(sense=pe.maximize)
+    def goalmax(mx):
+        return mx.greenFTot   # total green fuel produced
+        # return mx.carbCap   # total carbon captured
 
     # parameters  (declared in the sequence corresponding to their use in SMS)
     m.discr = pe.Param(within=pe.NonNegativeReals, default=0.04)   # discount rate (param used in calculating m.dis)
@@ -150,6 +165,8 @@ def mk_sms():
     m.hcap = pe.Param(m.TH, within=pe.NonNegativeReals, default=0.0)  # capacities installed in historical periods
     m.cuf = pe.Param(m.T, within=pe.NonNegativeReals, default=0.8)         # capacity utilization factor
     m.ef = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)       # unit carbon emission
+    m.ccf = pe.Param(m.XT, within=pe.NonNegativeReals, default=0.0)     # unit carbon capture
+    m.watf = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)     # unit water use
     m.inpP = pe.Param(m.J, within=pe.NonNegativeReals, mutable=True, default=1.0)   # unit cost of input
     m.invP = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)     # unit inv cost
     m.omcP = pe.Param(m.T, within=pe.NonNegativeReals, default=1.0)     # unit OMC cost (excl. inputs)
@@ -159,8 +176,35 @@ def mk_sms():
     @m.Constraint(m.P, m.K)  # output from activities of all techn. to cover demand at each period for each output
     def demC(mx, p, k):
         # exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vp_lst(mx, p)) for t in mx.T)  # output from activities
-        exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p)) for t in mx.T)  # output from activ.
+        # exp = sum(mx.outU[t, k] * sum(mx.act[t, p, v] for v in vtp_lst(mx, t, p)) for t in mx.T)  # output from activ.
+        exp = sum(mx.outU[t, k] * mx.actvS[t, p] for t in mx.T)  # output from activ.
         return mx.dem[p, k], exp, None
+
+    @m.Constraint(m.P, m.K)  # green fuel trajectory (output from XT technologies)
+    def greenFC(mx, p, k):
+        exp = sum(mx.outU[t, k] * mx.actvS[t, p] for t in mx.GT)  # green fuel from activ. of GT technology
+        return mx.greenF[p, k] == exp
+
+    @m.Constraint(m.P, m.K)  # green fuel max (needed for greenFTot selfish optimization)
+    def greenFmxC(mx, p, k):
+        return 0., mx.greenF[p, k], mx.dem[p, k]
+
+    @m.Constraint()  # total green fuel
+    def greenFTC(mx):
+        exp = sum(sum(mx.greenF[p, k] for p in mx.P) for k in mx.K)  # sum of periods and fuel types
+        return mx.greenFTot == exp
+
+    @m.Constraint()  # total carbon captured (only by XT technologies)
+    def carbCapC(mx):
+        return mx.carbCap == sum(mx.ccf[t] * sum(mx.actvS[t, p] for p in mx.P) for t in mx.XT)
+
+    @m.Constraint()  # total carbon balance (emission - captured)
+    def carbBalC(mx):
+        return mx.carbBal == mx.carb - mx.carbCap
+
+    @m.Constraint()  # total water used
+    def waterC(mx):
+        return mx.water == sum(mx.watf[t] * sum(mx.actvS[t, p] for p in mx.P) for t in mx.T)
 
     @m.Constraint(m.TPV)  # activity cannot exceed the corresponding (cuf * capacity)
     def actC(mx, t, p, v):

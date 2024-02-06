@@ -2,7 +2,7 @@ import math
 from operator import itemgetter  # , attrgetter
 
 # todo: add to ParSol:
-#   prune marker (to close to another solution) to skip (almost) duplictated solutions during cube generation
+#   prune marker (to close to another solution) to skip (almost) duplicated solutions during cube generation
 #   improve info on CAF (global, in [U, N], vs itr in [A, R]
 
 
@@ -77,25 +77,30 @@ class Cubes:     # collection of aCubes
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
         self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
         self.min_size = 5.      # cube's min. LInf size for including the cube to analysis
-        self.all_cubes = {}     # all generated cubes: key = id
+        self.all_cubes = {}     # all generated cubes: keys defined by cube's id
         self.cand = []          # cubes that are candidates for next iteration
         self.small = 0      # number of small ignored
         self.filled = 0     # number of non-empty ignored
 
-    def add(self, cube):    # add a new cube, if it large enough and non-empty
+    def add(self, cube):    # add a new cube, if it is large enough and non-empty
         if cube.size >= self.min_size:
             if self.is_empty(cube):
                 cube.id = len(self.all_cubes)
                 self.all_cubes.update({cube.id: cube})
                 self.cand.append((cube.id, cube.size))
+                # todo: add to the list of cubes defining neighbors
+                self.parRep.neigh_lst(cube.id, True)  # add=Trye means add to the list
+                print(f'cube {cube.id} added to the list of cubes defining neighbors.')
             else:
                 self.filled += 1
         else:
             self.small += 1
 
     def is_empty(self, cube):    # return True if no solution is inside the cube
+        if cube.empty is False:
+            return False
         for s in self.sols:     # check, if any solution is in the c-cube
-            if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:
+            if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:  # skip solutions defining the cube
                 continue
             if self.parRep.is_inside(s, cube.s1, cube.s2):
                 # print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
@@ -111,7 +116,7 @@ class Cubes:     # collection of aCubes
     def cand_ok(self, c_id):  # check, if c can be used
         c = self.get(c_id)
         assert not c.used, f'candidate cube[{c_id}] was already used.'
-        if self.is_empty(c):
+        if self.is_empty(c):    # check, if after the cube creation a solution was insterted in the cube
             return True    # the cube can be used
         else:
             return False    # the cube cannot be used
@@ -228,7 +233,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             self.sizeL2 += dist * dist  # L2 distance
             self.sizeLinf = max(dist, self.sizeLinf)  # Tchebyshev (Linf) distance
             self.edges.append(dist)
-            if dist < self.min_edge:   # difference between achivements too small --> cube dimension degenered
+            if dist < self.min_edge:   # difference between achievements too small --> cube dimension degenerated
                 self.is_degen = True    # the cube degenerated
                 self.degen.append(True)  # current dimension degenerated
             else:
@@ -239,7 +244,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         # self.size = self.sizeL2     # cube size defined by L2
         self.size = self.sizeLinf   # cube size defined by Linf
 
-    # define A/R values for spliting the cuboid (i.e., to find a new solution between s1 and s2)
+    # define A/R values for splitting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
         for (i, cr) in enumerate(self.mc.cr):
             v1 = self.s1.vals[i]
@@ -293,7 +298,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 # oldR = cr.val
                 achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
                 oldAch = cr.val2ach(achiv)
-                expAch = 5.    # A/R expansion-span (in the achivements scale, i.e., [0, 100])
+                expAch = 5.    # A/R expansion-span (in the achievements scale, i.e., [0, 100])
                 if achiv < 50.:     # closer to Nadir, move A
                     new_ach = achiv + expAch
                     mark = 'A'

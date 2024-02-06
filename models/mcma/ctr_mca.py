@@ -12,13 +12,13 @@ from par_repr import ParRep
 
 
 class CtrMca:
-    def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto-repres. mode
+    def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
         self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis
         self.f_crit = self.ana_dir + 'config.txt'   # file with criteria specification
         self.f_payoff = self.ana_dir + 'payoff.txt'     # file with payoff values
         self.f_pref = self.ana_dir + 'pref.txt'     # file with defined preferences' set
-        self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6}
+        self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
         self.cur_stage = 0  # initialization
         self.cur_itr_id = None  # id of the current iteration
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
@@ -109,7 +109,7 @@ class CtrMca:
                 n_def = 0
                 for n_line, line in enumerate(reader):
                     line = line.rstrip("\n")
-                    # print(f'line {line}')
+                    print(f'line {line}') # noqa
                     words = line.split()
                     n_words = len(words)
                     # assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
@@ -200,7 +200,7 @@ class CtrMca:
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
             else:   # move to the 2nd stage of nadir appr.
                 print('Finished 2nd nadir approximation.')
-                print('Aproximation of PayOff table ready. Preferences for neutral solution set automatically.')
+                print('Approximation of PayOff table ready. Preferences for neutral solution set automatically.')
                 self.cur_stage = 4
                 self.cur_cr = None     # should no longer be used
             return self.cur_stage
@@ -356,7 +356,7 @@ class CtrMca:
         for n_line, line in enumerate(lines):
             # print(f'processing {n_line}-th line: {line}')
             if line[0] != '#':  # process the line
-                words = line.split()    # number of woords check above
+                words = line.split()    # number of words check above
                 c_ind = self.cr_ind(words[0], False)
                 if c_ind < 0:
                     raise Exception(f'unknown crit. name "{words[0]}" in {n_line}: "{line}".')

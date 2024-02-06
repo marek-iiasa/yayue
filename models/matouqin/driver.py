@@ -61,7 +61,8 @@ def driver():
 
     # reporting results
 
-    rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income', 'invCost', 'OMC', 'overCost', 'buyCost', 'balCost']
+    rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income', 'invCost', 'OMC', 'overCost', 'buyCost', 'balCost',
+                'dOut', 'sIn', 'ePrs', 'sOut', 'eIn', 'eSurplus', 'eBought', 'hIn', 'hOut', 'hVol', 'hInc', 'cOut']
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
 
     rep = Report(model, res_dir, rep_vars)      # report results
@@ -82,26 +83,26 @@ def driver():
 
     print('\nValues of decision variables ------------------------------------------------------------------------')
     print(f'Supply = {pe.value(model.supply)} MW')
-    # for i in m.sNum_index:
-    #     print(f'sNum[{i}] = {pe.value(m.sNum[i])}')
-    # for i in m.sCap_index:
+    # for i in model.sNum_index:
+    #    print(f'sNum[{i}] = {pe.value(m.sNum[i])}')
+    # for i in model.sCap_index:
     #    print(f'sCap[{i}] = {pe.value(m.sCap[i])}')
     model.sNum.display()
     model.sCap.display()
     # print(f'Numbers of storage devices = {pe.value(m.sNum)}')
 
-    print('\nEnergy flows ------------------------------------------------------------------------')
-    model.supply.display()
-    model.eSurplus.display()
-    model.eBought.display()
-    model.dOut.display()
-    model.eIn.display()
-    model.hIn.display()
-    model.hOut.display()
-    model.ePrs.display()
-    model.mxIn.display()
-    model.hVol.display()
-    model.cOut.display()
+    # print('\nEnergy flows ------------------------------------------------------------------------')
+    # model.supply.display()
+    # model.eSurplus.display()
+    # model.eBought.display()
+    # model.dOut.display()
+    # model.eIn.display()
+    # model.hIn.display()
+    # model.hOut.display()
+    # model.ePrs.display()
+    # model.mxIn.display()
+    # model.hVol.display()
+    # model.cOut.display()
 
     print('\nValues of outcome variables -------------------------------------------------------------------------')
     print(f'Total revenue  = {pe.value(model.revenue)} thousands RMB')
