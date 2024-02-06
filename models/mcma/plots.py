@@ -4,7 +4,10 @@
 import pandas as pd
 from scipy.special import comb    # for computing number of combinations
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
+from matplotlib.widgets import RangeSlider
+from matplotlib.colors import ListedColormap, Normalize
+import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 # import mplcursors
 # from crit import Crit
@@ -48,6 +51,10 @@ class Plots:
                     i_cat += 1
                     i_memb = 0
 
+        # Which criterion is considered as "main" for the parallel coordinates plot
+        self.main_crit_idx = 0
+        self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
+
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
         n_perrow = 3
@@ -55,8 +62,8 @@ class Plots:
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
-        # fig_heig = 3.5 * n_percol
-        fig_heig = 4.
+        fig_heig = 4. * n_percol
+        # fig_heig = 4.
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
         fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
@@ -96,6 +103,7 @@ class Plots:
                 i_plot += 1
 
         f_name = f'{self.dir_name}p2D.png'
+        plt.tight_layout()
         fig1.savefig(f_name)
         # plt.show()
         print(f'2D plot of Pareto solutions stored in file: {f_name}')
@@ -139,6 +147,62 @@ class Plots:
         # f_name = f'{self.cfg.get("resDir")}p3D.png'
         fig2.savefig(f_name)
         print(f'3D plot of Pareto solutions stored in file: {f_name}')
+        # if self.show_plot:
+        #     plt.show()
+        # else:
+        #     print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+
+    def plot_parallel(self):
+        fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
+        fig3.canvas.manager.set_window_title(
+            f'Criteria achievements for {self.n_sol} solutions.')
+
+        ax.set_xlabel('Criteria names')
+        ax.set_ylabel('Criterion Achievement Function')
+
+        # Colors configuration
+        cmap = self.cmap
+        scaler = Normalize(vmin=0, vmax=100)
+        colors = cmap(scaler(self.main_crit))
+
+        # Draw vertical parallel lines
+        for i in range(self.n_crit):
+            ax.axvline(i, color='k', linewidth=2)
+        ax.set_xticks(range(self.n_crit), labels=self.cr_name)
+
+        # Draw all solutions
+        lines = []
+        for i, row in self.df[self.cr_col].iterrows():
+            line, = ax.plot(row, linewidth=2, marker='o', markersize=10, color=colors[i])
+            lines.append(line)
+
+        # Add colorbar
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes('left', size='5%', pad=0.5)
+        cbar = plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
+        cax.yaxis.set_ticks_position('left')
+
+        # Save fig before adding the slider
+        f_name = f'{self.dir_name}pparallel.png'
+        fig3.savefig(f_name)
+
+        # Add RangeSlider
+        slider_cax = divider.append_axes('left', size='5%', pad=0.5)
+        slider = RangeSlider(slider_cax, label="Range of values", valmin=0, valmax=100,
+                             orientation='vertical', valinit=(0, 100), valstep=0.1,
+                             valfmt='%0.1f', handle_style={'size': 15})
+
+        def update_slider(val):
+            min_val, max_val = val
+
+            for line in lines:
+                if min_val <= line.get_ydata()[self.main_crit_idx] <= max_val:
+                    line.set_alpha(1)
+                else:
+                    line.set_alpha(0.1)
+
+        slider.on_changed(update_slider)
+
         if self.show_plot:
             plt.show()
         else:
