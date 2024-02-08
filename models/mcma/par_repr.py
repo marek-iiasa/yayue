@@ -109,12 +109,14 @@ class ParProg:     # progress in Pareto set representation
         plt.pause(0.001) # Show the figure but not stop the script
 
     def progress_plot(self):
-        fig = plt.figure(figsize=(7, 3 * len(self.neigh)))
+        ncols = 2
+        nrows = len(self.neigh) // 2 + 1
+        fig = plt.figure(figsize=(7 * ncols, 3 * nrows))
         fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
 
         ax = None
         for step in self.neigh:
-            ax = fig.add_subplot(len(self.neigh), 1, step + 1)
+            ax = fig.add_subplot(nrows, ncols, step + 1)
             neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
                                     for cube_id in self.neigh[step][-1]]
 
