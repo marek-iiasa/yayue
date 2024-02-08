@@ -1,8 +1,11 @@
 # import sys      # needed from stdout
 # import os
-# import numpy as np
+import numpy as np
 # import pandas as pd
 # import math
+import matplotlib.pyplot as plt
+from matplotlib import mlab
+
 from cube import *
 from plots import *
 
@@ -43,11 +46,13 @@ class ParProg:     # progress in Pareto set representation
         print(f'\nOverall during {n_itrs} itrs {len(self.parRep.sols)} Pareto sols. were computed, '
               f'{len(cubes.all_cubes)} hyper-cubes were generated.')
         print(f'\nSummary data of {len(self.neigh)} computation stages.')
+        summary_list = []
         for step, info in self.neigh.items():
             itr = info[0]
             n_sol = info[1]
             n_cubes = info[2]
             mx_cube = info[3]
+            summary_list.append((step, itr, self.steps[step], n_sol, n_cubes, mx_cube))
             # todo: there is a bug in reporting (when all cubes are processed) number of cubes remained
             print(f'Stage {step} (stage_UpBnd {self.steps[step]}, mxCubeSize {mx_cube}): during {itr} itrs '
                   f'{n_sol} sols. computed, {n_cubes} remained for processing.')
@@ -58,6 +63,81 @@ class ParProg:     # progress in Pareto set representation
                 acube = cubes.get(cube_id)
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
+
+        summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
+        self.summary_plot(summary_df)
+        self.progress_plot()
+
+    def summary_plot(self, summary_df):
+        fig = plt.figure(figsize=(14, 5))
+        fig.canvas.manager.set_window_title(f'Summary data of {len(self.neigh)} computation stages')
+
+        plot_kw = dict(marker='o', markersize=10, linestyle='--', linewidth=3)
+        ax = fig.add_subplot(1, 2, 1)
+        ax.plot(summary_df['step'], summary_df['itr'],
+                color='tab:blue',
+                label='Number of iterations',
+                **plot_kw)
+
+        ax.plot(summary_df['step'], summary_df['n_sol'],
+                color='tab:orange',
+                label='Number of solutions found',
+                **plot_kw)
+
+        ax.set_xticks(summary_df['step'])
+        ax.set_ylabel('Number of iterations/solutions')
+        ax.set_xlabel('Computation stage')
+        ax.legend(loc='upper left')
+
+        ax = fig.add_subplot(1, 2, 2)
+        ax.plot(summary_df['step'], summary_df['upBnd'],
+                color='tab:red',
+                label='Stage cube size upper bound',
+                **plot_kw)
+
+        ax.plot(summary_df['step'], summary_df['mx_cube'],
+                color='tab:green',
+                label='Max cube size',
+                **plot_kw)
+
+        ax.set_xticks(summary_df['step'])
+        ax.set_ylabel('Cube size')
+        ax.set_xlabel('Computation stage')
+        ax.legend(loc='upper right')
+
+        plt.tight_layout()
+        plt.pause(0.001) # Show the figure but not stop the script
+
+    def progress_plot(self):
+        ncols = 2
+        nrows = len(self.neigh) // 2 + 1
+        fig = plt.figure(figsize=(7 * ncols, 3 * nrows))
+        fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
+
+        ax = None
+        for step in self.neigh:
+            ax = fig.add_subplot(nrows, ncols, step + 1)
+            neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
+                                    for cube_id in self.neigh[step][-1]]
+
+            ax.hist(neighbour_cube_sizes,
+                    bins=50,
+                    range=(0, 100),
+                    density=True)
+
+            kde = mlab.GaussianKDE(neighbour_cube_sizes)
+            x = np.linspace(0, 100, 200)
+            y = kde(x)
+            ax.plot(x, y, color='k', linewidth=4)
+
+            ax.set_xticks(range(0, 110, 10))
+            ax.set_xlabel('Size of the cube')
+            ax.set_ylabel('Probability Density')
+            ax.set_title(f'Stage {step}')
+
+        plt.tight_layout()
+        plt.pause(0.001)
+
 
 
 class ParRep:     # representation of Pareto set
