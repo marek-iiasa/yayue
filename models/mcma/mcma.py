@@ -48,12 +48,11 @@ def read_args():
     python mcma.py -h
     python mcma.py --usr marek
     """
-    # python mcma.py --usr marek
 
     parser = argparse.ArgumentParser(
         description=descr, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    user = "--usr : string\n    User id, also defines working directory."
+    user = "--usr : string\n    User_id, also defines working directory."
     parser.add_argument("--usr", help=user)
     # parser.add_argument("-s", "--save", action="store_true")  # on/off flag
 
@@ -70,7 +69,7 @@ if __name__ == '__main__':
     # process cmd-line args (currently only usr-name)
     args = read_args()
     usr = args.usr or 'tst_usr'
-    print(f'User id: {usr}')
+    print(f'User_id: {usr}')
     # assert usr == 'Jasio', f'just a test stop'
 
     # process the run configuration options and configure the working space
