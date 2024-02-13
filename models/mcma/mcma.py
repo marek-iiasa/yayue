@@ -17,6 +17,7 @@
 # import pandas as pd
 # import pickle     # pickle does not process relations defined with decorations (without decorations processed ok)
 # import dill  # stores and retrieves pyomo models into/from binary file
+import argparse
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
@@ -38,12 +39,40 @@ from cfg import *  # configuration (dir/file location, parameter values, etc
 # from tsjg1 import jg1 as jg1  # sand-box tiny jg1 model
 
 
+def read_args():
+    descr = """
+    Computing uniformly distributed Pareto front for specified criteria in the provided model.
+
+    Examples of usage:
+    python mcma.py
+    python mcma.py -h
+    python mcma.py --usr marek
+    """
+    # python mcma.py --usr marek
+
+    parser = argparse.ArgumentParser(
+        description=descr, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    user = "--usr : string\n    User id, also defines working directory."
+    parser.add_argument("--usr", help=user)
+    # parser.add_argument("-s", "--save", action="store_true")  # on/off flag
+
+    # parse cli
+    cl_args = parser.parse_args()
+    return cl_args
+
+
 # noinspection SpellCheckingInspection
 if __name__ == '__main__':
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    # todo: enable the cli option for _usr specs
+    # process cmd-line args (currently only usr-name)
+    args = read_args()
+    usr = args.usr or 'tst_usr'
+    print(f'User id: {usr}')
+    # assert usr == 'Jasio', f'just a test stop'
+
     # process the run configuration options and configure the working space
     ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
     config = Config(ana_def)    # process yaml config. file
