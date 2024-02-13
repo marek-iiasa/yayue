@@ -64,8 +64,9 @@ class ParProg:     # progress in Pareto set representation
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
 
-        summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
-        self.summary_plot(summary_df)
+        # todo: both below plots hang pyCharm (pro & community versions), each runs ok, if the other is commented
+        # summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
+        # self.summary_plot(summary_df)
         self.progress_plot()
 
     def summary_plot(self, summary_df):
@@ -106,7 +107,7 @@ class ParProg:     # progress in Pareto set representation
         ax.legend(loc='upper right')
 
         plt.tight_layout()
-        plt.pause(0.001) # Show the figure but not stop the script
+        plt.pause(0.001)  # Show the figure but not stop the script
 
     def progress_plot(self):
         ncols = 2
@@ -114,7 +115,7 @@ class ParProg:     # progress in Pareto set representation
         fig = plt.figure(figsize=(7 * ncols, 3 * nrows))
         fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
 
-        ax = None
+        # ax = None
         for step in self.neigh:
             ax = fig.add_subplot(nrows, ncols, step + 1)
             neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
@@ -137,7 +138,6 @@ class ParProg:     # progress in Pareto set representation
 
         plt.tight_layout()
         plt.pause(0.001)
-
 
 
 class ParRep:     # representation of Pareto set
@@ -392,7 +392,7 @@ class ParRep:     # representation of Pareto set
         plots = Plots(self.cfg, self.df_sol, self.mc.cr)    # 3D plot
         plots.plot2D()    # 2D plot
         plots.plot3D()    # 3D plot
-        plots.plot_parallel() # Parallel coordinates plot
+        plots.plot_parallel()  # Parallel coordinates plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
