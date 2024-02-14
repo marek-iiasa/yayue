@@ -59,18 +59,18 @@ class ParProg:     # progress in Pareto set representation
             '''
             # uncomment only when needed (the below produces a lot of printouts)
             cubes_id = info[4]
-            for cube_id in cubes_id:
+            for cube_id in cubes_id:q
                 acube = cubes.get(cube_id)
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
 
         # todo: both below plots hang pyCharm (pro & community versions), each runs ok, if the other is commented
-        # summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
-        # self.summary_plot(summary_df)
+        summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
+        self.summary_plot(summary_df)
         self.progress_plot()
 
     def summary_plot(self, summary_df):
-        fig = plt.figure(figsize=(14, 5))
+        fig = plt.figure(figsize=(10, 5))
         fig.canvas.manager.set_window_title(f'Summary data of {len(self.neigh)} computation stages')
 
         plot_kw = dict(marker='o', markersize=10, linestyle='--', linewidth=3)
@@ -107,12 +107,11 @@ class ParProg:     # progress in Pareto set representation
         ax.legend(loc='upper right')
 
         plt.tight_layout()
-        plt.pause(0.001)  # Show the figure but not stop the script
 
     def progress_plot(self):
         ncols = 2
         nrows = len(self.neigh) // 2 + 1
-        fig = plt.figure(figsize=(7 * ncols, 3 * nrows))
+        fig = plt.figure(figsize=(5 * ncols, 2 * nrows))
         fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
 
         # ax = None
@@ -137,7 +136,6 @@ class ParProg:     # progress in Pareto set representation
             ax.set_title(f'Stage {step}')
 
         plt.tight_layout()
-        plt.pause(0.001)
 
 
 class ParRep:     # representation of Pareto set
