@@ -148,7 +148,7 @@ class ParProg:     # progress in Pareto set representation
                     range=(0, 50),  # was 100
                     density=True)
 
-            # Check if list has at least two different values so we can calculate KDE
+            # Check if list has at least two different values, so we can calculate KDE
             if neighbour_cube_sizes[0] != neighbour_cube_sizes[-1]:
                 kde = mlab.GaussianKDE(neighbour_cube_sizes)
                 x = np.linspace(0, 50, 200)
