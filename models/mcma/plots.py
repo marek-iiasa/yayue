@@ -74,7 +74,7 @@ class Plots:
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         # crs = []
-        m_size = 50  # marker size
+        m_size = 30  # marker size
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
             for i_second in range(i_first + 1, self.n_crit):
@@ -88,11 +88,13 @@ class Plots:
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
                                    cmap=self.cmap, s=m_size)
                 # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
+                '''
                 for (i, seq) in enumerate(self.seq):
                     ax[i_plot].text(self.df[self.cr_col[i_first]][i] + 2, self.df[self.cr_col[i_second]][i] + 2,
                                     f'{seq}')
                     if i > 20:
                         break
+                '''
                 '''
                 # mplcursors don't work with subplots
                 crs.append(mplcursors.cursor(ax[i_plot], hover=True))  # mplcursors for interactive labels

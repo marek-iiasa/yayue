@@ -3,7 +3,7 @@
 import numpy as np
 # import pandas as pd
 # import math
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from matplotlib import mlab
 
 from cube import *
@@ -20,14 +20,16 @@ class ParProg:     # progress in Pareto set representation
         self.ini_steps()    # initialize steps
 
     def ini_steps(self):  # steps of progress
-        self.steps = [50, 40, 30, 20, 10, 7, 5, 3, 2, 1]
+        self.steps = [50, 40, 30, 20, 10, 7, 6, 5, 3, 2, 1]
 
     def update(self, cube_size):     # store info of pairs of neighbors waiting for processing
         if cube_size > self.steps[self.cur_step]:
             return
         itr = self.parRep.cur_itr
         n_sol = len(self.parRep.sols)
-        pairs = self.parRep.neigh.copy()
+        # todo: cube[2] is not empty!, make sure to use cubes.cand[]: it should not include non-empty cubes
+        # pairs = self.parRep.neigh.copy()
+        pairs = self.parRep.cubes.cand.copy()
         print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbors remain for processing.')
         if cube_size > 0.:
             self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
@@ -56,10 +58,12 @@ class ParProg:     # progress in Pareto set representation
             # todo: there is a bug in reporting (when all cubes are processed) number of cubes remained
             print(f'Stage {step} (stage_UpBnd {self.steps[step]}, mxCubeSize {mx_cube}): during {itr} itrs '
                   f'{n_sol} sols. computed, {n_cubes} remained for processing.')
-            '''
             # uncomment only when needed (the below produces a lot of printouts)
+            '''
+            if step < 6:
+                continue
             cubes_id = info[4]
-            for cube_id in cubes_id:q
+            for cube_id in cubes_id:
                 acube = cubes.get(cube_id)
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
@@ -82,7 +86,7 @@ class ParProg:     # progress in Pareto set representation
 
         ax.plot(summary_df['step'], summary_df['n_sol'],
                 color='tab:orange',
-                label='Number of solutions found',
+                label='Number of distinct solutions',
                 **plot_kw)
 
         ax.set_xticks(summary_df['step'])
@@ -93,12 +97,12 @@ class ParProg:     # progress in Pareto set representation
         ax = fig.add_subplot(1, 2, 2)
         ax.plot(summary_df['step'], summary_df['upBnd'],
                 color='tab:red',
-                label='Stage cube size upper bound',
+                label='Cube size upper bound',
                 **plot_kw)
 
         ax.plot(summary_df['step'], summary_df['mx_cube'],
                 color='tab:green',
-                label='Max cube size',
+                label='Actual max cube-size',
                 **plot_kw)
 
         ax.set_xticks(summary_df['step'])
@@ -109,29 +113,48 @@ class ParProg:     # progress in Pareto set representation
         plt.tight_layout()
 
     def progress_plot(self):
+        mx_hight = 9.0
         ncols = 2
-        nrows = len(self.neigh) // 2 + 1
-        fig = plt.figure(figsize=(5 * ncols, 2 * nrows))
-        fig.canvas.manager.set_window_title(f'Distance between neighbour points distribution.')
+        n_plots = len(self.neigh)
+        if len(self.neigh[self.cur_step - 1][-1]) == 0:
+            n_plots -= 1    # plot for last stage not generated
+        nrows = n_plots // 2 + n_plots % 2
+        # print(f'{nrows = } {n_plots = } rest {n_plots % 2}--------------------------')
+        fig = plt.figure(figsize=(5 * ncols, min(mx_hight, 2.8 * nrows)))
+        fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
+        fig.subplots_adjust(wspace=0.3, hspace=0.85)
 
         # ax = None
         for step in self.neigh:
+            if len(self.neigh[step][-1]) == 0:
+                print(f'Empty cube list for computation stage {step}.')
+                return
             ax = fig.add_subplot(nrows, ncols, step + 1)
+            '''
+            # all_cubes is a dict (not a list); the below would not work
             neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
                                     for cube_id in self.neigh[step][-1]]
+            '''
+            neighbour_cube_sizes = []
+            # print(f'{step = }')
+            # print(f'neigh {self.neigh[step]}')
+            for cube_id, cube_size in self.neigh[step][-1]:
+                # print(f'{cube_id = }, {cube_size = }')
+                # cube = self.parRep.cubes.get(cube_id)
+                neighbour_cube_sizes.append(cube_size)
 
             ax.hist(neighbour_cube_sizes,
                     bins=50,
-                    range=(0, 100),
+                    range=(0, 50),  # was 100
                     density=True)
 
             kde = mlab.GaussianKDE(neighbour_cube_sizes)
-            x = np.linspace(0, 100, 200)
+            x = np.linspace(0, 50, 200)
             y = kde(x)
             ax.plot(x, y, color='k', linewidth=4)
 
-            ax.set_xticks(range(0, 110, 10))
-            ax.set_xlabel('Size of the cube')
+            ax.set_xticks(range(0, 60, 10))
+            ax.set_xlabel('Distance between neighbor solutions')
             ax.set_ylabel('Probability Density')
             ax.set_title(f'Stage {step}')
 
@@ -144,7 +167,7 @@ class ParRep:     # representation of Pareto set
         self.cfg = mc.cfg   # Config object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
-        self.neigh = []     # list of cube's id currently defining neighbors
+        # self.neigh = []     # list of cube's id currently defining neighbors --- no longer needed
         self.cubes = Cubes(self)  # the object handling all cubes
         self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
@@ -250,11 +273,13 @@ class ParRep:     # representation of Pareto set
                     break
             if is_pareto:
                 if self.cur_cube is not None:  # cur_cube undefined during computation of selfish solutions
+                    # todo: no longer needed
+                    pass
                     # todo: remove the cube from the list of cubes defining neighbors
-                    self.neigh_lst(self.cur_cube, False)    # add=False means remove from the list
-                    print(f'cube {self.cur_cube} removed from the list of cubes defining neighbors.')
+                    # self.neigh_lst(self.cur_cube, False)    # add=False means remove from the list
+                    # print(f'cube {self.cur_cube} removed from the list of cubes defining neighbors.')
                 self.sols.append(new_sol)
-                print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
+                # print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
                 self.mk_cubes(new_sol)    # define cubes generated by this solution
 
         if self.n_corner == len(self.mc.cr):
@@ -326,13 +351,15 @@ class ParRep:     # representation of Pareto set
         # raise Exception(f'ParRep::mk_cubes() not implemented yet.')
             '''
 
+    '''
     def neigh_lst(self, cube_id, add):  # modify the list of cubes defining pairs of neighbor solutions
         if add:
             self.neigh.append(cube_id)
         else:
             self.neigh.remove(cube_id)
-        print(f'Currently {len(self.neigh)} pairs of neighbor solutions further than {self.cubes.min_size}.')
+        # print(f'Currently {len(self.neigh)} pairs of neighbor solutions further than {self.cubes.min_size}.')
         # print(f'List of cubes defining neighbor solutions: {self.neigh}')
+    '''
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
         for (i, s) in enumerate(self.sols):
