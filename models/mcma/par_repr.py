@@ -148,10 +148,12 @@ class ParProg:     # progress in Pareto set representation
                     range=(0, 50),  # was 100
                     density=True)
 
-            kde = mlab.GaussianKDE(neighbour_cube_sizes)
-            x = np.linspace(0, 50, 200)
-            y = kde(x)
-            ax.plot(x, y, color='k', linewidth=4)
+            # Check if list has at least two different values so we can calculate KDE
+            if neighbour_cube_sizes[0] != neighbour_cube_sizes[-1]:
+                kde = mlab.GaussianKDE(neighbour_cube_sizes)
+                x = np.linspace(0, 50, 200)
+                y = kde(x)
+                ax.plot(x, y, color='k', linewidth=4)
 
             ax.set_xticks(range(0, 60, 10))
             ax.set_xlabel('Distance between neighbor solutions')
