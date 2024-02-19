@@ -42,18 +42,52 @@ are easy to conform to.
 
 Modeling environment
 ^^^^^^^^^^^^^^^^^^^^
-(to be written)
+The pyMCMA can be integrated only with models developed in Pyomo,
+the Python-based, open-source structured modeling language.
+Pyomo is widely used, countless open-source models of diverse problems
+are posted on the GitHub.
+Actually, Pyomo provides a rich collection of classes, objects of which
+provide building blocks for development of properly structured models.
+Moreover, being Python-based, functionality of Pyomo can easily combined
+with diverse Python-packages supporting wide range of various functionalities.
+Therefore, the pyMCMA developers consider Pyomo as the best available
+environment for development of algebraic models.
+More information on, and downloads of Pyomo are available at www.pyomo.org
 
-Explain why Pyomo (effective integration),
-also summarize its advantages (public, Python/tools, etc)
+In particular, pyMCMA requires seamless integration with the core-model
+developed on another computer, possibly under a different operating system.
+Pyomo provides this critically important feature.
+Namely, two independently developed Pyomo concerete models can be
+included as blocks into a new concrete model.
+Such integration preserves name-spaces; therefore, there are no naming
+conflicts, typical for other model-instance integration methods,
+e.g., merging the MPS-files.
 
 Variables representing criteria
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(copy and adapt from the paper)
+At least two core-model variables should be defined to be used as criteria.
+Further on such variables are called ``outcome variables`` or (for short)
+``outcomes``.
+Such variables have to be scalar (i.e., not indexed) and have names conforming
+to the traditional naming requirements: (1)~composed of only Latin letters and
+(optionally) digits, and (2)~be maximum eight characters long.
+
+One can define many ``outcomes``.
+Actually, criteria are defined for each analysis; therefore, any core-model
+variable conforming to the above requirements can serve as a criterion.
+However, all variables intented to become criteria should be included in
+the model testing.
 
 Model testing
 ^^^^^^^^^^^^^
-(copy and adapt from the paper)
+Before applying MCMA each model should pass comprehensive testing conforming
+to the good modeling practice.
+Testing should include single-criterion optimizations, i.e.,  sequentially using
+each ``outcome`` as the optimization criterion.
+No additional constraints should be specified for such selfish optimizations.
+In other words, all constraints (including bounds on values of variables)
+of the core model should reflect the logical, physical, economical, etc relations.
+There should be no constraints representing preferences of the modeler.
 
 Export of the model instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -63,6 +97,8 @@ TODO Include in the working-space distribution an example (template) of export.
 
 Multiple-Criteria Model Analysis (MCMA)
 ---------------------------------------
+(to be written by adapting to the below structure the original draft by AS;
+the draft is moved to the Temporary notes section below)
 
 Overview
 ^^^^^^^^

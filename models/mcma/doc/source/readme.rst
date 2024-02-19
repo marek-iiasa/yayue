@@ -38,8 +38,8 @@ executed by the command-line.
 The environment should also be specified for the core (substantive) model
 development.
 
-Installation of the pyMCMA
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+pyMCMA installation
+^^^^^^^^^^^^^^^^^^^
 PyMCMA software should be installed by running the below specified commands.
 The commands should be executed in a terminal window within the activated conda
 environment.
