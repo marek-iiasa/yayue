@@ -21,10 +21,12 @@ Each of these steps is described in the corresponding section below.
 
 Conda environment
 ^^^^^^^^^^^^^^^^^
-We strongly recommend to install and use the pyMCMA within a dedicated and regularly updated
+We recommend to install and use the pyMCMA within a dedicated and regularly updated
 conda environment created for Python version 3.11.
-Conda is available for macOS, Linux, and MS-Windows; it supports easy keeping
-consistency of the Python packages.
+Conda is widely used, it is available for macOS, Linux, and MS-Windows;
+it supports easy organization of dedicated (when needed) environments for diverse
+packages, as well as easy updates of packages with keeping consistency of their
+versions.
 
 Documentation of conda is available at ....
 
