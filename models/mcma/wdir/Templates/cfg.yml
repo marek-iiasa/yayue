@@ -9,22 +9,18 @@
 
 # root-name of the core/substantive model instance; the corresponding *dll file
 # has to be provided in the Models dir
-model_id: ../Models/xpipa
+# model_id: ../xxx/example
 
 # criteria definition
 # each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
-# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
-# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water] ]
-# crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
-crit_def: [ [cost, min, cost], [greenFue, max, greenFTot] ]
-# crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
-# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
+# crit_def: [ [cr_name, min | max, var_name], [xx, min, xx], [] ]
 
 
 # The following specs are optional.  --------------------------------------------
 # If the option is desired, then uncomment the line with {key: value} pair and
 # modify the value
 
+# Directories. Each dir-name needs for finish with the / char          -----------
 # Sub-directory of the corresponding ana_dir containing results (df's and plots)
 # resDir: Results/
 
@@ -38,13 +34,13 @@ crit_def: [ [cost, min, cost], [greenFue, max, greenFTot] ]
 # fn_out: nsc_hs.txt
 
 # core-model variables values of which shall be included in the report
-rep_vars: ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
+# rep_vars: ['x1', 'x2', 'actS']
 
 # Control options     -----------
 
 # max number of iterations
 # mxIter: 50
-mxIter: 1000
+# mxIter: 1000
 
 # parRep: True for generating Pareto representation, False for predefined preferences
 # parRep: True
