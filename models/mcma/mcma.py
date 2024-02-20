@@ -41,12 +41,12 @@ from cfg import *  # configuration (dir/file location, parameter values, etc
 
 def read_args():
     descr = """
-    Computing uniformly distributed Pareto front for specified criteria in the provided model.
+    Computing uniformly distributed Pareto-front for specified criteria of provided model.
 
     Examples of usage:
     python mcma.py
     python mcma.py -h
-    python mcma.py --usr marek
+    python mcma.py --ana_id test1
     """
 
     parser = argparse.ArgumentParser(
