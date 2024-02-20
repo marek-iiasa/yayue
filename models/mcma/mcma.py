@@ -73,8 +73,8 @@ if __name__ == '__main__':
     # assert usr == 'Jasio', f'just a test stop'
 
     # process the run configuration options and configure the working space
-    ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
-    config = Config(ana_def)    # process yaml config. file
+    # ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
+    config = Config()    # process yaml config. file
     cfg = config.data   # dict with config. options
 
     # optional standard output redirection

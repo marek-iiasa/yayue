@@ -5,13 +5,12 @@ from yaml.loader import SafeLoader
 
 
 class Config:
-    def __init__(self, ana_def):
+    def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         self.f_sys = './Sys/cfg_sys.yml'    # full path to the system config file
-        self.ana_def = ana_def    # full path to the user yaml config file
-        self.rel_ana_dir = None    # relative (to ./Data) path to the user analysis dir
+        self.f_usr = './cfg.yml'    # usr config
         self.data = None      # config data read from both Sys and usr config files
         self.rd_cfg(self.f_sys)
-        self.rd_cfg(self.ana_def)
+        self.rd_cfg(self.f_usr)   # usr_cfg is in the current dir
         # print(f'Configuration options read:\n\t{self.data}')
         self.chk_dirs()       # check the needed dirs
         print(f'Configuration options after processing:\n\t{self.data}')
@@ -24,13 +23,7 @@ class Config:
         else:
             cfg_id = 'usr_config'
             sys_data = False
-            assert os.path.exists(f_name), f'analysis config file "{f_name}" is not readable.'
-            with open(f_name) as f:   # get the ana_dir name
-                dir_def = yaml.load(f, Loader=SafeLoader)
-            rel_ana_dir = dir_def.get("ana_dir")
-            assert rel_ana_dir is not None, f'Undefined key "ana_dir" in user config. file "{f_name}".'
-            self.rel_ana_dir = rel_ana_dir
-            f_name = f'./Data/{rel_ana_dir}cfg_usr.yml'  # full path to cfg_usr file
+            assert os.path.exists(f_name), f'analysis user-config file "{f_name}" is not readable.'
         print(f'Processing yaml "{cfg_id}" file "{f_name}".')
         with open(f_name) as f:
             if sys_data:
