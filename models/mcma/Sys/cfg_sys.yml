@@ -1,22 +1,16 @@
 # Root configuration of the MCMA
 # Please DON'T modify this file.
-# Please consult the ../Data/Config.txt on definition of options for your analyses
----
-# The following must be defined in .../cfg_ust.yml  -----------------------
-# root-name of the core/substantive model (must be defined in cfg_urs.yml)
-# model_id: jg1
+# Please consult the user cfg file on definition of options for your analyses
+# The following two specs must be defined in usr cfg file
+# model_id: path/name.dll
+# crit_def: [ [cr_name, min | max, core-model var_name], [...], ... ]
 
-# The following can be modified in .../cfg_ust.yml  -----------------------
+# The following can be modified in usr cfg file  -----------------------
 # but the default values must be defined here
+---
 
-# directories             -----------
-# dir with models
-modDir: Models/
-# replace, if needed, the ./ by your working dir (all needed dirs are relative to wrkDir)
-wrkDir: ./
-# dir containing analysis data (config, preferences, payoff table)
-# ana_dir: Data/simple0/  (must be defined in cfg_urs.yml)
-# directory for results (df's and plots)
+# dir-names             -----------
+# this restriction can be lifted in future
 resDir: Results/
 # uncomment run_id to define a sub-dir of the resDir for results
 # run_id: tst0/

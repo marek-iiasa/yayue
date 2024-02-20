@@ -36,24 +36,25 @@ def mk_mod():  # load or generate the core model
     raise Exception(f'mk_mod1(): no model specified.')
 
 
-def mk_inst(cfg):  # load or generate the core model
+def rd_inst(cfg):  # load the core model
     # m_name = f"{cfg.get('modDir')}{cfg.get('model_id')}"
     m_name = f"{cfg.get('model_id')}"
     # print(f'\nLoading or generating instance of the core model "{m_name}".')
     f_name = f'{m_name}.dll'     # alternatively the 'dill' file extension is used
-    if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
-        m2store = mk_mod()  # generate core model
-        with open(f_name, 'wb') as f:   # Serialize and save the Pyomo model
-            dill.dump(m2store, f)
-        print(f'Model "{m_name}" generated and dill-dumpped to: {f_name}')
+    # if not (isfile(f_name) and access(f_name, R_OK)):   # generate and store the model, if not yet stored
+    #     m2store = mk_mod()  # generate core model
+    #     with open(f_name, 'wb') as f:   # Serialize and save the Pyomo model
+    #         dill.dump(m2store, f)
+    #     print(f'Model "{m_name}" generated and dill-dumpped to: {f_name}')
     # Load the serialized Pyomo model
+    assert isfile(f_name) and access(f_name, R_OK), f'Model "{f_name}" not accessible'
     with open(f_name, 'rb') as f:
         m1 = dill.load(f)
     print(f'\nThe stored model "{m_name}" loaded from the dill file "{f_name}"')
 
-    # print('\ncore model display: -----------------------------------------------------------------------------')
-    # m1.pprint()
-    # print('end of model display: ------------------------------------------------------------------------\n')
+    print('\ncore model display: -----------------------------------------------------------------------------')
+    m1.pprint()
+    print('end of model display: ------------------------------------------------------------------------\n')
 
     for obj in m1.component_data_objects(pe.Objective):
         print(f'Objective "{obj}" deactivated.')

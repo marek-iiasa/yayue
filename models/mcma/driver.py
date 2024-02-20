@@ -10,7 +10,7 @@ import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
-from mk_inst import mk_inst  # model instance provider
+from rd_inst import rd_inst  # model instance provider
 from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
 from report import Report  # handles submodel/block of AF and links to the core/substantive model
 
@@ -35,7 +35,7 @@ def chk_sol(res):  # check status of the solution
 
 
 def driver(cfg):
-    m1 = mk_inst(cfg)    # upload or generate m1 (core model)
+    m1 = rd_inst(cfg)    # upload or generate m1 (core model)
     print(f'MCMA of the core-model instance: {m1.name}.')
 
     # is_par_rep = True/False: can be specified in cfg_usr.yml
