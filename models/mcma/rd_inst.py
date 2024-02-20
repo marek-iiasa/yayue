@@ -52,9 +52,9 @@ def rd_inst(cfg):  # load the core model
         m1 = dill.load(f)
     print(f'\nThe stored model "{m_name}" loaded from the dill file "{f_name}"')
 
-    print('\ncore model display: -----------------------------------------------------------------------------')
-    m1.pprint()
-    print('end of model display: ------------------------------------------------------------------------\n')
+    # print('\ncore model display: -----------------------------------------------------------------------------')
+    # m1.pprint()
+    # print('end of model display: ------------------------------------------------------------------------\n')
 
     for obj in m1.component_data_objects(pe.Objective):
         print(f'Objective "{obj}" deactivated.')

@@ -7,7 +7,7 @@ from yaml.loader import SafeLoader
 class Config:
     def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         # todo: the cfg_sys location shall differ between the development and the distribute-package versions
-        self.f_sys = '../../Sys/cfg_sys.yml'    # full path to the system config file
+        self.f_sys = './../Sys/cfg_sys.yml'    # full path to the system config file
         self.f_usr = './cfg.yml'    # usr config
         self.data = None      # config data read from both Sys and usr config files
         self.rd_cfg(self.f_sys)
@@ -19,7 +19,10 @@ class Config:
 
     def rd_cfg(self, f_name):       # upload yaml config file
         if f_name == self.f_sys:
-            assert os.path.exists(f_name), f'system config file "{f_name}" is not readable.'
+            # assert os.path.exists(f_name), f'system config file "{f_name}" is not readable.'
+            if not os.path.exists(f_name):
+                self.sys_default()
+                return
             cfg_id = 'sys_config'
             sys_data = True
         else:
@@ -40,6 +43,12 @@ class Config:
                 usr_data = yaml.load(f, Loader=SafeLoader)
                 for k, v in usr_data.items():   # add or over-write options by options defined in cfg_usr
                     self.data.update({k: v})
+
+    def sys_default(self):       # set default values of Sys/cfg
+        sysDefaults = {'resDir': 'Results/', 'mxIter': 16, 'parRep': True, 'showPlot': True, 'verb': 1}
+        self.data = {}
+        for k, v in sysDefaults.items():  # set default values
+            self.data.update({k: v})
 
     def chk_dirs(self):       # check, if the needed dirs are writeable, create those necessary
         # home_root = self.data.get('wrkDir')
