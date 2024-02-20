@@ -15,9 +15,9 @@ class CtrMca:
     def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
         self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis
-        self.f_crit = self.ana_dir + 'config.txt'   # file with criteria specification
-        self.f_payoff = self.ana_dir + 'payoff.txt'     # file with payoff values
-        self.f_pref = self.ana_dir + 'pref.txt'     # file with defined preferences' set
+        self.f_crit = 'config.txt'   # file with criteria specification
+        self.f_payoff = 'payoff.txt'     # file with payoff values
+        self.f_pref = 'pref.txt'     # file with defined preferences' set
         self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
         self.cur_stage = 0  # initialization
         self.cur_itr_id = None  # id of the current iteration
