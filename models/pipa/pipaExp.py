@@ -5,7 +5,7 @@
 #   noinspection PyUnresolvedReferences
 #   infty = float('inf')
 
-""" Prototype of the Pipa model. """
+""" Ad-hoc solution for exporting the Pipa model in the dill file (combines pipa.py and sms.py files)."""
 import sys		# needed for stdout and sys.exit()
 # import os
 # import pandas as pd
@@ -20,6 +20,8 @@ from pyomo.opt import TerminationCondition
 from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
 from inst import *      # return model instance
 from report import *    # report and store results
+
+
 # --------------------------------------------
 # sms
 def th_init(m):  # initialize TH set (t, v) of vintage periods prior to p=0 capacities of t-th techn.
@@ -344,6 +346,7 @@ def mk_sms():
     # m.pprint()    # does not work (needs lengths of sets)
     return m
 # --------------------------------------------
+
 
 def chk_sol(res):  # check status of the solution
     print(f'solver status: {res.solver.status}, termination condition: {res.solver.termination_condition}.')
