@@ -66,13 +66,14 @@ if __name__ == '__main__':
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    wdir = './wdir'     # development wdir is under src-dir, should be '.' for packaged version
+    # wdir = './wdir'     # development wdir is under src-dir, should be '.' for packaged version
+    wdir = '.'     # development wdir is under src-dir, should be '.' for packaged version
     assert os.path.exists(wdir), f'The work directory "{wdir}" does not exist'
     os.chdir(wdir)
     # process cmd-line args (currently only usr-name)
     args = read_args()
     ana_dir = args.ana_id or 'anaTst'
-    print(f'ana_dir: {ana_dir}')
+    print(f'Analysis directory: {ana_dir}')
     assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist'
     os.chdir(ana_dir)
     # assert ana_dir == 'Jasio', f'just a test stop'
