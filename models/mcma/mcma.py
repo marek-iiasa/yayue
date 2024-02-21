@@ -44,17 +44,18 @@ def read_args():
     Computing uniformly distributed Pareto-front for specified criteria of provided model.
 
     Examples of usage:
-    python mcma.py
     python mcma.py -h
-    python mcma.py --ana_id test1
+    python mcma.py --install
+    python mcma.py --anaDir iniTst
     """
 
     parser = argparse.ArgumentParser(
         description=descr, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ana_id = "--ana_id : string\n    analysis id, also defines the analysis directory."
-    parser.add_argument("--ana_id", help=ana_id)
-    # parser.add_argument("-s", "--save", action="store_true")  # on/off flag
+    instal = "--install : \n    install pyMCMA and test it."
+    anaDir = "--anaDir string :\n    define analysis directory."
+    parser.add_argument("--install", action="store_true", help=instal)  # on/off flag
+    parser.add_argument("--anaDir", help=anaDir)
 
     # parse cli
     cl_args = parser.parse_args()
@@ -66,13 +67,21 @@ if __name__ == '__main__':
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    # wdir = './wdir'     # development wdir is under src-dir, should be '.' for packaged version
-    wdir = '.'     # development wdir is under src-dir, should be '.' for packaged version
-    assert os.path.exists(wdir), f'The work directory "{wdir}" does not exist'
-    os.chdir(wdir)
-    # process cmd-line args (currently only usr-name)
+    wdir = '.'     # current dir is the wdir for both development and packaged version
+    # assert os.path.exists(wdir), f'The work directory "{wdir}" does not exist'
+    # os.chdir(wdir)
+    # process cmd-line args (currently only either install or ana_dir)
     args = read_args()
-    ana_dir = args.ana_id or 'anaTst'
+    # ana_dir = args.ana_id or 'anaTst'
+    install = args.install
+    ana_dir = args.anaDir
+    if install:
+        assert ana_dir is None, f'ERROR: no directory should not be defined for the installation.'
+        ana_dir = 'anaTst'
+        print('Installing pyMCMA.')
+        # todo: AS unpack wdir and continue
+    else:
+        assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
     print(f'Analysis directory: {ana_dir}')
     assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist'
     os.chdir(ana_dir)
