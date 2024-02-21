@@ -116,8 +116,6 @@ class Plots:
 
     def plot3D(self):
         if self.n_crit < 3:
-            if self.show_plot:
-                plt.show()
             return
         # todo: plots for more than 3 criteria
         if self.n_crit > 3:
