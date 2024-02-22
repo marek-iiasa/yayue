@@ -47,18 +47,18 @@ In the commands explained below the $-character stands for the terminal prompt.
 
 The installation consists of two steps:
 
-#. Installation of the pyMCMA package
+1. Installation of the pyMCMA package
     Execute the following pip command:
-
-.. code-block:: console
-
-    $ pip install pymcma
-
     TODO something is wrong here: the above (and others) code-block needs to be
     properly terminated. Currently this comment is a part of the code; moreover,
     numbering the following items is destroyed.
 
-#. Installation of the working space
+    .. code-block:: console
+
+        $ pip install pymcma
+
+
+2. Installation of the working space
     The first working space can be created in any folder in which the conda
     is accessible.
     We recommend to create a dedicated folder for the working space.
