@@ -27,11 +27,7 @@ Conda is widely used, it is available for macOS, Linux, and MS-Windows;
 it supports easy organization of dedicated (when needed) environments for diverse
 packages, as well as easy updates of packages with keeping consistency of their
 versions.
-
-Documentation of conda is available at ....
-
-TODO: proper link to info on conda (maybe also a link to anaconda download page) should
-be added above.
+Documentation of conda is available at: https://docs.conda.io/en/latest/
 
 NOTE: all commands described in this Guide should be executed in a terminal
 window.
@@ -42,13 +38,14 @@ we recommend to create a dedicated conda environment for pyMCMA.
 Preparation of the conda environment consists of two steps:
 
 #. Create a dedicated conda environment for pymcma
-    In the Guide we named such environment ``pymcma``. However, also other names can
-    be used.
     Execute the following command:
 
     .. code-block:: console
 
         $ conda create --name pymcma -c conda-forge python=3.11
+
+    We named the dedicated pyMCMA environment as ``pymcma``.
+    However, another name can be used.
 
 #. Update of the conda version.
     Execute the following command:
@@ -71,13 +68,22 @@ environment.
 In the commands explained below the $-character stands for the terminal prompt.
 
 The installation shall be done by executing at the terminal prompt the following
-two commands (the first one should be skipped, if the pymcma is active in the
-currently used terminal window:
+two commands (the first one should be skipped, if the conda pymcma environment
+is active in the currently used terminal window):
 
 .. code-block:: console
 
     $ conda activate pymcma
     $ pip install pymcma
+
+The installation will include all packages necessary for running pyMCMA,
+as well as assuring the consistent versions of all packages.
+We recommend to follow the good practice of updating the software, i.e.,
+to periodically execute:
+
+.. code-block:: console
+
+    $ conda update --all
 
 Testing the installation
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -91,11 +97,16 @@ The installation shall be tested by running the following two steps:
     This command creates in the current directory the initial work-space
     composed of three folders:
 
-    #. Models - it contains the testing model.
+    #. Models - it contains the test-model.
+        The name of the provided model should not be changed unless the
+        corresponding modification is done in''anaTst/cfg.yml`` file.
 
-    #. anaTst - folder and configuration of the testing analysis.
+    #. anaTst - folder for and configuration of the testing analysis.
+        Note that the analysis configuration is prepared in ''anaTst/cfg.yml`` file
+        assuming that neither the ``Models`` directory nor the test model is moved.
 
-    #. Templates -folder with templates of configuration file and of Pyomo model.
+    #. Templates - folder with templates of configuration file and of Pyomo model.
+        This directory can be moved to any place the user prefers.
 
 #. Running the provided example of MCMA of the Pipa model outlined in the paper:
     .. code-block:: console
