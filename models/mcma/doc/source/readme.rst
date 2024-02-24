@@ -21,7 +21,7 @@ Installation consists of the following steps:
 
 #. Installation of the pyMCMA
 
-#. Creation of the working space
+#. Creation of the work-space
 
 #. Testing the installation
 
@@ -106,46 +106,70 @@ The above recommended installation sequence assures the version consistency of
 all packages within the ``pymcma`` conda environment, not only during the installation
 but also during periodical updates of the environment.
 
+Creation of the work-space
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+The work-space for initial analysis can be created by running:
+
+.. code-block:: console
+
+    $ pymcma --install
+
+This command creates in the current directory the initial work-space
+composed of three folders:
+
+#. Models - it contains the test-model.
+    The name of the provided model should not be changed unless the
+    corresponding modification is done in''anaTst/cfg.yml`` file.
+
+#. anaTst - folder for and configuration of the testing analysis.
+    Note that the analysis configuration is prepared in ''anaTst/cfg.yml`` file
+    assuming that neither the ``Models`` directory nor the test model is moved.
+
+#. Templates - folder with templates of configuration file and of Pyomo model.
+    This directory can be moved to any place the user prefers.
+    The two provided templates, namely example.py and cfg.yml, might help in
+    development of actual core-model instances, and in configuration
+    of actual analyses.
+
+
 Testing the installation
 ^^^^^^^^^^^^^^^^^^^^^^^^
-The installation shall be tested by running the following two steps:
+Testing consists of running the preconfigured analysis of the provided core-model
+example of the Pipa model outlined in the paper.
+To following command runs the analysis:
 
-#. Creating work-space for initial analysis:
-    .. code-block:: console
+.. code-block:: console
 
-        $ pymcma --install
+    $ pymcma --anaDir anaTst
 
-    This command creates in the current directory the initial work-space
-    composed of three folders:
+Successful installation shall result in computation of the Pareto-front for the
+tutorial model (included in the working space installation) and the analysis
+configuration specified ``anaTst/cfg.yml`` file.
+The standard output will be displayed in the terminal.
 
-    #. Models - it contains the test-model.
-        The name of the provided model should not be changed unless the
-        corresponding modification is done in''anaTst/cfg.yml`` file.
+After the computation of the Pareto-front representation will be completed,
+four plots (similar to those shown in the paper) will be displayed.
+The parallel plot is interactive, i.e., one can change (by moving the upper and/or
+lower end of the slider) the range of achievements of the cost critetion.
+Closing all windows with plots will terminate the execution.
+The default analysis results will be stored in the analysis directory,
+i.e., anaTst/Results.
 
-    #. anaTst - folder for and configuration of the testing analysis.
-        Note that the analysis configuration is prepared in ''anaTst/cfg.yml`` file
-        assuming that neither the ``Models`` directory nor the test model is moved.
+One can easily experiment with diverse configurations of the analysis by
+creating for each analysis a dedicated folder, editing the configuration,
+and running the analysis.
+Assuming that next analysis will be done in directory ``myAnal`` and thet
+the standard unix vi editor is used for editing the configuration file,
+one can execute the following commands:
 
-    #. Templates - folder with templates of configuration file and of Pyomo model.
-        This directory can be moved to any place the user prefers.
+.. code-block:: console
 
-#. Running the provided example of MCMA of the Pipa model outlined in the paper:
-    .. code-block:: console
+    $ mkdir myAnal
+    $ cp anaTst/cfg.yml myAnal/cfg.yml
+    $ vi myAnal/cfg.yml
+    $ pymcma --anaDir myAnal
 
-        $ pymcma --anaDir anaTst
-
-    Successful installation shall result in computation of the Pareto-front for the
-    tutorial model (included in the working space installation) and the analysis
-    configuration specified ``anaTst/cfg.yml`` file.
-    The standard output will be displayed in the terminal.
-
-    After the computation of the Pareto-front representation will be completed,
-    four plots (similar to those shown in the paper) will be displayed.
-    The parallel plot is interactive, i.e., one can change (by moving the upper and/or
-    lower end of the slider) the range of achievements of the cost critetion.
-    Closing all windows with plots will terminate the execution.
-    The default analysis results will be stored in the analysis directory,
-    i.e., anaTst/Results.
+Configuration of analysis is discussed in detail in :doc:`user_guide`.
 
 Ready to go
 -----------
