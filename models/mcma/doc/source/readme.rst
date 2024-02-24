@@ -29,20 +29,20 @@ Each of these steps is described in the corresponding section below.
 
 Conda environment
 ^^^^^^^^^^^^^^^^^
-We recommend to install and use the pyMCMA within a dedicated and regularly updated
-conda environment created for Python version 3.11.
 Conda is widely used, it is available for macOS, Linux, and MS-Windows;
 it supports easy organization of dedicated (when needed) environments for diverse
 packages, as well as easy updates of packages with keeping consistency of their
 versions.
-Documentation of conda is available at: https://docs.conda.io/en/latest/
+Conda documentation is available at: https://docs.conda.io/en/latest/
 
-NOTE: all commands described in this Guide should be executed in a terminal
-window.
+NOTE: all commands described in this Guide should be executed in a terminal window.
 In the commands explained below the $-character stands for the terminal prompt.
+The actual terminal prompt depends on the OS and setup of the user environment.
 
-In orderr to avoid possible conflicts with already installed packages,
-we recommend to create a dedicated conda environment for pyMCMA.
+In order to avoid possible conflicts with already installed packages,
+we recommend to install and use the pyMCMA within a dedicated and regularly updated
+conda environment created for Python version 3.11.
+
 Preparation of the conda environment consists of two steps:
 
 #. Create a dedicated conda environment for pymcma
@@ -52,7 +52,7 @@ Preparation of the conda environment consists of two steps:
 
         $ conda create --name pymcma -c conda-forge python=3.11
 
-    We named the dedicated pyMCMA environment as ``pymcma``.
+    The dedicated pyMCMA environment is named here ``pymcma``.
     However, another name can be used.
 
 #. Update of the conda version.
@@ -63,14 +63,15 @@ Preparation of the conda environment consists of two steps:
         $ conda update -n base -c conda-forge conda
 
 
-The dedicated conda environment should be activated whenever the pyMCMA is
+The dedicated conda environment should be activated whenever the pymcma is
 executed by the command-line.
 The environment should also be specified for the core (substantive) model
-development.
+development (see the :doc:`user_guide` for details).
 
 pyMCMA installation
 ^^^^^^^^^^^^^^^^^^^
-PyMCMA software should be installed by running the below specified commands.
+PyMCMA software (further on referred as ``pymcma``, the name used for its execution)
+should be installed by running the below specified commands.
 The commands should be executed in a terminal window within the activated conda
 environment.
 In the commands explained below the $-character stands for the terminal prompt.
