@@ -2,36 +2,40 @@ User Guide
 ==========
 The pyMCMA .... (adapt from the paper)....
 
-Working space
--------------
-Overview the concept
-
-Structured working env.
-
-Explain (possibly many) wdirs (possibly duplicates of templates?)
-
-Structure of the distributed wdir
-
-Initial content of wdir
-
 Overview of pyMCMA
 ------------------
-Every Multiple-Criteria Model Analysis (MCMA) consists of two tasks:
+Every Multiple-Criteria Model Analysis (MCMA) consists of two linked but
+distinct tasks:
 
 #. Development of a core model (aka substantive model)
     The model defines the relations between variables representing the criteria
     and all other variables (representing e.g., decisions, system state, etc).
+    Discussion on methodology and tools for model development is beyond the
+    ``pcmcma`` scope. Therefore, we present only the guidelines spacific for
+    model preparation to the MCMA.
 
 #. Computations of Pareto-efficient solutions
-    Each of such solutions fits best the specified preferences.
+    Each Pareto solution fits best the specified preferences.
     In interactive MCMA the preferences are specified by the users.
-    The pyMCMA generates preferences autonomously aiming at sequentially decreasing
-    the maximum distance between neighbor solutions in order to provide
+    The ``pcmcma`` generates preferences autonomously aiming at sequentially
+    decreasing the maximum distance between neighbor solutions in order to provide
     a uniformly distributed representation of the Pareto-front.
+    Therefore, the MCMA part is very easy; it requires only a configuration
+    of the desired analysis.
 
-The pyMCMA seamlessly integrates these two tasks, which makes the objective
-(i.e., preference free) MCMA analysis easy.
 Below we discuss the requirements for each of the above two tasks.
+The ``pymcma`` supports seamless integratation of these two tasks, which makes
+the objective (i.e., preference free) MCMA analysis very easy.
+
+Issues common for both tasks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Both tasks should be done in terminal windows with the activated conda
+environment created during the ``pymcma`` installation.
+From the user point of view, the linkage between these task consists of
+only specification of two items in the analysis configuration file.
+Therefore, the model development and its analysis can be done in
+different folders; actually, it also can be done on different computers,
+possibly running different OSs.
 
 Development of the core model
 -----------------------------
@@ -91,9 +95,12 @@ There should be no constraints representing preferences of the modeler.
 
 Export of the model instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-(to be written after export/import will work)
-
-TODO Include in the working-space distribution an example (template) of export.
+The model instance (in Pyomo called ``concrete model``) should be stored in
+the ``dill``-format file.
+Location and name of the file should be specified in configuration file of each
+MCMA of this model.
+The ``example.py`` model (included in the Template directory created during the ``pcmcma``
+installation) includes a simple, reusable function performing this task.
 
 Multiple-Criteria Model Analysis (MCMA)
 ---------------------------------------
