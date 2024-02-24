@@ -4,6 +4,14 @@ About
 PyMCMA is the Python package for generation of uniformly distributed Pareto-efficient
 solutions.
 
+Requirements
+------------
+
+PyMCMA can be installed on computers running one of the following OS:
+macOS, Linux, Ms-Windows.
+It was tested with the Conda environment on each of these OSs.
+All required conda packages are installed during the PyMCMA installation.
+
 Installation
 ------------
 
@@ -84,6 +92,18 @@ to periodically execute:
 .. code-block:: console
 
     $ conda update --all
+
+After the pyMCMA installation any other conda packages desired by the user can
+be installed in the usual way, i.e.,
+
+.. code-block:: console
+
+    $ conda install xxx, yyy
+
+where xxx, yyy are names of the desired packages.
+The above recommended installation sequence assures the version consistency of
+all packages within the ``pymcma`` conda environment, not only during the installation
+but also during periodical updates of the environment.
 
 Testing the installation
 ^^^^^^^^^^^^^^^^^^^^^^^^
