@@ -1,9 +1,9 @@
 User Guide
 ==========
-The pyMCMA .... (adapt from the paper)....
+The ``pymcma`` .... (adapt from the paper)....
 
-Overview of pyMCMA
-------------------
+Overview of ``pymcma``
+----------------------
 Every Multiple-Criteria Model Analysis (MCMA) consists of two linked but
 distinct tasks:
 
@@ -39,14 +39,14 @@ possibly running different OSs.
 
 Development of the core model
 -----------------------------
-The pyMCMA will process any model developed according to the good modeling
+The ``pymcma`` will process any model developed according to the good modeling
 practice provided it conforms to the additional requirements specified below.
 All but the first these requirements are typical for the MCMA tools and
 are easy to conform to.
 
 Modeling environment
 ^^^^^^^^^^^^^^^^^^^^
-The pyMCMA can be integrated only with models developed in Pyomo,
+The ``pymcma`` can be integrated only with models developed in Pyomo,
 the Python-based, open-source structured modeling language.
 Pyomo is widely used, countless open-source models of diverse problems
 are posted on the GitHub.
@@ -54,12 +54,13 @@ Actually, Pyomo provides a rich collection of classes, objects of which
 provide building blocks for development of properly structured models.
 Moreover, being Python-based, functionality of Pyomo can easily combined
 with diverse Python-packages supporting wide range of various functionalities.
-Therefore, the pyMCMA developers consider Pyomo as the best available
+Therefore, the ``pymcma`` developers consider Pyomo as the best available
 environment for development of algebraic models.
 More information on, and downloads of Pyomo are available at www.pyomo.org
 
-In particular, pyMCMA requires seamless integration with the core-model
-developed on another computer, possibly under a different operating system.
+In particular, ``pymcma`` provides seamless integration with the core-model,
+also, if it is developed on another computer, possibly under a different
+operating system.
 Pyomo provides this critically important feature.
 Namely, two independently developed Pyomo concerete models can be
 included as blocks into a new concrete model.
