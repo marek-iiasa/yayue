@@ -14,7 +14,7 @@ distinct tasks:
     ``pcmcma`` scope. Therefore, we present only the guidelines spacific for
     model preparation to the MCMA.
 
-#. Computations of Pareto-efficient solutions
+#. Computations of the Pareto-front representation.
     Each Pareto solution fits best the specified preferences.
     In interactive MCMA the preferences are specified by the users.
     The ``pcmcma`` generates preferences autonomously aiming at sequentially
@@ -103,22 +103,52 @@ MCMA of this model.
 The ``example.py`` model (included in the Template directory created during the ``pcmcma``
 installation) includes a simple, reusable function performing this task.
 
-Multiple-Criteria Model Analysis (MCMA)
----------------------------------------
-(to be written by adapting to the below structure the original draft by AS;
-the draft is moved to the Temporary notes section below)
+Computation of the Pareto-front representation
+----------------------------------------------
+Usually one makes several analyses for one core-model.
+The ``pymcma`` supports this practice by running each analysis in
+the corresponding directory.
+The example of such in installation....
 
 Overview
 ^^^^^^^^
+We suggest the following steps for analysis of each core-model.
 
-Specification of the necessary items
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#. Choose a dedicated folder, further referred to as ``wdir``.
 
-Specification of the optional items
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#. In ``wdir`` create folder for first analysis, e.g., ``anaIni``
 
-Running the computations
-^^^^^^^^^^^^^^^^^^^^^^^^
+#. Copy to ``anaIni`` the provided ``cfg.yml`` file.
+
+#. Edit the copied ``cfg.yml`` to specify the configuration options described below.
+    The configuration file ``cfg.yml`` (provided in the Templates directory created
+    upon installation) is self-documented. The configuration is specified in the
+    YAML markup language but its modification can be done also knowing YAML.
+    It is enough to:
+
+    - know that the # character denotes a comment line
+    - refrain from modifications of the key-words (explained below)
+
+#. In ``wdir`` execute:
+
+.. code-block:: console
+
+    $ conda activate pymcma
+    $ pymcma --anaDir anaIni
+
+    The first command should be skipped, if the conda was earlier activated.
+    The second command run the ``pymcma`` for the analysis specified in
+    the ``anaIni/cfg.yml`` file.
+
+The steps 2 through 5 can be repeated with specifying different names of analysis
+folders and specifying (in the corresponding ``cfg.yml`` file) different configuration
+options.
+
+Necessary configuration items
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Optional configuration items
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Results of analyses
 -------------------
