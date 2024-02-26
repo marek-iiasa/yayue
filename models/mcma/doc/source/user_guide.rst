@@ -108,54 +108,236 @@ Computation of the Pareto-front representation
 Usually one makes several analyses for one core-model.
 The ``pymcma`` supports this practice by running each analysis in
 the corresponding directory.
-The example of such in installation....
+The examples discussed below illustrate how easy it can be to exploit
+the offerred functionality.
 
 Overview
 ^^^^^^^^
-We suggest the following steps for analysis of each core-model.
+Analysis of each core-model can be done in various ways.
+Therefore, the below suggested steps is just an example.
 
-#. Choose a dedicated folder, further referred to as ``wdir``.
+#. Make sure that the ``pymcma`` conda environment is activated.
+    Twe activation needs to be done only once in the terminal window, where the
+    the analyses are made.
+    To activate the environment execute:
 
-#. In ``wdir`` create folder for first analysis, e.g., ``anaIni``
+    .. code-block:: console
 
-#. Copy to ``anaIni`` the provided ``cfg.yml`` file.
+        $ conda activate pymcma
 
-#. Edit the copied ``cfg.yml`` to specify the configuration options described below.
-    The configuration file ``cfg.yml`` (provided in the Templates directory created
-    upon installation) is self-documented. The configuration is specified in the
-    YAML markup language but its modification can be done also knowing YAML.
+
+#. Change to a dedicated analysis folder, further referred to as ``wdir``.
+    The folder can be located anywhere in a file system in which the
+    core-model is accessible.
+
+#. In ``wdir`` create folder for first analysis, e.g., ``anaIni``.
+    Typically, names of the analysis folders associated with the corresponding
+    content of the analysis.
+    We use the ``anaIni`` name for initial analysisl however, any other name can be used.
+    For each subsequent analysis in ``wdir`` a distinct name should be specified.
+
+#. Copy to ``anaIni`` a ``cfg.yml`` file.
+    Advanced ``pymcma`` users might, of course, prefer to write the ``cfg.yml``
+    file in ``anaInit``  directory from scratch.
+    The ``cfg.yml`` file name should not be changed as it is used by ``pymcma``
+    application.
+    For initial analysis the configuration file ``cfg.yml`` provided in the
+    Templates directory created upon installation might be a good start.
+
+    The configuration file is specified in the YAML markup language but its
+    modification can be done also without YAML's knowledge.
     It is enough to:
 
     - know that the # character denotes a comment line
     - refrain from modifications of the key-words (explained below)
 
+    The provided ``cfg.yml`` is self-documented.
+    Therefore, meanings of key-words are explained in the provided example.
+
+#. Edit the copied ``cfg.yml`` to specify the configuration options described below.
+    For initial analysis one can with explore analysis of the core-model with
+    two criteria only.
+    For subsequent analysis either other pairs of criteria can be specified or
+    more criteria are usually defined.
+
+    Note that the configuration files should be edited only with a text-editor.
+    Any text editor (or programming tool) can be used for this purpose.
+
 #. In ``wdir`` execute:
 
-.. code-block:: console
+    .. code-block:: console
 
-    $ conda activate pymcma
-    $ pymcma --anaDir anaIni
+        $ pymcma --anaDir anaIni
 
-    The first command should be skipped, if the conda was earlier activated.
-    The second command run the ``pymcma`` for the analysis specified in
-    the ``anaIni/cfg.yml`` file.
+    The command runs the ``pymcma`` for the analysis specified in the
+    ``anaIni/cfg.yml`` file.
 
-The steps 2 through 5 can be repeated with specifying different names of analysis
+The steps 3 through 6 can be repeated with specifying different names of analysis
 folders and specifying (in the corresponding ``cfg.yml`` file) different configuration
 options.
 
-Necessary configuration items
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Required configuration items
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are only two required configuration options:
+
+#. Core-model location and name
+    This item is identified by the ``model_id`` key. Its argument defines the location
+    (../Models/) of the model and the model name.
+    The location can define either the relative or the absolute path to the directory
+    containing the model.
+    The model name (xpipa) is the root name of the dill-format file containing the
+    core model.
+
+#. Definition of criteria
+    This item is identified by the ``crit_def`` key. Its argument defines the
+    list of lists.
+    Each of the internal list defines one criterion; it consists of three elements:
+
+    #. Name of the criterion.
+        The four criteria names of the example read: cost, carBal, water, grFuel.
+
+    #. Criterion type: either ``min`` or ``max``.
+        The first three criteria are minimized, the last is maxized.
+
+    #. Name of the core model outcome variable defining the corresponding criterion.
+        The four names of the core-model variables of the example read:
+        cost, carbBal, water, greenFTot.
+
+
+Below we show the two corresponding lines of the ``cfg.yml`` file defining the
+required items:
+
+.. code-block:: YAML
+
+    model_id: ../Models/xpipa
+    crit_def: [ [cost, min, cost], [carBal, min, carbBal], [water, min, water], [grFuel, max, greenFTot] ]
+
+The above example shows how the corresponding entries look in the
+``cfg.yml`` file of the test configuration.
+Note that in this file almost all lines are commented,
+i.e., have #-character as the first character of the line.
+
+Note, that two commented lines in ``cfg.yml`` separate the necessary specs from optional
+specs.
+Only the two lines shown above are not commented in the necessary part.
+
+The file also contains several other (all of these commented) criteria definitions
+of the testing model ``xpipa`` installed with ``pymcma``.
 
 Optional configuration items
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Several run-time options can be activated by the corresponding configuration items,
+which are located in the ``cfg.yml`` file below the marker:
+
+.. code-block:: YAML
+
+    # The following specs are optional.  --------------------------------------------
+
+All but one these items are commented.
+The only one not commented reads:
+
+.. code-block:: YAML
+
+    rep_vars: ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
+
+It defines the list of names of core-model variables, values of which are request to
+be stored for each iteration.
+The variables can be either scalar (i.e., not indexed) or indexed.
+The values are stored in the Pandas data-frame and exported as the CSV-format file.
+If the ``rep_vars`` are undefined (i.e., the corresponding line is commented) than
+the file is not generated.
+
+Note that values of each indexed variable is stored in the data-frame columns,
+each column name is composed of the variable name and all pertaining combinations of
+values of indices.
+Therefore, for models with many such combinations the number of data-frame columns
+will be large.
+This should be taken into account in specification of the ``rep_vars`` list.
+
+Each of the other optional items in the ``cfg.yml`` is composed of two commented lines.
+The first contains the description of the option,
+the second the name of the key-word with its default value.
+The default value can be changed by uncommenting the second line and modifying the
+default value.
+
+Here are additional information on the meaning of the optional configuration items,
+referred to by the corresponding key-word:
+
+#.  ``resdir`` : name of the result sub-directory.
+    The analysis results are stored in the analysis result subdirectory of
+    the corresponding analysis directory.  For the above discussed analysis
+    example it will be named ``anaIni/Results/``.
+    The result sub-directory will be created by ``pymcma``.
+
+#.  ``run_id`` : name of the additional sub-directory of the result sub-directory.
+    It might be desired to store the results in a separate directory (e.g., for
+    different configuration options).
+    The additional sub-directory will be created by ``pymcma``.
+
+#.  ``mxIter`` : maximum number of iterations.
+    It might be desired to change the number of iteration for obtaining either
+    faster an incomplete Pareto-front representation or continue to computations
+    with a larger (than the default) iteration number.
+
+#.  ``showPlot`` : to suppress showing the plots during the computations.
+    If the computation time is too long to wait for seing the plots of the results,
+    then showing the plots should be surpressed.
+    Note that plots are always stored in the ``resdir``.
+
 
 Results of analyses
 -------------------
-(many diverse analyses), easy to structure (either by results-tree or by usr_id)
+Results of each analysis are stored in the ``resdir`` directory.
+New results overwrite the old-ones.
+Therefore, in order to keep the old results one should define in the
+``cfg.yml`` a new ``run_id``.
 
-Temporary notes
----------------
+The stored results consist of Pandas data-frames and plots in the ``png`` format.
+The data-frames are stored as the CSV-format files.
+The column names of the data-frames are generated from the corresponding names
+of either criteria or core-model variables.
+Therefore, we recommend to use easy to associate names in the analysis and core-model
+specification.
+
+The result directory contains:
+
+#. Data-frame with criteria values for each iteration.
+    Each iteration is identified by its sequence-number.
+    For each criterion and for each iteration criteria values are provided in
+    two measurment units: (1) used in the core-model, and (2) nomarlized by the CAF
+    (Criterion Achievement Function) to the common scale in which the largest/smallest
+    value corresponds to the best/worst criterion performance within the Pareto-front.
+
+#. Data-frame with values of the requested (in ``rep_vars``) core-model variables.
+    The values for each iteration are exported to be available for problem/core-model
+    specific analysis.
+    To enable linking these values with the corresponding performance of the criteria,
+    each iteration is identified by its sequence-number.
+    The labels of the data-frame columns correspond to the variable names.
+    The values of scalar (not indexed) variables are stored in one column.
+    The values of each indexed variables are stored in separate columns;
+    each column is labeled by the variable name and (sequentially generated)
+    names corresponding to each comvination of values of indices.
+
+#. Plots illustrating the Pareto front.
+    Two plots are generated:
+
+    - Two-dimensional sub-plots of all combinations of criteria pairs.
+    - Parallel-coordinate plot of all criteria.
+
+#. Plots illustrating computation progress.
+    Two plots showing the state at each computation stage are generated:
+
+    - Pair of plots showing numbers of iterations and of distinct solutions, respectively.
+    - Distributions of distances between neighbor solutions.
+
+Summary
+-------
+Complementary details on the core-model preparation and the analysis are available
+in the companion paper submitted for publication in the SoftwareX journal.
+
+Temporary notes (TO BE REMOVED)
+-------------------------------
 
 The PyMCMA software is configured and run based on a configuration file written in YAML markup language.
 
@@ -164,8 +346,8 @@ You can find the template configuration in TODO
 Model name
 ^^^^^^^^^^
 
-The first and most necessary thing is a definition of the model, which should be analyzed. Models should be stored in
-``.dll`` format in ``modDir`` (default is Models/) directory.
+The first and most necessary thing is a definition of the model, which should be analyzed.
+Models should be stored in ``.dll`` format in ``modDir`` (default is Models/) directory.
 
 .. code-block:: YAML
 
