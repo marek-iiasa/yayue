@@ -36,8 +36,9 @@ class ParProg:     # progress in Pareto set representation
             # print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
             self.cur_step += 1
         else:
+            self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
+            print(f'cur_step {self.cur_step}, itr {itr}, n_sol {n_sol}.')
             if len(pairs) > 0:
-                self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
                 print(f'{len(pairs)} cubes not processed.')
             else:
                 print(f'All cubes were processed.')

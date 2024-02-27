@@ -28,6 +28,7 @@ class Plots:
         self.n_sol = len(df.index)  # number of solutions defined in the df
         self.seq = df[self.cols[0]]
         self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
+        self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue', ])  # mono-color ALL crit-plots
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
 
         if self.show_plot is None:  # just in case the option is missed in cfg
@@ -74,7 +75,7 @@ class Plots:
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         # crs = []
-        m_size = 30  # marker size
+        m_size = 20  # marker size  (was 30)
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
             for i_second in range(i_first + 1, self.n_crit):
@@ -86,7 +87,7 @@ class Plots:
                 ax[i_plot].set_ylabel(name2)
                 ax[i_plot].set_title(name1 + ' vs ' + name2)
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
-                                   cmap=self.cmap, s=m_size)
+                                   cmap=self.cmap1, s=m_size)
                 # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
                 '''
                 for (i, seq) in enumerate(self.seq):
@@ -115,7 +116,7 @@ class Plots:
     #                             f'\nCoordinates: ({sel.target[0]:.2f}, {sel.target[1]:.2f})')
 
     def plot3D(self):
-        if self.n_crit < 3:
+        if self.n_crit < 6:     # ad-hoc suppress 3D
             return
         # todo: plots for more than 3 criteria
         if self.n_crit > 3:
