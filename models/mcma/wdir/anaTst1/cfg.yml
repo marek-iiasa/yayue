@@ -1,0 +1,57 @@
+# Template of the MCMA analysis configuration.
+# Please don't modify this file; copy it to your analysis dir and modify the copy
+# Please consult the configuration info summarized in ./Data/Readme.txt file.
+---
+
+# The following two specs are necessary.   ------------------------------------------
+# Therefore, the (given as example) values of each of the two below specified
+# yaml/dict key should be replaced by values correct for each analysis.
+
+# root-name of the core/substantive model instance; the corresponding *dll file
+# has to be provided in the Models dir
+model_id: ../Models/xpipa
+
+# criteria definition
+# each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
+# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
+# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water] ]
+# crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
+crit_def: [ [cost, min, cost], [greenFue, max, greenFTot] ]
+# crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
+# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
+
+
+# The following specs are optional.  --------------------------------------------
+# If the option is desired, then uncomment the line with {key: value} pair and
+# modify the value
+
+# Sub-directory of the corresponding ana_dir containing results (df's and plots)
+# resDir: Results/
+
+# A sub-directory of the resDir for results of the corresponding execution run.
+# Note: many subdirectories can be defined to organize outcomes of diverse runs.
+# run_id: tst1/
+
+# file-names          -----------
+# To redirect the stdout (e.g., of a long run) define the corresponding file name
+# (the option identified by the key: fn_out) 
+# fn_out: nsc_hs.txt
+
+# core-model variables values of which shall be included in the report
+rep_vars: ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
+
+# Control options     -----------
+
+# max number of iterations
+# mxIter: 50
+mxIter: 1000
+
+# parRep: True for generating Pareto representation, False for predefined preferences
+# parRep: True
+
+# verbosity level (controls print detail-level) [0, 3]
+# verb: 0
+
+# set to either True or False to show/no-show plots
+# showPlot: True
+
