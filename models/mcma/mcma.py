@@ -75,7 +75,6 @@ if __name__ == '__main__':
     # ana_dir = args.ana_id or 'anaTst'
     install = args.install
     ana_dir = args.anaDir
-    ana_dir = 'anaTst'
     if install:
         assert ana_dir is None, f'ERROR: no directory should not be defined for the installation.'
         ana_dir = 'anaTst'

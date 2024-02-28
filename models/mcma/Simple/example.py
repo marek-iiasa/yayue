@@ -7,19 +7,19 @@
 
 """ Ad-hoc solution for exporting the Pipa model in the dill file (combines pipa.py and sms.py files)."""
 import sys		# needed for stdout and sys.exit()
-# import os
+import os
 # import pandas as pd
 from os import R_OK, access
 from os.path import isfile
 import dill
-from datetime import datetime as dt
+# from datetime import datetime as dt
 # from datetime import timedelta as td
-import pyomo.environ as pe
+# import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 # from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
 from inst import *      # return model instance
-from report import *    # report and store results
+# from report import *    # report and store results
 
 
 # --------------------------------------------
@@ -44,7 +44,7 @@ abst.con1 = pe.Constraint(expr=abst.w + abst.l  <= abst.hour)
 abst.con2 = pe.Constraint(expr=abst.w  >= abst.work)
 abst.con3 = pe.Constraint(expr=abst.l <= abst.leisure)
 abst.con4 = pe.Constraint(expr=abst.s_w*abst.w+abst.s_l*abst.l == abst.obj1)
-abst.con5 = pe.Constraint(expr=abst.w+abst.l  == abst.obj2)
+abst.con5 = pe.Constraint(expr=10.0 * abst.w == abst.obj2)
 # --------------------------------------------
 # ----
 
@@ -65,7 +65,7 @@ def chk_sol(res):  # check status of the solution
 
 # noinspection SpellCheckingInspection
 if __name__ == '__main__':
-    tstart = dt.now()
+    # tstart = dt.now()
     # print('Started at:', str(tstart))
     # directories/folders
     # path = '/Users/marek/Documents/Github/yayue/models/pipa/'
