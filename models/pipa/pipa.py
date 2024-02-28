@@ -17,7 +17,7 @@ from datetime import datetime as dt
 
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-# from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
+from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
 from inst import *      # return model instance
 from report import *    # report and store results
 
