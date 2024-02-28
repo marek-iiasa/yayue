@@ -1,0 +1,105 @@
+# tiny data set for testing the SMS
+# data in AMPL format
+
+# the default values (set in SMS) are: periods=3, life=0, discr=0.05
+param periods := 3 ;
+param life := 
+BTL 0
+CTL 1
+OTL 3
+;
+#     param lifet := 1 ; no longer used (replaced by life_t)
+# sets: P, V, PV, H are initialized in SMS
+# could (but should not) be redefined here
+
+# the default (set in SMS) discr=0.04
+param discr := 0.05 ;
+
+# technologies
+set T := BTL CTL OTL;
+
+# inputs and outputs
+set J := ele h2 biom coal crude;
+set K := fuel;
+#
+
+
+# demand: from Fig. 2, p. 12
+param dem :=
+0 fuel 300
+1 fuel 310
+2 fuel 320
+;
+
+# from assumption that act are in the same energy-units as output
+param inpU :=
+BTL ele 1.1
+CTL ele 1.2
+OTL ele 1.3
+BTL biom 2.0
+CTL coal 4.0
+OTL crude 3.0
+;
+
+# emission factor, Tab. 3, p. 14
+param ef :=
+BTL 0.78
+CTL 7.69
+OTL 1.68
+;
+# historical capacities, default 0.
+param hcap :=
+# BTL -1 1.4
+CTL -1 12.5
+OTL -1 748
+OTL -3 748
+;
+
+# capacity utilization factor: Tab 3, p. 14
+param cuf :=
+BTL 0.08
+CTL 0.8
+OTL 0.85
+;
+
+# input requirement, == 1/efficiency, Tab 3, p. 14
+param inpU :=
+BTL biom 3
+BTL ele 0.5
+CTL coal 2.17
+CTL ele 0.2
+OTL crude 1.27
+OTL ele 0.1
+;
+
+# outputs
+param outU :=
+BTL fuel 0.7
+CTL fuel 0.8
+OTL fuel 0.9
+;
+
+# inv cost, Tab. 3, p. 13
+param invP :=
+BTL 1106
+CTL 1397
+OTL 509
+;
+
+# feedstock prices
+param inpP :=
+ele  110
+biom 289
+coal 83
+crude 357
+;
+
+param omcP :=
+BTL 334
+CTL 380
+OTL 89
+;
+
+# carbon price
+param carbP := 50 ;
+

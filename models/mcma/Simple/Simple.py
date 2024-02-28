@@ -46,6 +46,7 @@ abst.con3 = pe.Constraint(expr=abst.l <= abst.leisure)
 abst.con4 = pe.Constraint(expr=abst.s_w*abst.w+abst.s_l*abst.l == abst.obj1)
 abst.con5 = pe.Constraint(expr=abst.w+abst.l  == abst.obj2)
 # --------------------------------------------
+# ----
 
 
 def chk_sol(res):  # check status of the solution
