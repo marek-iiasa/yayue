@@ -1,7 +1,6 @@
-# Generate simple example model
+# Simple Pyomo model to demonstrate export of concrete model in the dill-format
 
 import sys		# needed for stdout and sys.exit()
-import os
 from os import R_OK, access
 from os.path import isfile
 import dill
@@ -10,41 +9,55 @@ from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 
 
-# --------------------------------------------
 # Symbolic model specification
 def mk_sms():
     m = pe.AbstractModel(name='example 1.0')
     # Parameters
     m.s_w = pe.Param()
     m.s_l = pe.Param()
-    m.hour = pe.Param()
+    m.perhour = pe.Param()
     m.work = pe.Param()
     m.leisure = pe.Param()
     m.h_income = pe.Param()
     # Variables
-    m.w = pe.Var(domain = pe.NonNegativeReals)
-    m.l = pe.Var(domain = pe.NonNegativeReals)
-    m.obj1 = pe.Var(domain = pe.Reals)
-    m.obj2 = pe.Var(domain = pe.Reals)
-    # Objective
-    m.obj = pe.Objective(expr=m.s_w * m.w+m.s_l*m.l,sense=pe.maximize)
-    # Constraints
-    m.con1 = pe.Constraint(expr=m.w + m.l <= m.hour)
-    m.con2 = pe.Constraint(expr=m.w  >= m.work)
-    m.con3 = pe.Constraint(expr=m.l <= m.leisure)
-    m.con4 = pe.Constraint(expr=m.s_w * m.w + m.s_l * m.l == m.obj1)
-    m.con5 = pe.Constraint(expr=m.h_income * m.w == m.obj2)
-    return m
-# --------------------------------------------
-# return the model instance (currently the params are in *.dat, i.e., AMPL-like format
+    m.nwork = pe.Var(domain=pe.NonNegativeReals)    # number of work hours
+    m.nleisure = pe.Var(domain=pe.NonNegativeReals)    # number of leasure hours
+    m.satisf = pe.Var(domain=pe.Reals)
+    m.income = pe.Var(domain=pe.Reals)
 
-def inst(m, f_data):    # m: abstract/symbolic model, f_data: parameters in AMPL-like format
-    # data = DataPortal()  # the default arg: (model=model) !
-    # data.load(filename='data0.yaml')  # works with DataPortal() and DataPortal(model=m)
-    # data.load(filename='data0.json')  # works with DataPortal() and DataPortal(model=m)
+    # Objective
+    @m.Objective(sense=pe.maximize)
+    def goalmax(mx):
+        return mx.s_w * mx.nwork + mx.s_l * mx.nleisure
+    # Constraints
+
+    @m.Constraint()
+    def con1(mx):
+        return mx.nwork + mx.nleisure <= mx.perhour
+
+    @m.Constraint()
+    def con2(mx):
+        return mx.nwork >= mx.work
+
+    @m.Constraint()
+    def con3(mx):
+        return mx.nleisure <= mx.leisure
+
+    @m.Constraint()
+    def con4(mx):
+        return mx.s_w * mx.nwork + mx.s_l * mx.nleisure == mx.satisf
+
+    @m.Constraint()
+    def con5(mx):
+        return mx.h_income * mx.nwork == mx.income
+
+    return m    # return concrete model
+
+
+# return the model instance
+def inst(m, f_dat):    # m: abstract/symbolic model, f_data: parameters in AMPL-like format
     data = pe.DataPortal(model=m)  # parameter (model=m) needed for loading *.dat
-    # dat-format requires DataPortal(model=m)
-    data.load(filename=f_data)  # dat3 prepared by JZ, Oct 21, 2023
+    data.load(filename=f_dat)  # dat3 prepared by JZ, Oct 21, 2023
     mod = m.create_instance(data)
 
     print('\n instance.pprint() follows      -----------------------------------------------------------------')
@@ -69,20 +82,11 @@ def chk_sol(res):  # check status of the solution
 
 # noinspection SpellCheckingInspection
 if __name__ == '__main__':
-    path = '.'
-    data_dir = f'{path}/'
-    mod_dir = f'{path}/'
-    out_dir = f'{path}/'
-    os.chdir(path)
-    m_name = 'Example'     # model name (used for the dll-format file-name
+    m_name = 'example'     # model name (used for the dll-format file-name)
     # files
-    f_data = f'{data_dir}example.dat'    # data for defining the model instance
-    f_mod = f'{mod_dir}{m_name}.dll'     # concrete model in dill format
-    f_out = f'{out_dir}stdout.txt'       # optionally redirected stdout
+    f_data = 'example.dat'    # data for defining the model instance
+    f_mod = f'{m_name}.dll'     # concrete model in dill format
     assert isfile(f_data) and access(f_data, R_OK), f'Data file {f_data} not readable.'
-
-    default_stdout = sys.stdout
-
     # noinspection SpellCheckingInspection
     abst = mk_sms()         # generate abstract model (SMS)
     model = inst(abst, f_data)  # generate model instance

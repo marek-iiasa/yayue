@@ -9,11 +9,11 @@
 
 # root-name of the core/substantive model instance; the corresponding *dll file
 # has to be provided in the Models dir
-model_id: ../Example/Models/Example
+model_id: ../Example/example
 
 # criteria definition
 # each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
-crit_def: [ [crit1, max, obj1], [crit2, max, obj2] ]
+crit_def: [ [crit1, max, satisf], [crit2, max, income] ]
 
 
 # The following specs are optional.  --------------------------------------------
@@ -33,7 +33,7 @@ crit_def: [ [crit1, max, obj1], [crit2, max, obj2] ]
 # fn_out: nsc_hs.txt
 
 # core-model variables values of which shall be included in the report
-rep_vars: ['obj1', 'obj2', 'w', 'l']
+rep_vars: ['satisf', 'income', 'nwork', 'nleisure']
 
 # Control options     -----------
 
