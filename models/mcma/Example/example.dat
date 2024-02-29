@@ -6,6 +6,6 @@ param s_l := 5.0 ;
 param hour := 14.0 ;
 param work := 5.0 ;
 param leisure := 8.0;
-
+param h_income := 10.0;
 
 
