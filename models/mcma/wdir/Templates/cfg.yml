@@ -1,9 +1,8 @@
-# Template of the MCMA analysis configuration.
-# Please don't modify this file; copy it to your analysis dir and modify the copy
-# Please consult the configuration info summarized in ./Data/Readme.txt file.
+# Template of the pyMCMA analysis configuration.
+# Uncomment and define at least the two required specs.
 ---
 
-# The following two specs are necessary.   ------------------------------------------
+# The following two specs are required.   ------------------------------------------
 # Therefore, the (given as example) values of each of the two below specified
 # yaml/dict key should be replaced by values correct for each analysis.
 
@@ -31,23 +30,11 @@
 # file-names          -----------
 # To redirect the stdout (e.g., of a long run) define the corresponding file name
 # (the option identified by the key: fn_out) 
-# fn_out: nsc_hs.txt
+# fn_out: out1.txt
 
 # core-model variables values of which shall be included in the report
 # rep_vars: ['x1', 'x2', 'actS']
 
 # Control options     -----------
-
 # max number of iterations
-# mxIter: 50
 # mxIter: 1000
-
-# parRep: True for generating Pareto representation, False for predefined preferences
-# parRep: True
-
-# verbosity level (controls print detail-level) [0, 3]
-# verb: 0
-
-# set to either True or False to show/no-show plots
-# showPlot: True
-

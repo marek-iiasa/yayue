@@ -13,12 +13,11 @@ model_id: ../Models/xpipa
 
 # criteria definition
 # each sub-list defines one criterion: [crit_name, type (max or min), core-model var.]
-# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
 # crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water] ]
 # crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
-crit_def: [ [cost, min, cost], [greenFue, max, greenFTot] ]
+# crit_def: [ [cost, min, cost], [greenFue, max, greenFTot] ]
 # crit_def: [ [cost, min, cost], [water, min, water], [greenFue, max, greenFTot] ]
-# crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
+crit_def: [ [cost, min, cost], [carb, min, carbBal], [water, min, water], [greenFue, max, greenFTot] ]
 
 
 # The following specs are optional.  --------------------------------------------
@@ -43,15 +42,5 @@ rep_vars: ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
 # Control options     -----------
 
 # max number of iterations
-# mxIter: 50
-mxIter: 1000
-
-# parRep: True for generating Pareto representation, False for predefined preferences
-# parRep: True
-
-# verbosity level (controls print detail-level) [0, 3]
-# verb: 0
-
-# set to either True or False to show/no-show plots
-# showPlot: True
+# mxIter: 1000
 

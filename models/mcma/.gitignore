@@ -4,9 +4,10 @@ Readme.txt
 pyBak/
 Example/*.dll
 ModelsOld/
-ana_*/
+wdirB*
+# ana_*/
 # anaEx/
-anaTst/Results/
-anaTst/pay*
+# anaTst/Results/
+# anaTst/pay*
 
 
