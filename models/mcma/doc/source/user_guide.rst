@@ -105,23 +105,27 @@ installation) includes a simple, reusable function performing this task.
 
 Example of a core-model
 ^^^^^^^^^^^^^^^^^^^^^^^
-To illustrate the basic use of Pyomo and the model-instance export in the
-dill-format file we provide in ``example.py`` a very simple model developed
-in Pyomo.
+The Template folder (created during ``pymcma`` installation) includes two
+files illustrating the basic use of Pyomo for a core-model development,
+as well as the model-instance export in the dill-format.
 The example consists of two files:
 
-#. ``example.py`` contains the model developed in Pyomo.
-    There are sepatate functions for defining the abstract model and the
-    concrete model, as well as the main function which drives the model
-    generation and export in the dill-format.
+#. ``example.py`` generates a very simple developed in Pyomo.
+    Separate functions define the abstract model and the
+    concrete model, respectively. The main function drives the model
+    generation and exports the concrete model in the dill-format.
 
-#. ``example.dat`` contain data in the AMPL format required for creating concrete model.
+#. ``example.dat`` contains data in the AMPL format used in concrete model creation.
     In development of actual models other data formats might be more suitable.
-    We suggest to consult the extensive Pyomo documentation for alternatives.
+    We suggest to consult the extensive Pyomo documentation for alternatives
+    that might fit better management of data used for the core-model parameters.
 
 The instance model object is exported to the dill-format file ``example.dll``.
 The dill format is applied for serializing and de-serializing Python objects.
-The ``example.dll`` file can be later used as a core-model for MCMA with ``pymcma``.
+The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
+although the example is by far too simple for actual MCMA analysis.
+For the latter we recommend to use the ``xpipa.dll`` demonstrated during the
+installation testing.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
