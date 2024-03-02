@@ -214,7 +214,8 @@ class ParRep:     # representation of Pareto set
             # print(f'\nSetting the criteria activity and the A/R for the selected cube.')
             cube.setAR()     # set AR values (directly in the Crit objects)
             cube.lst(self.cur_cube)
-            print(f'Proceed to generation of the optimization problem.')
+            if self.cfg.get('verb') > 1:
+                print(f'Proceed to generation of the optimization problem.')
             # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)

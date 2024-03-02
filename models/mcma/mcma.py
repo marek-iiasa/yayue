@@ -67,7 +67,7 @@ if __name__ == '__main__':
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    wdir = '.'     # current dir is the wdir for both development and packaged version
+    # wdir = '.'     # current dir is the wdir for both development and packaged version
     # assert os.path.exists(wdir), f'The work directory "{wdir}" does not exist'
     # os.chdir(wdir)
     # process cmd-line args (currently only either install or ana_dir)
@@ -76,21 +76,21 @@ if __name__ == '__main__':
     install = args.install
     ana_dir = args.anaDir
     if install:
-        assert ana_dir is None, f'ERROR: no directory should not be defined for the installation.'
+        assert ana_dir is None, f'ERROR: no directory should be defined for the installation.'
         ana_dir = 'anaTst'
         print('Installing pyMCMA.')
-        # todo: AS unpack wdir and continue
+        # todo: AS unpack wdir and continue; wdir should be unpacked during the pymcma installation?
     else:
         assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
     print(f'Analysis directory: {ana_dir}')
     assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist'
     os.chdir(ana_dir)
-    # assert ana_dir == 'Jasio', f'just a test stop'
 
     # process the run configuration options and configure the working space
-    # ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
     config = Config()    # process yaml config. file
     cfg = config.data   # dict with config. options
+    if cfg.get('verb') > 1:
+        print(f'Configuration options after processing:\n\t{cfg}')
 
     # optional standard output redirection
     default_stdout = sys.stdout

@@ -50,7 +50,7 @@ def rd_inst(cfg):  # load the core model
     assert isfile(f_name) and access(f_name, R_OK), f'Model "{f_name}" not accessible'
     with open(f_name, 'rb') as f:
         m1 = dill.load(f)
-    print(f'\nThe stored model "{m_name}" loaded from the dill file "{f_name}"')
+    print(f'\nModel "{m1.name}" loaded from the dill-format file "{f_name}"')
 
     # print('\ncore model display: -----------------------------------------------------------------------------')
     # m1.pprint()
