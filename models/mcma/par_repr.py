@@ -6,8 +6,8 @@ import numpy as np
 # import matplotlib.pyplot as plt
 from matplotlib import mlab
 
-from cube import *
-from plots import *
+from .cube import *
+from .plots import *
 
 
 class ParProg:     # progress in Pareto set representation

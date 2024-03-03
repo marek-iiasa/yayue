@@ -9,10 +9,10 @@ import sys		# needed for sys.exit()
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
-from rd_inst import rd_inst  # model instance provider
-from mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
-from report import Report  # handles submodel/block of AF and links to the core/substantive model
+from .ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
+from .rd_inst import rd_inst  # model instance provider
+from .mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
+from .report import Report  # handles submodel/block of AF and links to the core/substantive model
 
 
 def chk_sol(res):  # check status of the solution

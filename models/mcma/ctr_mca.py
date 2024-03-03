@@ -7,8 +7,8 @@ import math
 from os import R_OK, access
 from os.path import isfile
 # import numpy as np
-from crit import Crit, CrPref
-from par_repr import ParRep
+from .crit import Crit, CrPref
+from .par_repr import ParRep
 
 
 class CtrMca:
