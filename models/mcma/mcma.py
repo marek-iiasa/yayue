@@ -78,7 +78,7 @@ if __name__ == '__main__':
     if install:
         assert ana_dir is None, f'ERROR: no directory should be defined for the installation.'
         ana_dir = 'anaTst'
-        print('Installing pyMCMA.')
+        print('Installing working/test directories.')
         # todo: AS unpack wdir and continue; wdir should be unpacked during the pymcma installation?
     else:
         assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
