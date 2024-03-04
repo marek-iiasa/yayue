@@ -1,5 +1,5 @@
 import pyomo.environ as pe       # more robust than using import *
-from pwl import PWL
+from .pwl import PWL
 
 
 class McMod:

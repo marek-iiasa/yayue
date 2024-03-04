@@ -30,7 +30,8 @@ class ParSol:     # one Pareto solution
             # print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
             #       f's[{s2.itr_id}] {s2.a_vals[i]}')
             if not res <= val <= asp:
-                print(f'WARNING: Parsol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
+                pass
+                # print(f'WARNING: Parsol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
             # The below occurs when the corresponding criterion is inactive
             # assert res <= val <= asp, f'Parsol:neigh_inf():: crit {cr.name} {val=} outside [{res=}, {asp=}]'
 
@@ -355,9 +356,10 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         for dim in self.edges:
             edges += f'{dim:.1f} '
         edges += ']'
-        print(f'cube[{seq}] sol [{self.s1.itr_id}, {self.s2.itr_id}], size={self.size:.1f}, '
-              f'used {self.used}, empty {self.empty}, degen {self.is_degen}, edges={edges}, '
-              f'\n\tcorners: ([{val1}], [{val2}])')
+        if self.mc.cfg.get('verb') > 1:
+            print(f'cube[{seq}] sol [{self.s1.itr_id}, {self.s2.itr_id}], size={self.size:.1f}, '
+                  f'used {self.used}, empty {self.empty}, degen {self.is_degen}, edges={edges}, '
+                  f'\n\tcorners: ([{val1}], [{val2}])')
 
         # the below are for info only; not-scaled A/R values are used for actual preferences
         val1 = ''

@@ -7,8 +7,8 @@ import math
 from os import R_OK, access
 from os.path import isfile
 # import numpy as np
-from crit import Crit, CrPref
-from par_repr import ParRep
+from .crit import Crit, CrPref
+from .par_repr import ParRep
 
 
 class CtrMca:
@@ -110,7 +110,7 @@ class CtrMca:
                 n_def = 0
                 for n_line, line in enumerate(reader):
                     line = line.rstrip("\n")
-                    print(f'line {line}') # noqa
+                    # print(f'line {line}') # noqa
                     words = line.split()
                     n_words = len(words)
                     # assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
@@ -140,7 +140,8 @@ class CtrMca:
             print(line)
             lines.append(line)
         if prn_only or self.cur_stage < 4:  # don't store payOff table before neutral solution is computed:
-            print(f'Current values of the payoff table NOT written to file "{self.f_payoff}":')
+            if self.cfg.get('verb') > 1:
+                print(f'Current values of the payoff table NOT written to file "{self.f_payoff}":')
         else:
             print(f'Current values of the payoff table written to file "{self.f_payoff}":')
             f_payOff = open(self.f_payoff, "w")

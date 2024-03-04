@@ -99,7 +99,7 @@ be installed in the usual way, i.e.,
 
 .. code-block:: console
 
-    $ conda install xxx, yyy
+    $ conda install xxx yyy
 
 where xxx, yyy are names of the desired packages.
 The above recommended installation sequence assures the version consistency of

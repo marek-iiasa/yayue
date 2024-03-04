@@ -14,7 +14,6 @@ class Config:
         self.rd_cfg(self.f_usr)   # usr_cfg is in the current dir
         # print(f'Configuration options read:\n\t{self.data}')
         self.chk_dirs()       # check the needed dirs
-        print(f'Configuration options after processing:\n\t{self.data}')
         # raise Exception('test stop')
 
     def rd_cfg(self, f_name):       # upload yaml config file
@@ -45,7 +44,7 @@ class Config:
                     self.data.update({k: v})
 
     def sys_default(self):       # set default values of Sys/cfg
-        sysDefaults = {'resDir': 'Results/', 'mxIter': 16, 'parRep': True, 'showPlot': True, 'verb': 1}
+        sysDefaults = {'resDir': 'Results/', 'mxIter': 1000, 'parRep': True, 'showPlot': True, 'verb': 0}
         self.data = {}
         for k, v in sysDefaults.items():  # set default values
             self.data.update({k: v})

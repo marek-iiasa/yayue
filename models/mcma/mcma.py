@@ -12,6 +12,7 @@
 
 # import sys		# needed for sys.exit()
 # import os
+import shutil
 # from os import R_OK, access
 # from os.path import isfile
 # import pandas as pd
@@ -21,8 +22,8 @@ import argparse
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
-from driver import *  # driver (run the analysis set-up and iterations)
-from cfg import *  # configuration (dir/file location, parameter values, etc
+from .driver import *  # driver (run the analysis set-up and iterations)
+from .cfg import *  # configuration (dir/file location, parameter values, etc
 
 # import from remote dir does no work
 # sys.path.append('/Users/marek/Documents/GitHub/yayue/models/pipa/pipa0')
@@ -38,6 +39,7 @@ from cfg import *  # configuration (dir/file location, parameter values, etc
 # from tspipa import sbPipa as sbPipa  # sand-box tiny Pipa testing model, developed as concrete (without abstract)
 # from tsjg1 import jg1 as jg1  # sand-box tiny jg1 model
 
+SCRIPT_DIR = os.path.dirname(__file__)
 
 def read_args():
     descr = """
@@ -62,12 +64,33 @@ def read_args():
     return cl_args
 
 
+def create_wdir():
+    print('Initializing new working directory.')
+
+    dirs_to_create = ['Models', 'Templates', 'anaTst']
+
+    for dir in dirs_to_create:
+        os.mkdir(dir)
+
+    files_to_copy = [
+        'wdir/Models/xpipa.dll',
+        'wdir/Templates/cfg.yml',
+        'wdir/Templates/example.py',
+        'wdir/Templates/example.dat',
+        'wdir/anaTst/cfg.yml',
+        ]
+
+    for file in files_to_copy:
+        shutil.copyfile(src=os.path.join(SCRIPT_DIR, file),
+                        dst=file.removeprefix('wdir/'))
+
+
 # noinspection SpellCheckingInspection
-if __name__ == '__main__':
+def main():
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    wdir = '.'     # current dir is the wdir for both development and packaged version
+    # wdir = '.'     # current dir is the wdir for both development and packaged version
     # assert os.path.exists(wdir), f'The work directory "{wdir}" does not exist'
     # os.chdir(wdir)
     # process cmd-line args (currently only either install or ana_dir)
@@ -76,21 +99,21 @@ if __name__ == '__main__':
     install = args.install
     ana_dir = args.anaDir
     if install:
-        assert ana_dir is None, f'ERROR: no directory should not be defined for the installation.'
+        assert ana_dir is None, f'ERROR: no directory should be defined for the installation.'
         ana_dir = 'anaTst'
-        print('Installing pyMCMA.')
-        # todo: AS unpack wdir and continue
+        print('Installing working/test directories.')
+        create_wdir()
     else:
         assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
     print(f'Analysis directory: {ana_dir}')
     assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist'
     os.chdir(ana_dir)
-    # assert ana_dir == 'Jasio', f'just a test stop'
 
     # process the run configuration options and configure the working space
-    # ana_def = './Data/ana_dir.yml'    # yaml file defining the analysis directory
     config = Config()    # process yaml config. file
     cfg = config.data   # dict with config. options
+    if cfg.get('verb') > 1:
+        print(f'Configuration options after processing:\n\t{cfg}')
 
     # optional standard output redirection
     default_stdout = sys.stdout
@@ -122,3 +145,6 @@ if __name__ == '__main__':
         print('\nStarted at: ', str(tstart))
         print('Finished at:', str(tend))
         print(f'Wall-clock execution time: {time_diff.seconds} sec.')
+
+if __name__ == '__main__':
+    main()
