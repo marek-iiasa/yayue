@@ -269,10 +269,12 @@ class ParRep:     # representation of Pareto set
                 if cmp_ret == 0:    # is Pareto
                     continue    # check next solution
                 elif cmp_ret > 0:   # new_sol dominates s2
-                    print(f'\t-------------     current solution[{itr_id}] dominates solution[{s2.itr_id}].')
+                    if self.cfg.get('verb') > 1:
+                        print(f'\t-------------     current solution[{itr_id}] dominates solution[{s2.itr_id}].')
                     s2.domin = -itr_id      # mark s2 as dominated by the new solution, and continue checking next sol.
                 else:           # new_sol is dominated by s2
-                    print(f'\t-------------     current solution[{itr_id}] is dominated by solution[{s2.itr_id}].')
+                    if self.cfg.get('verb') > 1:
+                        print(f'\t-------------     current solution[{itr_id}] is dominated by solution[{s2.itr_id}].')
                     is_pareto = False
                     break
             if is_pareto:

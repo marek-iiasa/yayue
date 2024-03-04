@@ -110,7 +110,8 @@ class McMod:
                 pwls.append(None)
                 sc_var.append(None)
                 var_seq.append(-1)
-                print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
+                if self.mc.cfg.get('verb') > 1:
+                    print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
         if self.mc.verb > 2:
             print(f'\nParams of s-th segment defining PWL for i-th CAF:')
             for (i, pwl) in enumerate(pwls):

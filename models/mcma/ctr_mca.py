@@ -136,7 +136,7 @@ class CtrMca:
         print('PayOff table:')
         lines = []
         for crit in self.cr:
-            line = f'{crit.name}   U {crit.utopia}   N {crit.nadir}'
+            line = f'{crit.name}\t U {crit.utopia:.3e}   N {crit.nadir:.3e}'
             print(line)
             lines.append(line)
         if prn_only or self.cur_stage < 4:  # don't store payOff table before neutral solution is computed:

@@ -51,6 +51,7 @@ def driver(cfg):
     # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 0
     max_itr = cfg.get('mxIter')
+    print(f'Maximum number of iterations: {max_itr}')
     # todo: verify conditions for storing the payoff table
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         i_stage = mc.set_stage()  # define/check current analysis stage

@@ -60,6 +60,7 @@ class Report:
         #   modify self.itr_id to a subsequent number
 
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
+        print(f'Core-model variables to be reported: {self.rep_vars}')
 
         # noinspection SpellCheckingInspection
         '''

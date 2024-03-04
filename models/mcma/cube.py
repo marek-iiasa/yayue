@@ -148,7 +148,8 @@ class Cubes:     # collection of aCubes
                 break   # take the first found empty cube
             else:
                 id2prune.append(c_id)
-                print(f'non-empty cube [{c_id}]')
+                if self.parRep.cfg.get('verb') > 1:
+                    print(f'non-empty cube [{c_id}]')
 
         best = None
         if len(lst) > 0:
@@ -157,7 +158,7 @@ class Cubes:     # collection of aCubes
             best = self.get(best_id)
             best.used = True
             id2prune.append(best.id)
-            print(f'\nBest (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
+            print(f'Best (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
                   f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
         else:
             print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
@@ -292,7 +293,8 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                     achiv = cr.val2ach(self.s1.a_vals[i])  # CAF (same/similar for both solutions)
                     self.aspAch.append(achiv)
                     self.resAch.append(achiv)
-                    print(f'Crit. {cr.name}, edge {self.edges[i]:.1f}: crit achiv. fixed at A/R = {achiv:.1f}')
+                    if self.mc.cfg.get('verb') > 1:
+                        print(f'Crit. {cr.name}, edge {self.edges[i]:.1f}: crit achiv. fixed at A/R = {achiv:.1f}')
                 '''
                 cr.is_active = False
                 # oldA = cr.val
@@ -368,7 +370,8 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         for (v1, v2) in zip(self.aspAch, self.resAch):    # CAF values for A/R
             val1 += f'{v1:.1f} '
             val2 += f'{v2:.1f} '
-        print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
+        if self.mc.cfg.get('verb') > 1:
+            print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
 
     def lst_size(self, c_ind):  # seq: externally defined seq_no of the list of cubes
         print(f'cube[{c_ind}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
