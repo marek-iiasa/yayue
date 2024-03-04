@@ -1,8 +1,3 @@
-# import sys      # needed from stdout
-# import os
-# import numpy as np
-
-
 class CrPref:     # attributes of item of preference specs
     def __init__(self, parent, asp, res, act=True):
         self.parent = parent  # seq_no (in mc container) of parent crit
@@ -12,8 +7,7 @@ class CrPref:     # attributes of item of preference specs
 
 
 class Crit:     # definition and attributes of a single criterion
-    # see: ~/src/mcma/mc_defs.h for the corresponding C++ classes
-    """Attributes of particular criterion."""
+    """Attributes of a criterion."""
     def __init__(self, cr_name, var_name, typ):
         # Specified at criterion declaration: crit. name, core-model var., min or max.
         self.name = cr_name
@@ -105,7 +99,7 @@ class Crit:     # definition and attributes of a single criterion
                     shift = True     # move away from U
 
         if shift:
-            # todo: add check to prevent moving (back?) to utopia
+            # todo: add check to prevent moving (back?) too close utopia
             self.nadir = val    # set val as new nadir appr.
             no_yes = ''
         else:

@@ -6,12 +6,11 @@ import os
 import math
 from os import R_OK, access
 from os.path import isfile
-# import numpy as np
 from .crit import Crit, CrPref
 from .par_repr import ParRep
 
 
-class CtrMca:
+class CtrMca:   # control flows of MCMA at diverse computations states
     def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
         self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis
@@ -49,7 +48,7 @@ class CtrMca:
         self.rdCritSpc()    # read criteria specs from the config file
         self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
 
-    def opt(self, key_id, def_val):
+    def opt(self, key_id, def_val):     # return: the cfg value if specified; otherwise the default
         val = self.cfg.get(key_id)
         if val is None:
             return def_val
@@ -68,7 +67,6 @@ class CtrMca:
         :type typ:  str
         :return:  None
         """
-        # todo: verify the check of cr_name duplication
         if self.cr_ind(cr_name, False) == -1:  # add, if the cr_name is not already used
             self.cr.append(Crit(cr_name, var_name, typ))
             self.n_crit = len(self.cr)
@@ -113,8 +111,6 @@ class CtrMca:
                     # print(f'line {line}') # noqa
                     words = line.split()
                     n_words = len(words)
-                    # assert(n_words == 3), f'line {line} has {n_words} instead of the required three.'
-                    # self.set_payOff(words[0], words[1], words[2])
                     assert n_words == 5, f'line {line} has {n_words} instead of the required five.'
                     self.set_payOff(words[0], words[2], words[4])
                     n_def += 1
@@ -124,8 +120,8 @@ class CtrMca:
             self.cur_stage = 5
             print(f'\nPayOff table provided. Skipping its computation. Jump to processing user-defined preferences.')
         else:
-            print(f"\nFile '{self.f_payoff}' with stored payoff table not available.")
-            self.hotStart = False  # if payOff provided, jump to stage==5
+            print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
+            self.hotStart = False  # payOff not provided, shall be computed
 
     def prnPayOff(self, prn_only=False):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)
@@ -194,7 +190,6 @@ class CtrMca:
                 self.cur_stage = 3
                 self.cur_cr = 0     # start 2nd nedir appr with 0-th criterion
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
-                # raise Exception(f'set_stage(): nadir2 stage NOT implemented yet.')
             return self.cur_stage
         elif self.cur_stage == 3:  # second approximation of Nadir
             if self.cur_cr + 1 < self.n_crit:   # not all crit used?
@@ -208,11 +203,11 @@ class CtrMca:
             return self.cur_stage
         elif self.cur_stage == 4:  # comes here after computing neutral solution
             print('Finished computation of neutral Pareto solution.')
-            print('Switch to get and process user-preferences.')
+            print('Switch to using preferences.')
             self.cur_stage = 5
             self.cur_cr = None  # should no longer be used
             self.hotStart = True
-            return self.cur_stage   # return to set pref for gor neutral solution and compute it
+            return self.cur_stage   # return to set pref for for neutral solution and compute it
         elif self.cur_stage == 5:  # comes here while processing preferences
             # after debugging, nothing to do here
             # print('Continue to get and handle user preferences.')
@@ -223,7 +218,7 @@ class CtrMca:
         # return self.cur_stage
 
     def set_pref(self):
-        # set automatically (acording to programmed rules for each stage) crit attributes:
+        # set automatically (according to programmed rules for each stage) crit attributes:
         # (activity, A/R, possibly adjust nadir app).
         assert self.cur_stage > 0, f'CtrMca::set_pref() should not be called for cur_stage {self.cur_stage}.'
         if self.cur_stage == 1:  # set only currently computed utopia criterion to be active
@@ -272,10 +267,9 @@ class CtrMca:
         if self.par_rep is None:
             self.par_rep = ParRep(self)     # initialize Pareto set representation
         self.par_rep.pref()     # define largest cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
-        # raise Exception(f'Mcma::par_pref() not implemented yet.')
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
-        # todo: make sure that all criteria are active by default
+        # make sure that all criteria are active by default
         for crit in self.cr:
             crit.is_active = True
         if self.n_pref == 0:    # no preferences defined, read them
@@ -307,20 +301,6 @@ class CtrMca:
             assert n_words == 3, f'definition of {i}-th criterion has {n_words} elements instead of the required three.'
             self.addCrit(cr[0], cr[1], cr[2])  # store the criterion specs
         assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
-        '''
-        print(f"\nCreating criteria defined in file '{self.f_crit}':")
-        self.n_crit = 0
-        with open(self.f_crit) as reader:  # read and store specs of criteria
-            for n_line, line in enumerate(reader):
-                line = line.rstrip("\n")
-                # print(f'line {line}')
-                if line[0] == "*" or len(line) == 0:  # skip commented and empty lines
-                    continue
-                words = line.split()
-                n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
-                assert n_words == 3, f'line {line} has {n_words} instead of the required three.'
-                self.addCrit(words[0], words[1], words[2])    # store the criterion specs
-        '''
 
     def readPref(self):  # read preferences provided in file self.f_pref
         # each line defines: cr_name, A, R, optionally activity for a criterion
@@ -384,31 +364,6 @@ class CtrMca:
         self.n_pref = len(self.pref)
         print(f'Prepared {self.n_pref} sets of user-defined preferences.')
 
-    '''
-    def procPrefSet(self, lines):  # process set of lines defining preferences
-        pref_set = []
-        for line in lines:
-            words = line.split()
-            c_ind = self.cr_ind(words[0], False)
-            if c_ind < 0:
-                print(f'unknown criterion name "{words[0]}", ignoring line {line}.')
-                continue
-            is_ok = self.cr[c_ind].chkAR(words[1], words[2])  # check correctness of A and R values
-            if is_ok:
-                # pr_line = words[0] + ' ' + float(words[1]) + ' ' + float(words[2])
-                # if len(words) == 4:
-                #     pr_line += ' n'     # criterion non-active
-                pref_set.append(line)
-            else:
-                print(f'ignoring inconsistent preferences: {line}.')
-        if len(pref_set) > 0:
-            self.pref.append(pref_set)
-            return True
-        else:
-            print(f'ignoring empty set of preferences.')
-            return False
-    '''
-
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
         # print(f'Processing criteria values of the current iteration: {crit_val}')
@@ -440,26 +395,6 @@ class CtrMca:
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
-        '''
-        elif self.cur_stage == 2:  # update nadir values
-            # print(f'---\nMcma::store_sol(): TESTING for stage {self.cur_stage}.')
-            for crit in self.cr:
-                val = crit_val.get(crit.name)
-                crit.val = val
-                if crit.is_active:  # nothing to store/update
-                    print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
-                else:
-                    crit.updNadir(self.cur_stage, val)  # update nadir value
-        elif self.cur_stage == 3:   # update nadir values
-            print(f'---\nMcma::store_sol() in stage {self.cur_stage}.')
-            for crit in self.cr:
-                val = crit_val.get(crit.name)
-                crit.val = val
-                if crit.is_active:  # nothing to store/update
-                    print(f'NOT updating nadir for active crit "{crit.name}" = {val}')
-                else:
-                    crit.updNadir(self.cur_stage, val)   # update nadir value
-        '''
 
     def diffOK(self, i, val1, val2):  # return True if the difference of two values of i-th is large enough
         maxVal = max(abs(self.cr[i].utopia), (abs(self.cr[i].nadir)))  # value used as basis for min-differences
