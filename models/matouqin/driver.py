@@ -38,8 +38,8 @@ def driver():
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
     # par = Params()  # prepare all model parameters
     # f_data = f'{data_dir}dat1.dat'
-# f_data = f'{data_dir}dat_test.dat'    # test by ZZ
-    f_data = f'{data_dir}tst1.dat'    # test by MM
+    f_data = f'{data_dir}data.dat'    # test by ZZ
+    # f_data = f'{data_dir}tst1.dat'    # test by MM
     model = inst(abst, f_data)
     print(f'\nAnalysing instance of model {model.name}.')
 

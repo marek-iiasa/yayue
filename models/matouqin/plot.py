@@ -122,7 +122,7 @@ def plot_flow(org_df, var_names):
 
     # select and store needed results
     dv_df = org_df.filter(regex=regex_patterns)
-    # print(dv_df)
+    print(dv_df)
 
     if dv_df.empty:
         print('Wrong variable selection. Please reselect the variables')
@@ -133,16 +133,17 @@ def plot_flow(org_df, var_names):
     iteration = len(org_df)
 
     for i in range(iteration):
-        # print(f'irritation = {i}')
+        print(f'irritation = {i}')
         print(f'Flow plotting start')
         for var_name in var_names:
             # print(f'var_name = {var_name}')
             plt.figure(figsize=(10, 8))
             columns = [col for col in dv_df.columns if col.startswith(var_name)]
-            # print(f'{var_name} column: {columns}')
+            # print(f'{var_name} column: {columns}\n value: \n {dv_df[columns].iloc[i]}')
             x_labels = [re.search(r'_(\w+)$', col).group(1) for col in columns]
             # print(f'{var_name} x_labels = {x_labels}')
-            for index, (col, label) in enumerate(zip(dv_df.columns, x_labels)):
+            for col, label in zip(dv_df[columns], x_labels):
+                # print(label, dv_df[col].values[i])
                 plt.bar(label, dv_df[col].values[i])
                 plt.text(label, dv_df[col].values[i], f'{dv_df[col].values[i]:.2f}', ha='center', va='bottom')
             plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
@@ -266,7 +267,7 @@ def plot_dv_flow(org_df, var_names, dv_names=None, periods=None, pl_type=None, i
                     # print(f'plt_dv_names = {plt_dv_names}')
                     plt_dv_n = len(plt_dv_names)    # numbers of devices, for setting the bar position
                     plt_dv_t = set(int(match.group(3)) for col in plt_df.columns
-                                       for match in [re.search(regex_patterns, col)] if match)  # match the time periods
+                                   for match in [re.search(regex_patterns, col)] if match)  # match the time periods
                     # plt_df_n = len(plt_df.columns)  # numbers of the columns of data
                     # print(f'plt_df_n = {plt_df_n}')
                     for index, plt_dv_name in enumerate(plt_dv_names):
@@ -305,7 +306,7 @@ def plot_dv_flow(org_df, var_names, dv_names=None, periods=None, pl_type=None, i
                     # print(f'columns = {plt_df}')
                     # plt_df_n = len(plt_df.columns)  # numbers of the columns of data
                     plt_var_names = set((match.group(1)) for col in plt_df.columns
-                                       for match in [re.search(regex_patterns, col)] if match)
+                                        for match in [re.search(regex_patterns, col)] if match)
                     # print(f'plt_var_names = {plt_var_names}')
                     plt_dv_t = set(int(match.group(3)) for col in plt_df.columns
                                    for match in [re.search(regex_patterns, col)] if match)  # match the time periods
@@ -360,6 +361,7 @@ df[df < 1e-5] = 0   # processing for plotting
 cost_var = ['revenue', 'income', 'invCost', 'OMC', 'overCost', 'buyCost', 'balCost']
 dvflow_var = ['eIn', 'hIn', 'hOut', 'hVol', 'hInc', 'cOut']
 flow_var = ['dOut', 'sIn', 'ePrs', 'sOut', 'eSurplus', 'eBought']
+# flow_var = ['eBought']
 
 plot_finance(df, cost_var)
 plot_capacity(df, 'sNum', 'Numbers of storage devices', 'Number')
