@@ -57,7 +57,15 @@ the following ``.condarc`` configuration file:
 
 Preparation of the conda environment consists of two steps:
 
-#. Create a dedicated conda environment for pyMCMA
+#. Update of the conda version.
+    Execute the following command:
+
+    .. code-block:: console
+
+        $ conda update -n base -c conda-forge conda
+
+
+#. Create a dedicated conda environment for pyMCMA.
     Execute the following command:
 
     .. code-block:: console
@@ -66,14 +74,6 @@ Preparation of the conda environment consists of two steps:
 
     The dedicated pyMCMA environment is named here ``pymcma``.
     However, another name can be used.
-
-#. Update of the conda version.
-    Execute the following command:
-
-    .. code-block:: console
-
-        $ conda update -n base -c conda-forge conda
-
 
 The dedicated conda environment should be activated whenever the ``pymcma`` is
 executed by the command-line.
