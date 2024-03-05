@@ -8,8 +8,8 @@ Requirements
 ------------
 
 PyMCMA can be installed on computers running one of the following OS:
-macOS, Linux, Ms-Windows.
-It was tested with the Conda environment on each of these OSs.
+macOS, Linux, MS-Windows.
+It was tested with the conda environment on each of these OSs.
 All required conda packages are installed during the PyMCMA installation.
 
 Installation
@@ -21,7 +21,7 @@ Installation consists of the following steps:
 
 #. Installation of the pyMCMA
 
-#. Creation of the work-space
+#. Creation of the workspace
 
 #. Testing the installation
 
@@ -43,9 +43,21 @@ In order to avoid possible conflicts with already installed packages,
 we recommend to install and use the pyMCMA within a dedicated and regularly updated
 conda environment created for Python version 3.11.
 
+To be sure that everything will work as intended we highly recommend to use
+the following ``.condarc`` configuration file:
+
+.. code-block:: YAML
+
+    ssl_verify: true
+    channels:
+      - conda-forge
+      - defauklts
+    channel_priority: flexible
+    auto_activate_base: false
+
 Preparation of the conda environment consists of two steps:
 
-#. Create a dedicated conda environment for pymcma
+#. Create a dedicated conda environment for pyMCMA
     Execute the following command:
 
     .. code-block:: console
@@ -63,7 +75,7 @@ Preparation of the conda environment consists of two steps:
         $ conda update -n base -c conda-forge conda
 
 
-The dedicated conda environment should be activated whenever the pymcma is
+The dedicated conda environment should be activated whenever the ``pymcma`` is
 executed by the command-line.
 The environment should also be specified for the core (substantive) model
 development (see the :doc:`user_guide` for details).
@@ -83,7 +95,7 @@ is active in the currently used terminal window):
 .. code-block:: console
 
     $ conda activate pymcma
-    $ pip install pymcma
+    $ conda install pymcma
 
 The installation will include all packages necessary for running pyMCMA,
 as well as assuring the consistent versions of all packages.
@@ -106,28 +118,28 @@ The above recommended installation sequence assures the version consistency of
 all packages within the ``pymcma`` conda environment, not only during the installation
 but also during periodical updates of the environment.
 
-Creation of the work-space
+Creation of the workspace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-The work-space for initial analysis can be created by running:
+The workspace for initial analysis can be created by running:
 
 .. code-block:: console
 
     $ pymcma --install
 
-This command creates in the current directory the initial work-space
+This command creates in the current directory the initial workspace
 composed of three folders:
 
-#. Models - it contains the test-model.
+#. ``Models/`` - it contains the test-model.
     The name of the provided model should not be changed unless the
-    corresponding modification is done in''anaTst/cfg.yml`` file.
+    corresponding modification is done in ``anaTst/cfg.yml`` file.
 
-#. anaTst - folder for and configuration of the testing analysis.
-    Note that the analysis configuration is prepared in ''anaTst/cfg.yml`` file
+#. ``anaTst/`` - folder for and configuration of the testing analysis.
+    Note that the analysis configuration is prepared in ``anaTst/cfg.yml`` file
     assuming that neither the ``Models`` directory nor the test model is moved.
 
-#. Templates - folder with templates of configuration file and of Pyomo model.
+#. ``Templates/`` - folder with templates of configuration file and of Pyomo model.
     This directory can be moved to any place the user prefers.
-    The two provided templates, namely example.py and cfg.yml, might help in
+    The two provided templates, namely ``example.py`` and ``cfg.yml``, might help in
     development of actual core-model instances, and in configuration
     of actual analyses.
 
@@ -149,24 +161,27 @@ The standard output will be displayed in the terminal.
 
 After the computation of the Pareto-front representation will be completed,
 four plots (similar to those shown in the paper) will be displayed.
-The parallel plot is interactive, i.e., one can change (by moving the upper and/or
-lower end of the slider) the range of achievements of the cost critetion.
-Closing all windows with plots will terminate the execution.
+The parallel coordinates plot is interactive, i.e., one can change (by moving
+the upper and/or lower end of the slider) the range of achievements of the
+cost criterion. Closing all windows with plots will terminate the execution.
 The default analysis results will be stored in the analysis directory,
-i.e., anaTst/Results.
+i.e., ``anaTst/Results``.
 
 One can easily experiment with diverse configurations of the analysis by
 creating for each analysis a dedicated folder, editing the configuration,
 and running the analysis.
-Assuming that next analysis will be done in directory ``myAnal`` and thet
-the standard unix vi editor is used for editing the configuration file,
-one can execute the following commands:
+Assuming that next analysis will be done in directory ``myAnal`` one can copy
+and then edit the configuration file with their favorite text editor.
 
 .. code-block:: console
 
     $ mkdir myAnal
     $ cp anaTst/cfg.yml myAnal/cfg.yml
-    $ vi myAnal/cfg.yml
+
+After editing and saving the configuration file, run the analysis using:
+
+.. code-block:: console
+
     $ pymcma --anaDir myAnal
 
 Configuration of analysis is discussed in detail in :doc:`user_guide`.
