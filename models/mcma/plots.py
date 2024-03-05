@@ -190,11 +190,11 @@ class Plots:
         def update_slider(val):
             min_val, max_val = val
 
-            for line in lines:
-                if min_val <= line.get_ydata()[self.main_crit_idx] <= max_val:
-                    line.set_alpha(1)
+            for aline in lines:
+                if min_val <= aline.get_ydata()[self.main_crit_idx] <= max_val:
+                    aline.set_alpha(1)
                 else:
-                    line.set_alpha(0.1)
+                    aline.set_alpha(0.1)
 
         slider.on_changed(update_slider)
 
