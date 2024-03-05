@@ -1,6 +1,13 @@
 User Guide
 ==========
-The ``pymcma`` .... (adapt from the paper)....
+The ``pymcma`` package seamlessly integrates the Multiple-Criteria Model
+Analysis (MCMA) with independently developed substantive models, and
+autonomously computes Pareto-front representation composed of efficient
+solutions that are uniformly distributed in terms of distances between neighbor
+solutions. The ``pymcma`` illustrates the Pareto-front, also for more than
+three criteria, and optionally exports the results for problems-specific
+analysis in the substantive model's
+variables space.
 
 Overview of ``pymcma``
 ----------------------
@@ -11,7 +18,7 @@ distinct tasks:
     The model defines the relations between variables representing the criteria
     and all other variables (representing e.g., decisions, system state, etc).
     Discussion on methodology and tools for model development is beyond the
-    ``pcmcma`` scope. Therefore, we present only the guidelines spacific for
+    ``pcmcma`` scope. Therefore, we present only the guidelines specific for
     model preparation to the MCMA.
 
 #. Computations of the Pareto-front representation.
@@ -29,7 +36,7 @@ the objective (i.e., preference free) MCMA analysis very easy.
 
 Issues common for both tasks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Both tasks should be done in terminal windows with the activated conda
+Both tasks should be done in the terminal windows with the activated conda
 environment created during the ``pymcma`` installation.
 From the user point of view, the linkage between these task consists of
 only specification of two items in the analysis configuration file.
@@ -74,8 +81,10 @@ At least two core-model variables should be defined to be used as criteria.
 Further on such variables are called ``outcome variables`` or (for short)
 ``outcomes``.
 Such variables have to be scalar (i.e., not indexed) and have names conforming
-to the traditional naming requirements: (1)~composed of only Latin letters and
-(optionally) digits, and (2)~be maximum eight characters long.
+to the traditional naming requirements:
+
+#. composed of only Latin letters and (optionally) digits, and
+#. be maximum eight characters long.
 
 One can define many ``outcomes``.
 Actually, criteria are defined for each analysis; therefore, any core-model
@@ -87,12 +96,12 @@ Model testing
 ^^^^^^^^^^^^^
 Before applying MCMA each model should pass comprehensive testing conforming
 to the good modeling practice.
-Testing should include single-criterion optimizations, i.e.,  sequentially using
+Testing should include single-criterion optimizations, i.e., sequentially using
 each ``outcome`` as the optimization criterion.
 No additional constraints should be specified for such selfish optimizations.
 In other words, all constraints (including bounds on values of variables)
-of the core model should reflect the logical, physical, economical, etc relations.
-There should be no constraints representing preferences of the modeler.
+of the core model should reflect the logical, physical, economical, or other
+relations. There should be no constraints representing preferences of the modeler.
 
 Export of the model instance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -100,22 +109,23 @@ The model instance (in Pyomo called ``concrete model``) should be stored in
 the ``dill``-format file.
 Location and name of the file should be specified in configuration file of each
 MCMA of this model.
-The ``example.py`` model (included in the Template directory created during the ``pcmcma``
-installation) includes a simple, reusable function performing this task.
+The ``example.py`` file (included in the ``Template/`` directory created during
+the ``pymcma`` installation) includes a simple, reusable example performing
+export of the simple model.
 
 Example of a core-model
 ^^^^^^^^^^^^^^^^^^^^^^^
-The Template folder (created during ``pymcma`` installation) includes two
+The ``Template/`` folder (created during ``pymcma`` installation) includes two
 files illustrating the basic use of Pyomo for a core-model development,
-as well as the model-instance export in the dill-format.
+as well as the model-instance export in the ``dill``-format.
 The example consists of two files:
 
-#. ``example.py`` generates a very simple developed in Pyomo.
+#. ``example.py`` - generates a very simple model developed in Pyomo.
     Separate functions define the abstract model and the
     concrete model, respectively. The main function drives the model
     generation and exports the concrete model in the dill-format.
 
-#. ``example.dat`` contains data in the AMPL format used in concrete model creation.
+#. ``example.dat`` - contains data in the AMPL format used in concrete model creation.
     In development of actual models other data formats might be more suitable.
     We suggest to consult the extensive Pyomo documentation for alternatives
     that might fit better management of data used for the core-model parameters.
@@ -151,7 +161,7 @@ Therefore, the below suggested steps is just an example.
 
 
 #. Change to a dedicated analysis folder, further referred to as ``wdir``.
-    The folder can be located anywhere in a file system in which the
+    The folder can be located anywhere in a filesystem in which the
     core-model is accessible.
 
 #. In ``wdir`` create folder for first analysis, e.g., ``anaIni``.
@@ -160,13 +170,13 @@ Therefore, the below suggested steps is just an example.
     We use the ``anaIni`` name for initial analysisl however, any other name can be used.
     For each subsequent analysis in ``wdir`` a distinct name should be specified.
 
-#. Copy to ``anaIni`` a ``cfg.yml`` file.
+#. Copy a ``cfg.yml`` file to ``anaIni`` directory.
     Advanced ``pymcma`` users might, of course, prefer to write the ``cfg.yml``
-    file in ``anaInit``  directory from scratch.
+    file in ``anaIni``  directory from scratch.
     The ``cfg.yml`` file name should not be changed as it is used by ``pymcma``
     application.
     For initial analysis the configuration file ``cfg.yml`` provided in the
-    Templates directory created upon installation might be a good start.
+    ``Templates`` directory created upon installation might be a good start.
 
     The configuration file is specified in the YAML markup language but its
     modification can be done also without YAML's knowledge.
@@ -176,7 +186,7 @@ Therefore, the below suggested steps is just an example.
     - refrain from modifications of the key-words (explained below)
 
     The provided ``cfg.yml`` is self-documented.
-    Therefore, meanings of key-words are explained in the provided example.
+    Therefore, meanings of keywords are explained in the provided example.
 
 #. Edit the copied ``cfg.yml`` to specify the configuration options described below.
     For initial analysis one can with explore analysis of the core-model with
@@ -184,7 +194,7 @@ Therefore, the below suggested steps is just an example.
     For subsequent analysis either other pairs of criteria can be specified or
     more criteria are usually defined.
 
-    Note that the configuration files should be edited only with a text-editor.
+    Note that the configuration files should be edited only with a text editor.
     Any text editor (or programming tool) can be used for this purpose.
 
 #. In ``wdir`` execute:
@@ -206,7 +216,7 @@ There are only two required configuration options:
 
 #. Core-model location and name
     This item is identified by the ``model_id`` key. Its argument defines the location
-    (../Models/) of the model and the model name.
+    (``../Models/``) of the model and the model name.
     The location can define either the relative or the absolute path to the directory
     containing the model.
     The model name (xpipa) is the root name of the dill-format file containing the
@@ -226,7 +236,6 @@ There are only two required configuration options:
     #. Name of the core model outcome variable defining the corresponding criterion.
         The four names of the core-model variables of the example read:
         cost, carbBal, water, greenFTot.
-
 
 Below we show the two corresponding lines of the ``cfg.yml`` file defining the
 required items:
@@ -287,23 +296,23 @@ default value.
 Here are additional information on the meaning of the optional configuration items,
 referred to by the corresponding key-word:
 
-#.  ``resdir`` : name of the result sub-directory.
+#.  ``resdir`` - name of the result sub-directory.
     The analysis results are stored in the analysis result subdirectory of
     the corresponding analysis directory.  For the above discussed analysis
     example it will be named ``anaIni/Results/``.
     The result sub-directory will be created by ``pymcma``.
 
-#.  ``run_id`` : name of the additional sub-directory of the result sub-directory.
+#.  ``run_id`` - name of the additional sub-directory of the result sub-directory.
     It might be desired to store the results in a separate directory (e.g., for
     different configuration options).
     The additional sub-directory will be created by ``pymcma``.
 
-#.  ``mxIter`` : maximum number of iterations.
+#.  ``mxIter`` - maximum number of iterations.
     It might be desired to change the number of iteration for obtaining either
     faster an incomplete Pareto-front representation or continue to computations
     with a larger (than the default) iteration number.
 
-#.  ``showPlot`` : to suppress showing the plots during the computations.
+#.  ``showPlot`` - to suppress showing the plots during the computations.
     If the computation time is too long to wait for seing the plots of the results,
     then showing the plots should be surpressed.
     Note that plots are always stored in the ``resdir``.
@@ -312,7 +321,7 @@ referred to by the corresponding key-word:
 Results of analyses
 -------------------
 Results of each analysis are stored in the ``resdir`` directory.
-New results overwrite the old-ones.
+New results overwrite the old ones.
 Therefore, in order to keep the old results one should define in the
 ``cfg.yml`` a new ``run_id``.
 

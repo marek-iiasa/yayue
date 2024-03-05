@@ -1,6 +1,3 @@
-# import sys      # needed from stdout
-# import os
-# import numpy as np
 import pandas as pd
 from scipy.special import comb    # for computing number of combinations
 import matplotlib.pyplot as plt
@@ -9,11 +6,11 @@ from matplotlib.colors import ListedColormap, Normalize
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
-# import mplcursors
-# from crit import Crit
+# import mplcursors     # for interactive plots, currently not used
 sns.set()   # settings for seaborn plotting style
 
 
+# noinspection SpellCheckingInspection
 class Plots:
     def __init__(self, cfg, df, cr_defs):   # driver for plots
         self.cfg = cfg
@@ -52,19 +49,17 @@ class Plots:
                     i_cat += 1
                     i_memb = 0
 
-        # Which criterion is considered as "main" for the parallel coordinates plot
+        # criterion considered as "main" for the parallel coordinates plot
         self.main_crit_idx = 0
         self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
         n_perrow = 3
-        # n_percol_ = float(n_plots) / flot(n_perrow)
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
         fig_heig = 4. * n_percol
-        # fig_heig = 4.
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
         fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
@@ -74,13 +69,11 @@ class Plots:
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
-        # crs = []
         m_size = 20  # marker size  (was 30)
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
             for i_second in range(i_first + 1, self.n_crit):
                 name2 = self.cr_name[i_second]
-                # print('Plot', i_plot + 1, 'pair (', name1, ',', name2, ')')
                 print(f'Subplot {i_plot}, criteria: ({name1}, {name2})')
                 ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # subplots numbered from 1
                 ax[i_plot].set_xlabel(name1)
@@ -90,6 +83,7 @@ class Plots:
                                    cmap=self.cmap1, s=m_size)
                 # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
                 '''
+                # labels of points used only for debugging purposes
                 for (i, seq) in enumerate(self.seq):
                     ax[i_plot].text(self.df[self.cr_col[i_first]][i] + 2, self.df[self.cr_col[i_second]][i] + 2,
                                     f'{seq}')
@@ -118,8 +112,8 @@ class Plots:
     def plot3D(self):
         if self.n_crit < 6:     # ad-hoc suppress 3D
             return
-        # todo: plots for more than 3 criteria
         if self.n_crit > 3:
+            # todo: implement 3D subplots for more than 3 criteria
             print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
             return
         # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
@@ -177,10 +171,10 @@ class Plots:
             line, = ax.plot(row, linewidth=2, marker='o', markersize=10, color=colors[i])
             lines.append(line)
 
-        # Add colorbar
+        # Add color-bar
         divider = make_axes_locatable(ax)
         cax = divider.append_axes('left', size='5%', pad=0.5)
-        cbar = plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
+        plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
         cax.yaxis.set_ticks_position('left')
 
         # Save fig before adding the slider
@@ -196,11 +190,11 @@ class Plots:
         def update_slider(val):
             min_val, max_val = val
 
-            for line in lines:
-                if min_val <= line.get_ydata()[self.main_crit_idx] <= max_val:
-                    line.set_alpha(1)
+            for aline in lines:
+                if min_val <= aline.get_ydata()[self.main_crit_idx] <= max_val:
+                    aline.set_alpha(1)
                 else:
-                    line.set_alpha(0.1)
+                    aline.set_alpha(0.1)
 
         slider.on_changed(update_slider)
 
