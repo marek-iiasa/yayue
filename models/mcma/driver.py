@@ -1,11 +1,8 @@
 """
-Prototype of the MCMA driver
+pymcma driver
 """
-# import os.path
 
 import sys		# needed for sys.exit()
-# import os
-# import pandas as pd
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition

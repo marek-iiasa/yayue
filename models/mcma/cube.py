@@ -1,4 +1,5 @@
 import math
+# noinspection SpellCheckingInspection
 from operator import itemgetter  # , attrgetter
 
 # todo: add to ParSol:
@@ -6,13 +7,13 @@ from operator import itemgetter  # , attrgetter
 #   improve info on CAF (global, in [U, N], vs itr in [A, R]
 
 
+# noinspection SpellCheckingInspection
 class ParSol:     # one Pareto solution
     def __init__(self, itr_id, cube_id, vals, a_vals):
         self.itr_id = itr_id    # iter. id: positive indicates cube-seq, negative for Pareto-set corners
         self.cube_id = cube_id	 # id (seq_no) of the parent cube
         self.vals = vals  # list of (not scaled) criteria values of the itr_id solution
         self.a_vals = a_vals  # list of achievement values
-        # self.sc_vals = sc_vals  # list of scaled criteria values
         self.domin = 0  # >= 0: is Pareto, domin > 0: itr_id of dominated, domin < 0: itr_id of dominating solution
         self.closeTo = None     # None replaced by itr_id of a first solution that is close
         self.distMx = None      # None replaced by L-inf distance for close/duplicated solutions
@@ -26,7 +27,7 @@ class ParSol:     # one Pareto solution
             res = min(s1.a_vals[i], s2.a_vals[i])
             asp = max(s1.a_vals[i], s2.a_vals[i])
             val = self.a_vals[i]
-            is_act = cr.is_active
+            # is_act = cr.is_active
             # print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
             #       f's[{s2.itr_id}] {s2.a_vals[i]}')
             if not res <= val <= asp:
@@ -53,8 +54,7 @@ class ParSol:     # one Pareto solution
         self.distMx = 0.
         for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
-            # todo: define a sensible minDist below
-            minDist = 1.0   # was 0.01
+            minDist = 1.0   # rather demanding in [0, 100] CAF scale
             if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
                 self.distMx = None
                 return False
@@ -64,14 +64,7 @@ class ParSol:     # one Pareto solution
         return True
 
 
-# todo: add to Cube:
-#   skip almost duplictated solution during cube generation
-#   store diverse distance metrics (L1, L2, L-Inf)
-#   storing in a df info on the progress (using diverse metrics)
-#   improve control on printouts
-#   consider improving cube generation efficiency (store/update info on neigbours, a new sol is in the current cube)
-
-
+# noinspection SpellCheckingInspection
 class Cubes:     # collection of aCubes
     def __init__(self, parRep):
         self.parRep = parRep    # Pareto-set representation object
@@ -89,8 +82,6 @@ class Cubes:     # collection of aCubes
                 cube.id = len(self.all_cubes)
                 self.all_cubes.update({cube.id: cube})
                 self.cand.append((cube.id, cube.size))
-                # todo: no longer needed
-                # self.parRep.neigh_lst(cube.id, True)  # add=True means add to the list
                 # print(f'cube {cube.id} added to the list of cubes defining neighbors.')
             else:
                 self.filled += 1
@@ -145,15 +136,14 @@ class Cubes:     # collection of aCubes
             '''
             if self.cand_ok(c_id):
                 lst.append(c_id)
-                break   # take the first found empty cube
+                break   # take the first found empty-cube
             else:
                 id2prune.append(c_id)
                 if self.parRep.cfg.get('verb') > 1:
-                    print(f'non-empty cube [{c_id}]')
+                    print(f'non-empty cube [{c_id}] skipped (will be pruned).')
 
         best = None
         if len(lst) > 0:
-            # todo: consider other selection criteria, currently the first cube is used
             best_id = lst[0]
             best = self.get(best_id)
             best.used = True
@@ -177,7 +167,7 @@ class Cubes:     # collection of aCubes
             # print(f'after: {self.cand}\n')
 
         # if len(self.sols) > 10:
-        #     print(f'Test iteration break')
+        #     print(f'Iteration test-break')
         #     return None
         return best
 
@@ -196,6 +186,7 @@ class Cubes:     # collection of aCubes
         print(f'\t{self.small} small cubes ignored.')
         print(f'\t{self.filled} non-empty cubes ignored.')
         '''
+        # use the below with care: the list might be very long
         print('\nList of cubes:')
         for (i, c) in enumerate(self.all_cubes):
             c.lst(i)
@@ -205,6 +196,7 @@ class Cubes:     # collection of aCubes
         '''
 
 
+# noinspection SpellCheckingInspection
 class aCube:     # a Cube defined (in achievement values) by the given pair of neighbor solutions
     def __init__(self, mc, s1, s2):
         self.mc = mc    # CtrMca object (provides the needed info on criteria)
@@ -223,10 +215,6 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.sizeLinf = 0.  # Linf (Tchebyshev)-norm size
         self.aspAch = []   # list of A values in Achievement scale (used to define self.asp/res)
         self.resAch = []   # list of R values in Achievement scale
-        # self.sc_asp = []   # list of scaled A values (used in selecting solutions that define the cube)
-        # self.sc_res = []   # list of scaled R values
-        # self.asp = []   # list of A values in model units (to be used in the MCMA preferences)
-        # self.res = []   # list of R values in model units
 
         # calculate the cube size, and distance components (diffs for each criterion)
         for (a1, a2) in zip(s1.a_vals, s2.a_vals):  # loop over achievements of criteria
@@ -241,7 +229,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             else:
                 self.degen.append(False)   # current dimension not degenerated
         self.sizeL2 = math.sqrt(self.sizeL2)     # cube size define by L2
-        # diverse norms used for the size
+        # uncomment only one norm to be used for the size (Linf is used for consistency with the AF)
         # self.size = self.sizeL1     # cube size defined by L1
         # self.size = self.sizeL2     # cube size defined by L2
         self.size = self.sizeLinf   # cube size defined by Linf
@@ -263,9 +251,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 self.aspAch.append(cr.val2ach(cr.asp))
                 self.resAch.append(cr.val2ach(cr.res))
             else:   # handle the degenerated dimension (too small edge)
-                '''
-                '''
-                if self.mc.deg_exp:     # expand degenerated dimension:
+                if self.mc.deg_exp:     # expand degenerated dimension (no longer used, causes problems)
                     achivOld = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
                     cr.is_fixed = False
                     if achivOld < self.min_edge:  # too close to Nadir to relax R
@@ -286,7 +272,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                     cr.res = cr.ach2val(achivR)
                     self.aspAch.append(achivA)
                     self.resAch.append(achivR)
-                else:   # don't relax: the cr will not enter AF, value of the corresponding m1 var will be fixed
+                else:   # don't expand: the cr will not enter AF, value of the corresponding m1 var will be fixed
                     cr.is_active = False
                     cr.is_fixed = True
                     cr.res = cr.asp
@@ -296,28 +282,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                     if self.mc.cfg.get('verb') > 1:
                         print(f'Crit. {cr.name}, edge {self.edges[i]:.1f}: crit achiv. fixed at A/R = {achiv:.1f}')
                 '''
-                cr.is_active = False
-                # oldA = cr.val
-                # oldR = cr.val
-                achiv = self.s1.a_vals[i]   # CAF (same/similar for both solutions)
-                oldAch = cr.val2ach(achiv)
-                expAch = 5.    # A/R expansion-span (in the achievements scale, i.e., [0, 100])
-                if achiv < 50.:     # closer to Nadir, move A
-                    new_ach = achiv + expAch
-                    mark = 'A'
-                    cr.asp = cr.ach2val(new_ach)     # get A value corresponding to achievement new_ach
-                    self.aspAch.append(new_ach)
-                    self.resAch.append(achiv)
-                else:           # closer to Utopia, move R
-                    new_ach = achiv - expAch
-                    mark = 'R'
-                    cr.res = cr.ach2val(new_ach)
-                    self.aspAch.append(achiv)
-                    self.resAch.append(new_ach)
-                print(f'Crit. {cr.name} edge {self.edges[i]:.1f} expanded to {expAch:.1f} by moving '
-                      f'{mark} from {oldAch} to {new_ach}')
-                '''
-                '''
+                # the below no longer use, but kept for possible further testing
                 print(f'Crit. {cr.name} set to in-active: edge {self.edges[i]:.2e} expanded to {expAch:.2e} by moving:'
                       f'\n\tA from {oldA:.2e} to {cr.asp:.2e},  R from {oldR:.2e} to {cr.res:.2e}.')
                 # old version, not good (too much A/R span
@@ -340,11 +305,6 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                         cr.res = cr.nadir
                         cr.asp = oldA + cr.mult * abs(span - distN)
                 '''
-            # self.asp.append(cr.asp)
-            # self.res.append(cr.res)
-            # self.sc_asp.append(cr.sc_var * cr.asp)
-            # self.sc_res.append(cr.sc_var * cr.res)
-            # print(f'New cube A/R values for criterion {cr.name}: A {cr.asp:.3e}, R {cr.res:.3e}')
 
     # print: itr_ids of solutions defining the cube, cube size, lengths of cube edges (i.e., components of the size),
     # scaled criteria values defining the diameter-corners, scaled A/R values defining preferences for next iter.
@@ -366,7 +326,6 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         # the below are for info only; not-scaled A/R values are used for actual preferences
         val1 = ''
         val2 = ''
-        # todo: aspAch, resAch for degenerated criteria
         for (v1, v2) in zip(self.aspAch, self.resAch):    # CAF values for A/R
             val1 += f'{v1:.1f} '
             val2 += f'{v2:.1f} '
@@ -376,22 +335,3 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
     def lst_size(self, c_ind):  # seq: externally defined seq_no of the list of cubes
         print(f'cube[{c_ind}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
               f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.is_degen}')
-
-    '''
-    def chk_inside(self, s, s1, s2):    # return True if s is inside cube(s1, s2)
-        # it = s.itr_id
-        # it1 = s1.itr_id
-        # it2 = s2.itr_id
-        for (i, cr) in enumerate(self.mc.cr):
-            v = s.vals[i]
-            v1 = s1.vals[i]
-            v2 = s2.vals[i]
-            if not min(v1, v2) <= v <= max(v1, v2):
-                # print(f'sol {it} is NOT between sols ({it1}, {it2}): crit {cr.name}: {v} is outside ({v1}, {v2}).')
-                return False  # v outside the range [v1, v2]
-            # else:
-            #     print(f'crit {cr.name}: {v} is in the range of ({v1}, {v2}); continue check.')
-        # print(f'solution {it} is between solutions ({it1}, {it2}).')
-        # raise Exception(f'ParRep::chk_inside() not implemented yet.')
-        return True    # all crit-vals of s are between the corresponding values of s1 and s2
-    '''
