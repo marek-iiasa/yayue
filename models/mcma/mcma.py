@@ -1,9 +1,6 @@
 # infinity = float('inf')
 
-""" Main function of the mcma: import the core model, define the work-space. """
-
-# todo: add/print info:
-#   A/R undefined for Pareto set corners (virtual solutions, i.e., no values of model variables)
+""" Main function of the mcma: configure the analysis options and work-space. """
 
 # from os import R_OK, access
 # from os.path import isfile
@@ -22,12 +19,12 @@ SCRIPT_DIR = os.path.dirname(__file__)
 
 def read_args():
     descr = """
-    Computing uniformly distributed Pareto-front for specified criteria of provided model.
+    Compute uniformly distributed Pareto-front for specified criteria of the provided core-model.
 
     Examples of usage:
     python mcma.py -h
     python mcma.py --install
-    python mcma.py --anaDir iniTst
+    python mcma.py --anaDir analysis_folder
     """
 
     parser = argparse.ArgumentParser(
