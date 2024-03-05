@@ -1,16 +1,13 @@
-# import sys      # needed from stdout
-# import os
 import numpy as np
-# import pandas as pd
-# import math
-# import matplotlib.pyplot as plt
 from matplotlib import mlab
 
 from .cube import *
 from .plots import *
 
 
-class ParProg:     # progress in Pareto set representation
+# noinspection SpellCheckingInspection
+# progress in Pareto set representation
+class ParProg:
     def __init__(self, parRep):     # initialize corners by regularized selfish solutions
         self.parRep = parRep        # ParRep object
         self.steps = []             # list of reporting steps (max distances between neighbors
@@ -27,7 +24,6 @@ class ParProg:     # progress in Pareto set representation
             return
         itr = self.parRep.cur_itr
         n_sol = len(self.parRep.sols)
-        # todo: cube[2] is not empty!, make sure to use cubes.cand[]: it should not include non-empty cubes
         # pairs = self.parRep.neigh.copy()
         pairs = self.parRep.cubes.cand.copy()
         print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbors remain for processing.')
@@ -69,7 +65,6 @@ class ParProg:     # progress in Pareto set representation
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
 
-        # todo: both below plots hang pyCharm (pro & community versions), each runs ok, if the other is commented
         summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
         self.summary_plot(summary_df)
         self.progress_plot()
@@ -98,16 +93,16 @@ class ParProg:     # progress in Pareto set representation
         ax = fig.add_subplot(1, 2, 2)
         ax.plot(summary_df['step'], summary_df['upBnd'],
                 color='tab:red',
-                label='Cube size upper bound',
+                label='Cuboid size bound',
                 **plot_kw)
 
         ax.plot(summary_df['step'], summary_df['mx_cube'],
                 color='tab:green',
-                label='Actual max cube-size',
+                label='Actual max cuboid-size',
                 **plot_kw)
 
         ax.set_xticks(summary_df['step'])
-        ax.set_ylabel('Cube size')
+        ax.set_ylabel('Cuboid size')
         ax.set_xlabel('Computation stage')
         ax.legend(loc='upper right')
 
@@ -125,23 +120,18 @@ class ParProg:     # progress in Pareto set representation
         fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
         fig.subplots_adjust(wspace=0.3, hspace=0.85)
 
-        # ax = None
         for step in self.neigh:
             if len(self.neigh[step][-1]) == 0:
                 print(f'Empty cube list for computation stage {step}.')
                 return
             ax = fig.add_subplot(nrows, ncols, step + 1)
-            '''
-            # all_cubes is a dict (not a list); the below would not work
-            neighbour_cube_sizes = [self.parRep.cubes.all_cubes[cube_id].size
-                                    for cube_id in self.neigh[step][-1]]
-            '''
             neighbour_cube_sizes = []
-            # print(f'{step = }')
-            # print(f'neigh {self.neigh[step]}')
+            if self.parRep.cfg.get('verb') > 3:
+                print(f'{step = }')
+                print(f'neigh {self.neigh[step]}')
             for cube_id, cube_size in self.neigh[step][-1]:
-                # print(f'{cube_id = }, {cube_size = }')
-                # cube = self.parRep.cubes.get(cube_id)
+                if self.parRep.cfg.get('verb') > 3:
+                    print(f'{cube_id = }, {cube_size = }')
                 neighbour_cube_sizes.append(cube_size)
 
             ax.hist(neighbour_cube_sizes,
@@ -164,13 +154,13 @@ class ParProg:     # progress in Pareto set representation
         plt.tight_layout()
 
 
+# noinspection SpellCheckingInspection
 class ParRep:     # representation of Pareto set
     def __init__(self, mc):         # initialize corners by regularized selfish solutions
         self.mc = mc        # CtrMca object
         self.cfg = mc.cfg   # Config object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
-        # self.neigh = []     # list of cube's id currently defining neighbors --- no longer needed
         self.cubes = Cubes(self)  # the object handling all cubes
         self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
@@ -182,9 +172,6 @@ class ParRep:     # representation of Pareto set
 
         print('Initializing Pareto-set exploration. --------------------')
         mc.scale()          # (re)define scales for criteria values
-        # self.ini_corners()  # selfish solutions must be generated and computed one-by-one
-        # print('Initialization completed. Start the exploration --------------------\n')
-        # raise Exception(f'ParRep ctor not implemented yet.')
 
     def pref(self):     # entry point for each new iteration
         if not self.from_cube:  # no cubes yet, generate and compute selfish solution
@@ -233,7 +220,6 @@ class ParRep:     # representation of Pareto set
             #     print(f'crit {cr.name}: {v} is in the range of ({v1}, {v2}); continue check.')
         # print(f'solution {it} is between solutions ({it1}, {it2}).')
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
-        # raise Exception(f'ParRep::chk_inside() not implemented yeYt.')
 
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
         assert self.mc.is_opt, f'ParRep::addSol() called for non-optimal solution'
@@ -243,11 +229,11 @@ class ParRep:     # representation of Pareto set
         # sc_vals = []  # scaled crit values
         for cr in self.mc.cr:
             vals.append(cr.val)
-            # sc_vals.append(cr.sc_var * cr.val)
             cr.a_val = cr.val2ach(cr.val)    # compute and set achievement value
             a_vals.append(cr.a_val)
-            # print(f'crit {cr.name} ({cr.attr}): a_val={cr.a_val:.2f}, val={cr.val:.2e}, '  # a_frac={a_frac:.2e}, '
-            #       f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
+            if self.cfg.get('verb') > 3:
+                print(f'crit {cr.name} ({cr.attr}): a_val={cr.a_val:.2f}, val={cr.val:.2e}, '  # a_frac={a_frac:.2e}, '
+                      f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
         new_sol = ParSol(itr_id, self.cur_cube, vals, a_vals)
         if self.cur_cube is not None:   # cur_cube undefined during computation of selfish solutions
             c = self.cubes.get(self.cur_cube)     # parent cube
@@ -279,93 +265,26 @@ class ParRep:     # representation of Pareto set
                     break
             if is_pareto:
                 if self.cur_cube is not None:  # cur_cube undefined during computation of selfish solutions
-                    # todo: no longer needed
+                    # no longer needed
                     pass
-                    # todo: remove the cube from the list of cubes defining neighbors
-                    # self.neigh_lst(self.cur_cube, False)    # add=False means remove from the list
-                    # print(f'cube {self.cur_cube} removed from the list of cubes defining neighbors.')
                 self.sols.append(new_sol)
-                # print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
+                if self.cfg.get('verb') > 1:
+                    print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
                 self.mk_cubes(new_sol)    # define cubes generated by this solution
 
         if self.n_corner == len(self.mc.cr):
             self.from_cube = True   # next preferences to be generated from cubes
 
-    '''
-    ini_corners() no longer needed
-    def ini_corners(self):  # initialize corner solutions (each composed of one utopia and nadir of all others)
-        # todo: consider to additionally run the regularized selfish optimization (also to get values of vars)
-        #   this can be done rather in the driver than here.
-        print(f'\nGenerating {self.mc.n_crit} virtual solutions (defining corners of the Pareto set).')
-        cur_uto = 0     # index of the current utopia
-        for (k, crit) in enumerate(self.mc.cr):     # one corner for each criterion
-            vals = []  # crit values
-            a_vals = []  # achievement values
-            # sc_vals = []  # scaled crit values (one utopia, others nadir)
-            itr_id = -1 - k  # itr_id negative, start with -1
-            for (i, cr) in enumerate(self.mc.cr):
-                if i == cur_uto:
-                    val = cr.utopia
-                    a_val = self.mc.cafAsp  # value of CAF at A
-                    # sc_val = cr.sc_var * val
-                else:
-                    val = cr.nadir
-                    a_val = 0.
-                    # sc_val = cr.sc_var * val
-                vals.append(val)
-                a_vals.append(a_val)
-                # sc_vals.append(sc_val)
-            new_sol = ParSol(itr_id, None, vals, a_vals)
-            for s2 in self.sols:  # check if the new sol is close to any previous unique (i.e., not-close) sol
-                if new_sol.is_close(s2):
-                    print(f'Selfish solution {new_sol.itr_id} too close to another selfish solution: {new_sol.closeTo} '
-                          f'(L-inf = {new_sol.distMx:.1e}).')
-                    raise Exception('The problem not suitable for MCMA.')
-            self.sols.append(new_sol)
-            print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
-            self.mk_cubes(new_sol)    # define cubes generated by this solution
-            cur_uto += 1
-    '''
-
-    def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous solutions
+    def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous distinct-solution
         # store_all = False
-        verb = False
+        verb = self.cfg.get('verb') > 2
         for s1 in self.sols:
             if s.itr_id == s1.itr_id:
                 continue    # skip self (already included in self.sols)
             n_cube = aCube(self.mc, s1, s)
-            self.cubes.add(n_cube)  # cubes are made for all pairs of solutions
+            self.cubes.add(n_cube)  # adds to the list only empty and large-enough cubes
             if verb:
                 print(f'New cube[{n_cube.id}] of sols [{s1.itr_id}, {s.itr_id}], size {n_cube.size:2f}.')
-            '''
-            n_cube.empty = True
-            mark = ''
-            for s2 in self.sols:     # check, if s2 is inside new cube(s1, s)
-                # check, if the new solution is inside cube generated by solutions [s1, s2]
-                if s.itr_id == s2.itr_id or s1.itr_id == s2.itr_id:
-                    continue  # skip self (already included in self.sols)
-                is_inside = self.chk_inside(s2, s1, s)
-                if is_inside:
-                    n_cube.empty = False
-                    # print(f'Cube generated by solutions [{s1.itr_id}, {s.itr_id}] contains solution [{s2.itr_id}].')
-                    mark = 'NOT '
-                    break   # don't check the remaining solutions
-            if store_all or n_cube.empty:
-                self.cubes.add(n_cube)  # cubes are made for all pairs of solutions
-                if verb:
-                    print(f'New cube generated by solutions [{s1.itr_id}, {s.itr_id}] is {mark}empty.')
-        # raise Exception(f'ParRep::mk_cubes() not implemented yet.')
-            '''
-
-    '''
-    def neigh_lst(self, cube_id, add):  # modify the list of cubes defining pairs of neighbor solutions
-        if add:
-            self.neigh.append(cube_id)
-        else:
-            self.neigh.remove(cube_id)
-        # print(f'Currently {len(self.neigh)} pairs of neighbor solutions further than {self.cubes.min_size}.')
-        # print(f'List of cubes defining neighbor solutions: {self.neigh}')
-    '''
 
     def sol_seq(self, itr_id):  # return seq_no in self.sols[] for the itr_id
         for (i, s) in enumerate(self.sols):
@@ -385,13 +304,9 @@ class ParRep:     # representation of Pareto set
             cols.append(cr.name)
         for cr in self.mc.cr:   # space for criteria achievements
             cols.append('a_' + cr.name)
-        # self.df_sol = pd.DataFrame(columns=cols)  # not needed, if df created by list of row dictionaries
         rows = []   # each row with crit attributes for a solution
         for s in self.sols:
             new_row = {'itr_id': s.itr_id}
-            # for (i, cr) in enumerate(self.mc.cr):     # results in different column seq. than the two loops below
-            #     new_row.update({cr.name: s.vals[i]})
-            #     new_row.update({'a_' + cr.name: s.a_vals[i]})
             for (i, cr) in enumerate(self.mc.cr):   # cols with crit values
                 new_row.update({cr.name: s.vals[i]})
             for (i, cr) in enumerate(self.mc.cr):   # cols with crit achievements
@@ -404,29 +319,21 @@ class ParRep:     # representation of Pareto set
                 new_row.update({'parents': f'[{cube.s1.itr_id}, {cube.s2.itr_id}]'})
             new_row.update({'domin': s.domin})
             rows.append(new_row)
-            # df2 = pd.DataFrame(new_row, index=list(range(1)))
-            # self.df_sol = pd.concat([self.df_sol, df2], axis=0, ignore_index=True)    # results in compatibility warn.
-            # self.df_sol.loc[len(self.df_sol)] = new_row   # does not work
-            # last = len(self.df_sol)
-            # self.df_sol.loc[last] = new_row   # also does not work
-            # self.df_sol.append(new_row, ignore_index=True)    # append() removed from pd
         self.df_sol = pd.DataFrame(rows)
-        # self.df_sol = pd.DataFrame.from_dict(rows)
-        # f_name = self.mc.ana_dir + '/df_sol.csv'
-        # f_name = self.mc.ana_dir + '/df_sol1M.csv'
         f_name = f'{self.dir_name}df_sol.csv'
         self.df_sol.to_csv(f_name, index=True)
         print(f'{len(self.sols)} unique solutions stored in {f_name}. '
-              f'{len(self.clSols)} duplicated solutions not stored.')
+              f'{len(self.clSols)} duplicated solutions skipped.')
 
         # plot solutions
         plots = Plots(self.cfg, self.df_sol, self.mc.cr)    # 3D plot
         plots.plot2D()    # 2D plot
-        plots.plot3D()    # 3D plot
+        # plots.plot3D()    # 3D plot
         plots.plot_parallel()  # Parallel coordinates plot
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
+        #  generation of 3D plots is suppressed until this problem will be solved.
         # self.plot3()
         # self.plot3a()
         # raise Exception(f'ParRep::summary() not finished yet.')
