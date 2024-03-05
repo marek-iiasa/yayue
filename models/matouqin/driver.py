@@ -37,8 +37,7 @@ def driver():
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
     # par = Params()  # prepare all model parameters
-    # f_data = f'{data_dir}dat1.dat'
-    f_data = f'{data_dir}data.dat'    # test by ZZ
+    f_data = f'{data_dir}dat1.dat'    # test by ZZ
     # f_data = f'{data_dir}tst1.dat'    # test by MM
     model = inst(abst, f_data)
     print(f'\nAnalysing instance of model {model.name}.')
@@ -105,7 +104,7 @@ def driver():
     # model.cOut.display()
 
     print('\nValues of outcome variables -------------------------------------------------------------------------')
-    print(f'Total revenue  = {pe.value(model.revenue)} thousands RMB')
+    print(f'Total revenue  = {pe.value(model.revenue)} million RMB')
     print(f'Income  = {pe.value(model.income)} million RMB')
     print(f'Investment cost  = {pe.value(model.invCost)} million RMB')
     print(f'Operation and maintenance cost  = {pe.value(model.OMC)} million RMB')
