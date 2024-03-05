@@ -1,17 +1,14 @@
-"""
-pymcma driver
-"""
-
 import sys		# needed for sys.exit()
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from .ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
 from .rd_inst import rd_inst  # model instance provider
-from .mc_block import McMod  # handles submodel/block of AF and links to the core/substantive model
-from .report import Report  # handles submodel/block of AF and links to the core/substantive model
+from .mc_block import McMod  # generate the AF sub-model/block and link the core-model variables with AF variables
+from .report import Report  # organize results of each iteration into reports
 
 
+# noinspection SpellCheckingInspection
 def chk_sol(res):  # check status of the solution
     # print(f'solver status: {res.solver.status}, termination condition: {res.solver.termination_condition}.')
     if ((res.solver.status != SolverStatus.ok) or
@@ -19,6 +16,7 @@ def chk_sol(res):  # check status of the solution
         print(f'optimization failed; termination condition: {res.solver.termination_condition}')
         sys.stdout.flush()  # desired for assuring printing exception at the output end
         '''
+        # non-optimal solutions are handled now, commented exceptions kept here in case they should be needed
         if res.solver.termination_condition == TerminationCondition.infeasible:
             raise Exception('Optimization problem is infeasible.')
         elif res.solver.termination_condition == TerminationCondition.unbounded:
@@ -31,6 +29,7 @@ def chk_sol(res):  # check status of the solution
         return True     # optimization OK
 
 
+# noinspection SpellCheckingInspection
 def driver(cfg):
     m1 = rd_inst(cfg)    # upload or generate m1 (core model)
     print(f'Generating Pareto-front representation of the core-model instance: {m1.name}.')
@@ -101,8 +100,6 @@ def driver(cfg):
                 # print(f'\nOptimal solution found.')
                 pass
             else:   # optimization failed
-                # todo: process correctly iterations with failed optimization
-                #   done but check/tests still needed
                 print(f'\nOptimization failed, solution disregarded.         ----------------------------------------')
         # print('processing solution ----')
         rep.itr(mc_part)  # update crit. attr. {N, U, payOff}, reporting; checks domination & close solutions
@@ -118,8 +115,8 @@ def driver(cfg):
 
     print(f'\nFinished {n_iter} analysis iterations. Summary report follows.')
 
-    # reports,
-    rep.summary()
+    # reports
+    rep.summary()   # generate data-frames and store them as csv
     if mc.par_rep:
         # todo: consider to integrate the below into rep.summary()
         mc.par_rep.summary()    # plots of Pareto-set representation
