@@ -70,7 +70,9 @@ class McMod:
                     # m.x[i].setlb(cr.asp)
                     # m.x[i].setub(cr.asp)
                     m.x[i].fix(cr.asp)  # better than fixing LB and UB
-        m.m1_cr_vars = []    # list of variables (objects) of m1 (core model) defining criteria
+
+        # make list of variables (pyomo objects) of m1 (core model) defining criteria
+        m.m1_cr_vars = []
         for cr in self.mc.cr:     # get m1-vars representing criteria
             var_name = cr.var_name
             m1_var = m1_vars[var_name]  # select from all core-model vars the object named var_name
@@ -140,24 +142,23 @@ class McMod:
         if self.mc.verb > 2:
             print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
 
+        # Constraints representing CAFs defined by the corresponding PWLs
         @m.Constraint(m.S)
         def cafD(mx, ix, sx):   # is called for each (ix, sx) in m.S; indexes each constraint by (ix, sx)
             if var_seq[ix] >= 0:
                 pwlx = pwls[ix]  # pwlx: ix-item from the pwls list of all PWLs
                 sc_len = len(sc_var)
-                # print(f'{ix = }, {sc_len = }')
                 if ix >= sc_len:
-                    print(f'{ix = }, {sc_len = }')
-                    print('bug here --------------------------------------------')
+                    raise Exception(f'mc_itr() bug in cafD() {ix = }, {sc_len = }.')
                 sc_coe = sc_var[ix]
                 abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
-                if self.mc.verb > 2:
+                if self.mc.verb > 3:
                     print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
                     print(f'({ix = }, sc_coef {sc_coe:.2e},  {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
                 cons_item = mx.caf[ix] <= abx[0] * sc_coe * mx.x[var_seq[ix]] + abx[1]
                 return cons_item
             else:   # PWL not generated for fixed criteria; the corresponding caf shall be fixed
-                # CAF needs to be defined, but it enters only the reg. term
+                # CAF needs to be defined, although it enters only the reg. term
                 return mx.caf[ix] == 0.
                 # return pe.Constraint.Skip
 
@@ -178,9 +179,9 @@ class McMod:
         #     print(f'---  end of specs of the MC_blok.\n')
 
         @m.Constraint(m.A)
-        def cafMinD(mx, ii):    # only active criteria included in the m.cafMin term
-            return mx.cafMin <= mx.caf[ii]
+        def cafMinD(mx, ii):    # nothing to be skipped, only active criteria included in the m.A set
             # return pe.Constraint.Skip
+            return mx.cafMin <= mx.caf[ii]
 
         reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit       # scaling coef of regularizing term
         if self.mc.verb > 2:
@@ -188,7 +189,6 @@ class McMod:
 
         @m.Constraint()
         def cafRegD(mx):    # regularizing term
-            # todo: correct the summation, if caf[fix_crit] will not be equal to 0.
             return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
 
         @m.Constraint()
