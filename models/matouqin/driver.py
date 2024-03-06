@@ -13,6 +13,7 @@ from inst import *
 from sms import *  # handles sub model/block of AF and links to the core/substantive model
 # from params import Params
 from report import *
+from test import *
 
 
 def chk_sol(res):  # check status of the solution
@@ -32,7 +33,8 @@ def chk_sol(res):  # check status of the solution
 def driver():
     path = '.'
     data_dir = f'{path}/Data/'      # repository of data
-    res_dir = f'{path}/Results/'  # repository of results
+    res_dir = f'{path}/Results/'    # repository of results
+    fig_dir = f'{path}/Figures/'    # repository of figures
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
@@ -111,3 +113,7 @@ def driver():
     print(f'Surplus cost  = {pe.value(model.overCost)} million RMB')
     print(f'Shortage cost  = {pe.value(model.buyCost)} million RMB')
     print(f'Balance cost  = {pe.value(model.balCost)} million RMB')
+
+# ----------------------------------------------------------------
+# plotting
+    Plot(model, fig_dir)

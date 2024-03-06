@@ -52,7 +52,7 @@ def plot_finance(org_df, var_cost):
             plt.text(bar.get_x() + bar.get_width() / 2, value, f'{value:.2f}', ha='center', va='bottom')
         plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
         plt.title('Financial Overview')
-        plt.xlabel('Categories',)
+        plt.xlabel('Categories')
         plt.ylabel('Thousands Yuan')
         # plt.legend(title='Finance', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., edgecolor='black')
         # plt.tight_layout()
