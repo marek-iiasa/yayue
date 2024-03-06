@@ -8,24 +8,9 @@ import pyomo.environ as pe  # more robust than using import *
 # from ctr_mca import CtrMca
 # from crit import Crit
 
-'''
-import os
-import numpy as np
-# from sklearn.cluster import KMeans
-# import collections   # for Counter()
-import matplotlib.pyplot as plt
-# from mpl_toolkits import mplot3d
-# from mpl_toolkits.mplot3d import Axes3D     # needed by Axes3D()
-from matplotlib import cm
-from matplotlib import colors
-# from matplotlib.ticker import LinearLocator    # needed for ax.set_major_locator
-import seaborn as sns
-sns.set()   # settings for seaborn plotting style
-'''
 
-
+# noinspection SpellCheckingInspection
 class Report:
-    # cf regret::report() for extensive processing
     def __init__(self, cfg, mc, m1):
         self.mc = mc    # CtrMca
         self.cfg = mc.cfg
@@ -47,50 +32,13 @@ class Report:
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
         self.f_itr_df = f'{self.rep_dir}df_itr.csv'  # file name of the stored df
         self.f_df_vars = f'{self.rep_dir}df_vars.csv'  # file name of the stored df
-
         #
         self.itr_id = -1
         self.prev_itr = 0   # number of previously made iters
         self.cur_itr = 0   # number of currently made iters
 
-        # todo: implement hot start
-        # todo: get itr-id from length of log.txt
-
-        # todo: initialize self.itr_df with previously stored df, if exists
-        #   modify self.itr_id to a subsequent number
-
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
         print(f'Core-model variables to be reported: {self.rep_vars}')
-
-        # noinspection SpellCheckingInspection
-        '''
-                # data space for the summary df with values of each iteration (to be used in the summary report)
-                cols = ['itr_id'] + self.par_id + ['cost', 'CO2', 'oilImp']     # 'slope', 'marker'
-                self.sum_df = pd.DataFrame(columns=cols)
-        
-                # container of lists, each list a space for values of each requested variable
-                # sol_cont: list of lists, list each for values of one variable (for all params values)
-                self.sol_cont = []   # container of dfs, each to hold extracted values of a variable for all params
-                model_vars = m.component_map(ctype=pe.Var)
-                # check, if each req_var is defined, make space for values
-                tmp_lst = var_lst.copy()    # must use copy(), assignment is a reference
-                for req_var in tmp_lst:     # use var_lst here would corrupt the loop, if the list element is removed
-                    if req_var in model_vars:
-                        # append empty list to mk_space in the container for dfs with values of the req_var;
-                        # each df appended in add_itr() for the corresponding iter defined by value(s) of param(s)
-                        self.sol_cont.append([])
-                        # print(f'space allocated for pd.df with values of the requested var {req_var}.')
-                    else:   # the requested var is not defined in the SMS; remove it from the reported-vars list
-                        self.var_lst.remove(req_var)
-                        print(f'requested var {req_var} not defined in the model: its values will not be reported.')
-                        print(f'modified list of the vars to be reported: {self.var_lst}.')
-        
-                # declarations of data shared by functions of the summary report
-                self.costs = self.sum_df['cost'] # assignments here are to empty df, must be reassigned in summary(self)
-                self.prices = self.sum_df[self.par_id]
-        
-                print('\nReport ctor finished.                                        --------------------------------')
-                '''
 
     def itr(self, m):   # m: current mc_block (invariant core-model linked in the ctor)
         """Process values of criteria and other vars in the current solution."""
@@ -104,13 +52,6 @@ class Report:
             return
 
         cri_val = {}    # all criteria values in current solution
-        '''
-        if self.mc.cur_stage > 1:
-            mx = m  # use the current mc_core model for accessing solution
-            m_vars = m.component_map(ctype=pe.Var)  # all variables of the mc_block
-        else:
-            mx = self.m1  # use the core-model for accessing solution
-        '''
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
             m_var = m_vars[var_name]
@@ -137,7 +78,6 @@ class Report:
             cafReg = round(cafReg, 1)
             new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
         else:   # cafMin, cafReg not defined in stage 1
-            # print(f' af = {af:.3e}')
             new_row = {'itr_id': self.itr_id, 'af': af}
         cur_col = 4
         for crit in self.mc.cr:
@@ -168,7 +108,6 @@ class Report:
         with warnings.catch_warnings():  # suppress the pd.concat() warning
             warnings.filterwarnings("ignore", category=FutureWarning)
             self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
-        # print(f'current itr_df in report():\n{self.itr_df}')
 
         if len(self.rep_vars):
             self.req_vals()     # extract and store values of the core-model variables requested to be reported
@@ -208,7 +147,6 @@ class Report:
 
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
-        # todo: correct info on current and previous iterations
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_itr_df, index=True)
         print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_itr_df}" file.')
@@ -216,4 +154,3 @@ class Report:
         self.df_vars.to_csv(self.f_df_vars, index=True)
         print(f'Values of core-model variables requested to be reported are stored in the DataFrame '
               f'"{self.f_df_vars}" file.')
-        # raise Exception(f'Report::summary() not implemented yet.')

@@ -21,14 +21,13 @@ Installation consists of the following steps:
 
 #. Installation of the pyMCMA
 
-#. Creation of the workspace
+#. Creation of the workspace and running the preconfigured analysis
 
-#. Testing the installation
 
 Each of these steps is described in the corresponding section below.
 
-Conda environment
-^^^^^^^^^^^^^^^^^
+Creating and/or activating the Conda environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Conda is widely used, it is available for macOS, Linux, and MS-Windows;
 it supports easy organization of dedicated (when needed) environments for diverse
 packages, as well as easy updates of packages with keeping consistency of their
@@ -80,8 +79,8 @@ executed by the command-line.
 The environment should also be specified for the core (substantive) model
 development (see the :doc:`user_guide` for details).
 
-pyMCMA installation
-^^^^^^^^^^^^^^^^^^^
+Installation of the pyMCMA
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 PyMCMA software (further on referred as ``pymcma``, the name used for its execution)
 should be installed by running the below specified commands.
 The commands should be executed in a terminal window within the activated conda
@@ -118,16 +117,17 @@ The above recommended installation sequence assures the version consistency of
 all packages within the ``pymcma`` conda environment, not only during the installation
 but also during periodical updates of the environment.
 
-Creation of the workspace
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-The workspace for initial analysis can be created by running:
+Creation of the workspace and running the preconfigured analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The command:
 
 .. code-block:: console
 
     $ pymcma --install
 
-This command creates in the current directory the initial workspace
-composed of three folders:
+creates the workspace for initial analysis and runs the preconfigured initial analysis
+
+The initial workspace is composed of three folders (created in the current directory):
 
 #. ``Models/`` - it contains the test-model.
     The name of the provided model should not be changed unless the
@@ -143,16 +143,8 @@ composed of three folders:
     development of actual core-model instances, and in configuration
     of actual analyses.
 
-
-Testing the installation
-^^^^^^^^^^^^^^^^^^^^^^^^
-Testing consists of running the preconfigured analysis of the provided core-model
-example of the Pipa model outlined in the paper.
-To following command runs the analysis:
-
-.. code-block:: console
-
-    $ pymcma --anaDir anaTst
+The installation of pyMCMA can be tested by running the preconfigured analysis of the provided core-model
+example of the Pipa model outlined in the paper. This analysis is running automatically after creation of the workspace.
 
 Successful installation shall result in computation of the Pareto-front for the
 tutorial model (included in the working space installation) and the analysis
