@@ -4,6 +4,7 @@ import yaml
 from yaml.loader import SafeLoader
 
 
+# noinspection SpellCheckingInspection
 class Config:
     def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         self.f_sys = './../Sys/cfg_sys.yml'    # full path to the system config file

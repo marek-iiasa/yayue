@@ -6,6 +6,7 @@ class CrPref:     # attributes of item of preference specs
         self.is_active = act    # activity
 
 
+# noinspection SpellCheckingInspection
 class Crit:     # definition and attributes of a single criterion
     """Attributes of a criterion."""
     def __init__(self, cr_name, var_name, typ):

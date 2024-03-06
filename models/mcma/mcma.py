@@ -43,12 +43,20 @@ def read_args():
 
 # noinspection SpellCheckingInspection
 def create_wdir():
-    print('Initializing new working directory.')
+    print('Creating directories with templates/examples.')
 
     dirs_to_create = ['Models', 'Templates', 'anaTst']
 
+    found = False
+    for adir in dirs_to_create:
+        if os.path.exists(adir):
+            print(f'\t"{adir}" directory exists; please remove it before running --install.')
+            found = True
+    if found:
+        exit(1)
     for adir in dirs_to_create:
         os.mkdir(adir)
+        print(f'\t"{adir}" directory created.')
 
     files_to_copy = [
         'wdir/Models/xpipa.dll',
@@ -81,12 +89,9 @@ def main():
     ana_dir = args.anaDir
     if install:     # check, if wdir (composed of pymcma's templates and tests) should be installed
         assert ana_dir is None, f'ERROR: no directory should be defined for the installation.'
-        ana_dir = 'anaTst'
-        if as_module:
-            print('Skip installation of test directories in the development mode.')
-        else:       # run as distributed pymcma
-            print('Installing test directories.')
-            create_wdir()
+        # print('Installing test directories.')
+        create_wdir()
+        exit(0)
     else:
         assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
     print(f'Analysis directory: {ana_dir}')
