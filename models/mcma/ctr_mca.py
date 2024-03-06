@@ -10,6 +10,7 @@ from .crit import Crit, CrPref
 from .par_repr import ParRep
 
 
+# noinspection SpellCheckingInspection
 class CtrMca:   # control flows of MCMA at diverse computations states
     def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
@@ -132,7 +133,10 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         print('PayOff table:')
         lines = []
         for crit in self.cr:
-            line = f'{crit.name}\t U {crit.utopia:.3e}   N {crit.nadir:.3e}'
+            if crit.utopia is not None and crit.nadir is not None:
+                line = f'{crit.name}\t U {crit.utopia:.3e}   N {crit.nadir:.3e}'
+            else:
+                line = f'{crit.name}\t U {crit.utopia}   N {crit.nadir}'
             print(line)
             lines.append(line)
         if prn_only or self.cur_stage < 4:  # don't store payOff table before neutral solution is computed:
@@ -207,7 +211,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             self.cur_stage = 5
             self.cur_cr = None  # should no longer be used
             self.hotStart = True
-            return self.cur_stage   # return to set pref for for neutral solution and compute it
+            return self.cur_stage   # return to set pref for neutral solution and compute it
         elif self.cur_stage == 5:  # comes here while processing preferences
             # after debugging, nothing to do here
             # print('Continue to get and handle user preferences.')
