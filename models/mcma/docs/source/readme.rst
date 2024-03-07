@@ -21,7 +21,9 @@ Installation consists of the following steps:
 
 #. Installation of the pyMCMA
 
-#. Creation of the workspace and running the preconfigured analysis
+#. Installation of the examples and templates
+
+#. Execution of the provided example of analysis
 
 
 Each of these steps is described in the corresponding section below.
