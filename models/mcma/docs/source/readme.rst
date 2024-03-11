@@ -21,7 +21,9 @@ Installation consists of the following steps:
 
 #. Installation of the pyMCMA
 
-#. Creation of the workspace and running the preconfigured analysis
+#. Installation of the examples and templates
+
+#. Execution of the provided example of analysis
 
 
 Each of these steps is described in the corresponding section below.
@@ -96,8 +98,24 @@ is active in the currently used terminal window):
     $ conda activate pymcma
     $ conda install pymcma
 
-The installation will include all packages necessary for running pyMCMA,
-as well as assuring the consistent versions of all packages.
+The installation will include all packages necessary for running ``pymcma``,
+as well as assure version consistency of all packages installed
+(and subsequently updated) in the created conda environment.
+The installation can be tested by running:
+
+.. code-block:: console
+
+    $ pymcma -h
+
+It should result in displaying the ``pymcma`` help consisting of the list
+of available ``pymcma`` command-line options.
+
+Note that the first run of the ``pymcma`` after its installation includes one-time
+configuration of the installed software;
+therefore, it takes much longer time (up to several minutes, depending the computer
+resources) than subsequent runs.
+Repeated execution of the above command should take about one second.
+
 We recommend to follow the good practice of updating the software, i.e.,
 to periodically execute:
 
@@ -117,17 +135,17 @@ The above recommended installation sequence assures the version consistency of
 all packages within the ``pymcma`` conda environment, not only during the installation
 but also during periodical updates of the environment.
 
-Creation of the workspace and running the preconfigured analysis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The command:
+Installing examples and templates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installation of the provided examples and templates is optional.
+They can be installed in any directory by the command:
 
 .. code-block:: console
 
     $ pymcma --install
 
-creates the workspace for initial analysis and runs the preconfigured initial analysis
-
-The initial workspace is composed of three folders (created in the current directory):
+The provided examples are organized into three folders created in the
+current directory:
 
 #. ``Models/`` - it contains the test-model.
     The name of the provided model should not be changed unless the
@@ -143,10 +161,19 @@ The initial workspace is composed of three folders (created in the current direc
     development of actual core-model instances, and in configuration
     of actual analyses.
 
-The installation of pyMCMA can be tested by running the preconfigured analysis of the provided core-model
-example of the Pipa model outlined in the paper. This analysis is running automatically after creation of the workspace.
+Running the provided example of analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The preconfigured analysis of the provided core-model example of the Pipa
+model outlined in the paper can be run in any directory where the ``anaTst/``
+and ``Models/`` folders are available (e.g., by running the above presented
+example installation).
+The following command runs the analysis:
 
-Successful installation shall result in computation of the Pareto-front for the
+.. code-block:: console
+
+    $ pymcma --anaDir anaTst
+
+Successful run shall result in computation of the Pareto-front for the
 tutorial model (included in the working space installation) and the analysis
 configuration specified ``anaTst/cfg.yml`` file.
 The standard output will be displayed in the terminal.
@@ -159,11 +186,15 @@ cost criterion. Closing all windows with plots will terminate the execution.
 The default analysis results will be stored in the analysis directory,
 i.e., ``anaTst/Results``.
 
+Experimenting with diverse analyses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One can easily experiment with diverse configurations of the analysis by
 creating for each analysis a dedicated folder, editing the configuration,
 and running the analysis.
 Assuming that next analysis will be done in directory ``myAnal`` one can copy
 and then edit the configuration file with their favorite text editor.
+Note that the below shown ``cp ...`` command on the WindowsOS may have to
+be modified.
 
 .. code-block:: console
 

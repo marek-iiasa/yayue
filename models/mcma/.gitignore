@@ -8,6 +8,8 @@ ModelsOld/
 wdir/anaTst/pay*
 wdir/anaTst/Results/
 wdirB*
+pytst/
+docs/source/Bak/
 xtst/
 # ana_*/
 # anaEx/
