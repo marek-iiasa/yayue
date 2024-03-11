@@ -39,7 +39,7 @@ class Params:
         self.eh2 = self.eph2 = self.h2Ratio = self.h2Res = self.h2e = None
         self.sInv = None
 
-        self.add_inflow()
+        self.set_inflow()
         self.set_time()
         self.set_price()
         self.set_elec()
@@ -50,7 +50,7 @@ class Params:
         self.write_to_excel()
 
     # data processing
-    def add_inflow(self):    # generation
+    def set_inflow(self):    # generation
         dv_inflow = pd.DataFrame()
         for index, row in self.gen_df.iterrows():
             name = row['name']
@@ -113,7 +113,7 @@ class Params:
         print(f'{self.elec_df}')
 
     def set_hyTank(self):
-        eph2 = self.cEle * self.hytank_df['toHstr']
+        eph2 = (1 / self.cEle) * self.hytank_df['toHstr']
         h2res = 1 - self.hytank_df['h2Loss']
         invshare = (((1 + self.ydis) ** self.hytank_df['n'] * self.ydis)
                     / ((1 + self.ydis) ** self.hytank_df['n'] - 1))

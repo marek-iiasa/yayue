@@ -112,7 +112,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in each tank type
     def hVol_bal(mx, s, t):
         if t == 0:
-            return mx.hVol[s, t] == mx.hMin[s]
+            return mx.hVol[s, t] == mx.hMin[s] + mx.hIn[s, t] - mx.hOut[s, t]
         else:
             return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t - 1)] + mx.hIn[s, t] - mx.hOut[s, t]
 
