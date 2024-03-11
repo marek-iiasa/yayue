@@ -13,7 +13,7 @@ from inst import *
 from sms import *  # handles sub model/block of AF and links to the core/substantive model
 # from params import Params
 from report import *
-from test import *
+from plot1 import *
 
 
 def chk_sol(res):  # check status of the solution
