@@ -38,7 +38,7 @@ class Config:
                     self.data.update({k: v})
 
     def sys_default(self):       # set default values of Sys/cfg
-        sysDefaults = {'resDir': 'Results/', 'mxIter': 1000, 'parRep': True, 'showPlot': True, 'hiPlot': False,
+        sysDefaults = {'resDir': 'Results/', 'mxIter': 1000, 'parRep': True, 'showPlot': True, 'hiPlot': True,
                        'verb': 0}
         self.data = {}
         for k, v in sysDefaults.items():  # set default values

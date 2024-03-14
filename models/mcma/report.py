@@ -5,6 +5,7 @@ Reporting results of the MCMA iterations. Handling core-model is generic, i.e., 
 import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
+from .plots import Plots
 # from ctr_mca import CtrMca
 # from crit import Crit
 
@@ -154,3 +155,28 @@ class Report:
         self.df_vars.to_csv(self.f_df_vars, index=True)
         print(f'Values of core-model variables requested to be reported are stored in the DataFrame '
               f'"{self.f_df_vars}" file.')
+
+        if self.mc.par_rep is None:  # return if Pareto-front is not computed
+            return
+
+        self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
+        f_name = f'{self.rep_dir}df_sol.csv'
+        self.mc.par_rep.df_sol.to_csv(f_name, index=True)
+        print(f'{len(self.mc.par_rep.sols)} unique solutions stored in {f_name}. '
+              f'{len(self.mc.par_rep.clSols)} duplicated solutions skipped.')
+
+        # plot solutions
+        plots = Plots(self.mc)    # plots
+        plots.plot2D()    # 2D plots
+        # plots.plot3D()    # 3D plot
+        plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        plots.kde_stages()  # KDE + histograms vs stages
+        plots.parallel()  # Parallel coordinates plot
+        plots.hiPlots()  # high resolution plots
+
+        # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
+        #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
+        #  generation of 3D plots is suppressed until this problem will be solved.
+        # self.plot3()
+        # self.plot3a()
+        # raise Exception(f'ParRep::summary() not finished yet.')

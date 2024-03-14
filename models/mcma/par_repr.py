@@ -1,8 +1,5 @@
-import numpy as np
-from matplotlib import mlab
-
-from .cube import *
-from .plots import *
+import pandas as pd
+from .cube import ParSol, Cubes, aCube
 
 
 # noinspection SpellCheckingInspection
@@ -13,6 +10,7 @@ class ParProg:
         self.steps = []             # list of reporting steps (max distances between neighbors
         self.cur_step = 0           # index of the current step
         self.neigh = {}             # neighbors for each step
+        self.df_stages = None
 
         self.ini_steps()    # initialize steps
 
@@ -65,93 +63,9 @@ class ParProg:
                 print(f'Size of cube[{cube_id}]: {round(acube.size, 2)}, mx_cube = {mx_cube}')
             '''
 
-        summary_df = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
-        self.summary_plot(summary_df)
-        self.progress_plot()
-
-    def summary_plot(self, summary_df):
-        fig = plt.figure(figsize=(10, 5))
-        fig.canvas.manager.set_window_title(f'Summary data of {len(self.neigh)} computation stages')
-
-        plot_kw = dict(marker='o', markersize=10, linestyle='--', linewidth=3)
-        ax = fig.add_subplot(1, 2, 1)
-        ax.plot(summary_df['step'], summary_df['itr'],
-                color='tab:blue',
-                label='Number of iterations',
-                **plot_kw)
-
-        ax.plot(summary_df['step'], summary_df['n_sol'],
-                color='tab:orange',
-                label='Number of distinct solutions',
-                **plot_kw)
-
-        ax.set_xticks(summary_df['step'])
-        ax.set_ylabel('Number of iterations/solutions')
-        ax.set_xlabel('Computation stage')
-        ax.legend(loc='upper left')
-
-        ax = fig.add_subplot(1, 2, 2)
-        ax.plot(summary_df['step'], summary_df['upBnd'],
-                color='tab:red',
-                label='Cuboid size bound',
-                **plot_kw)
-
-        ax.plot(summary_df['step'], summary_df['mx_cube'],
-                color='tab:green',
-                label='Actual max cuboid-size',
-                **plot_kw)
-
-        ax.set_xticks(summary_df['step'])
-        ax.set_ylabel('Cuboid size')
-        ax.set_xlabel('Computation stage')
-        ax.legend(loc='upper right')
-
-        plt.tight_layout()
-
-    def progress_plot(self):
-        mx_hight = 9.0
-        ncols = 2
-        n_plots = len(self.neigh)
-        if len(self.neigh[self.cur_step - 1][-1]) == 0:
-            n_plots -= 1    # plot for last stage not generated
-        nrows = n_plots // 2 + n_plots % 2
-        # print(f'{nrows = } {n_plots = } rest {n_plots % 2}--------------------------')
-        fig = plt.figure(figsize=(5 * ncols, min(mx_hight, 2.8 * nrows)))
-        fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
-        fig.subplots_adjust(wspace=0.3, hspace=0.85)
-
-        for step in self.neigh:
-            if len(self.neigh[step][-1]) == 0:
-                print(f'Empty cube list for computation stage {step}.')
-                return
-            ax = fig.add_subplot(nrows, ncols, step + 1)
-            neighbour_cube_sizes = []
-            if self.parRep.cfg.get('verb') > 3:
-                print(f'{step = }')
-                print(f'neigh {self.neigh[step]}')
-            for cube_id, cube_size in self.neigh[step][-1]:
-                if self.parRep.cfg.get('verb') > 3:
-                    print(f'{cube_id = }, {cube_size = }')
-                neighbour_cube_sizes.append(cube_size)
-
-            ax.hist(neighbour_cube_sizes,
-                    bins=50,
-                    range=(0, 50),  # was 100
-                    density=True)
-
-            # Check if list has at least two different values, so we can calculate KDE
-            if neighbour_cube_sizes[0] != neighbour_cube_sizes[-1]:
-                kde = mlab.GaussianKDE(neighbour_cube_sizes)
-                x = np.linspace(0, 50, 200)
-                y = kde(x)
-                ax.plot(x, y, color='k', linewidth=4)
-
-            ax.set_xticks(range(0, 60, 10))
-            ax.set_xlabel('Distance between neighbor solutions')
-            ax.set_ylabel('Probability Density')
-            ax.set_title(f'Stage {step}')
-
-        plt.tight_layout()
+        self.df_stages = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
+        # self.summary_plot(self.df_stages)
+        # self.progress_plot()
 
 
 # noinspection SpellCheckingInspection
@@ -298,7 +212,7 @@ class ParRep:     # representation of Pareto set
         self.progr.update(0.)   # store info on the unprocessed cubes, if any remain
         self.progr.summary()   # process info on the computation progress
 
-        # prepare df with solutions for plot2D
+        # prepare df with solutions for plots and storing as csv
         cols = ['itr_id']
         for cr in self.mc.cr:   # space for criteria values
             cols.append(cr.name)
@@ -320,21 +234,3 @@ class ParRep:     # representation of Pareto set
             new_row.update({'domin': s.domin})
             rows.append(new_row)
         self.df_sol = pd.DataFrame(rows)
-        f_name = f'{self.dir_name}df_sol.csv'
-        self.df_sol.to_csv(f_name, index=True)
-        print(f'{len(self.sols)} unique solutions stored in {f_name}. '
-              f'{len(self.clSols)} duplicated solutions skipped.')
-
-        # plot solutions
-        plots = Plots(self.cfg, self.df_sol, self.mc.cr)    # 3D plot
-        plots.plot2D()    # 2D plot
-        # plots.plot3D()    # 3D plot
-        plots.plot_parallel()  # Parallel coordinates plot
-        plots.hiPlots()  # high resolution plots
-
-        # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
-        #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
-        #  generation of 3D plots is suppressed until this problem will be solved.
-        # self.plot3()
-        # self.plot3a()
-        # raise Exception(f'ParRep::summary() not finished yet.')

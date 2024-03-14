@@ -117,6 +117,6 @@ def driver(cfg):
 
     # reports
     rep.summary()   # generate data-frames and store them as csv
-    if mc.par_rep:
-        # todo: consider to integrate the below into rep.summary()
-        mc.par_rep.summary()    # plots of Pareto-set representation
+    # if mc.par_rep:
+    #     # todo: consider to integrate the below into rep.summary()
+    #     mc.par_rep.summary()    # plots of Pareto-set representation
