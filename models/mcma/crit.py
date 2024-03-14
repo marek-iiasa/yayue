@@ -107,7 +107,7 @@ class Crit:     # definition and attributes of a single criterion
             no_yes = 'not'
 
         if shift:
-            print(f'\tnadir appr. of crit "{self.name}": {old_val:.2e} {no_yes} changed to {val:.2e} (in {stage=}).')
+            print(f'\tnadir appr. of crit "{self.name}": {old_val:.5e} {no_yes} changed to {val:.5e} (in {stage=}).')
         return shift
 
     def isBetter(self, val1, val2):   # return true if val1 is better or equal to than val2

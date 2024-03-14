@@ -4,15 +4,15 @@
 
 # from os import R_OK, access
 # from os.path import isfile
-# import sys		# needed for sys.exit()
-# import os
+import sys		# needed for sys.exit()
+import os
 import argparse
 import shutil
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
-from .cfg import *  # configuration (dir/file location, parameter values, etc
-from .driver import *  # driver (run the analysis set-up and iterations)
+from .cfg import Config  # configuration (dir/file location, parameter values, etc
+from .driver import driver  # driver (run the analysis set-up and iterations)
 
 SCRIPT_DIR = os.path.dirname(__file__)
 
@@ -31,7 +31,7 @@ def read_args():
         description=descr, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # noinspection SpellCheckingInspection
-    instal = "--install : \n    install pyMCMA and test it."
+    instal = "--install : \n    install folders with templates."
     anaDir = "--anaDir string :\n    define analysis directory."
     parser.add_argument("--install", action="store_true", help=instal)  # on/off flag
     parser.add_argument("--anaDir", help=anaDir)
@@ -73,7 +73,6 @@ def create_wdir():
 
 # noinspection SpellCheckingInspection
 def main():
-    # noinspection SpellCheckingInspection
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
@@ -88,14 +87,13 @@ def main():
     install = args.install
     ana_dir = args.anaDir
     if install:     # check, if wdir (composed of pymcma's templates and tests) should be installed
-        assert ana_dir is None, f'ERROR: no directory should be defined for the installation.'
-        # print('Installing test directories.')
+        assert ana_dir is None, 'ERROR: no analysis directory should be defined with the --install option.'
         create_wdir()
         exit(0)
     else:
-        assert ana_dir is not None, f'ERROR: analysis directory should be defined.'
+        assert ana_dir is not None, 'ERROR: analysis directory should be defined.'
     print(f'Analysis directory: {ana_dir}')
-    assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist'
+    assert os.path.exists(ana_dir), f'The analysis directory "{ana_dir}" does not exist.'
     os.chdir(ana_dir)   # analysis run in the choosen/dedicated directory
 
     # process the run configuration options and configure the working space

@@ -26,7 +26,7 @@ class ParProg:
         n_sol = len(self.parRep.sols)
         # pairs = self.parRep.neigh.copy()
         pairs = self.parRep.cubes.cand.copy()
-        print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbors remain for processing.')
+        print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbor-pairs remain for processing.')
         if cube_size > 0.:
             self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
             # print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
@@ -177,7 +177,7 @@ class ParRep:     # representation of Pareto set
         if not self.from_cube:  # no cubes yet, generate and compute selfish solution
             for (i, cr) in enumerate(self.mc.cr):
                 if i == self.n_corner:  # selfish sol. for i-th criterion
-                    print(f'Computing selfish solution for crit: {cr.name}.')
+                    print(f'Computing Pareto-front corners: selfish opt. for crit. "{cr.name}".')
                     cr.is_active = True
                     cr.asp = cr.utopia
                 else:
@@ -330,6 +330,7 @@ class ParRep:     # representation of Pareto set
         plots.plot2D()    # 2D plot
         # plots.plot3D()    # 3D plot
         plots.plot_parallel()  # Parallel coordinates plot
+        plots.hiPlots()  # high resolution plots
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)

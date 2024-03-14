@@ -118,7 +118,7 @@ class Cubes:     # collection of aCubes
             print(f'\nEmpty list of cubes: no more preferences can be defined.')
             return None
         # print(f'cand-list before sorting: {self.cand}')
-        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort the cand. id-list by decreasing cube-size
+        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort cand. id-list by decreasing cube-size
         # print(f'after sorting {len(self.cand)}: {self.cand}')
 
         # sub-list of candidates of the same size
@@ -140,7 +140,7 @@ class Cubes:     # collection of aCubes
             else:
                 id2prune.append(c_id)
                 if self.parRep.cfg.get('verb') > 1:
-                    print(f'non-empty cube [{c_id}] skipped (will be pruned).')
+                    print(f'non-empty cube [{c_id}] skipped (will be pruned from the candidate list).')
 
         best = None
         if len(lst) > 0:
@@ -149,7 +149,8 @@ class Cubes:     # collection of aCubes
             best.used = True
             id2prune.append(best.id)
             print(f'Best (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
-                  f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
+                  # f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
+                  f'size={best.size:.2f}, degen = {best.is_degen}.')
         else:
             print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
             # print('Termination2')
