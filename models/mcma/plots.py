@@ -109,43 +109,11 @@ class Plots:
     #     sel.annotation.set_text(f'Label: {self.df[self.cols[0]][sel.target.index]} (Subplot {i})'
     #                             f'\nCoordinates: ({sel.target[0]:.2f}, {sel.target[1]:.2f})')
 
-    def plot3D(self):
-        if self.n_crit < 6:     # ad-hoc suppress 3D
+    def hiPlots(self):  # generate high-resolution plots
+        if self.cfg.get('hiPlot') is not True:
+            print('\n----------------------------------------------------hiPlot not requested.')
             return
-        if self.n_crit > 3:
-            # todo: implement 3D subplots for more than 3 criteria
-            print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
-            return
-        # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
-        fig2 = plt.figure(figsize=(12, 9))
-        fig2.canvas.manager.set_window_title(
-            f'Criteria achievements for {self.n_sol} solutions.')  # window title
-        ax = fig2.add_subplot(projection='3d')
-        ax.set_xlabel(self.cr_name[0])
-        ax.set_ylabel(self.cr_name[1])
-        ax.set_zlabel(self.cr_name[2])
-        # noinspection PyArgumentList
-        # warning suppressed here (complains on unfilled params x and y)
-        ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
-                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
-        # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
-        # ax.view_init(elev=3, azim=-135, roll=0)
-        ax.view_init(elev=15, azim=45, roll=0)
-        for (i, seq) in enumerate(self.seq):
-            # noinspection PyTypeChecker
-            ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
-                    f'{seq}', fontdict=None)
-            if i > 20:
-                break
-        # Show the plot
-        f_name = f'{self.dir_name}p3D.png'
-        # f_name = f'{self.cfg.get("resDir")}p3D.png'
-        fig2.savefig(f_name)
-        print(f'3D plot of Pareto solutions stored in file: {f_name}')
-        # if self.show_plot:
-        #     plt.show()
-        # else:
-        #     print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+        print('\n---------------------------------------------------hi-resolution plots not implemented yet.')
 
     def plot_parallel(self):
         fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
@@ -202,3 +170,41 @@ class Plots:
             plt.show()
         else:
             print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+
+    def plot3D(self):
+        if self.n_crit < 6:     # ad-hoc suppress 3D
+            return
+        if self.n_crit > 3:
+            # todo: implement 3D subplots for more than 3 criteria
+            print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
+            return
+        # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
+        fig2 = plt.figure(figsize=(12, 9))
+        fig2.canvas.manager.set_window_title(
+            f'Criteria achievements for {self.n_sol} solutions.')  # window title
+        ax = fig2.add_subplot(projection='3d')
+        ax.set_xlabel(self.cr_name[0])
+        ax.set_ylabel(self.cr_name[1])
+        ax.set_zlabel(self.cr_name[2])
+        # noinspection PyArgumentList
+        # warning suppressed here (complains on unfilled params x and y)
+        ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
+                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+        # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
+        # ax.view_init(elev=3, azim=-135, roll=0)
+        ax.view_init(elev=15, azim=45, roll=0)
+        for (i, seq) in enumerate(self.seq):
+            # noinspection PyTypeChecker
+            ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
+                    f'{seq}', fontdict=None)
+            if i > 20:
+                break
+        # Show the plot
+        f_name = f'{self.dir_name}p3D.png'
+        # f_name = f'{self.cfg.get("resDir")}p3D.png'
+        fig2.savefig(f_name)
+        print(f'3D plot of Pareto solutions stored in file: {f_name}')
+        # if self.show_plot:
+        #     plt.show()
+        # else:
+        #     print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
