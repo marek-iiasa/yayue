@@ -22,17 +22,18 @@ class Plots:
         self.cr_defs = mc.cr    # criteria specs
         self.dir_name = self.cfg.get('resDir')  # result-dir: all plots shall be stored there
         self.show_plot = self.cfg.get('showPlot')
-        self.hire_plot = self.cfg.get('hiPlot') is True
+        self.hire_plot = self.cfg.get('hiPlot') is True     # True, if hi-res plots are requested
         self.n_crit = len(self.cr_defs)
         self.cols = self.df.columns  # columns of the df defined in the report() using the criteria names
         self.cr_name = []   # criteria names
         self.cr_col = []   # col-names containing criteria achievements values
         self.n_sol = len(self.df.index)  # number of solutions defined in the df
         self.seq = self.df[self.cols[0]]
-        self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item, if no more specified
-        self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue', ])  # mono-color ALL crit-plots
+        self.cmap = ListedColormap(['brown', 'red', 'orange', 'blue', 'green'])  # takes every item...
+        # self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item...
+        self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue'])  # mono-color ALL crit-plots
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
-        self.plots = {}  # place holder for all plots, the keys might be names of the corresponding functions
+        self.plots = {}  # placeholder for all plots, the keys might be names of the corresponding functions
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
