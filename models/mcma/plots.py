@@ -22,6 +22,7 @@ class Plots:
         self.cr_defs = mc.cr    # criteria specs
         self.dir_name = self.cfg.get('resDir')  # result-dir: all plots shall be stored there
         self.show_plot = self.cfg.get('showPlot')
+        self.hire_plot = self.cfg.get('hiPlot') is True
         self.n_crit = len(self.cr_defs)
         self.cols = self.df.columns  # columns of the df defined in the report() using the criteria names
         self.cr_name = []   # criteria names
@@ -116,7 +117,8 @@ class Plots:
 
     def hiPlots(self):  # generate high-resolution plots
         # todo: maybe high-res plots should be done in each plot-function?
-        if self.cfg.get('hiPlot') is not True:
+        #   then to either generate either high-res plot only or pair of plots
+        if self.hire_plot is False:
             print('\n----------------------------------------------------hiPlot not requested.')
             return
         print('\n---------------------------------------------------hi-resolution plots not implemented yet.')

@@ -31,8 +31,9 @@ class Report:
         self.rep_vars = mc.opt('rep_vars', [])    # names of the core-model variables to be included in the report
         self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
-        self.f_itr_df = f'{self.rep_dir}df_itr.csv'  # file name of the stored df
-        self.f_df_vars = f'{self.rep_dir}df_vars.csv'  # file name of the stored df
+        self.f_iters = f'{self.rep_dir}iters.csv'  # info on iterations
+        self.f_vars = f'{self.rep_dir}modelVars.csv'  # values of requested variables
+        self.f_pareto = f'{self.rep_dir}parFront.csv'  # values of requested variables
         #
         self.itr_id = -1
         self.prev_itr = 0   # number of previously made iters
@@ -148,21 +149,27 @@ class Report:
 
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
+        if self.mc.par_rep:  # Pareto-front summary
+            self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
+
+        self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
-        self.itr_df.to_csv(self.f_itr_df, index=True)
-        print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_itr_df}" file.')
+        self.itr_df.to_csv(self.f_iters, index=True)
+        print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_iters}" file.')
         self.df_vars = pd.DataFrame(self.sol_vars)
-        self.df_vars.to_csv(self.f_df_vars, index=True)
+        self.df_vars.to_csv(self.f_vars, index=True)
         print(f'Values of core-model variables requested to be reported are stored in the DataFrame '
-              f'"{self.f_df_vars}" file.')
+              f'"{self.f_vars}" file.')
 
         if self.mc.par_rep is None:  # return if Pareto-front is not computed
             return
 
-        self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
-        f_name = f'{self.rep_dir}df_sol.csv'
-        self.mc.par_rep.df_sol.to_csv(f_name, index=True)
-        print(f'{len(self.mc.par_rep.sols)} unique solutions stored in {f_name}. '
+        df = self.mc.par_rep.df_sol
+        for cr in self.mc.cr:   # format criteria values
+            df[cr.name] = df[cr.name].apply(lambda x: f'{x:.4e}')
+        f_name = self.f_pareto
+        df.to_csv(f_name, index=True)
+        print(f'{len(df)} unique solutions stored in {f_name}. '
               f'{len(self.mc.par_rep.clSols)} duplicated solutions skipped.')
 
         # plot solutions
