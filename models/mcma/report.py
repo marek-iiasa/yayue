@@ -166,7 +166,7 @@ class Report:
 
         df = self.mc.par_rep.df_sol
         for cr in self.mc.cr:   # format criteria values
-            df[cr.name] = df[cr.name].apply(lambda x: f'{x:.4e}')
+            df[cr.name] = df[cr.name].apply(lambda x: f'{x:.4e}')   # apply() returns series (a column)
         f_name = self.f_pareto
         df.to_csv(f_name, index=True)
         print(f'{len(df)} unique solutions stored in {f_name}. '
