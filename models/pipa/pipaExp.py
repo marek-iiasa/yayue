@@ -378,10 +378,10 @@ if __name__ == '__main__':
         if not os.path.exists(sdir):
             os.makedirs(sdir, mode=0o755)
             print(f'Directory "{sdir} created.')
-    m_name = 'pipa'     # model name (used for the dll-format file-name
+    m_name = 'ypipa'     # model name (used for the dll-format file-name
     # files
     f_out = f'{out_dir}stdout.txt'    # optionally redirected stdout
-    f_data = f'{data_dir}dat4.dat'    # data for defining the model instance
+    f_data = f'{data_dir}dat5.dat'    # data for defining the model instance
     f_mod = f'{mod_dir}{m_name}.dll'  # concrete model in dill format
 
     assert isfile(f_data) and access(f_data, R_OK), f'Data file {f_data} not readable.'
