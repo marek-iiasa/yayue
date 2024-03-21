@@ -7,19 +7,20 @@
 
 """ Prototype of the Pipa model. """
 import sys		# needed for stdout and sys.exit()
-# import os
+import os
 # import pandas as pd
 from os import R_OK, access
 from os.path import isfile
+import pyomo.environ as pe
 import dill
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from sms import *       # returns SMS; NOTE: pyomo has to be imported in sms (otherwise is unknown there)
-from inst import *      # return model instance
-from report import *    # report and store results
+from sms import mk_sms       # returns SMS;
+from inst import inst      # return model instance
+from report import Report    # report and store results
 
 
 def chk_sol(res):  # check status of the solution
@@ -52,7 +53,7 @@ if __name__ == '__main__':
         if not os.path.exists(sdir):
             os.makedirs(sdir, mode=0o755)
             print(f'Directory "{sdir} created.')
-    m_name = 'pipa'     # model name (used for the dll-format file-name
+    m_name = 'zpipa'     # model name (used for the dll-format file-name
     # files
     f_out = f'{out_dir}stdout.txt'    # optionally redirected stdout
     f_data = f'{data_dir}dat4.dat'    # data for defining the model instance
@@ -98,8 +99,11 @@ if __name__ == '__main__':
     # model.pprint()
     # print('end of model printout          -----------------------------------------------------------------\n')
 
-    # ad-hoc dll atore
+    # ad-hoc dll store
+    # dill.settings['recurse'] = True
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
+        # dill.save(model, f)
+        # dill.dump(abst, f)
         dill.dump(model, f)
     print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
 
