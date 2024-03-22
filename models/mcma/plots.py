@@ -15,10 +15,11 @@ sns.set()   # settings for seaborn plotting style
 # todo: Plots should preferably be prepared (as self.xxxx figs), then saved in one function, and shown in another func.
 # noinspection SpellCheckingInspection
 class Plots:
-    def __init__(self, mc):   # driver for plots
+    def __init__(self, mc, df_vars):   # driver for plots
         self.cfg = mc.cfg
         self.mc = mc
         self.df = mc.par_rep.df_sol     # df with distinct solutions
+        self.df_vars = df_vars     # df with values of core-model variable (might be None)
         self.cr_defs = mc.cr    # criteria specs
         self.dir_name = self.cfg.get('resDir')  # result-dir: all plots shall be stored there
         self.show_plot = self.cfg.get('showPlot')
@@ -115,6 +116,14 @@ class Plots:
     # def set_tooltip(self, sel, i):
     #     sel.annotation.set_text(f'Label: {self.df[self.cols[0]][sel.target.index]} (Subplot {i})'
     #                             f'\nCoordinates: ({sel.target[0]:.2f}, {sel.target[1]:.2f})')
+
+    # plot the value of requested core-model variable along costs
+    def vars(self, var_name):
+        if self.df_vars is None:
+            print('No core-model variables requested to plot.')
+            return
+        print(f'Plotting requested core model variable "{var_name}" not implemented yet.')
+        # df_vars constains values labeled as varName_index, where index is e.g., the technology ID (BTL, OTL, PTL)
 
     def hiPlots(self):  # generate high-resolution plots
         # todo: maybe high-res plots should be done in each plot-function?

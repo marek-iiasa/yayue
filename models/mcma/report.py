@@ -173,8 +173,9 @@ class Report:
               f'{len(self.mc.par_rep.clSols)} duplicated solutions skipped.')
 
         # plot solutions
-        plots = Plots(self.mc)    # plots
+        plots = Plots(self.mc, self.df_vars)    # plots
         plots.plot2D()    # 2D plots
+        plots.vars('actS')    # plot the requested model variables
         # plots.plot3D()    # 3D plot
         plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         plots.kde_stages()  # KDE + histograms vs stages
