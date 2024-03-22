@@ -1,4 +1,4 @@
-# place holder for the test data to be prepared by Bingqing and Jinyang
+# Data prepared by Jinyang for the IEEE paper, March 2024.
 
 # the default values (set in SMS) are: periods=6, life=0, discr=0.05
 param periods := 5 ;
