@@ -34,7 +34,9 @@ class Plots:
         # self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item...
         self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue'])  # mono-color ALL crit-plots
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
-        self.plots = {}  # placeholder for all plots, the keys might be names of the corresponding functions
+        self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
+        self.slider = None # If we want to save figures elsewhere but slider to work, we should ensure Python garbage
+                           # collector won't delete its object so saving it in self seems to be good solution for it?
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -60,6 +62,17 @@ class Plots:
         # criterion considered as "main" for the parallel coordinates plot
         self.main_crit_idx = 0
         self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
+
+    def show_figures(self):
+        plt.show()
+
+    def save_figures(self):
+        dpi = 300 if self.hire_plot else 100
+        for name, fig in self.figures.items():
+            filename = f'{self.dir_name}{name}.png'
+            fig.savefig(filename, dpi=dpi, bbox_inches='tight')
+            print(f'Plot "{name}" is saved to "{filename}".')
+
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
@@ -107,11 +120,8 @@ class Plots:
                 '''
                 i_plot += 1
 
-        f_name = f'{self.dir_name}p2D.png'
         plt.tight_layout()
-        fig1.savefig(f_name)
-        # plt.show()
-        print(f'2D plot of Pareto solutions stored in file: {f_name}')
+        self.figures['plot2D'] = fig1
 
     # def set_tooltip(self, sel, i):
     #     sel.annotation.set_text(f'Label: {self.df[self.cols[0]][sel.target.index]} (Subplot {i})'
@@ -124,14 +134,6 @@ class Plots:
             return
         print(f'Plotting requested core model variable "{var_name}" not implemented yet.')
         # df_vars constains values labeled as varName_index, where index is e.g., the technology ID (BTL, OTL, PTL)
-
-    def hiPlots(self):  # generate high-resolution plots
-        # todo: maybe high-res plots should be done in each plot-function?
-        #   then to either generate either high-res plot only or pair of plots
-        if self.hire_plot is False:
-            print('\n----------------------------------------------------hiPlot not requested.')
-            return
-        print('\n---------------------------------------------------hi-resolution plots not implemented yet.')
 
     def parallel(self):
         fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
@@ -163,13 +165,9 @@ class Plots:
         plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
         cax.yaxis.set_ticks_position('left')
 
-        # Save fig before adding the slider
-        f_name = f'{self.dir_name}parallel.png'
-        fig3.savefig(f_name)
-
         # Add RangeSlider
         slider_cax = divider.append_axes('left', size='5%', pad=0.5)
-        slider = RangeSlider(slider_cax, label="Range of values", valmin=0, valmax=100,
+        self.slider = RangeSlider(slider_cax, label="Range of values", valmin=0, valmax=100,
                              orientation='vertical', valinit=(0, 100), valstep=0.1,
                              valfmt='%0.1f', handle_style={'size': 15})
 
@@ -181,13 +179,9 @@ class Plots:
                     aline.set_alpha(1)
                 else:
                     aline.set_alpha(0.1)
+        self.slider.on_changed(update_slider)
 
-        slider.on_changed(update_slider)
-
-        if self.show_plot:
-            plt.show()
-        else:
-            print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+        self.figures['parallel'] = fig3
 
     def sol_stages(self):   # two subplots: 1. iters + solutions, 2. stage-max cube-size + actual max-size
         summary_df = self.mc.par_rep.progr.df_stages
@@ -228,6 +222,7 @@ class Plots:
         ax.legend(loc='upper right')
 
         plt.tight_layout()
+        self.figures['sol_stages'] = fig
 
     def kde_stages(self):   # for each stage: histogram + KDE
         mx_hight = 9.0
@@ -273,6 +268,7 @@ class Plots:
             ax.set_title(f'Stage {step}')
 
         plt.tight_layout()
+        self.figures['kde_stages'] = fig
 
     def plot3D(self):
         if self.n_crit < 6:     # ad-hoc suppress 3D
@@ -302,12 +298,5 @@ class Plots:
                     f'{seq}', fontdict=None)
             if i > 20:
                 break
-        # Show the plot
-        f_name = f'{self.dir_name}p3D.png'
-        # f_name = f'{self.cfg.get("resDir")}p3D.png'
-        fig2.savefig(f_name)
-        print(f'3D plot of Pareto solutions stored in file: {f_name}')
-        # if self.show_plot:
-        #     plt.show()
-        # else:
-        #     print(f'Plots not displayed (this would pause the execution until plot-windows are closed).')
+
+        self.figures['plot3D'] = fig2

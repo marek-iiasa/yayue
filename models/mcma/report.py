@@ -180,7 +180,10 @@ class Report:
         plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         plots.kde_stages()  # KDE + histograms vs stages
         plots.parallel()  # Parallel coordinates plot
-        plots.hiPlots()  # high resolution plots
+
+        plots.save_figures()
+        if plots.show_plot:
+            plots.show_figures()
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
