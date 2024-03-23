@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.special import comb    # for computing number of combinations
+from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RangeSlider
@@ -8,35 +8,36 @@ from matplotlib.colors import ListedColormap, Normalize
 import matplotlib.cm as cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
+
 # import mplcursors     # for interactive plots, currently not used
-sns.set()   # settings for seaborn plotting style
+sns.set()  # settings for seaborn plotting style
 
 
 # todo: Plots should preferably be prepared (as self.xxxx figs), then saved in one function, and shown in another func.
 # noinspection SpellCheckingInspection
 class Plots:
-    def __init__(self, mc, df_vars):   # driver for plots
+    def __init__(self, mc, df_vars):  # driver for plots
         self.cfg = mc.cfg
         self.mc = mc
-        self.df = mc.par_rep.df_sol     # df with distinct solutions
-        self.df_vars = df_vars     # df with values of core-model variable (might be None)
-        self.cr_defs = mc.cr    # criteria specs
+        self.df = mc.par_rep.df_sol  # df with distinct solutions
+        self.df_vars = df_vars  # df with values of core-model variable (might be None)
+        self.cr_defs = mc.cr  # criteria specs
         self.dir_name = self.cfg.get('resDir')  # result-dir: all plots shall be stored there
         self.show_plot = self.cfg.get('showPlot')
-        self.hire_plot = self.cfg.get('hiPlot') is True     # True, if hi-res plots are requested
+        self.hire_plot = self.cfg.get('hiPlot') is True  # True, if hi-res plots are requested
         self.n_crit = len(self.cr_defs)
         self.cols = self.df.columns  # columns of the df defined in the report() using the criteria names
-        self.cr_name = []   # criteria names
-        self.cr_col = []   # col-names containing criteria achievements values
+        self.cr_name = []  # criteria names
+        self.cr_col = []  # col-names containing criteria achievements values
         self.n_sol = len(self.df.index)  # number of solutions defined in the df
         self.seq = self.df[self.cols[0]]
         self.cmap = ListedColormap(['brown', 'red', 'orange', 'blue', 'green'])  # takes every item...
         # self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item...
         self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue'])  # mono-color ALL crit-plots
-        self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')    # seq_id of category
+        self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')  # seq_id of category
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
-        self.slider = None # If we want to save figures elsewhere but slider to work, we should ensure Python garbage
-                           # collector won't delete its object so saving it in self seems to be good solution for it?
+        self.slider = None  # If we want to save figures elsewhere but slider to work, we should ensure Python garbage
+        # collector won't delete its object so saving it in self seems to be good solution for it?
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -72,7 +73,6 @@ class Plots:
             filename = f'{self.dir_name}{name}.png'
             fig.savefig(filename, dpi=dpi, bbox_inches='tight')
             print(f'Plot "{name}" is saved to "{filename}".')
-
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
@@ -134,6 +134,28 @@ class Plots:
             return
         print(f'Plotting requested core model variable "{var_name}" not implemented yet.')
         # df_vars constains values labeled as varName_index, where index is e.g., the technology ID (BTL, OTL, PTL)
+        fig, ax = plt.subplots(figsize=(10, 7))
+
+        # TODO Marek: Please check what variables should be used as X and Y and change it to fit general case
+        x_var = 'cost'  # Variable used for X axis
+        y_vars = [c for c in self.df_vars.columns if 'act' in c]  # Variables which data will be stacked on Y axis
+
+        df_vars = self.df_vars.astype('float').sort_values(by=x_var)
+
+        x_var_data = df_vars[x_var].to_numpy()  # Should be (N,)
+        y_vars_data = df_vars[y_vars].to_numpy().T  # Should be (M, N)
+
+        ax.stackplot(x_var_data, y_vars_data, labels=y_vars)
+
+        ax.set_xticks(np.linspace(x_var_data[0], x_var_data[-1], 7))
+        ax.set_yticks(np.linspace(np.min(y_vars_data), np.max(y_vars_data), 7))
+
+        ax.set_xlabel(x_var)
+        ax.set_ylabel('Criteria values')
+        ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper left', ncols=len(y_vars), mode='expand')
+
+        plt.tight_layout()
+        self.figures['vars'] = fig
 
     def parallel(self):
         fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
@@ -168,8 +190,8 @@ class Plots:
         # Add RangeSlider
         slider_cax = divider.append_axes('left', size='5%', pad=0.5)
         self.slider = RangeSlider(slider_cax, label="Range of values", valmin=0, valmax=100,
-                             orientation='vertical', valinit=(0, 100), valstep=0.1,
-                             valfmt='%0.1f', handle_style={'size': 15})
+                                  orientation='vertical', valinit=(0, 100), valstep=0.1,
+                                  valfmt='%0.1f', handle_style={'size': 15})
 
         def update_slider(val):
             min_val, max_val = val
@@ -179,11 +201,12 @@ class Plots:
                     aline.set_alpha(1)
                 else:
                     aline.set_alpha(0.1)
+
         self.slider.on_changed(update_slider)
 
         self.figures['parallel'] = fig3
 
-    def sol_stages(self):   # two subplots: 1. iters + solutions, 2. stage-max cube-size + actual max-size
+    def sol_stages(self):  # two subplots: 1. iters + solutions, 2. stage-max cube-size + actual max-size
         summary_df = self.mc.par_rep.progr.df_stages
         fig = plt.figure(figsize=(10, 5))
         fig.canvas.manager.set_window_title(f'Summary data of {len(self.mc.par_rep.progr.neigh)} computation stages')
@@ -224,12 +247,12 @@ class Plots:
         plt.tight_layout()
         self.figures['sol_stages'] = fig
 
-    def kde_stages(self):   # for each stage: histogram + KDE
+    def kde_stages(self):  # for each stage: histogram + KDE
         mx_hight = 9.0
         ncols = 2
         n_plots = len(self.mc.par_rep.progr.neigh)
         if len(self.mc.par_rep.progr.neigh[self.mc.par_rep.progr.cur_step - 1][-1]) == 0:
-            n_plots -= 1    # plot for last stage not generated
+            n_plots -= 1  # plot for last stage not generated
         nrows = n_plots // 2 + n_plots % 2
         # print(f'{nrows = } {n_plots = } rest {n_plots % 2}--------------------------')
         fig = plt.figure(figsize=(5 * ncols, min(mx_hight, 2.8 * nrows)))
@@ -271,7 +294,7 @@ class Plots:
         self.figures['kde_stages'] = fig
 
     def plot3D(self):
-        if self.n_crit < 6:     # ad-hoc suppress 3D
+        if self.n_crit < 6:  # ad-hoc suppress 3D
             return
         if self.n_crit > 3:
             # todo: implement 3D subplots for more than 3 criteria
