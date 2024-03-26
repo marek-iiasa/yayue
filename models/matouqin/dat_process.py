@@ -8,14 +8,14 @@ import os
 
 
 class Params:
-    def __init__(self, data_dir, data_excel, name_ampl, n_data):
+    def __init__(self, data_dir, data_excel, name_ampl, n_periods):
         self.dat_dir = data_dir
         self.f_dat = data_excel
         self.name_ampl = name_ampl
-        self.n_data = n_data
+        self.T = n_periods
 
         # read initial data from excel file
-        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=self.n_data)
+        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=self.T)
         self.gen_df = pd.read_excel(self.f_dat, sheet_name='generation')
         self.time_df = pd.read_excel(self.f_dat, sheet_name='time')
         self.price_df = pd.read_excel(self.f_dat, sheet_name='price')
