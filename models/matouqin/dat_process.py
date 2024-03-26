@@ -126,12 +126,15 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.elec_df['n']+1) * self.ydis)
         #             / ((1 + self.ydis) ** self.elec_df['n'] - 1))
+
         # sinv = invshare * self.elec_df['sInvcost']
-        sinv = invshare * self.elec_df['sInvcost'] / 8760 * self.n_data
+        sinv = invshare * self.elec_df['sInvcost'] / 8760 * self.T
+        omc = self.elec_df['sOmc'] / 8760 * self.T
 
         self.elec_df['eh2'] = eh2
         self.elec_df['invshare'] = invshare
         self.elec_df['sInv'] = sinv
+        self.elec_df['OMC'] = omc
 
         print(f'New parameters of electrolyzers are added')
         print(f'{self.elec_df}')
@@ -148,12 +151,14 @@ class Params:
         #             / ((1 + self.ydis) ** self.hytank_df['n'] - 1))
 
         # sinv = invshare * self.hytank_df['sInvcost']
-        sinv = invshare * self.hytank_df['sInvcost'] / 8760 * self.n_data
+        sinv = invshare * self.hytank_df['sInvcost'] / 8760 * self.T
+        omc = self.hytank_df['sOmc'] / 8760 * self.T
 
         self.hytank_df['eph2'] = eph2
         self.hytank_df['h2Res'] = h2res
         self.hytank_df['invshare'] = invshare
         self.hytank_df['sInv'] = sinv
+        self.hytank_df['OMC'] = omc
 
         print(f'New parameters of hydrogen tanks are added')
         print(f'{self.hytank_df}')
@@ -169,12 +174,14 @@ class Params:
         # invshare = (((1 + self.ydis) ** (self.fcell_df['n'] + 1) * self.ydis)
         #             / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
         # sinv = invshare * self.fcell_df['sInvcost']
-        sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.n_data
+        sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.T
+        omc = self.fcell_df['sOmc'] / 8760 * self.T
 
         self.fcell_df['h2ratio'] = h2ratio
         self.fcell_df['h2e'] = h2e
         self.fcell_df['invshare'] = invshare
         self.fcell_df['sInv'] = sinv
+        self.fcell_df['OMC'] = omc
 
         print(f'New parameters of fuel-cells are added')
         print(f'{self.fcell_df}')
@@ -225,7 +232,8 @@ class Params:
             eh2_str += f'{row["name"]} {round(row["eh2"], 4)} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
 
         for index, row in self.hytank_df.iterrows():
             sh_str += f'{row["name"]} \n'
@@ -240,7 +248,8 @@ class Params:
             h2res_str += f'{row["name"]} {round(row["h2Res"], 4)} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
 
         for index, row in self.fcell_df.iterrows():
             sc_str += f'{row["name"]} \n'
@@ -250,7 +259,8 @@ class Params:
             h2e_str += f'{row["name"]} {round(row["h2e"], 2)} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
 
         nhrs_str += ';\n'
         se_str += ';\n'
