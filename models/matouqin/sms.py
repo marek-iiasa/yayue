@@ -4,6 +4,8 @@ All functions used in the m model are defined before mk_sms() to avoid warnings 
 """
 
 import pyomo.environ as pe      # more robust than using import *
+# todo set in/out constraints to tank
+# todo check formulations with overleaf
 
 
 # noinspection PyTypeChecker
@@ -33,6 +35,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     # decision variables
     m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
+    # m.sNum = pe.Var(m.S, within=pe.NonNegativeReals)
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
     # control variables
@@ -46,6 +49,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.hIn = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)       # hydrogen inflow to each hydrogen tank, [kg]
     m.hOut = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # hydrogen outflow from each hydrogen tank, [kg]
     m.hVol = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # amount of hydrogen stored in s-th device
+    m.hState = pe.Var(m.Sh, m.T, within=pe.Binary)              # state of hydrogen tank, charging(1), discharging(0)
     m.hInc = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # hydrogen inflow to each fuel cell, [kg]
     m.cOut = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # electricity outflow from each fuel cell, [MWh]
 
@@ -60,7 +64,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     # Auxiliary variables
     m.sCap = pe.Var(m.S, within=pe.NonNegativeReals)        # total capacity of ，总容量 s-th type of storage devices
-    m.hMin = pe.Var(m.Sh, within=pe.NonNegativeReals)       # the lowest hydrogen needed in s-th type of tank
+    # m.hMin = pe.Var(m.Sh, within=pe.NonNegativeReals)       # the lowest hydrogen needed in s-th type of tank
     m.mxIn = pe.Var(m.S, within=pe.NonNegativeReals)        # the maximum hydrogen inflow of s-th tank (per hour)
     m.mxOut = pe.Var(m.S, within=pe.NonNegativeReals)       # the maximum hydrogen outflow of s-th tank (per hour)
     m.h2T = pe.Var(m.T, within=pe.NonNegativeReals)     # total amount of hydrogen produced by all electrolyzer
@@ -71,7 +75,8 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.mxCap = pe.Param(m.S, domain=pe.NonNegativeReals)     # unit storage capacity of each storage device
     m.hMxIn = pe.Param(m.Sh, domain=pe.NonNegativeReals)       # maximum hydrogen incoming to the tank [kg]
     m.hMxOut = pe.Param(m.Sh, domain=pe.NonNegativeReals)       # maximum hydrogen outflow from the tank [kg]
-    m.hmi = pe.Param(m.Sh, domain=pe.NonNegativeReals)      # minimum hydrogen needed in hydrogen tank [kg]
+    # m.hmi = pe.Param(m.Sh, domain=pe.NonNegativeReals)      # minimum hydrogen needed in hydrogen tank [kg]
+    m.hini = pe.Param(m.Sh, domain=pe.NonNegativeReals)      # initial available hydrogen in hydrogen tank [kg]
     m.eh2 = pe.Param(m.Se, domain=pe.NonNegativeReals)      # converting electricity to hydrogen, [kg/MWh]
     m.eph2 = pe.Param(m.Sh, domain=pe.NonNegativeReals)     # making high pressure, [MWh/kg]
     m.h2Res = pe.Param(m.Sh, domain=pe.NonNegativeReals)        # hydrogen retention rate, unit in percentage
@@ -112,13 +117,15 @@ def mk_sms():      # p: model parameters prepared in the Params class
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in each tank type
     def hVol_bal(mx, s, t):
         if t == 0:
-            return mx.hVol[s, t] == mx.hMin[s] + mx.hIn[s, t] - mx.hOut[s, t]
+            # return mx.hVol[s, t] == mx.hMin[s] + mx.hIn[s, t] - mx.hOut[s, t]
+            return mx.hVol[s, t] == mx.hini[s] + mx.hIn[s, t] - mx.hOut[s, t]
         else:
             return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t - 1)] + mx.hIn[s, t] - mx.hOut[s, t]
 
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in tanks of each type
     def hVol_lower(mx, s, t):
-        return mx.hVol[s, t] >= mx.hMin[s]
+        # return mx.hVol[s, t] >= mx.hMin[s]
+        return mx.hVol[s, t] >= 0
 
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in tanks of each type
     def hVol_upper(mx, s, t):
@@ -130,15 +137,26 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.Sh, m.T)        # Maximum flow from each type of tank to fuel cells
     def hIn_upper2(mx, s, t):
-        return mx.hIn[s, t] <= mx.hMxIn[s]
+        return mx.hIn[s, t] <= mx.mxIn[s]
 
     @m.Constraint(m.Sh, m.T)        # Maximum flow from each type of tank
     def hOut_upper1(mx, s, t):
-        return mx.hOut[s, t] <= mx.hVol[s, t] - mx.hMin[s]
+        # return mx.hOut[s, t] <= mx.hVol[s, t] - mx.hMin[s]
+        return mx.hOut[s, t] <= mx.hVol[s, t]
 
     @m.Constraint(m.Sh, m.T)        # Maximum flow from each type of tank to fuel cells
     def hOut_upper2(mx, s, t):
-        return mx.hOut[s, t] <= mx.hMxOut[s]
+        return mx.hOut[s, t] <= mx.mxOut[s]
+
+    @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
+    def hIn_Out1(mx, s, t):
+        hm = 1000
+        return mx.hIn[s, t] <= mx.hState[s, t] * hm
+
+    @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
+    def hOut_Out2(mx, s, t):
+        hm = 1000
+        return mx.hOut[s, t] <= (1 - mx.hState[s, t]) * hm
 
     @m.Constraint(m.T)      # Hydrogen flow from tanks to all fuel cells
     def h2C_blc1(mx, t):
@@ -198,9 +216,9 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def sCapC(mx, s):
         return mx.sCap[s] == mx.mxCap[s] * mx.sNum[s]
 
-    @m.Constraint(m.Sh)
-    def hMinC(mx, s):
-        return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
+    # @m.Constraint(m.Sh)
+    # def hMinC(mx, s):
+    #     return mx.hMin[s] == mx.hmi[s] * mx.sNum[s]
 
     @m.Constraint(m.Sh)  # Maximum hydrogen inflow of s-th tank (per hour)
     def mxInC(mx, s):
