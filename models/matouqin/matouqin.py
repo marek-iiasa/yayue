@@ -31,7 +31,7 @@ if __name__ == '__main__':
         fn_out = None
         f_out = None
 
-    driver()    # run generation of parameters and their them for generating pe.ConcreteModel
+    driver()    # run generation of parameters and use them for generating pe.ConcreteModel
 
     # time difference
     tend = dt.now()
