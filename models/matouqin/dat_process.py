@@ -5,17 +5,17 @@ See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 import pandas as pd
 import os
-# todo check data scale
 
 
 class Params:
-    def __init__(self, data_dir, data_excel, name_ampl):
+    def __init__(self, data_dir, data_excel, name_ampl, n_data):
         self.dat_dir = data_dir
         self.f_dat = data_excel
         self.name_ampl = name_ampl
+        self.n_data = n_data
 
         # read initial data from excel file
-        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=100)
+        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=self.n_data)
         self.gen_df = pd.read_excel(self.f_dat, sheet_name='generation')
         self.time_df = pd.read_excel(self.f_dat, sheet_name='time')
         self.price_df = pd.read_excel(self.f_dat, sheet_name='price')
@@ -126,7 +126,8 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.elec_df['n']+1) * self.ydis)
         #             / ((1 + self.ydis) ** self.elec_df['n'] - 1))
-        sinv = invshare * self.elec_df['sInvcost']
+        # sinv = invshare * self.elec_df['sInvcost']
+        sinv = invshare * self.elec_df['sInvcost'] / 8760 * self.n_data
 
         self.elec_df['eh2'] = eh2
         self.elec_df['invshare'] = invshare
@@ -145,7 +146,9 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.hytank_df['n'] + 1) * self.ydis)
         #             / ((1 + self.ydis) ** self.hytank_df['n'] - 1))
-        sinv = invshare * self.hytank_df['sInvcost']
+
+        # sinv = invshare * self.hytank_df['sInvcost']
+        sinv = invshare * self.hytank_df['sInvcost'] / 8760 * self.n_data
 
         self.hytank_df['eph2'] = eph2
         self.hytank_df['h2Res'] = h2res
@@ -165,7 +168,8 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.fcell_df['n'] + 1) * self.ydis)
         #             / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
-        sinv = invshare * self.fcell_df['sInvcost']
+        # sinv = invshare * self.fcell_df['sInvcost']
+        sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.n_data
 
         self.fcell_df['h2ratio'] = h2ratio
         self.fcell_df['h2e'] = h2e
@@ -306,9 +310,11 @@ class Params:
         print(f'All parameters are stored in: {excel_file}')
 
 
-path = '.'
-dat_dir = f'{path}/Data/'
-f_data = f'{dat_dir}dat1.xlsx'
-par = Params(dat_dir, f_data, 'dat1')   #
-par.write_to_ampl()
-par.write_to_excel()
+# path = '.'
+# dat_dir = f'{path}/Data/'
+# f_data = f'{dat_dir}dat1.xlsx'
+# par = Params(dat_dir, f_data, 'dat1', 2400)   #
+# f_data = f'{dat_dir}dat2.xlsx'
+# par = Params(dat_dir, f_data, 'dat2')   #
+# par.write_to_ampl()
+# par.write_to_excel()

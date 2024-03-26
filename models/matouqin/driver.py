@@ -11,8 +11,9 @@ from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from inst import *
 from sms import *  # handles sub model/block of AF and links to the core/substantive model
-# rom dat_process import Params  # data processing
+from dat_process import Params  # data processing
 from report import *    # report all variables and needed results for plotting
+from plot import *      # plot needed variables
 
 
 def chk_sol(res):  # check status of the solution
@@ -33,13 +34,20 @@ def driver():
     path = '.'
     data_dir = f'{path}/Data/'      # repository of data
     res_dir = f'{path}/Results/'    # repository of results
+    fig_dir = f'{path}/Figures/'  # repository of figures
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
-    # par = Params()  # prepare all model parameters
-    f_data = f'{data_dir}dat1.dat'    # test by ZZ
+    f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
+    af_name = f'dat1'
+
+    par = Params(data_dir, f_data, af_name, 240)  # prepare all model parameters, n_data select numbers of hours
+    par.write_to_ampl()     # write model parameters to ampl format file
+    par.write_to_excel()    # write model parameters to excel file
+
+    af_data = f'{data_dir}{af_name}.dat'    # test by ZZ
     # f_data = f'{data_dir}tst1.dat'    # test by MM
-    model = inst(abst, f_data)
+    model = inst(abst, af_data)
     print(f'\nAnalysing instance of model {model.name}.')
 
     # model.pprint()
@@ -86,3 +94,10 @@ def driver():
     print(f'Surplus cost  = {pe.value(model.overCost)} million RMB')
     print(f'Shortage cost  = {pe.value(model.buyCost)} million RMB')
     print(f'Balance cost  = {pe.value(model.balCost)} million RMB')
+
+    print('\nPlotting begins ----------------------------------------------------------------')
+    fig = Plot(res_dir, fig_dir)
+    fig.plot_flow()
+    fig.plot_finance()
+    fig.plot_capacity()
+    fig.plot_dv_flow()

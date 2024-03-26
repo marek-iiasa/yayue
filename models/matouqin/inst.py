@@ -13,6 +13,6 @@ def inst(m, f_data):    # m: abstract/symbolic model, f_data: parameters in AMPL
     mod = m.create_instance(data)
 
     print('\n instance.pprint() follows      -----------------------------------------------------------------')
-    mod.pprint()
+    # mod.pprint()
     print('end of instance printout          -----------------------------------------------------------------\n')
     return mod
