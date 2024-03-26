@@ -148,15 +148,15 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def hOut_upper2(mx, s, t):
         return mx.hOut[s, t] <= mx.mxOut[s]
 
-    @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
-    def hIn_Out1(mx, s, t):
-        hm = 1000
-        return mx.hIn[s, t] <= mx.hState[s, t] * hm
-
-    @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
-    def hOut_Out2(mx, s, t):
-        hm = 1000
-        return mx.hOut[s, t] <= (1 - mx.hState[s, t]) * hm
+    # @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
+    # def hIn_Out1(mx, s, t):
+    #     hm = 1000
+    #     return mx.hIn[s, t] <= mx.hState[s, t] * hm
+    #
+    # @m.Constraint(m.Sh, m.T)        # Tank inflow and outflow do not exist in the same period
+    # def hOut_Out2(mx, s, t):
+    #     hm = 1000
+    #     return mx.hOut[s, t] <= (1 - mx.hState[s, t]) * hm
 
     @m.Constraint(m.T)      # Hydrogen flow from tanks to all fuel cells
     def h2C_blc1(mx, t):
