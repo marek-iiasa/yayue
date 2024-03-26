@@ -441,7 +441,7 @@ class Plot:
         print('Dv flows plotting finished \n'
               '--------------------------------')
 
-        plt.savefig(f'{self.fig_dir}Dvflows_bar.png')
+        plt.savefig(f'{self.fig_dir}Dvflows.png')
         plt.show()
 
 
