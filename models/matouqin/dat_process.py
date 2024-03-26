@@ -5,6 +5,7 @@ See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 import pandas as pd
 import os
+# todo check data scale
 
 
 class Params:
@@ -14,7 +15,7 @@ class Params:
         self.name_ampl = name_ampl
 
         # read initial data from excel file
-        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=350)
+        self.cf_df = pd.read_excel(self.f_dat, sheet_name='cf', nrows=100)
         self.gen_df = pd.read_excel(self.f_dat, sheet_name='generation')
         self.time_df = pd.read_excel(self.f_dat, sheet_name='time')
         self.price_df = pd.read_excel(self.f_dat, sheet_name='price')
@@ -39,7 +40,7 @@ class Params:
         # self.eCal = 3.6e3  # calorific value of electricity, [kJ/kWh]
 
         # define default parameters
-        self.inflow = None
+        self.inflow = pd.DataFrame
         self.Hrs = self.nHrs = self.ydis = None
         self.penalty = self.ePrice = self.eOver = self.eBprice = None
         self.eh2 = self.eph2 = self.h2Ratio = self.h2Res = self.h2e = None
@@ -70,7 +71,8 @@ class Params:
 
             # check generation devices name is consistent
             if name in self.cf_df.columns:
-                dv_inflow[f'inflow_{name}'] = self.cEle * self.cf_df[name] * capacity * number
+                dv_inflow[f'inflow_{name}'] = self.cf_df[name] * capacity * number
+                # dv_inflow[f'inflow_{name}'] = self.cEle * self.cf_df[name] * capacity * number
             else:
                 print(f"Warning: '{name}' not found in {self.cf_df}")
 
@@ -95,6 +97,8 @@ class Params:
         self.penalty = self.price_df.loc[0, 'penalty']  # penalty factor, define the price for buying electricity
         self.ePrice = ep / 1e6 * 1e3  # unit contract price, unit in [million RMB/MWh]
         self.eOver = oc / 1e6 * 1e3  # unit price of managed electricity surplus, [million RMB/MWh]
+        # self.ePrice = ep  # unit contract price, unit in [thousands RMB/MWh]
+        # self.eOver = oc  # unit price of managed electricity surplus, [thousands RMB/MWh]
 
         self.price_df['ePrice'] = self.ePrice
         self.price_df['eOver'] = self.eOver
@@ -188,7 +192,8 @@ class Params:
         mxcap_str = '\nparam mxCap :=\n'
         hmxin_str = '\nparam hMxIn :=\n'
         hmxout_str = '\nparam hMxOut :=\n'
-        hmi_str = '\nparam hmi :=\n'
+        hini_str = '\nparam hini :=\n'
+        # hmi_str = '\nparam hmi :=\n'
 
         eh2_str = '\nparam eh2 :=\n'
         eph2_str = '\nparam eph2 :=\n'
@@ -206,14 +211,14 @@ class Params:
         eover_str += f'{self.eOver} \n'
 
         for t, value in self.inflow.items():
-            inflow_str += f'{t} {value}\n'
+            inflow_str += f'{t} {value:.2f}\n'
 
         for index, row in self.elec_df.iterrows():
             se_str += f'{row["name"]} \n'
 
             mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
 
-            eh2_str += f'{row["name"]} {round(row["eh2"], 2)} \n'
+            eh2_str += f'{row["name"]} {round(row["eh2"], 4)} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
             somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
@@ -224,9 +229,10 @@ class Params:
             mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
             hmxin_str += f'{row["name"]} {row["hMxIn"]} \n'
             hmxout_str += f'{row["name"]} {row["hMxOut"]} \n'
-            hmi_str += f'{row["name"]} {row["hmi"]} \n'
+            hini_str += f'{row["name"]} {row["hini"]} \n'
+            # hmi_str += f'{row["name"]} {row["hmi"]} \n'
 
-            eph2_str += f'{row["name"]} {round(row["eph2"], 2)} \n'
+            eph2_str += f'{row["name"]} {round(row["eph2"], 4)} \n'
             h2res_str += f'{row["name"]} {round(row["h2Res"], 4)} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
@@ -253,7 +259,8 @@ class Params:
         mxcap_str += ';\n'
         hmxin_str += ';\n'
         hmxout_str += ';\n'
-        hmi_str += ';\n'
+        hini_str += ';\n'
+        # hmi_str += ';\n'
         eh2_str += ';\n'
         eph2_str += ';\n'
         h2res_str += ';\n'
@@ -261,8 +268,13 @@ class Params:
         sinv_str += ';\n'
         somc_str += ';\n'
 
+        # ampl_dat = (nhrs_str + se_str + sh_str + sc_str + eprice_str + ebprice_str + eover_str + inflow_str
+        #             + mxcap_str + hmxin_str + hmxout_str + hmi_str
+        #             + eh2_str + eph2_str + h2res_str + h2e_str
+        #             + sinv_str + somc_str)
+
         ampl_dat = (nhrs_str + se_str + sh_str + sc_str + eprice_str + ebprice_str + eover_str + inflow_str
-                    + mxcap_str + hmxin_str + hmxout_str + hmi_str
+                    + mxcap_str + hmxin_str + hmxout_str + hini_str
                     + eh2_str + eph2_str + h2res_str + h2e_str
                     + sinv_str + somc_str)
 
@@ -284,6 +296,7 @@ class Params:
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
             self.cf_df.to_excel(writer, sheet_name='cf', index=False)
             self.gen_df.to_excel(writer, sheet_name='generation', index=False)
+            self.inflow.to_excel(writer, sheet_name='inflow', index=True)
             self.time_df.to_excel(writer, sheet_name='time', index=False)
             self.price_df.to_excel(writer, sheet_name='price', index=False)
             self.elec_df.to_excel(writer, sheet_name='electrolyzer', index=False)
