@@ -4,6 +4,7 @@ from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from matplotlib.ticker import LinearLocator
 import seaborn as sns
 
 from .interactive_parallel import InteractiveParallel
@@ -76,14 +77,20 @@ class Plots:
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
-        fig_heig = 4. * n_percol
+        fig_heig = 4.5 * n_percol
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
         fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
         fig1.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
-        fig1.subplots_adjust(wspace=0.3, hspace=0.3)
 
+        ticks = np.linspace(0, 100, 6)
+        cr_ticklabels = []
+        for i in range(self.n_crit):
+            ticklabels = np.linspace(self.cr_defs[i].nadir, self.cr_defs[i].utopia, 6)
+            cr_ticklabels.append([f'{label:0.2e}' for label in ticklabels])
+
+        ticker = LinearLocator(6)
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         m_size = 20  # marker size  (was 30)
@@ -96,9 +103,24 @@ class Plots:
                 ax[i_plot].set_xlabel(name1)
                 ax[i_plot].set_ylabel(name2)
                 ax[i_plot].set_title(name1 + ' vs ' + name2)
+
+                ax[i_plot].set_xlim(-5, 105)
+                ax[i_plot].set_ylim(-5, 105)
+                ax[i_plot].set_axisbelow(True)
+
+                ax_y = ax[i_plot].twinx()
+                ax_y.set_ylim(-5, 105)
+                ax_y.set_yticks(ticks, labels=cr_ticklabels[i_second])
+                ax_y.grid(False)
+
+                ax_x = ax[i_plot].twiny()
+                ax_x.set_xlim(-5, 105)
+                ax_x.set_xticks(ticks, labels=cr_ticklabels[i_first], rotation=30, ha='left')
+                ax_x.grid(False)
+
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
                                    cmap=self.cmap1, s=m_size)
-                # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
+
                 '''
                 # labels of points used only for debugging purposes
                 for (i, seq) in enumerate(self.seq):
