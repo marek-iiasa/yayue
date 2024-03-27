@@ -61,6 +61,18 @@ class Plots:
                     i_cat += 1
                     i_memb = 0
 
+        if self.hire_plot:
+            SMALL_SIZE = 14
+            MEDIUM_SIZE = SMALL_SIZE + 2
+
+            plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+            plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
+            plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+            plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the ax title
+            plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+            plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+            plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+
     def show_figures(self):
         plt.show()
 
@@ -90,7 +102,6 @@ class Plots:
             ticklabels = np.linspace(self.cr_defs[i].nadir, self.cr_defs[i].utopia, 6)
             cr_ticklabels.append([f'{label:0.2e}' for label in ticklabels])
 
-        ticker = LinearLocator(6)
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         m_size = 20  # marker size  (was 30)
