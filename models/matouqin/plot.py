@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.gridspec as gridspec
 import plotly.graph_objects as pgo
 import plotly.io as pio
 from plotly.subplots import make_subplots
@@ -11,15 +12,15 @@ import numpy as np
 def set_plt_format():
     plt.rcParams.update({
         'font.family': 'Times New Roman',
-        'axes.titlesize': '18',  # title size
-        'axes.titlepad': 15,  # space between title and figure
-        'axes.labelsize': '15',  # axis title size
-        'axes.labelpad': 10,  # space between label and figure
-        'xtick.labelsize': '13',  # axis scale size
-        'ytick.labelsize': '13',  # axis scale size
-        'legend.fontsize': '12',  # legend font size
+        'axes.titlesize': '15',  # title size
+        'axes.titlepad': 12,  # space between title and figure
+        'axes.labelsize': '13',  # axis title size
+        'axes.labelpad': 5,  # space between label and figure
+        'xtick.labelsize': '10',  # axis scale size
+        'ytick.labelsize': '10',  # axis scale size
+        'legend.fontsize': '10',  # legend font size
         'legend.title_fontsize': '13',  # legend title font size
-        'font.size': '12',  # font size
+        'font.size': '10',  # font size
         })
 
 
@@ -28,16 +29,18 @@ def set_pgo_format():
         layout=pgo.Layout(
             width=1000, height=800,
             font=dict(family="Times New Roman", size=13, color="black"),
-            titlefont=dict(size=18),
+            titlefont=dict(size=15),
             xaxis=dict(showline=True, linecolor='black',
                        linewidth=1, mirror=True,
                        showgrid=False, showticklabels=True,
-                       tickfont=dict(size=15),
+                       tickfont=dict(size=13),
+                       title_standoff=12,
                        ),
             yaxis=dict(showline=True, linecolor='black',
                        linewidth=1, mirror=True,
                        showgrid=False, showticklabels=True,
-                       tickfont=dict(size=15),
+                       tickfont=dict(size=13),
+                       title_standoff=12,
                        ),
             # legend=dict(x=0.325, y=0.98, traceorder="normal",
             #             font=dict(size=12),
@@ -123,10 +126,11 @@ def set_color(numbers):
     return colors
 
 
-def add_labels(bars, values, precision, offset):
+def add_labels(bars, values, axs, precision, offset):
     for bar, value in zip(bars, values):
         offset = offset
         pre = precision
+        ax = axs
         if value != 0:
             if value > 0:
                 # y_position = value + offset
@@ -136,8 +140,8 @@ def add_labels(bars, values, precision, offset):
                 # y_position = value - offset
                 y_position = bar.get_height() - offset
                 va_position = 'top'
-            plt.text(bar.get_x() + bar.get_width() / 2, y_position, f'{bar.get_height():{pre}}',
-                     ha='center', va=va_position, fontsize=12)
+            ax.text(bar.get_x() + bar.get_width() / 2, y_position, f'{bar.get_height():{pre}}',
+                    ha='center', va=va_position, fontsize=10)
 
 
 class Plot:
@@ -172,6 +176,92 @@ class Plot:
         # self.plot_dv_flow()
         # self.plot_flow()
 
+    def plot_overview(self):
+        print('Overview plotting start')
+
+        # get values
+        variables = self.finance_df.columns.tolist()
+        values = self.finance_df.iloc[0].values
+        cap = self.cap_df
+
+        # plotting
+        fig = plt.figure(figsize=(10, 8))
+
+        gs = gridspec.GridSpec(2, 2, fig)
+
+        ax1 = fig.add_subplot(gs[0, :])
+        ax2 = fig.add_subplot(gs[1, 0])
+        ax3 = fig.add_subplot(gs[1, 1])
+
+        color = set_color(3)
+
+        # 1) finance
+        bars = ax1.bar(variables, values,
+                       color=set_color(7),
+                       width=0.5,
+                       edgecolor='black',
+                       linewidth=0.8, label=variables)
+        add_labels(bars, values, ax1, '.2f', 0.01)
+
+        ax1.axhline(0, color='gray', linewidth=0.8, linestyle='--')
+        # plt.ylim(-100, 160)    # Set the value range of the y-axis
+        # ax1.set_xlabel('Categories')
+        ax1.set_ylabel('Million Yuan')
+        ax1.set_title('a) Financial Overview', y=-0.2)
+        ax1.legend(title='Finance', bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0., edgecolor='black')
+
+        # 2) capacity
+        ax22 = ax2.twinx()
+
+        non_tank_dv = cap[~cap.index.str.contains('Tank')]
+        tank_dv = cap[cap.index.str.contains('Tank')]
+
+        bars1 = ax2.bar(non_tank_dv.index, non_tank_dv['sCap'], edgecolor='black',
+                        color=color, label='Non-Tank (MW)')
+        add_labels(bars1, non_tank_dv['sCap'], ax2, '.0f', offset=0)
+        ax2.set_title('b) Capacity of the storage system', y=-0.2)
+        # ax2.set_xlabel('Storage devices')
+        ax2.set_ylabel('Capacity (MW)')
+        bars2 = ax22.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label='Tank (kg)')
+        ax22.set_ylabel('Capacity (kg)')
+        add_labels(bars2, tank_dv['sCap'], ax22, '.0f', offset=0)
+        # ax2.tick_params(axis='x', rotation=45)
+
+        # 3) number of storage devices
+        ax3.bar(non_tank_dv.index, non_tank_dv['sNum'], color=color, edgecolor='black',
+                label=non_tank_dv.index)
+        ax3.bar(tank_dv.index, tank_dv['sNum'], color=color[2], edgecolor='black',
+                label=tank_dv.index)
+        ax3.set_title('c) Numbers of storage device', y=-0.2)
+        # ax3.set_xlabel('Storage devices')
+        ax3.set_ylabel('Numbers')
+        # ax3.tick_params(axis='x', rotation=45)
+
+        for idx, val in enumerate(non_tank_dv['sNum']):
+            if val != 0:
+                ax3.text(idx, val, f'{val}', ha='center', va='bottom')
+        for idx, val in enumerate(tank_dv['sNum']):
+            if val != 0:
+                ax3.text((idx + len(non_tank_dv)), val, f'{val}', ha='center', va='bottom')
+
+        ax3.legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left',
+                   borderaxespad=0., edgecolor='black')
+
+        plt.subplots_adjust(top=0.99,
+                            bottom=0.08,
+                            left=0.069,
+                            right=0.87,
+                            hspace=0.25,
+                            wspace=0.40)
+
+        # fig.tight_layout()
+        plt.savefig(f'{self.fig_dir}Cap_bar.png')
+        # plt.show()
+        # plt.close()
+
+        print('Overview plotting finished \n'
+              '--------------------------------')
+
     def plot_finance(self):
         print('Finance plotting start')
 
@@ -181,7 +271,7 @@ class Plot:
         plt.figure(figsize=(10, 8))
         bars = plt.bar(variables, values, color=set_color(7), edgecolor='black',
                        linewidth=0.8, label=variables)
-        add_labels(bars, values, '.2f', 0.01)
+        add_labels(bars, values, plt, '.2f', 0.01)
 
         plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
         # plt.ylim(-100, 160)    # Set the value range of the y-axis
@@ -202,11 +292,11 @@ class Plot:
         # get values
         cap = self.cap_df
 
+        # 1) sCap
         # plotting
-        fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
         color = set_color(3)
 
-        # 1) sCap
         ax2 = axs[0].twinx()
 
         non_tank_dv = cap[~cap.index.str.contains('Tank')]
@@ -214,25 +304,28 @@ class Plot:
 
         bars1 = axs[0].bar(non_tank_dv.index, non_tank_dv['sCap'], edgecolor='black',
                            color=color, label='Non-Tank (MW)')
+        add_labels(bars1, non_tank_dv['sCap'], axs[0], '.0f', offset=0)
         axs[0].set_title('Capacity of the storage system')
         axs[0].set_xlabel('Storage devices')
         axs[0].set_ylabel('Capacity (MW)')
         bars2 = ax2.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label='Tank (kg)')
         ax2.set_ylabel('Capacity (kg)')
-        for bar in bars1:
+        for bar in bars2:
             if bar.get_height() != 0:
-                axs[0].text(bar.get_x() + bar.get_width() / 2, bar.get_height(), f'{bar.get_height()}',
-                            ha='center', va='bottom')
-        add_labels(bars2, tank_dv['sCap'], '.0f', offset=0)
-        # axs[0].tick_params(axis='x', rotation=45)
+                ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), f'{bar.get_height()}',
+                         ha='center', va='bottom')
+
+        # axs[2].tick_params(axis='x', rotation=45)
 
         # 2) sNum
-        axs[1].bar(non_tank_dv.index, non_tank_dv['sNum'], color=color, edgecolor='black')
-        axs[1].bar(tank_dv.index, tank_dv['sNum'], color=color[2], edgecolor='black')
+        axs[1].bar(non_tank_dv.index, non_tank_dv['sNum'], color=color, edgecolor='black',
+                   label=non_tank_dv.index)
+        axs[1].bar(tank_dv.index, tank_dv['sNum'], color=color[2], edgecolor='black',
+                   label=tank_dv.index)
         axs[1].set_title('Numbers of storage device')
         axs[1].set_xlabel('Storage devices')
         axs[1].set_ylabel('Numbers')
-        # axs[1].tick_params(axis='x', rotation=45)
+        # axs[2].tick_params(axis='x', rotation=45)
 
         for idx, val in enumerate(non_tank_dv['sNum']):
             if val != 0:
@@ -241,14 +334,17 @@ class Plot:
             if val != 0:
                 axs[1].text((idx+len(non_tank_dv)), val, f'{val}', ha='center', va='bottom', fontsize=12)
 
+        axs[1].legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left',
+                      borderaxespad=0., edgecolor='black')
+
         plt.subplots_adjust(left=0.1,
                             right=0.95,
                             bottom=0.1,
                             top=0.9,
-                            hspace=0.2,
-                            wspace=0.5)
+                            hspace=0.4,
+                            wspace=0.55)
 
-        # fig.tight_layout()
+        fig.tight_layout()
         plt.savefig(f'{self.fig_dir}Cap_bar.png')
         # plt.show()
 
@@ -264,7 +360,7 @@ class Plot:
         # print('flow')
 
         # fig = pgo.Figure()
-        fig = make_subplots(rows=1, cols=2)
+        fig = make_subplots(rows=2, cols=1)
         fig.add_trace(pgo.Bar(x=flow.index, y=flow['inflow'], name='inflow',
                               # text=flow['inflow'],
                               textposition='auto',
@@ -272,11 +368,11 @@ class Plot:
                                           # line=dict(color='black', width=1)
                                           ),
                               ),
-                      row=1, col=1,
+                      row=2, col=1,
                       )
 
-        fig.update_xaxes(title_text='Time', row=1, col=1)
-        fig.update_yaxes(title_text='Inflow (MW)', row=1, col=1)
+        fig.update_xaxes(title_text='Time', row=2, col=1)
+        fig.update_yaxes(title_text='Inflow (MW)', row=2, col=1)
 
         for i, variable in enumerate(flow.columns[1:]):
             fig.add_trace(pgo.Bar(x=flow.index, y=flow[variable], name=variable,
@@ -286,11 +382,13 @@ class Plot:
                                               # line=dict(color='black', width=1)
                                               ),
                                   ),
-                          row=1, col=2,
+                          row=1, col=1,
                           )
 
-        fig.update_xaxes(title_text='Time', row=1, col=2)
-        fig.update_yaxes(title_text='Flows (MW)', row=1, col=2)
+        fig.update_xaxes(title_text='Time', row=1, col=1)
+        fig.update_yaxes(title_text='Flows (MW)',
+                         range=[-30, 16],
+                         row=1, col=1)
 
         fig.add_shape(type="line",
                       x0=(flow.index[0]), y0=0,
@@ -299,7 +397,7 @@ class Plot:
                       # yref="y",
                       line=dict(color="gray", width=2, dash="dot"),
                       showlegend=False,
-                      row=1, col=2,
+                      row=1, col=1,
                       )
 
         fig.add_shape(type="line",
@@ -308,15 +406,16 @@ class Plot:
                       # xref="paper",
                       # yref="y",
                       line=dict(color="grey", width=2, dash="dot"),
-                      row=1, col=2,
+                      row=1, col=1,
                       )
 
         fig.add_annotation(
-            x=20, y=(1.1 * supply),
+            x=20, y=(1.3 * supply),
             text=f'Supply = {round(supply, 2)} MW',
             font=dict(size=18),
+            bgcolor='#f5f5f5',
             showarrow=False,
-            row=1, col=2,
+            row=1, col=1,
         )
 
         fig.add_shape(type="line",
@@ -325,15 +424,16 @@ class Plot:
                       # xref="paper",
                       # yref="y",
                       line=dict(color="grey", width=2, dash="dot"),
-                      row=1, col=1,
+                      row=2, col=1,
                       )
 
         fig.add_annotation(
-            x=20, y=(1.1 * avg_inflow),
+            x=20, y=(1.3 * avg_inflow),
             text=f'Avg_inflow = {round(avg_inflow, 2)} MW',
             font=dict(size=18),
+            bgcolor='#f5f5f5',
             showarrow=False,
-            row=1, col=1,
+            row=2, col=1,
         )
 
         fig.update_layout(
@@ -349,9 +449,9 @@ class Plot:
             width=1400, height=800,
             )
 
+        fig.write_image(f'{self.fig_dir}Flow_overview.png')    # save as png file (static)
+        fig.write_html(f'{self.fig_dir}Flow_overview.html')    # save as html file (interactive)
         fig.show()
-        # fig.write_image(f'{self.fig_dir}Flow_overview.png')    # save as png file (static)
-        # fig.write_html(f'{self.fig_dir}Flow_overview.html')    # save as html file (interactive)
         print('Flow overview plotting finished \n'
               '--------------------------------')
 
@@ -380,7 +480,7 @@ class Plot:
         #     axs[0].bar_label(container)
 
         axs[0].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        axs[0].set_title('Electricity flow in storage devices')
+        axs[0].set_title('a) Electricity flow in storage devices', y=-0.5)
         axs[0].set_xlabel('Time')
         axs[0].set_ylabel('Electricity flow (MW)')
         axs[0].tick_params(axis='x', rotation=0)
@@ -395,61 +495,66 @@ class Plot:
         #     axs[1].bar_label(container)
 
         axs[1].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        axs[1].set_title('Hydrogen flow in storage devices')
+        axs[1].set_title('b) Hydrogen flow in storage devices', y=-0.5)
         axs[1].set_xlabel('Time')
         axs[1].set_ylabel('Hydrogen flow (kg)')
         axs[1].tick_params(axis='x', rotation=0)
 
         # 3) Fuel-cell flows
-        # dv_fc_p = dv_fc.loc[:, (dv_fc != 0).any(axis=0)]
-        # fc_h = dv_fc_p.filter(like='hInc')
-        fc_e = dv_fc.filter(like='cOut')
+        dv_fc_p = dv_fc.loc[:, (dv_fc != 0).any(axis=0)]
+        fc_h = dv_fc_p.filter(like='hInc')
+        fc_e = dv_fc_p.filter(like='cOut')
         fc_e.plot(ax=axs[2],
-                  title='Energy flows in fuel cells',
                   xlabel='Time',
                   ylabel='Electricity flow (MW)',
                   # kind='bar', width=0.8,
                   # edgecolor='black',
                   )
 
-        # ax2 = axs[2].twinx()
-        # fc_h.plot(ax=ax2,
-        #           ylabel='Hydrogen (kg)',
-        #           color='green',
-        #           # kind='bar', width=0.8,
-        #           # edgecolor='black',
-        #           )
+        ax2 = axs[2].twinx()
+        fc_h.plot(ax=ax2,
+                  ylabel='Hydrogen (kg)',
+                  color='pink',
+                  # kind='bar', width=0.8,
+                  # edgecolor='black',
+                  )
 
         # for container in axs[2].containers:
         #     axs[2].bar_label(container)
 
-        axs[2].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        # ax2.legend(bbox_to_anchor=(1.15, 0.85), loc='upper left', ncol=1)
+        axs[2].legend(bbox_to_anchor=(1.17, 1.02), loc='upper center', ncol=1)
+        ax2.legend(bbox_to_anchor=(1.08, 0.85), loc='upper left', ncol=1)
         axs[2].tick_params(axis='x', rotation=0)
 
-        for ax in axs:
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(25))
+        axs[2].set_title('c) Energy flows in fuel cells', y=-0.5)
 
-        plt.subplots_adjust(left=0.1,
-                            right=0.95,
-                            bottom=0.1,
-                            top=0.9,
-                            hspace=0.5,
+        for ax in axs:
+            ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
+
+        plt.subplots_adjust(top=0.981,
+                            bottom=0.108,
+                            left=0.083,
+                            right=0.809,
+                            hspace=0.6,
                             wspace=0.2)
 
-        plt.tight_layout()
+        # plt.tight_layout()
         print('Dv flows plotting finished \n'
               '--------------------------------')
 
         plt.savefig(f'{self.fig_dir}Dvflows.png')
-        plt.show()
+        # plt.show()
 
 
 # path = '.'
 # res_dir = f'{path}/Results/'    # repository of results
 # fig_dir = f'{path}/Figures/'    # repository of figures
 # Fig = Plot(res_dir, fig_dir)
+#
 # Fig.plot_flow()
+# Fig.plot_overview()
+# Fig.plot_dv_flow()
+# plt.show()
+
 # Fig.plot_finance()
 # Fig.plot_capacity()
-# Fig.plot_dv_flow()
