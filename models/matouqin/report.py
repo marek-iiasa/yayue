@@ -106,11 +106,11 @@ class Report:
                 self.dvflow_df.loc[t, f'eIn_{dv}'] = round(pe.value(self.m1.eIn[dv, t]), 2)
             for dv in self.m1.Sh:
                 self.dvflow_df.loc[t, f'hIn_{dv}'] = round(pe.value(self.m1.hIn[dv, t]), 2)
-                self.dvflow_df.loc[t, f'hOut_{dv}'] = round(pe.value(self.m1.hOut[dv, t]), 2)
+                self.dvflow_df.loc[t, f'hOut_{dv}'] = -round(pe.value(self.m1.hOut[dv, t]), 2)
                 self.dvflow_df.loc[t, f'hVol_{dv}'] = round(pe.value(self.m1.hVol[dv, t]), 2)
             for dv in self.m1.Sc:
                 self.dvflow_df.loc[t, f'hInc_{dv}'] = round(pe.value(self.m1.hInc[dv, t]), 2)
-                self.dvflow_df.loc[t, f'cOut_{dv}'] = round(pe.value(self.m1.cOut[dv, t]), 2)
+                self.dvflow_df.loc[t, f'cOut_{dv}'] = -round(pe.value(self.m1.cOut[dv, t]), 2)
 
         # print(f'Finance results:\n {self.finance_df} \n')
         # print(f'Capacity results:\n {self.cap_df} \n')
