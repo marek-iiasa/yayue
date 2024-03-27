@@ -4,7 +4,7 @@ Prototype of the Matouqin driver
 # import os.path
 
 import sys		# needed for sys.exit()
-# import os
+import os
 # import pandas as pd
 # import pyomo.environ as pe
 from pyomo.opt import SolverStatus
@@ -36,12 +36,17 @@ def driver():
     res_dir = f'{path}/Results/'    # repository of results
     fig_dir = f'{path}/Figures/'  # repository of figures
 
+    # check repository
+    if not os.path.exists(fig_dir):
+        os.makedirs(fig_dir, mode=0o755)
+        print(f'Directory {fig_dir} created')
+
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
     f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
     af_name = f'dat1'       # define filename of ampl format data file
 
-    par = Params(data_dir, f_data, af_name, 240)  # prepare all model parameters, n_data select numbers of hours
+    par = Params(data_dir, f_data, af_name, 240)  # prepare all model parameters, n_periods select numbers of hours
     # par = Params(data_dir, f_data, af_name, 300)  # Optimization failed by using glpk
     par.write_to_ampl()     # write model parameters to ampl format file
     par.write_to_excel()    # write model parameters to excel file
@@ -86,6 +91,8 @@ def driver():
 
     print('\nValues of decision variables ------------------------------------------------------------------------')
     print(f'Supply = {pe.value(model.supply)} MW')
+    for s in model.S:
+        print(f'Numbers of {s} = {pe.value(model.sNum[s])}')
 
     print('\nValues of outcome variables -------------------------------------------------------------------------')
     print(f'Total revenue  = {pe.value(model.revenue)} million RMB')
@@ -98,7 +105,9 @@ def driver():
 
     print('\nPlotting begins ----------------------------------------------------------------')
     fig = Plot(res_dir, fig_dir)
+    fig.plot_overview()     # Finance and storage overview
     fig.plot_flow()         # Flow overview
-    fig.plot_finance()      # Finance overview
-    fig.plot_capacity()     # Storage capacity
+    # fig.plot_finance()      # Finance overview
+    # fig.plot_capacity()     # Storage capacity
     fig.plot_dv_flow()      # Detailed flow of storage system
+    plt.show()
