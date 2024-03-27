@@ -3,11 +3,10 @@ import pandas as pd
 from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
-from matplotlib.widgets import RangeSlider
-from matplotlib.colors import ListedColormap, Normalize
-import matplotlib.cm as cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.colors import ListedColormap
 import seaborn as sns
+
+from .interactive_parallel import InteractiveParallel
 
 # import mplcursors     # for interactive plots, currently not used
 sns.set()  # settings for seaborn plotting style
@@ -38,6 +37,7 @@ class Plots:
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
         self.slider = None  # If we want to save figures elsewhere but slider to work, we should ensure Python garbage
         # collector won't delete its object so saving it in self seems to be good solution for it?
+        self.df[self.cr_name] = self.df[self.cr_name].astype('float')
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -59,10 +59,6 @@ class Plots:
                 if i_memb == n_members:
                     i_cat += 1
                     i_memb = 0
-
-        # criterion considered as "main" for the parallel coordinates plot
-        self.main_crit_idx = 0
-        self.main_crit = self.df[self.cr_col[self.main_crit_idx]]
 
     def show_figures(self):
         plt.show()
@@ -158,51 +154,16 @@ class Plots:
         self.figures['vars'] = fig
 
     def parallel(self):
-        fig3, ax = plt.subplots(figsize=(self.n_crit * 5, 7))
+        fig3 = plt.figure(figsize=(self.n_crit * 5, 7))
         fig3.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')
 
-        ax.set_xlabel('Criteria names')
-        ax.set_ylabel('Criterion Achievement Function')
-
-        # Colors configuration
-        cmap = self.cmap
-        scaler = Normalize(vmin=0, vmax=100)
-        colors = cmap(scaler(self.main_crit))
-
-        # Draw vertical parallel lines
-        for i in range(self.n_crit):
-            ax.axvline(i, color='k', linewidth=2)
-        ax.set_xticks(range(self.n_crit), labels=self.cr_name)
-
-        # Draw all solutions
-        lines = []
-        for i, row in self.df[self.cr_col].iterrows():
-            line, = ax.plot(row, linewidth=2, marker='o', markersize=10, color=colors[i])
-            lines.append(line)
-
-        # Add color-bar
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes('left', size='5%', pad=0.5)
-        plt.colorbar(cm.ScalarMappable(norm=Normalize(0, 100), cmap=cmap), cax=cax)
-        cax.yaxis.set_ticks_position('left')
-
-        # Add RangeSlider
-        slider_cax = divider.append_axes('left', size='5%', pad=0.5)
-        self.slider = RangeSlider(slider_cax, label="Range of values", valmin=0, valmax=100,
-                                  orientation='vertical', valinit=(0, 100), valstep=0.1,
-                                  valfmt='%0.1f', handle_style={'size': 15})
-
-        def update_slider(val):
-            min_val, max_val = val
-
-            for aline in lines:
-                if min_val <= aline.get_ydata()[self.main_crit_idx] <= max_val:
-                    aline.set_alpha(1)
-                else:
-                    aline.set_alpha(0.1)
-
-        self.slider.on_changed(update_slider)
+        InteractiveParallel(self.df,
+                            self.cr_name,
+                            self.cr_col,
+                            self.cr_defs,
+                            self.cmap,
+                            fig3)
 
         self.figures['parallel'] = fig3
 
