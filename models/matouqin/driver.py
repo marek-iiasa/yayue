@@ -62,8 +62,7 @@ def driver():
     # select solver
     opt = pe.SolverFactory('glpk')
     # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
-    # opt = SolverFactory('gams')  # gams can be used as a solver
-    # opt = SolverFactory('gams')  # gams can be used as a solver
+    # opt = pe.SolverFactory('gams')  # gams can be used as a solver
     results = opt.solve(model, tee=True)   # True to pipe output to the terminal
     chk_sol(results)  # check the status of the solution
 
