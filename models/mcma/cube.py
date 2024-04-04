@@ -42,12 +42,15 @@ class ParSol:     # one Pareto solution
         for (cr, a1, a2) in zip(mc.cr, self.a_vals, s2.a_vals):  # loop over criteria achievements
             if a1 < a2:
                 is_worse = True
-            else:
+            elif a1 > a2:   # exclude equal
                 is_better = True    # self.a1 is better (or equal) than s2.a2
         if is_worse is None:    # self is better than s2 on all criteria
             return s2.itr_id    # current sol is Pareto but also dominates s2
         if is_better is None:   # self is worse than s2 on all criteria
-            return -s2.itr_id   # current sol is dominated by s2
+            if s2.itr_id > 0:
+                return -s2.itr_id  # current sol is dominated by s2
+            else:
+                return -1   # current solution dominated by s2.itr_id == 0 (very first solution)
         return 0    # self is Pareto, i.e., neither dominating nor dominated
 
     def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
