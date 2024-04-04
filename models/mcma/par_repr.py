@@ -75,6 +75,7 @@ class ParRep:     # representation of Pareto set
         self.cfg = mc.cfg   # Config object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
+        self.domSols = []   # dominated solutions (ParSol objects)
         self.cubes = Cubes(self)  # the object handling all cubes
         self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
@@ -164,6 +165,7 @@ class ParRep:     # representation of Pareto set
                   f'There are {len(self.clSols)} duplicated Pareto solutions.')
         else:   # check dominance with all sols found so far
             is_pareto = True
+            toPrune = []
             for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
                 cmp_ret = new_sol.cmp(self.mc, s2)
                 if cmp_ret == 0:    # is Pareto
@@ -172,11 +174,17 @@ class ParRep:     # representation of Pareto set
                     if self.cfg.get('verb') > -1:
                         print(f'\t-------------     current solution[{itr_id}] dominates solution[{s2.itr_id}].')
                     s2.domin = -itr_id      # mark s2 as dominated by the new solution, and continue checking next sol.
+                    self.domSols.append(s2)     # add to the dominated sols
+                    toPrune.append(s2)  # cannot be removed from sols here (it would destroy the list)
                 else:           # new_sol is dominated by s2
                     if self.cfg.get('verb') > -1:
                         print(f'\t-------------     current solution[{itr_id}] is dominated by solution[{s2.itr_id}].')
                     is_pareto = False
+                    new_sol.domin = -s2.itr_id      # mark new_sol as dominated by the s2 solution, and break
+                    self.domSols.append(new_sol)
                     break
+            for s2 in toPrune:   # remove sols dominated by the new_sol, if any
+                self.sols.remove(s2)  # remove from the list of Pareto-sols
             if is_pareto:
                 self.sols.append(new_sol)
                 if self.cfg.get('verb') > 1:
