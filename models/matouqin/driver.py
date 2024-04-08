@@ -67,8 +67,8 @@ def driver():
     # opt = pe.SolverFactory('glpk')
     # opt.options['write'] = f'{res_dir}model.nps'  # glpk
 
-    opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
-    # opt = pe.SolverFactory('gams')  # gams can be used as a solver
+    # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
+    opt = pe.SolverFactory('gams')  # gams can be used as a solver
     # results = opt.solve(model, tee=True, options={'solnFile': 'cplex.sol'}) # gams solver configuration
     results = opt.solve(model, tee=True)   # True to pipe output to the terminal
     chk_sol(results)  # check the status of the solution
@@ -100,5 +100,5 @@ def driver():
     # fig.plot_finance()      # Finance overview
     # fig.plot_capacity()     # Storage capacity
     fig.plot_dv_flow()      # Detailed flow of storage system
-    # plt.show()
+    plt.show()
     # plt.close()
