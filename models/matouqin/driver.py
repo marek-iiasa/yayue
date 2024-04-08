@@ -43,13 +43,13 @@ def driver():
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
-    # f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
-    # af_name = f'dat1'       # define filename of ampl format data file
-    f_data = f'{data_dir}test1.xlsx'  # constant inflow test by ZZ
-    af_name = f'test1'
+    f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
+    af_name = f'dat1'       # define filename of ampl format data file
+    # f_data = f'{data_dir}test1.xlsx'  # constant inflow test by ZZ
+    # af_name = f'test1'
 
     # data processing: select the number of hours the model runs by changing n_periods
-    par = Params(data_dir, f_data, af_name, 8760)  # prepare all model parameters
+    par = Params(data_dir, f_data, af_name, 168)  # prepare all model parameters
     # par = Params(data_dir, f_data, af_name, 8760)  # Optimization failed by using glpk
     par.write_to_ampl()     # write model parameters to ampl format file
     par.write_to_excel()    # write model parameters to excel file

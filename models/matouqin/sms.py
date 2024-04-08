@@ -50,7 +50,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.hIn = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)       # hydrogen inflow to each hydrogen tank, [kg]
     m.hOut = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # hydrogen outflow from each hydrogen tank, [kg]
     m.hVol = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # amount of hydrogen stored in s-th device
-    m.hState = pe.Var(m.Sh, m.T, within=pe.Binary)              # state of hydrogen tank, charging(1), discharging(0)
+    # m.hState = pe.Var(m.Sh, m.T, within=pe.Binary)              # state of hydrogen tank, charging(1), discharging(0)
     m.hInc = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # hydrogen inflow to each fuel cell, [kg]
     m.cOut = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # electricity outflow from each fuel cell, [MWh]
 
