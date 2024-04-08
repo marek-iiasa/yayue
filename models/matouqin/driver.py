@@ -43,11 +43,14 @@ def driver():
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
-    f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
-    af_name = f'dat1'       # define filename of ampl format data file
+    # f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
+    # af_name = f'dat1'       # define filename of ampl format data file
+    f_data = f'{data_dir}test1.xlsx'  # constant inflow test by ZZ
+    af_name = f'test1'
 
-    par = Params(data_dir, f_data, af_name, 240)  # prepare all model parameters, n_periods select numbers of hours
-    # par = Params(data_dir, f_data, af_name, 300)  # Optimization failed by using glpk
+    # data processing: select the number of hours the model runs by changing n_periods
+    par = Params(data_dir, f_data, af_name, 8760)  # prepare all model parameters
+    # par = Params(data_dir, f_data, af_name, 8760)  # Optimization failed by using glpk
     par.write_to_ampl()     # write model parameters to ampl format file
     par.write_to_excel()    # write model parameters to excel file
 
@@ -60,10 +63,13 @@ def driver():
 
     print('\nsolving --------------------------------')
     # select solver
-    opt = pe.SolverFactory('glpk')
-    # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
-    # opt = SolverFactory('gams')  # gams can be used as a solver
-    # opt = SolverFactory('gams')  # gams can be used as a solver
+
+    # opt = pe.SolverFactory('glpk')
+    # opt.options['write'] = f'{res_dir}model.nps'  # glpk
+
+    opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
+    # opt = pe.SolverFactory('gams')  # gams can be used as a solver
+    # results = opt.solve(model, tee=True, options={'solnFile': 'cplex.sol'}) # gams solver configuration
     results = opt.solve(model, tee=True)   # True to pipe output to the terminal
     chk_sol(results)  # check the status of the solution
 
@@ -81,27 +87,11 @@ def driver():
     rep = Report(model, res_dir, rep_vars)      # report results
     rep.var_vals()  # extract from the solution values of the requested variables
     rep.summary()  # store the extracted values in a df
-    rep.toExcel()   # store the extracted values in excel for plotting
+    rep.check()  # check storage flow results
+    rep.toExcel()   # store the extracted values in Excel for plotting
 
     print(f'\nPlace holder for report results of model {model.name}.')
-
-    print('\nValues of inflow ----------------------------------------------------------------------------')
-    ave_inflow = sum(model.inflow[t] for t in model.T) / model.nHrs
-    print(f'Average inflow = {ave_inflow} MW')
-
-    print('\nValues of decision variables ------------------------------------------------------------------------')
-    print(f'Supply = {pe.value(model.supply)} MW')
-    for s in model.S:
-        print(f'Numbers of {s} = {pe.value(model.sNum[s])}')
-
-    print('\nValues of outcome variables -------------------------------------------------------------------------')
-    print(f'Total revenue  = {pe.value(model.revenue)} million RMB')
-    print(f'Income  = {pe.value(model.income)} million RMB')
-    print(f'Investment cost  = {pe.value(model.invCost)} million RMB')
-    print(f'Operation and maintenance cost  = {pe.value(model.OMC)} million RMB')
-    print(f'Surplus cost  = {pe.value(model.overCost)} million RMB')
-    print(f'Shortage cost  = {pe.value(model.buyCost)} million RMB')
-    print(f'Balance cost  = {pe.value(model.balCost)} million RMB')
+    rep.analyze()  # analyze the results
 
     print('\nPlotting begins ----------------------------------------------------------------')
     fig = Plot(res_dir, fig_dir)
@@ -110,4 +100,5 @@ def driver():
     # fig.plot_finance()      # Finance overview
     # fig.plot_capacity()     # Storage capacity
     fig.plot_dv_flow()      # Detailed flow of storage system
-    plt.show()
+    # plt.show()
+    # plt.close()

@@ -255,7 +255,7 @@ class Plot:
                             wspace=0.40)
 
         # fig.tight_layout()
-        plt.savefig(f'{self.fig_dir}Cap_bar.png')
+        plt.savefig(f'{self.fig_dir}Finance_overview.png')
         # plt.show()
         # plt.close()
 

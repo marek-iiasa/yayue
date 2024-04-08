@@ -41,7 +41,7 @@ class Params:
 
         # define default parameters
         self.inflow = pd.DataFrame
-        self.Hrs = self.nHrs = self.ydis = None
+        self.nHrs = self.ydis = None
         self.penalty = self.ePrice = self.eOver = self.eBprice = None
         self.eh2 = self.eph2 = self.h2Ratio = self.h2Res = self.h2e = None
         self.sInv = None
@@ -82,7 +82,6 @@ class Params:
 
     # 2) set time related parameters
     def set_time(self):
-        self.Hrs = self.time_df.loc[0, 'Hrs']       # the duration time between each decision period (hour)
         self.nHrs = len(self.cf_df)     # the number of hours in a year
         self.ydis = self.time_df.loc[0, 'ydis']     # the yearly discount factor
 

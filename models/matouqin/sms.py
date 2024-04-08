@@ -34,7 +34,8 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # define variables needed for demonstrating decorators
 
     # decision variables
-    m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
+    # m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
+    m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers, bounds=(None, 50))   # bounds for using solver gams
     # m.sNum = pe.Var(m.S, within=pe.NonNegativeReals)
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
