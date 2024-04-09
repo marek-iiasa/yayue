@@ -7,7 +7,7 @@ import math
 from os import R_OK, access
 from os.path import isfile
 from .crit import Crit, CrPref
-from .par_repr import ParRep
+# from .par_repr import ParRep
 
 
 # noinspection SpellCheckingInspection
@@ -44,6 +44,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
         self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
+        self.neutralDone = False    # set to True (in set_stage()) after neutral sol. computed
         # self.hotStart = None    # if payOff provided, jump to stage==5
 
         self.rdCritSpc()    # read criteria specs from the config file
@@ -119,7 +120,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             self.prnPayOff(True)    # print only (don't write to the file)
             # self.hotStart = True  # if payOff provided, jump to stage==5
             self.cur_stage = 4
-            print(f'\nPayOff table provided. Skipping its computation. Jump to processing user-defined preferences.')
+            print(f'\nPayOff table provided; skipping its computation. Compute neutral solution.')
         else:
             print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
             # self.hotStart = False  # payOff not provided, shall be computed
@@ -199,18 +200,20 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             if self.cur_cr + 1 < self.n_crit:   # not all crit used?
                 self.cur_cr += 1    # use next (not yet used) criterion
                 print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
-            else:   # move to the 2nd stage of nadir appr.
+            else:   # finished the 2nd stage of nadir appr.
                 print('Finished 2nd nadir approximation.')
-                print('Approximation of PayOff table ready. Preferences for neutral solution set automatically.')
+                print('Approximation of PayOff table ready. Compute for neutral solution.')
                 self.cur_stage = 4
                 self.cur_cr = None     # should no longer be used
             return self.cur_stage
-        elif self.cur_stage == 4:  # comes here after computing neutral solution
-            print('Finished computation of neutral Pareto solution.')
-            print('Switch to using preferences.')
-            self.cur_stage = 5
-            self.cur_cr = None  # should no longer be used
-            self.hotStart = True
+        elif self.cur_stage == 4:  # comes here to compute neutral solution
+            if not self.neutralDone:
+                self.cur_cr = None  # should not be used
+                self.neutralDone = True
+            else:
+                print('Finished computation of neutral Pareto solution.')
+                print('Switch to using preferences.')
+                self.cur_stage = 5
             return self.cur_stage   # return to set pref for neutral solution and compute it
         elif self.cur_stage == 5:  # comes here while processing preferences
             # after debugging, nothing to do here
@@ -258,18 +261,20 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             for crit in self.cr:
                 crit.setAR()
             return
-        elif self.cur_stage == 5:     # get user-preferences
-            self.usrPref()    # driver() calls setPref() function to access usrPref()
+        elif self.cur_stage == 5:     # generate pref (for Pareto repr.) or get user-defined preferences
+            if self.is_par_rep:
+                self.par_pref()    # generate preferences for finding next Pareto-set repr.
+            else:
+                self.usrPref()    # get user-defined preferences
             return
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
 
     def par_pref(self):  # generate preferences for finding next solution in Pareto set representation
-        assert self.is_par_rep, f'CtrMca::par_pref() is not set to be used.'
+        assert self.is_par_rep, f'CtrMca::par_pref() should not be used for usr-def pref.'
+        assert self.par_rep is not None, f'CtrMca::par_pref() should be initialized earlier.'
         assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
-        if self.par_rep is None:
-            self.par_rep = ParRep(self)     # initialize Pareto set representation
         self.par_rep.pref()     # define largest cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
@@ -394,8 +399,8 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                     change = crit.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
                     if change:
                         self.payOffChange = True
-            if self.par_rep:
-                self.par_rep.addSol(self.cur_itr_id)   # add solution to ParRep solutions
+            # if self.par_rep:  # addSol() is now in Report::itr()
+            #     self.par_rep.addSol(self.cur_itr_id)   # add solution to ParRep solutions
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')

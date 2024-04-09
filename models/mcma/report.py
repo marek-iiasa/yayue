@@ -80,7 +80,6 @@ class Report:
             self.req_vals()     # extract and store values of the core-model variables requested to be reported
 
         if self.mc.par_rep is None:    # initialize ParRep() object (must be after payOff table was computed)
-            # raise Exception('mc.par_rep not defined.')
             self.mc.par_rep = ParRep(self.mc)
 
         # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
@@ -164,8 +163,9 @@ class Report:
 
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
-        if self.mc.par_rep:  # Pareto-front summary
-            self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
+        if self.mc.par_rep is None:  # Pareto-front summary
+            print('No report information collected.')
+            return
 
         self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
