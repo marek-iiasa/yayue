@@ -45,7 +45,7 @@ class ParSol:     # one Pareto solution
             else:
                 is_better = True    # self.a1 is better (or equal) than s2.a2
         if is_worse is None:    # self is better than s2 on all criteria
-            return s2.itr_id    # current sol is Pareto but also dominates s2
+            return 1  # current solution dominates s2
         if is_better is None:   # self is worse than s2 on all criteria
             return -s2.itr_id   # current sol is dominated by s2
         return 0    # self is Pareto, i.e., neither dominating nor dominated
@@ -109,6 +109,7 @@ class Cubes:     # collection of aCubes
         c = self.get(c_id)
         assert not c.used, f'candidate cube[{c_id}] was already used.'
         if self.is_empty(c):    # check, if after the cube creation a solution was insterted in the cube
+            # todo: add check, if sols defining the cube are Pareto
             return True    # the cube can be used
         else:
             return False    # the cube cannot be used

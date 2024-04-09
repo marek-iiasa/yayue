@@ -44,7 +44,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
         self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
-        self.hotStart = None    # if payOff provided, jump to stage==5
+        # self.hotStart = None    # if payOff provided, jump to stage==5
 
         self.rdCritSpc()    # read criteria specs from the config file
         self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
@@ -117,12 +117,12 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                     n_def += 1
             assert (self.n_crit == n_def), f'stored payOff table has {n_def} values for {self.n_crit} defined criteria.'
             self.prnPayOff(True)    # print only (don't write to the file)
-            self.hotStart = True  # if payOff provided, jump to stage==5
-            self.cur_stage = 5
+            # self.hotStart = True  # if payOff provided, jump to stage==5
+            self.cur_stage = 4
             print(f'\nPayOff table provided. Skipping its computation. Jump to processing user-defined preferences.')
         else:
             print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
-            self.hotStart = False  # payOff not provided, shall be computed
+            # self.hotStart = False  # payOff not provided, shall be computed
 
     def prnPayOff(self, prn_only=False):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)

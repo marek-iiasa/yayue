@@ -5,6 +5,7 @@ Reporting results of the MCMA iterations. Handling core-model is generic, i.e., 
 import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
+from .par_repr import ParRep
 from .plots import Plots
 # from ctr_mca import CtrMca
 # from crit import Crit
@@ -42,16 +43,17 @@ class Report:
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
         print(f'Core-model variables to be reported: {self.rep_vars}')
 
+    # driver of processing of each solution
     def itr(self, m):   # m: current mc_block (invariant core-model linked in the ctor)
         """Process values of criteria and other vars in the current solution."""
         # formatting doc: https://docs.python.org/3/library/string.html#formatstrings
 
-        self.itr_id += 1
+        self.itr_id += 1    # itr_id inilialized at -1
         self.mc.cur_itr_id = self.itr_id
         # print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         if not self.mc.is_opt:
-            return
+            return  # refrain from storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
@@ -65,10 +67,26 @@ class Report:
         if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
 
-        self.mc.updCrit(cri_val)    # update crit attributes (value, optionally: nadir, utopia)
+        # update crit attributes (value, optionally: nadir, utopia)
+        self.mc.updCrit(cri_val)
         self.mc.prnPayOff()     # print, and optionally store payOff table
 
-        # add to self.itr_df one row with values of all attributes for each criterion
+        self.itr_inf(m)     # store one-line info on each iteration
+
+        if self.mc.cur_stage < 4:   # don't store solutions during payOff table computations
+            return
+
+        if len(self.rep_vars):
+            self.req_vals()     # extract and store values of the core-model variables requested to be reported
+
+        if self.mc.par_rep is None:    # initialize ParRep() object (must be after payOff table was computed)
+            # raise Exception('mc.par_rep not defined.')
+            self.mc.par_rep = ParRep(self.mc)
+
+        # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
+        self.mc.par_rep.addSol(self.itr_id)
+
+    def itr_inf(self, m):    # add to self.itr_df one row with values of all attributes for each criterion
         af = pe.value(m.af)
         af = round(af, 1)
         if self.mc.cur_stage > 1:
@@ -110,9 +128,6 @@ class Report:
         with warnings.catch_warnings():  # suppress the pd.concat() warning
             warnings.filterwarnings("ignore", category=FutureWarning)
             self.itr_df = pd.concat([self.itr_df, df2], axis=0, ignore_index=True)
-
-        if len(self.rep_vars):
-            self.req_vals()     # extract and store values of the core-model variables requested to be reported
 
     # extract and store values of the variables to be included in the report
     def req_vals(self):
@@ -174,12 +189,12 @@ class Report:
 
         # plot solutions
         plots = Plots(self.mc, self.df_vars)    # plots
-        plots.plot2D()    # 2D plots
-        plots.vars('actS')    # plot the requested model variables
         # plots.plot3D()    # 3D plot
-        plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
-        plots.kde_stages()  # KDE + histograms vs stages
+        # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        # plots.kde_stages()  # KDE + histograms vs stages
+        plots.plot2D()    # 2D plots
         plots.parallel()  # Parallel coordinates plot
+        plots.vars('actS')    # plot the requested model variables
 
         plots.save_figures()
         if plots.show_plot:
