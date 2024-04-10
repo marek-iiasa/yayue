@@ -205,12 +205,13 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 print('Approximation of PayOff table ready. Compute for neutral solution.')
                 self.cur_stage = 4
                 self.cur_cr = None     # should no longer be used
+                self.neutralDone = True     # declare as done (to prevent repetition at cur_stage==4 below
             return self.cur_stage
         elif self.cur_stage == 4:  # comes here to compute neutral solution
             if not self.neutralDone:
                 self.cur_cr = None  # should not be used
-                self.neutralDone = True
-            else:
+                self.neutralDone = True     # declare as done
+            else:   # neutral sol. already computed, switch to handle preferences for Pareto sols
                 print('Finished computation of neutral Pareto solution.')
                 print('Switch to using preferences.')
                 self.cur_stage = 5
