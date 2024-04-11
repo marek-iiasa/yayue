@@ -90,16 +90,17 @@ class ParRep:     # representation of Pareto set
     def pref(self):     # entry point for each new iteration
         if not self.from_cube:  # no cubes yet, generate and compute selfish solution
             for (i, cr) in enumerate(self.mc.cr):
+                delta = abs(cr.utopia - cr.nadir) / 3.  # take 1/3 of the (utopia, nadir) range
                 if i == self.n_corner:  # selfish sol. for i-th criterion
                     print(f'Computing Pareto-front corners: selfish opt. for crit. "{cr.name}".')
                     cr.is_active = True
                     cr.asp = cr.utopia
+                    cr.res = cr.utopia - cr.mult * delta
                 else:
                     cr.is_active = False
-                    delta = abs(cr.utopia - cr.nadir) / 2.  # take half of the (utopia, nadir) range
-                    cr.asp = cr.utopia - cr.mult * delta
+                    cr.asp = cr.nadir + cr.mult * delta
+                    cr.res = cr.nadir
                 cr.is_fixed = False
-                cr.res = cr.nadir
             self.n_corner += 1
         else:   # all selfish solutions ready
             cube = self.cubes.select()  # the cube defining A/R for new iteration
