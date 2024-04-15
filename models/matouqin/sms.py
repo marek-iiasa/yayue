@@ -19,12 +19,12 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     # sets
     # noinspection SpellCheckingInspection
-    m.Se = pe.Set()     # set of electrolizers
-    m.Sh = pe.Set()     # set of hydrogen tanks
-    m.Sc = pe.Set()     # set of fuel cells
+    m.Se = pe.Set()     # set of electrolizers types
+    m.Sh = pe.Set()     # set of hydrogen tanks types
+    m.Sc = pe.Set()     # set of fuel cells types
 
     # noinspection ClassSet. The union function works.
-    m.S = pe.Set(initialize=m.Se | m.Sh | m.Sc)     # set of storage devices
+    m.S = pe.Set(initialize=m.Se | m.Sh | m.Sc)     # set of types of storage devices
 
     # noinspection typeInspection
     m.nHrs = pe.Param(domain=pe.PositiveIntegers)       # the number of hours (time periods) in a year
@@ -35,7 +35,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     # decision variables
     # m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers)      # number of units of s-th storage device
-    m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers, bounds=(None, 50))   # bounds for using solver gams
+    m.sNum = pe.Var(m.S, within=pe.NonNegativeIntegers, bounds=(0, 500))   # bounds on int vars req. by cplex
     # m.sNum = pe.Var(m.S, within=pe.NonNegativeReals)
     m.supply = pe.Var()       # energy committed to be provided in each hour, [MWh]
 
