@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.gridspec as gridspec
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import plotly.graph_objects as pgo
 import plotly.io as pio
 from plotly.subplots import make_subplots
@@ -160,7 +161,7 @@ class Plot:
         # print(f'Finance results:\n {self.finance_df} \n')
         # print(f'Capacity results:\n {self.cap_df} \n')
         # print(f'Supply results:\n {self.supply_df} \n')
-        # print(f'Flow results:\n {self.flow_df} \n')
+        # print(f'Flow results:\n {self.flow_df.head(10)} \n')
         # print(f'Dv_flow results:\n {self.dvflow_df} \n')
 
         # Color setting
@@ -351,18 +352,48 @@ class Plot:
         print('Capacity plotting finished \n'
               '--------------------------------')
 
-    def plot_flow(self):
+    def plot_flow(self, step='hourly'):
         print(f'Flow plotting start')
 
-        supply = self.supply_df['supply'].iloc[0]
-        avg_inflow = self.supply_df['avg_inflow'].iloc[0]
+        supply_h = self.supply_df['supply'].iloc[0]
+        avg_h = self.supply_df['avg_inflow'].iloc[0]
         flow = self.flow_df
+        # hvol = self.dvol_df.filter(like='hVol')
         # print('flow')
 
         # fig = pgo.Figure()
         fig = make_subplots(rows=2, cols=1)
-        fig.add_trace(pgo.Bar(x=flow.index, y=flow['inflow'], name='inflow',
-                              # text=flow['inflow'],
+
+        # set date index
+        time_deltas = pd.to_timedelta(flow.index, unit='h')
+        start_date = pd.Timestamp('2024-01-01 00:00')
+        date_times = start_date + time_deltas
+        flow.index = date_times
+        hvol.index = date_times
+
+        if step == 'hourly':
+            agg_df = flow
+            avg_inflow = avg_h
+            supply = supply_h
+        elif step == 'daily':
+            agg_df = flow.resample('D').sum()
+            avg_inflow = flow['inflow'].sum() / 365
+            supply = supply_h * 24
+        elif step == 'weekly':
+            agg_df = flow.resample('W').sum()
+            avg_inflow = flow['inflow'].sum() / 52
+            supply = supply_h * 168
+        elif step == 'monthly':
+            agg_df = flow.resample('M').sum()
+            avg_inflow = flow['inflow'].sum() / 12
+            supply = supply_h * 30
+        else:
+            raise ValueError(f'Invalid step')
+
+        # print(f'{agg_df.head(10)}')
+
+        # plot inflow at bottom
+        fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df['inflow'], name='inflow',
                               textposition='auto',
                               marker=dict(color=set_color(11)[-1]
                                           # line=dict(color='black', width=1)
@@ -372,11 +403,28 @@ class Plot:
                       )
 
         fig.update_xaxes(title_text='Time', row=2, col=1)
-        fig.update_yaxes(title_text='Inflow (MW)', row=2, col=1)
+        fig.update_yaxes(title_text=f'{step.capitalize()} Inflow (MW) ', row=2, col=1)
 
-        for i, variable in enumerate(flow.columns[1:]):
-            fig.add_trace(pgo.Bar(x=flow.index, y=flow[variable], name=variable,
-                                  # text=flow[variable],
+        fig.add_shape(type="line",
+                      x0=(agg_df.index[0]), y0=avg_inflow,
+                      x1=(agg_df.index[-1]), y1=avg_inflow,
+                      # xref="paper",
+                      # yref="y",
+                      line=dict(color="grey", width=2, dash="dot"),
+                      row=2, col=1,
+                      )
+
+        fig.add_annotation(x=(agg_df.index[0]), y=(1.3 * avg_inflow),
+                           text=f'Avg_inflow = {round(avg_inflow, 2)} MW',
+                           font=dict(size=18),
+                           bgcolor='#f5f5f5',
+                           showarrow=False,
+                           row=2, col=1,
+                           )
+
+        # plot other flows
+        for i, variable in enumerate(agg_df.columns[1:]):
+            fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
                                   textposition='auto',
                                   marker=dict(color=set_color(11)[i],
                                               # line=dict(color='black', width=1)
@@ -386,13 +434,13 @@ class Plot:
                           )
 
         fig.update_xaxes(title_text='Time', row=1, col=1)
-        fig.update_yaxes(title_text='Flows (MW)',
-                         range=[-30, 16],
+        fig.update_yaxes(title_text=f'{step.capitalize()} Flows (MW)',
+                         # range=[-30, 16],
                          row=1, col=1)
 
         fig.add_shape(type="line",
-                      x0=(flow.index[0]), y0=0,
-                      x1=(flow.index[-1]+0.5), y1=0,
+                      x0=(agg_df.index[0]), y0=0,
+                      x1=(agg_df.index[-1]), y1=0,
                       # xref="paper",
                       # yref="y",
                       line=dict(color="gray", width=2, dash="dot"),
@@ -401,8 +449,8 @@ class Plot:
                       )
 
         fig.add_shape(type="line",
-                      x0=(flow.index[0]-0.2), y0=supply,
-                      x1=(flow.index[-1]+0.5), y1=supply,
+                      x0=(agg_df.index[0]), y0=supply,
+                      x1=(agg_df.index[-1]), y1=supply,
                       # xref="paper",
                       # yref="y",
                       line=dict(color="grey", width=2, dash="dot"),
@@ -410,7 +458,7 @@ class Plot:
                       )
 
         fig.add_annotation(
-            x=20, y=(1.3 * supply),
+            x=(agg_df.index[0]), y=(1.3 * supply),
             text=f'Supply = {round(supply, 2)} MW',
             font=dict(size=18),
             bgcolor='#f5f5f5',
@@ -418,36 +466,15 @@ class Plot:
             row=1, col=1,
         )
 
-        fig.add_shape(type="line",
-                      x0=(flow.index[0] - 0.2), y0=avg_inflow,
-                      x1=(flow.index[-1] + 0.5), y1=avg_inflow,
-                      # xref="paper",
-                      # yref="y",
-                      line=dict(color="grey", width=2, dash="dot"),
-                      row=2, col=1,
-                      )
-
-        fig.add_annotation(
-            x=20, y=(1.3 * avg_inflow),
-            text=f'Avg_inflow = {round(avg_inflow, 2)} MW',
-            font=dict(size=18),
-            bgcolor='#f5f5f5',
-            showarrow=False,
-            row=2, col=1,
-        )
-
         fig.update_layout(
             # barmode='stack',
-            barmode='relative',
+            barmode='relative',     # positive and negative values are displayed relative to 0
+            # bargap=0,   # set the spacing between the bars
             title='Flow overview',
-            # xaxis_title='Time',
-            # yaxis_title='Electricity flow (Mw)',
-            # xaxis=dict(title='Time'),
-            # yaxis=dict(title='Values'),
             legend_title='Variables',
             plot_bgcolor='white',   # background color
             width=1400, height=800,
-            )
+        )
 
         fig.write_image(f'{self.fig_dir}Flow_overview.png')    # save as png file (static)
         fig.write_html(f'{self.fig_dir}Flow_overview.html')    # save as html file (interactive)
@@ -455,106 +482,205 @@ class Plot:
         print('Flow overview plotting finished \n'
               '--------------------------------')
 
-    def plot_dv_flow(self):
-        print('Dv flows plotting start')
+    def plot_dv_flow(self, n, unit='day'):
+        # print hourly flows in specific day or week
+        print(f'Plotting energy flows in the {unit} {n} start')
 
         # get values
-        dv_ele = self.dvflow_df.filter(like='Elec')
-        dv_hy = self.dvflow_df.filter(like='Tank')
-        dv_fc = self.dvflow_df.filter(like='Cell')
+        dv_ele_df = self.dvflow_df.filter(like='Elec')
+        dv_hy_df = self.dvflow_df.filter(like='Tank')
+        dv_fc_df = self.dvflow_df.filter(like='Cell')
 
-        # print(dv_ele)
-        # print(dv_hy)
-        # print(dv_fc)
+        flow_h_df = self.flow_df
+        supply_h = self.supply_df['supply'].iloc[0]
 
         # plotting
-        fig, axs = plt.subplots(3, 1, figsize=(10, 8))
+        fig, axs = plt.subplots(4, 1, figsize=(10, 10))
 
-        # 1) electrolyzer flows
-        dv_ele_p = dv_ele.loc[:, (dv_ele != 0).any(axis=0)]
-        dv_ele_p.plot(ax=axs[0],
-                      # kind='bar', width=0.8,
-                      # edgecolor='black',
-                      )
-        # for container in axs[0].containers:
-        #     axs[0].bar_label(container)
+        # data processing, day, week
+        if unit == 'day':
+            dv_ele = dv_ele_df.iloc[((n - 1) * 24):(n * 24 - 1)]
+            dv_hy = dv_hy_df.iloc[((n - 1) * 24):(n * 24 - 1)]
+            dv_fc = dv_fc_df.iloc[((n - 1) * 24):(n * 24 - 1)]
+            flow = flow_h_df.iloc[((n - 1) * 24):(n * 24 - 1)]
+
+            for ax in axs:
+                ax.xaxis.set_major_locator(ticker.MultipleLocator(4))
+
+        elif unit == 'week':
+            dv_ele = dv_ele_df.iloc[((n - 1) * 168):(n * 168 - 1)]
+            dv_hy = dv_hy_df.iloc[((n - 1) * 168):(n * 168 - 1)]
+            dv_fc = dv_fc_df.iloc[((n - 1) * 168):(n * 168 - 1)]
+            flow = flow_h_df.iloc[((n - 1) * 168):(n * 168 - 1)]
+
+            for ax in axs:
+                ax.xaxis.set_major_locator(ticker.MultipleLocator(24))
+
+        else:
+            raise ValueError(f'Invalid unit')
+
+        # 1) flows overview
+        if flow.empty:
+            print(f'There is no energy flows in the model, please check')
+        else:
+            flow.plot(ax=axs[0], color=set_color(11))
+            axs[0].axhline(y=supply_h, color='grey', linestyle='--')
+            axs[0].axhline(y=0, color='black', linestyle=':')
+            axs[0].text(flow.index[0], supply_h, f'Supply = {round(supply_h, 2)}',
+                        verticalalignment='bottom', horizontalalignment='left')
 
         axs[0].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        axs[0].set_title('a) Electricity flow in storage devices', y=-0.5)
         axs[0].set_xlabel('Time')
         axs[0].set_ylabel('Electricity flow (MW)')
         axs[0].tick_params(axis='x', rotation=0)
 
-        # 2) hydrogen flows
-        dv_hy_p = dv_hy.loc[:, (dv_hy != 0).any(axis=0)]
-        dv_hy_p.plot(ax=axs[1],
-                     # kind='bar', width=0.8,
-                     # edgecolor='black',
-                     )
-        # for container in axs[1].containers:
-        #     axs[1].bar_label(container)
+        # 1) electrolyzer flows
+        if dv_ele.empty:
+            print(f'There is no energy flows through the electrolyzer')
+        else:
+            # dv_ele_p = dv_ele.loc[:, (dv_ele != 0).any(axis=0)]     # remove 0 columns
+            # dv_ele_p.plot(ax=axs[0],
+            dv_ele.plot(ax=axs[1],
+                        # kind='bar', width=0.8,
+                        # edgecolor='black',
+                        )
 
-        axs[1].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        axs[1].set_title('b) Hydrogen flow in storage devices', y=-0.5)
-        axs[1].set_xlabel('Time')
-        axs[1].set_ylabel('Hydrogen flow (kg)')
-        axs[1].tick_params(axis='x', rotation=0)
+            max_val = dv_ele.max().max()
+            min_val = dv_ele.min().min()
+
+            max_t = dv_ele.idxmax().loc[dv_ele.max().idxmax()]
+            min_t = dv_ele.idxmin().loc[dv_ele.min().idxmin()]
+
+            axs[1].annotate(f'{max_val:.2f}', xy=(max_t, max_val), xytext=(max_t, 1.01 * max_val))
+            # arrowprops=dict(facecolor='black', shrink=0.05)
+            axs[1].annotate(f'{min_val:.2f}', xy=(min_t, min_val), xytext=(min_t, 1.01 * (min_val-0.1)))
+            # arrowprops=dict(facecolor='black', shrink=0.05))
+
+            axs[1].set_ylim([(min_val - 2), (max_val + 2)])
+            axs[1].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
+            axs[1].set_title('a) Electricity flow in storage devices', y=-0.5)
+            axs[1].set_xlabel('Time')
+            axs[1].set_ylabel('Electricity flow (MW)')
+            axs[1].tick_params(axis='x', rotation=0)
+
+        # 2) hydrogen flows
+        if dv_hy.empty:
+            print(f'There is no energy flows through the hydrogen tank')
+        else:
+            # dv_hy_p = dv_hy.loc[:, (dv_hy != 0).any(axis=0)]  # remove 0 columns
+            # dv_hy_p.plot(ax=axs[1],
+
+            dv_hy_in = dv_hy.filter(like='hIn')
+            dv_hy_out = dv_hy.filter(like='hOut')
+
+            mmax = dv_hy_in.max().max()
+            mmin = dv_hy_out.min().min()
+
+            # max_idx = dv_hy_in.idxmax()
+            # min_idx = dv_hy_out.idxmin()
+            #
+            # axs[1].annotate(f'Max: {max_hInc}',
+            #             xy=(max_idx, mmax),
+            #             xytext=(max_idx, mmax * 1.05),
+            #             arrowprops=dict(facecolor='black', arrowstyle="->"),
+            #             ha='center')
+
+            dv_hy.plot(ax=axs[2],
+                       # kind='bar', width=0.8,
+                       # edgecolor='black',
+                       )
+            # for container in axs[1].containers:
+            #     axs[1].bar_label(container)
+
+            axins = inset_axes(axs[2], width='70%', height='55%', loc='lower right',
+                               bbox_to_anchor=(0.4, 0.2, 0.6, 0.6),
+                               bbox_transform=axs[2].transAxes)
+            dv_hy.plot(ax=axins, legend=False)
+            axins.set_ylim(1.1 * (mmin-10), 1.1 * (mmax+15))
+
+            # hide axes or labels
+            # axins.set_xlabel('Time (zoomed in)')
+            # axins.set_ylabel('Flow (zoomed in)')
+            # axins.tick_params(labelleft=False, labelbottom=False)
+
+            axs[2].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
+            axs[2].set_title('b) Hydrogen flow in storage devices', y=-0.5)
+            axs[2].set_xlabel('Time')
+            axs[2].set_ylabel('Hydrogen flow (kg)')
+            axs[2].tick_params(axis='x', rotation=0)
 
         # 3) Fuel-cell flows
-        dv_fc_p = dv_fc.loc[:, (dv_fc != 0).any(axis=0)]
-        fc_h = dv_fc_p.filter(like='hInc')
-        fc_e = dv_fc_p.filter(like='cOut')
-        fc_e.plot(ax=axs[2],
-                  xlabel='Time',
-                  ylabel='Electricity flow (MW)',
-                  # kind='bar', width=0.8,
-                  # edgecolor='black',
-                  )
+        if dv_fc.empty:
+            print(f'There is no energy flows through the fuel cell')
+        else:
+            # dv_fc_p = dv_fc.loc[:, (dv_fc != 0).any(axis=0)]      # remove 0 columns
+            # fc_h = dv_fc_p.filter(like='hInc')
+            # fc_e = dv_fc_p.filter(like='cOut')
+            fc_h = dv_fc.filter(like='hInc')
+            fc_e = dv_fc.filter(like='cOut')
 
-        ax2 = axs[2].twinx()
-        fc_h.plot(ax=ax2,
-                  ylabel='Hydrogen (kg)',
-                  color='pink',
-                  # kind='bar', width=0.8,
-                  # edgecolor='black',
-                  )
+            max_h = fc_h.max().max()
+            min_h = fc_h.min().min()
+            max_e = fc_e.max().max()
+            min_e = fc_e.min().min()
 
-        # for container in axs[2].containers:
-        #     axs[2].bar_label(container)
+            max_ht = fc_h.idxmax().loc[fc_h.max().idxmax()]
+            min_ht = fc_h.idxmin().loc[fc_h.min().idxmin()]
+            max_et = fc_e.idxmax().loc[fc_e.max().idxmax()]
+            min_et = fc_e.idxmin().loc[fc_e.min().idxmin()]
 
-        axs[2].legend(bbox_to_anchor=(1.17, 1.02), loc='upper center', ncol=1)
-        ax2.legend(bbox_to_anchor=(1.08, 0.85), loc='upper left', ncol=1)
-        axs[2].tick_params(axis='x', rotation=0)
+            fc_e.plot(ax=axs[3], xlabel='Time', ylabel='Electricity flow (MW)', legend=False)
+            # kind='bar', width=0.8, edgecolor='black',
+            axs[3].annotate(f'{max_e:.2f}', xy=(max_et, max_e), xytext=(max_et, max_e + 0.1))
+            axs[3].annotate(f'{min_e:.2f}', xy=(min_et, min_e), xytext=(min_et, min_e + 0.1))
 
-        axs[2].set_title('c) Energy flows in fuel cells', y=-0.5)
+            ax3 = axs[3].twinx()
+            fc_h.plot(ax=ax3, ylabel='Hydrogen (kg)', color='pink', legend=False)
+            # kind='bar', width=0.8, # edgecolor='black',
+            ax3.annotate(f'{max_h:.2f}', xy=(max_ht, max_h), xytext=(max_ht, max_h + 5))
+            ax3.annotate(f'{min_h:.2f}', xy=(min_ht, max_h), xytext=(min_ht, min_h + 5))
 
-        for ax in axs:
-            ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
+            # for container in axs[2].containers:
+            #     axs[2].bar_label(container)
 
-        plt.subplots_adjust(top=0.981,
-                            bottom=0.108,
-                            left=0.083,
-                            right=0.809,
-                            hspace=0.6,
-                            wspace=0.2)
+            # ax2.legend(bbox_to_anchor=(1.11, 1.02), loc='upper left', ncol=1)
+            # axs[2].legend(bbox_to_anchor=(1.2, 0.85), loc='upper left', ncol=1)
+            axs[3].set_ylim([(min_e - 2), (max_e + 2)])
+            lines, labels = axs[3].get_legend_handles_labels()
+            lines2, labels2 = ax3.get_legend_handles_labels()
+            axs[3].legend(lines + lines2, labels + labels2, bbox_to_anchor=(1.1, 1.02), loc='upper left', ncol=1)
+
+            axs[3].tick_params(axis='x', rotation=0)
+
+            axs[3].set_title('c) Energy flows in fuel cells', y=-0.5)
+
+            # set x coordinate interval
+            # for ax in axs:
+            #     ax.xaxis.set_major_locator(ticker.MultipleLocator(24))
+
+            plt.subplots_adjust(top=0.981,
+                                bottom=0.108,
+                                left=0.083,
+                                right=0.809,
+                                hspace=0.6,
+                                wspace=0.2)
 
         # plt.tight_layout()
         print('Dv flows plotting finished \n'
               '--------------------------------')
 
         plt.savefig(f'{self.fig_dir}Dvflows.png')
-        # plt.show()
 
-
+#
 # path = '.'
 # res_dir = f'{path}/Results/'    # repository of results
 # fig_dir = f'{path}/Figures/'    # repository of figures
 # Fig = Plot(res_dir, fig_dir)
 #
-# Fig.plot_flow()
-# Fig.plot_overview()
-# Fig.plot_dv_flow()
+# # Fig.plot_flow('weekly')     # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
+# # Fig.plot_overview()
+# Fig.plot_dv_flow(20, 'day')     # unit: 'day', 'week'
 # plt.show()
-
-# Fig.plot_finance()
-# Fig.plot_capacity()
+#
+# # Fig.plot_finance()
+# # Fig.plot_capacity()

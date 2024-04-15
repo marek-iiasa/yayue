@@ -93,14 +93,17 @@ class Params:
     def set_price(self):
         ep = self.price_df.loc[0, 'eP']  # unit contract price, unit in [RMB/kWh]
         oc = self.price_df.loc[0, 'eO']  # unit price of managed electricity surplus, unit in [RMB/kWh]
+        # hc = self.price_df.loc[0, 'hUse']   # unit cost of using hydrogen, unit in [RMB/kg]
         self.penalty = self.price_df.loc[0, 'penalty']  # penalty factor, define the price for buying electricity
         self.ePrice = ep / 1e6 * 1e3  # unit contract price, unit in [million RMB/MWh]
         self.eOver = oc / 1e6 * 1e3  # unit price of managed electricity surplus, [million RMB/MWh]
+        # self.hCost = hc / 1e6   # unit cost of using hydrogen, unit in [million RMB/kg]
         # self.ePrice = ep  # unit contract price, unit in [thousands RMB/MWh]
         # self.eOver = oc  # unit price of managed electricity surplus, [thousands RMB/MWh]
 
         self.price_df['ePrice'] = self.ePrice
         self.price_df['eOver'] = self.eOver
+        # self.price_df['hCost'] = self.hCost
 
         print(f'Price related parameters are added')
         print(f'Price information:\n {self.price_df}')
@@ -196,6 +199,7 @@ class Params:
         eprice_str = '\nparam ePrice :=\n'
         ebprice_str = '\nparam eBprice :=\n'
         eover_str = '\nparam eOver :=\n'
+        # hcost_str = '\nparam hCost :=\n'
 
         inflow_str = "\nparam inflow :=\n"
 
@@ -219,6 +223,7 @@ class Params:
         eprice_str += f'{self.ePrice} \n'
         ebprice_str += f'{self.eBprice.round(4)} \n'
         eover_str += f'{self.eOver} \n'
+        # hcost_str += f'{self.hCost} \n'
 
         for t, value in self.inflow.items():
             inflow_str += f'{t} {value:.2f}\n'
@@ -268,6 +273,7 @@ class Params:
         eprice_str += ';\n'
         ebprice_str += ';\n'
         eover_str += ';\n'
+        # hcost_str += ';\n'
         inflow_str += ';\n'
         mxcap_str += ';\n'
         hmxin_str += ';\n'
@@ -286,8 +292,8 @@ class Params:
         #             + eh2_str + eph2_str + h2res_str + h2e_str
         #             + sinv_str + somc_str)
 
-        ampl_dat = (nhrs_str + se_str + sh_str + sc_str + eprice_str + ebprice_str + eover_str + inflow_str
-                    + mxcap_str + hmxin_str + hmxout_str + hini_str
+        ampl_dat = (nhrs_str + se_str + sh_str + sc_str + eprice_str + ebprice_str + eover_str  # hcost_str
+                    + inflow_str + mxcap_str + hmxin_str + hmxout_str + hini_str
                     + eh2_str + eph2_str + h2res_str + h2e_str
                     + sinv_str + somc_str)
 

@@ -61,6 +61,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.overCost = pe.Var(within=pe.Reals)    # the cost of management of surplus
     m.buyCost = pe.Var(within=pe.Reals)     # the cost of management of shortage
     m.balCost = pe.Var(within=pe.Reals)     # the cost of management of electricity surplus and shortage
+    # m.varCost = pe.Var(within=pe.Reals)     # the cost of using hydrogen energy
     m.OMC = pe.Var(within=pe.Reals)     # the operation and maintenance costs
 
     # Auxiliary variables
@@ -87,6 +88,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.ePrice = pe.Param(domain=pe.NonNegativeReals)     # contract price
     m.eBprice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]
     m.eOver = pe.Param(domain=pe.NonNegativeReals)       # unit price of electricity surplus, [million RMB]
+    # m.hCost = pe.Param(domain=pe.NonNegativeReals)   # the cost of using hydrogen energy, [million RMB/kg]
     m.sInv = pe.Param(m.S, domain=pe.NonNegativeReals)      # per unit investment cost of storage, [million RMB]
     m.sOmc = pe.Param(m.S, domain=pe.NonNegativeReals)       # per unit operation cost of storage, [million RMB]
 
@@ -192,9 +194,14 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def invCostC(mx):
         return mx.invCost == sum(mx.sInv[s] * mx.sNum[s] for s in mx.S)
 
+    # @m.Constraint()     # Variable cost of using hydrogen energy
+    # def varCostC(mx):
+    #     return mx.varCost == mx.hCost * sum(mx.h2C[t] for t in mx.T)
+
     @m.Constraint()     # Operation and maintenance cost of the storage system
     def OMCC(mx):
         return mx.OMC == sum(mx.sOmc[s] * mx.sNum[s] for s in mx.S)
+        # return mx.OMC == sum(mx.sOmc[s] * mx.sNum[s] for s in mx.S) + mx.varCost
 
     @m.Constraint()      # Cost of handling surplus
     def overCostC(mx):

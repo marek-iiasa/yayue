@@ -69,12 +69,13 @@ class Report:
 
     # generate and store needed results in df's in Excel file for plotting
     def toExcel(self):
-        print('Get results')
+        print(f'\nGet results')
 
         # finance related results
         self.finance_df.loc[0, 'Revenue'] = pe.value(self.m1.revenue)
         self.finance_df.loc[0, 'Income'] = pe.value(self.m1.income)
         self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
+        self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
         self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
         self.finance_df.loc[0, 'OverCost'] = pe.value(self.m1.overCost)
         self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
