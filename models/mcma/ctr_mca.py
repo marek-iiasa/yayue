@@ -32,8 +32,8 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
-        # self.epsilon = 0.0001  # fraction of self.cafAsp used for scaling the AF regularizing term
-        self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
+        self.epsilon = 1.e-4  # fraction of self.cafAsp used for scaling the AF regularizing term
+        #
         self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse
@@ -45,8 +45,10 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.cur_pref = 0   # index of currently processed preference
         self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
         self.neutralDone = False    # set to True (in set_stage()) after neutral sol. computed
-        # self.hotStart = None    # if payOff provided, jump to stage==5
 
+        self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term
+        # print(f'epsilon = {self.epsilon}')
+        print(f'epsilon = {self.epsilon:.1e}')
         self.rdCritSpc()    # read criteria specs from the config file
         self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
 
