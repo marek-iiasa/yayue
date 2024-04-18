@@ -32,7 +32,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
-        self.epsilon = 1.e-4  # fraction of self.cafAsp used for scaling the AF regularizing term
+        self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
         #
         self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
         self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
