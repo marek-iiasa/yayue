@@ -357,19 +357,19 @@ class Plot:
 
         supply_h = self.supply_df['supply'].iloc[0]
         avg_h = self.supply_df['avg_inflow'].iloc[0]
-        flow = self.flow_df
-        # hvol = self.dvol_df.filter(like='hVol')
-        # print('flow')
+        flow = self.flow_df.copy()
+
+        # print(self.flow_df.head(10))
+        # print(flow.head(10))
 
         # fig = pgo.Figure()
         fig = make_subplots(rows=2, cols=1)
 
         # set date index
         time_deltas = pd.to_timedelta(flow.index, unit='h')
-        start_date = pd.Timestamp('2024-01-01 00:00')
+        start_date = pd.Timestamp('2019-01-01 00:00')
         date_times = start_date + time_deltas
         flow.index = date_times
-        hvol.index = date_times
 
         if step == 'hourly':
             agg_df = flow
@@ -419,6 +419,7 @@ class Plot:
                            font=dict(size=18),
                            bgcolor='#f5f5f5',
                            showarrow=False,
+                           xanchor='left',  # starting from the left side of the x coordinate
                            row=2, col=1,
                            )
 
@@ -463,6 +464,7 @@ class Plot:
             font=dict(size=18),
             bgcolor='#f5f5f5',
             showarrow=False,
+            xanchor='left',  # starting from the left side of the x coordinate
             row=1, col=1,
         )
 
@@ -671,16 +673,16 @@ class Plot:
 
         plt.savefig(f'{self.fig_dir}Dvflows.png')
 
-#
 # path = '.'
 # res_dir = f'{path}/Results/'    # repository of results
 # fig_dir = f'{path}/Figures/'    # repository of figures
 # Fig = Plot(res_dir, fig_dir)
 #
-# # Fig.plot_flow('weekly')     # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
-# # Fig.plot_overview()
-# Fig.plot_dv_flow(20, 'day')     # unit: 'day', 'week'
+# Fig.plot_overview()     # Finance and storage overview
+# Fig.plot_flow('hourly')         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
+# # Fig.plot_flow('weekly')
+# # Fig.plot_dv_flow(20, 'day')     # unit: 'day', 'week'
 # plt.show()
 #
-# # Fig.plot_finance()
-# # Fig.plot_capacity()
+# Fig.plot_finance()
+# Fig.plot_capacity()
