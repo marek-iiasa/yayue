@@ -43,34 +43,33 @@ def driver():
 
     # make model
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
-    f_data = f'{data_dir}dat1.xlsx'      # test by ZZ
-    af_name = f'dat1'       # define filename of ampl format data file
-    # f_data = f'{data_dir}test1.xlsx'  # constant inflow test by ZZ
-    # af_name = f'test1'
 
-    # data processing: select the number of hours the model runs by changing n_periods
-    par = Params(data_dir, f_data, af_name, 8760)  # prepare all model parameters
-    # par = Params(data_dir, f_data, af_name, 8760)  # Optimization failed by using glpk
-    par.write_to_ampl()     # write model parameters to ampl format file
-    par.write_to_excel()    # write model parameters to excel file
+    # f_data = f'{data_dir}dat1.dat'     # real data test by ZZ
+    f_data = f'{data_dir}test1.dat'     # small scale data (720 periods, 30days) for testing the model
 
-    af_data = f'{data_dir}{af_name}.dat'    # test by ZZ
-    # f_data = f'{data_dir}tst1.dat'    # test by MM
-    model = inst(abst, af_data)
+    model = inst(abst, f_data)
     print(f'\nAnalysing instance of model {model.name}.')
 
+    # print the model
     # model.pprint()
 
-    print('\nsolving --------------------------------')
     # select solver
+    print('\nsolving --------------------------------')
 
     # opt = pe.SolverFactory('glpk')
-    # opt.options['write'] = f'{res_dir}model.mps'  # glpk
+    # opt.options['log'] = f'{res_dir}glpk_log.txt'
+    # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
+    # results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
     # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
+
     opt = pe.SolverFactory('gams')  # gams can be used as a solver
-    # results = opt.solve(model, tee=True, options={'solnFile': 'cplex.sol'}) # gams solver configuration
-    results = opt.solve(model, tee=True)   # True to pipe output to the terminal
+    results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
+                        add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
+
+    # opt.options['add_options'] = ['option mipkappastats=1;']
+    # results = opt.solve(model, io_options=options, tee=True)
+
     chk_sol(results)  # check the status of the solution
 
     # todo: clarify exception (uncomment next line) while loading the results
@@ -79,7 +78,6 @@ def driver():
     print('\nprocessing solution --------------------------------')
 
     # reporting results
-
     rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income', 'invCost', 'OMC', 'overCost', 'buyCost', 'balCost',
                 'dOut', 'sIn', 'ePrs', 'sOut', 'eIn', 'eSurplus', 'eBought', 'hIn', 'hOut', 'hVol', 'hInc', 'cOut']
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
@@ -97,9 +95,9 @@ def driver():
     fig = Plot(res_dir, fig_dir)
     fig.plot_overview()     # Finance and storage overview
     fig.plot_flow('hourly')         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
-    fig.plow_flow('weekly')
+    # fig.plot_flow('weekly')
     # fig.plot_finance()      # Finance overview
     # fig.plot_capacity()     # Storage capacity
-    fig.plot_dv_flow(20, 'day')  # Detailed flow of storage system, unit: 'day', 'week'
+    # fig.plot_dv_flow(20, 'day')  # Detailed flow of storage system, unit: 'day', 'week'
     plt.show()
     # plt.close()
