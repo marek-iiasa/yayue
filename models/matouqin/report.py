@@ -7,6 +7,7 @@ Reporting results
 # import os
 import pandas as pd
 import pyomo.environ as pe  # needed for extracting elements of the solution
+import logging
 
 
 class Report:
@@ -75,7 +76,7 @@ class Report:
         self.finance_df.loc[0, 'Revenue'] = pe.value(self.m1.revenue)
         self.finance_df.loc[0, 'Income'] = pe.value(self.m1.income)
         self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
-        self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
+        # self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
         self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
         self.finance_df.loc[0, 'OverCost'] = pe.value(self.m1.overCost)
         self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
@@ -85,7 +86,7 @@ class Report:
         for s in self.m1.sNum:
             self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
         for s in self.m1.sCap:
-            self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 0)
+            self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
 
         # supply and average inflows
         supply = pe.value(self.m1.supply)
@@ -170,7 +171,14 @@ class Report:
             print(f'Storage correct')
 
     def analyze(self):
-        print(f'\nResults analysis')
+        # logging.basicConfig(level=logging.INFO,
+        #                     # format='%(asctime)s - %(levelname)s - %(message)s',
+        #                     handlers=[
+        #                         logging.FileHandler(f'{self.rep_dir}output.log'),
+        #                         logging.StreamHandler()
+        #                     ])
+        #
+        # logging.info(f'\nResults analysis')
 
         print('1) Values of inflow -----------------------------------------------------------------------')
         ave_inflow = round((sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs), 2)
