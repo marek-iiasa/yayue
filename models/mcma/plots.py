@@ -296,7 +296,9 @@ class Plots:
         self.figures['kde_stages'] = fig
 
     def plot3D(self):
-        if self.n_crit != 3:
+        if self.n_crit < 3:      # just return for bi-criteria problem
+            return
+        if self.n_crit > 3:
             # todo: implement 3D subplots for more than 3 criteria
             print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
             return
