@@ -1,9 +1,7 @@
 Results/
 Figures/
-Data/dat1.dat
-Data/all_params.xlsx
-Data/dat2.xlsx
-Data/dat2.dat
+Data/Raw
+Data/Temp
 plot_org.py
 test.py
-Data/test1.dat
+

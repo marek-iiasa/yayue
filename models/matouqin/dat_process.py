@@ -95,8 +95,8 @@ class Params:
         oc = self.price_df.loc[0, 'eO']  # unit price of managed electricity surplus, unit in [RMB/kWh]
         # hc = self.price_df.loc[0, 'hUse']   # unit cost of using hydrogen, unit in [RMB/kg]
         self.penalty = self.price_df.loc[0, 'penalty']  # penalty factor, define the price for buying electricity
-        self.ePrice = ep / 1e6 * 1e3  # unit contract price, unit in [million RMB/MWh]
-        self.eOver = oc / 1e6 * 1e3  # unit price of managed electricity surplus, [million RMB/MWh]
+        self.ePrice = round((ep / 1e6 * 1e3), 4)  # unit contract price, unit in [million RMB/MWh]
+        self.eOver = round((oc / 1e6 * 1e3), 4)  # unit price of managed electricity surplus, [million RMB/MWh]
         # self.hCost = hc / 1e6   # unit cost of using hydrogen, unit in [million RMB/kg]
         # self.ePrice = ep  # unit contract price, unit in [thousands RMB/MWh]
         # self.eOver = oc  # unit price of managed electricity surplus, [thousands RMB/MWh]
@@ -310,7 +310,8 @@ class Params:
 
     # 10) store all parameters in excel file
     def write_to_excel(self):
-        excel_file = f'{self.dat_dir}all_params.xlsx'
+        temp_dir = f'{self.dat_dir}/Temp/'
+        excel_file = f'{temp_dir}{self.name_ampl}_all_params.xlsx'
 
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
             self.cf_df.to_excel(writer, sheet_name='cf', index=False)
@@ -325,11 +326,20 @@ class Params:
         print(f'All parameters are stored in: {excel_file}')
 
 
-# path = '.'
-# dat_dir = f'{path}/Data/'
-# f_data = f'{dat_dir}dat1.xlsx'
-# par = Params(dat_dir, f_data, 'dat1', 2400)   #
-# f_data = f'{dat_dir}dat2.xlsx'
-# par = Params(dat_dir, f_data, 'dat2')   #
-# par.write_to_ampl()
-# par.write_to_excel()
+path = '.'
+dat_dir = f'{path}/Data/'
+
+# select the data file
+# f_data = f'{dat_dir}Raw/dat1.xlsx'
+# af_name = f'dat1'
+
+# preparing test data
+f_data = f'{dat_dir}Raw/test1.xlsx'
+af_name = f'test1'
+
+# data processing: select the number of hours the model runs by changing n_periods
+# par = Params(dat_dir, f_data, af_name, 8760)    # prepare all model parameters
+par = Params(dat_dir, f_data, af_name, 240)    # prepare model parameters for testing, 30days
+
+par.write_to_ampl()     # write model parameters to ampl format file
+par.write_to_excel()    # write model parameters to Excel file

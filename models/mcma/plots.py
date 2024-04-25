@@ -132,6 +132,9 @@ class Plots:
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
                                    cmap=self.cmap1, s=m_size)
 
+                ax[i_plot].set_xlim(-5, 105)
+                ax[i_plot].set_ylim(-5, 105)
+                # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
                 '''
                 # labels of points used only for debugging purposes
                 for (i, seq) in enumerate(self.seq):
@@ -288,7 +291,7 @@ class Plots:
         self.figures['kde_stages'] = fig
 
     def plot3D(self):
-        if self.n_crit < 6:  # ad-hoc suppress 3D
+        if self.n_crit < 3:      # just return for bi-criteria problem
             return
         if self.n_crit > 3:
             # todo: implement 3D subplots for more than 3 criteria
