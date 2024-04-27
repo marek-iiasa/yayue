@@ -91,24 +91,24 @@ def driver():
     rep = Report(model, res_dir, rep_vars)      # report results
     rep.var_vals()  # extract from the solution values of the requested variables
     rep.summary()  # store the extracted values in a df
-    rep.check()  # check storage flow results
-    rep.toExcel()   # store the extracted values in Excel for plotting
+    # rep.check()  # check storage flow results
+    # rep.toExcel()   # store the extracted values in Excel for plotting
 
     print(f'\nPlace holder for report results of model {model.name}.')
     rep.analyze()  # analyze the results
 
-    print('\nPlotting begins ----------------------------------------------------------------')
-    fig = Plot(res_dir, fig_dir)
-
-    fig.plot_flow('hourly', True)         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
+    # print('\nPlotting begins ----------------------------------------------------------------')
+    # fig = Plot(res_dir, fig_dir)
+    #
+    # fig.plot_flow('hourly', True)         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
     # fig.plot_flow('daily', True)
     # fig.plot_flow('weekly', False)
     # fig.plot_flow('monthly', False)
     #
-    fig.plot_overview()  # Finance and storage overview
+    # fig.plot_overview()  # Finance and storage overview
     # fig.plot_dv_flow(3, 'week')     # Detailed flow of storage system, unit: 'day', 'week'
     #
     # # fig.plot_finance()      # Finance overview
     # # fig.plot_capacity()     # Storage capacity
     #
-    show_figs()     # show figures
+    # show_figs()     # show figures
