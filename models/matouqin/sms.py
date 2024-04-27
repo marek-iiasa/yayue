@@ -86,8 +86,9 @@ def mk_sms():      # p: model parameters prepared in the Params class
     # m.Hrs = pe.Param(domain=pe.NonNegativeIntegers)     # the during of decision time (hour)
     # m.ann = pe.Param(m.S, domain=pe.NonNegativeReals)       # annualization factor
     m.ePrice = pe.Param(domain=pe.NonNegativeReals)     # contract price
+    # m.ePrice = pe.Param(domain=pe.NonNegativeReals, mutable=True)  # contract price
     m.eBprice = pe.Param(domain=pe.NonNegativeReals)     # purchase price of buying electricity, [million RMB/MW]
-    m.eOver = pe.Param(domain=pe.NonNegativeReals)       # unit price of electricity surplus, [million RMB]
+    m.eOver = pe.Param(domain=pe.Reals)       # unit price of electricity surplus, [million RMB]
     # m.hCost = pe.Param(domain=pe.NonNegativeReals)   # the cost of using hydrogen energy, [million RMB/kg]
     m.sInv = pe.Param(m.S, domain=pe.NonNegativeReals)      # per unit investment cost of storage, [million RMB]
     m.sOmc = pe.Param(m.S, domain=pe.NonNegativeReals)       # per unit operation cost of storage, [million RMB]
