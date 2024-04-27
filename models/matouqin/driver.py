@@ -11,7 +11,7 @@ from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from inst import *
 from sms import *  # handles sub model/block of AF and links to the core/substantive model
-from dat_process import Params  # data processing
+# from dat_process import Params  # data processing
 from report import *    # report all variables and needed results for plotting
 from plot import *      # plot needed variables
 
@@ -37,6 +37,10 @@ def driver():
     fig_dir = f'{path}/Figures/'  # repository of figures
 
     # check repository
+    if not os.path.exists(res_dir):
+        os.makedirs(res_dir, mode=0o755)
+        print(f'Directory {res_dir} created')
+
     if not os.path.exists(fig_dir):
         os.makedirs(fig_dir, mode=0o755)
         print(f'Directory {fig_dir} created')
@@ -45,7 +49,8 @@ def driver():
     abst = mk_sms()    # initialize Model class that generates model instance (ConcreteModel)
 
     # f_data = f'{data_dir}dat1.dat'     # real data test by ZZ
-    f_data = f'{data_dir}test1.dat'     # small scale data (720 periods, 30days) for testing the model
+    f_data = f'{data_dir}test1.dat'     # small scale data for testing the model
+    # f_data = f'{data_dir}test2.dat'     # small scale data for testing the model
 
     model = inst(abst, f_data)
     print(f'\nAnalysing instance of model {model.name}.')
@@ -56,19 +61,20 @@ def driver():
     # select solver
     print('\nsolving --------------------------------')
 
-    # opt = pe.SolverFactory('glpk')
-    # opt.options['log'] = f'{res_dir}glpk_log.txt'
-    # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
-    # results = opt.solve(model, tee=True)  # True to pipe output to the terminal
+    # glpk settings
+    opt = pe.SolverFactory('glpk')
+    opt.options['log'] = f'{res_dir}glpk_log.txt'
+    opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
+    results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
+    # cplex settings
+    # opt = pe.SolverFactory('gams')  # gams can be used as a solver
+    # results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
+    #                     add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
+
+    # other solvers
     # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
-
-    opt = pe.SolverFactory('gams')  # gams can be used as a solver
-    results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
-                        add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
-
-    # opt.options['add_options'] = ['option mipkappastats=1;']
-    # results = opt.solve(model, io_options=options, tee=True)
+    # results = opt.solve(model, tee=True)
 
     chk_sol(results)  # check the status of the solution
 
@@ -93,11 +99,16 @@ def driver():
 
     print('\nPlotting begins ----------------------------------------------------------------')
     fig = Plot(res_dir, fig_dir)
-    fig.plot_overview()     # Finance and storage overview
-    fig.plot_flow('hourly')         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
-    # fig.plot_flow('weekly')
-    # fig.plot_finance()      # Finance overview
-    # fig.plot_capacity()     # Storage capacity
-    # fig.plot_dv_flow(20, 'day')  # Detailed flow of storage system, unit: 'day', 'week'
-    plt.show()
-    # plt.close()
+
+    fig.plot_flow('hourly', True)         # Flow overview, 'hourly', 'daily', 'weekly', 'monthly' flows
+    # fig.plot_flow('daily', True)
+    # fig.plot_flow('weekly', False)
+    # fig.plot_flow('monthly', False)
+    #
+    fig.plot_overview()  # Finance and storage overview
+    # fig.plot_dv_flow(3, 'week')     # Detailed flow of storage system, unit: 'day', 'week'
+    #
+    # # fig.plot_finance()      # Finance overview
+    # # fig.plot_capacity()     # Storage capacity
+    #
+    show_figs()     # show figures
