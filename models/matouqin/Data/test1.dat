@@ -16,12 +16,10 @@ set Sc :=
 Cell1 
 ;
 
-param ePrice :=
-0.08
-;
+param ePrice := 10 ;
 
 param eBprice :=
-0.24
+24
 ;
 
 param eOver :=
@@ -30,10 +28,10 @@ param eOver :=
 
 param inflow :=
 0 10.00
-1 10.00
-2 10.00
-3 10.00
-4 10.00
+1 1.00
+2 20.00
+3 0.00
+4 5.00
 ;
 
 param mxCap :=
@@ -71,13 +69,13 @@ Cell1 0.02
 ;
 
 param sInv :=
-Elec1 300
-Tank1 50
-Cell1 50
+Elec1 3
+Tank1 5
+Cell1 5
 ;
 
 param sOmc :=
 Elec1 5
-Tank1 0
+Tank1 1
 Cell1 5
 ;

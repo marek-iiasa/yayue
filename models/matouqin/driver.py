@@ -56,7 +56,7 @@ def driver():
     print(f'\nAnalysing instance of model {model.name}.')
 
     # print the model
-    # model.pprint()
+    model.pprint()
 
     # select solver
     print('\nsolving --------------------------------')
