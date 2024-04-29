@@ -55,7 +55,7 @@ Tank1 0
 ;
 
 param eh2 :=
-Elec1 19.9778 
+Elec1 20
 ;
 
 param eph2 :=
@@ -71,13 +71,13 @@ Cell1 0.02
 ;
 
 param sInv :=
-Elec1 0.3
-Tank1 0.05
-Cell1 0.05
+Elec1 300
+Tank1 50
+Cell1 50
 ;
 
 param sOmc :=
-Elec1 0.005
-Tank1 0.0
-Cell1 0.005
+Elec1 5
+Tank1 0
+Cell1 5
 ;
