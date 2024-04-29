@@ -9,8 +9,7 @@ Elec1
 ;
 
 set Sh :=
-Tank1 
-Tank2 
+Tank1
 ;
 
 set Sc :=
@@ -18,15 +17,15 @@ Cell1
 ;
 
 param ePrice :=
-0.0008 
+0.08
 ;
 
 param eBprice :=
-0.0024 
+0.24
 ;
 
 param eOver :=
--0.0 
+0.24
 ;
 
 param inflow :=
@@ -39,24 +38,20 @@ param inflow :=
 
 param mxCap :=
 Elec1 5 
-Tank1 1000 
-Tank2 500 
+Tank1 1000
 Cell1 0.3 
 ;
 
 param hMxIn :=
-Tank1 300 
-Tank2 100 
+Tank1 300
 ;
 
 param hMxOut :=
-Tank1 300 
-Tank2 100 
+Tank1 300
 ;
 
 param hini :=
-Tank1 0 
-Tank2 0 
+Tank1 0
 ;
 
 param eh2 :=
@@ -64,13 +59,11 @@ Elec1 19.9778
 ;
 
 param eph2 :=
-Tank1 0.001 
-Tank2 0.001 
+Tank1 0.001
 ;
 
 param h2Res :=
-Tank1 1 
-Tank2 1 
+Tank1 1
 ;
 
 param h2e :=
@@ -78,15 +71,13 @@ Cell1 0.02
 ;
 
 param sInv :=
-Elec1 0.0003 
-Tank1 0.0 
-Tank2 0.0 
-Cell1 0.0 
+Elec1 0.3
+Tank1 0.05
+Cell1 0.05
 ;
 
 param sOmc :=
-Elec1 0.0 
-Tank1 0.0 
-Tank2 0.0 
-Cell1 0.0 
+Elec1 0.005
+Tank1 0.0
+Cell1 0.005
 ;
