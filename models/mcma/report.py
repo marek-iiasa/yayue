@@ -189,7 +189,7 @@ class Report:
 
         # plot solutions
         plots = Plots(self.mc, self.df_vars)    # plots
-        # plots.plot3D()    # 3D plot
+        plots.plot3D()    # 3D plot
         # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # plots.kde_stages()  # KDE + histograms vs stages
         plots.plot2D()    # 2D plots

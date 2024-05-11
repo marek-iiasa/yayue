@@ -177,7 +177,7 @@ class Plots:
         x_var_data = df_vars[x_var].to_numpy()  # Should be (N,)
         y_vars_data = df_vars[y_vars].to_numpy().T  # Should be (M, N)
 
-        ax.stackplot(x_var_data, y_vars_data, labels=y_vars)
+        ax.stackplot(x_var_data, y_vars_data, labels=y_vars, linewidth=0)
 
         ax.set_xticks(np.linspace(x_var_data[0], x_var_data[-1], 7))
         ax.set_yticks(np.linspace(np.min(y_vars_data), np.max(y_vars_data), 7))
