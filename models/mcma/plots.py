@@ -309,6 +309,27 @@ class Plots:
         # warning suppressed here (complains on unfilled params x and y)
         ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
                    label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+
+        # Cubes drawing
+        cubes = self.mc.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
+        for i, cube in cubes.items():
+            # p1 = cube.aspAch
+            # p2 = cube.resAch
+            p1 = cube.s1.a_vals
+            p2 = cube.s2.a_vals
+            c = 'k' if cube.used else 'r'
+            if p1 and p2:
+                bottom = [(p1[0], p1[1], p1[2]), (p1[0], p2[1], p1[2]), (p2[0], p2[1], p1[2]), (p2[0], p1[1], p1[2]),
+                          (p1[0], p1[1], p1[2])]
+                ax.plot(*zip(*bottom), c=c, lw=0.5)
+
+                top = [(p1[0], p1[1], p2[2]), (p1[0], p2[1], p2[2]), (p2[0], p2[1], p2[2]), (p2[0], p1[1], p2[2]),
+                       (p1[0], p1[1], p2[2])]
+                ax.plot(*zip(*top), c=c, lw=0.5)
+
+                for b, t in zip(bottom, top):
+                    ax.plot(*zip(*[b, t]), c=c, lw=0.5)
+
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
         # ax.view_init(elev=3, azim=-135, roll=0)
         ax.view_init(elev=15, azim=45, roll=0)
