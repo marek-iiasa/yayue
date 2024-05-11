@@ -283,7 +283,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                     cr.is_active = False
                     cr.is_fixed = True
                     cr.res = cr.asp
-                    achiv = cr.val2ach(self.s1.a_vals[i])  # CAF (same/similar for both solutions)
+                    achiv = cr.val2ach(self.s1.vals[i])  # CAF (same/similar for both solutions)
                     self.aspAch.append(achiv)
                     self.resAch.append(achiv)
                     if self.mc.cfg.get('verb') > 1:
