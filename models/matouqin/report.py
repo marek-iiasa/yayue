@@ -146,7 +146,7 @@ class Report:
         if check:
             check_df = pd.DataFrame(check)
             check_df.to_csv(self.check_df_vars, index=False)
-            print(f'Storage problem, please check csv file: {self.check_df_vars}')
+            print(f'Store and release at the same time, please check csv file: {self.check_df_vars}')
 
             # Check inflow and outflow of hydrogen tanks
             check_hy = []
@@ -163,7 +163,7 @@ class Report:
             if check_hy:
                 check_hy = pd.DataFrame(check)
                 check_hy.to_csv(self.check_df_hy, index=False)
-                print(f'Hydrogen tank flows problem, please check csv file: {self.check_df_hy}')
+                print(f'Store and release hydrogen at the same time, please check csv file: {self.check_df_hy}')
             else:
                 print(f'Hydrogen tank flows correct')
 
@@ -187,8 +187,8 @@ class Report:
         print('\n2) Values of decision variables ------------------------------------------------')
         print('2.1 Supply ------------------------------------------------------------------------')
         supply = round(pe.value(self.m1.supply), 2)
-        v1 = round((supply / ave_inflow), 2)
-        print(f'Supply = {supply} MW per hour, {v1} times of average inflow')
+        r_sa = round((supply / ave_inflow), 2)
+        print(f'Supply = {supply} MW per hour, {r_sa} times of average inflow')
 
         print('\n2.2 Storage investment ---------------------------------------------')
         for s in self.m1.S:
@@ -203,14 +203,14 @@ class Report:
                 inv = round((sinv * num), 2)     # yearly investment of storage devices
 
             print(f'\nInvestment of {s}:')
-            print(f'Unit capacity is {mxcap} MW')
-            print(f'Yearly investment is {sinv} million RMB')
-            print(f'Numbers of invest = {snum}')
+            print(f'Unit capacity of {s} is {mxcap} MW')
+            print(f'Investment for one {s} is {sinv} million RMB')
+            print(f'Numbers of {s} = {snum}')
             print(f'Total capacity = {scap} MW')
-            print(f'Total yearly investment = {inv} million RMB')
+            print(f'Total investment cost of {s} = {inv} million RMB')
 
         print('\n3) Overview of outcome variables -------------------------------------------------------------------')
-        revenue = round(pe.value(self.m1.revenue), 2)
+        revenue = round(pe.value(self.m1.revenue), 4)
         income = round(pe.value(self.m1.income), 2)
         invcost = round(pe.value(self.m1.invCost), 2)
         omc = round(pe.value(self.m1.OMC), 2)
@@ -220,47 +220,53 @@ class Report:
 
         print(f'Total revenue  = {revenue} million RMB')
         print(f'Income  = {income} million RMB')
+        print(f'Balance cost  = {balcost} million RMB')
         print(f'Investment cost  = {invcost} million RMB')
         print(f'Operation and maintenance cost  = {omc} million RMB')
         print(f'Surplus cost  = {overcost} million RMB')
         print(f'Shortage cost  = {buycost} million RMB')
-        print(f'Balance cost  = {balcost} million RMB')
 
         cost = invcost + omc + balcost
-        ratio = round((cost / income * 100), 2)
+        storcost = invcost + omc
+
+        if income != 0:
+            r_ci = round((cost / income * 100), 2)
+        else:
+            r_ci = 0
 
         print(f'\nRevenue and cost analysis:')
         if revenue > 0:
-            v2 = round((income / revenue), 2)
-            print(f'Income is {v2} times of revenue')
-            print(f'Total cost is {cost} million RMB, the cost-income ratio is {ratio}%')
+            r_ir = round((income / revenue), 2)
+            print(f'Income is {r_ir} times of revenue')
+            print(f'Total cost is {cost} million RMB, the cost-income ratio is {r_ci}%')
         else:
-            v3 = round((income / cost), 2)
-            v4 = round((cost / revenue), 2)
-            print(f'\nIncome is {v3} times of revenue')
-            print(f'\nTotal cost is {cost} million RMB, the cost-revenue ratio is {v4}%')
+            r_ic = round((income / cost), 2)
+            r_cr = round((cost / revenue), 2)
+            print(f'\nIncome is {r_ic} times of revenue')
+            print(f'\nTotal cost is {cost} million RMB, the cost-revenue ratio is {r_cr}%')
 
         print(f'\nCost structure:')
         if cost != 0:
-            v5 = round((invcost / cost * 100), 2)
-            v6 = round((omc / cost * 100), 2)
-            v7 = round((balcost / cost * 100), 2)
+            r_sc = round((storcost / cost * 100), 2)
+            r_invc = round((invcost / cost * 100), 2)
+            r_oc = round((omc / cost * 100), 2)
+            r_bc = round((balcost / cost * 100), 2)
 
-            print(f'Investment cost accounts for {v5}% of total cost')
-            print(f'Operation and Maintenance cost accounts for {v6}% of total cost')
-            print(f'Balance cost accounts for {v7}% of total cost')
+            print(f'Investment cost accounts for {r_invc}% of total cost')
+            print(f'Operation and Maintenance cost accounts for {r_oc}% of total cost')
+            print(f'Total storage cost is {r_sc} of total cost, and balance cost accounts for {r_bc}% of total cost')
 
-            v8 = round((overcost / cost * 100), 2)
-            v9 = round((buycost / cost * 100), 2)
+            r_overc = round((overcost / cost * 100), 2)
+            r_buyc = round((buycost / cost * 100), 2)
 
             if balcost != 0:
-                v10 = round((overcost / balcost * 100), 2)
-                v11 = round((buycost / balcost * 100), 2)
-                print(f'Electricity loss accounts for {v8}% of total cost, and {v10}% of balance cost')
-                print(f'Electricity purchase accounts for {v9}% of total cost, and {v11}% of balance cost')
+                r_ob = round((overcost / balcost * 100), 2)
+                r_bb = round((buycost / balcost * 100), 2)
+                print(f'Electricity loss accounts for {r_overc}% of total cost, and {r_ob}% of balance cost')
+                print(f'Electricity purchase accounts for {r_buyc}% of total cost, and {r_bb}% of balance cost')
             else:
-                print(f'Electricity loss accounts for {v8}% of total cost.')
-                print(f'Electricity purchase accounts for {v9}% of total cost.')
+                print(f'Electricity loss accounts for {r_overc}% of total cost.')
+                print(f'Electricity purchase accounts for {r_buyc}% of total cost.')
 
         print(f'\n4) Overview of energy flows ----------------------------------------------------------------')
         inflow_total = round((sum(self.m1.inflow[t] for t in self.m1.T)), 2)
@@ -272,23 +278,30 @@ class Report:
         esurplus_total = round((sum(pe.value(self.m1.eSurplus[t]) for t in self.m1.T)), 2)
         ebought_total = round((sum(pe.value(self.m1.eBought[t]) for t in self.m1.T)), 2)
 
-        ev1 = round((dout_total / supply_total * 100), 2)
-        ev2 = round((sin_total / inflow_total * 100), 2)
-        ev3 = round((sout_total / supply_total * 100), 2)
+        er_si = round((sin_total / inflow_total * 100), 2)
         # ev4 = round((eprs_total / inflow_total * 100), 2)
-        ev5 = round((esurplus_total / inflow_total * 100), 2)
-        ev6 = round((ebought_total / supply_total * 100), 2)
+        er_esi = round((esurplus_total / inflow_total * 100), 2)
+
+        if supply_total != 0:
+            er_ds = round((dout_total / supply_total * 100), 2)
+            er_ss = round((sout_total / supply_total * 100), 2)
+            er_ebs = round((ebought_total / supply_total * 100), 2)
+        else:
+            print(f'There is no supply.')
+            er_ds = 0
+            er_ss = 0
+            er_ebs = 0
 
         print(f'Total electricity inflow is {inflow_total} MW')
         print(f'Total supply is {supply_total} MW')
-        print(f'Total directly output is {dout_total} MW, {ev1}% of the total supply.')
+        print(f'Total directly output is {dout_total} MW, {er_ds}% of the total supply.')
         print(f'Total electricity inflow to storage system is {sin_total} MW, '
-              f'{ev2}% of the total inflow.')
+              f'{er_si}% of the total inflow.')
         print(f'Total electricity outflow from storage system is {sout_total} MW, '
-              f'{ev3}% of the total supply.')
+              f'{er_ss}% of the total supply.')
         print(f'Total surplus (loss) is {esurplus_total} MW, '
-              f'{ev5}% of the total inflow, '
+              f'{er_esi}% of the total inflow, '
               f'costs {overcost} million RMB.')
         print(f'Total electricity purchase is {ebought_total} MW, '
-              f'{ev6}% of the total supply, '
+              f'{er_ebs}% of the total supply, '
               f'costs {buycost} million RMB.')

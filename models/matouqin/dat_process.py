@@ -125,6 +125,7 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the end of year)
         invshare = (((1 + self.ydis) ** self.elec_df['n'] * self.ydis)
                     / ((1 + self.ydis) ** self.elec_df['n'] - 1))
+
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.elec_df['n']+1) * self.ydis)
         #             / ((1 + self.ydis) ** self.elec_df['n'] - 1))
@@ -172,9 +173,11 @@ class Params:
         # annuity factor used to generate annualized investment cost (pay at the end of year)
         invshare = (((1 + self.ydis) ** self.fcell_df['n'] * self.ydis)
                     / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
+
         # annuity factor used to generate annualized investment cost (pay at the beginning of year)
         # invshare = (((1 + self.ydis) ** (self.fcell_df['n'] + 1) * self.ydis)
         #             / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
+
         # sinv = invshare * self.fcell_df['sInvcost']
         sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.T
         omc = self.fcell_df['sOmc'] / 8760 * self.T
@@ -222,6 +225,7 @@ class Params:
 
         eprice_str += f'{self.ePrice} \n'
         ebprice_str += f'{self.eBprice.round(4)} \n'
+        # ebprice_str += f'{self.eBprice} \n'
         eover_str += f'{self.eOver} \n'
         # hcost_str += f'{self.hCost} \n'
 
@@ -234,10 +238,12 @@ class Params:
             mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
 
             eh2_str += f'{row["name"]} {round(row["eh2"], 4)} \n'
+            # eh2_str += f'{row["name"]} {row["eh2"]} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
             somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+            # sinv_str += f'{row["name"]} {row["sInv"]}\n'
+            # somc_str += f'{row["name"]} {row["OMC"]} \n'
 
         for index, row in self.hytank_df.iterrows():
             sh_str += f'{row["name"]} \n'
@@ -251,9 +257,14 @@ class Params:
             eph2_str += f'{row["name"]} {round(row["eph2"], 4)} \n'
             h2res_str += f'{row["name"]} {round(row["h2Res"], 4)} \n'
 
+            # eph2_str += f'{row["name"]} {row["eph2"]} \n'
+            # h2res_str += f'{row["name"]} {row["h2Res"]} \n'
+
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
             somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+
+            # sinv_str += f'{row["name"]} {row["sInv"]}\n'
+            # somc_str += f'{row["name"]} {row["OMC"]} \n'
 
         for index, row in self.fcell_df.iterrows():
             sc_str += f'{row["name"]} \n'
@@ -261,10 +272,13 @@ class Params:
             mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
 
             h2e_str += f'{row["name"]} {round(row["h2e"], 2)} \n'
+            # h2e_str += f'{row["name"]} {row["h2e"]} \n'
 
             sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            # somc_str += f'{row["name"]} {round(row["sOmc"], 4)} \n'
             somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+
+            # sinv_str += f'{row["name"]} {row["sInv"]}\n'
+            # somc_str += f'{row["name"]} {row["OMC"]} \n'
 
         nhrs_str += ';\n'
         se_str += ';\n'
@@ -330,16 +344,16 @@ path = '.'
 dat_dir = f'{path}/Data/'
 
 # select the data file
-# f_data = f'{dat_dir}Raw/dat1.xlsx'
-# af_name = f'dat1'
+f_data = f'{dat_dir}Raw/dat1.xlsx'
+af_name = f'dat1'
 
 # preparing test data
-f_data = f'{dat_dir}Raw/test1.xlsx'
-af_name = f'test1'
+# f_data = f'{dat_dir}Raw/test1.xlsx'
+# af_name = f'test3'
 
 # data processing: select the number of hours the model runs by changing n_periods
 # par = Params(dat_dir, f_data, af_name, 8760)    # prepare all model parameters
-par = Params(dat_dir, f_data, af_name, 240)    # prepare model parameters for testing, 30days
+par = Params(dat_dir, f_data, af_name, 8670)    # prepare model parameters for testing, 30days
 
 par.write_to_ampl()     # write model parameters to ampl format file
 par.write_to_excel()    # write model parameters to Excel file
