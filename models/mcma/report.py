@@ -195,6 +195,7 @@ class Report:
         plots.plot2D()    # 2D plots
         plots.parallel()  # Parallel coordinates plot
         plots.vars('actS')    # plot the requested model variables
+        plots.vars_alternative()
 
         plots.save_figures()
         if plots.show_plot:

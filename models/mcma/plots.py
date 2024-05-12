@@ -3,6 +3,8 @@ import pandas as pd
 from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
+from matplotlib import patches
+import matplotlib as mpl
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import LinearLocator
 import seaborn as sns
@@ -188,6 +190,46 @@ class Plots:
 
         plt.tight_layout()
         self.figures['vars'] = fig
+
+    def vars_alternative(self):
+        colors = mpl.rcParams['axes.prop_cycle'].by_key()['color']
+
+        fig, ax = plt.subplots(figsize=(11, 7))
+        # TODO Marek: Please check what variables should be used as X and Y and change it to fit general case
+        x_var = 'cost'  # Variable used for X axis
+        y_vars = [c for c in self.df_vars.columns if 'act' in c]
+
+        df_vars = self.df_vars.astype('float').sort_values(by=[x_var, *y_vars])
+        bar_width = (df_vars[x_var].iloc[-1] - df_vars[x_var].iloc[0]) / df_vars[x_var].unique().shape[0]
+
+        for x_val, x_val_df in df_vars.groupby(by=x_var):
+            y_vars_data = x_val_df[y_vars].to_numpy()
+            if y_vars_data.shape[0] == 1:
+                bottom = 0
+                for i, y_val in enumerate(y_vars_data[0]):
+                    ax.bar(x_val, y_val, bar_width,
+                           color=colors[i % len(y_vars)], bottom=bottom, linewidth=0)
+                    bottom += y_val
+            else:
+                new_bar_width = bar_width / y_vars_data.shape[0]
+                x_values = np.linspace(x_val - bar_width / 2 + new_bar_width / 2,
+                                       x_val + bar_width / 2 - new_bar_width / 2,
+                                       y_vars_data.shape[0])
+                bottom = np.zeros_like(y_vars_data.T[0])
+                for i, y_val in enumerate(y_vars_data.T):
+                    ax.bar(x_values, y_val, new_bar_width,
+                           color=colors[i % len(y_vars)], bottom=bottom, linewidth=0)
+                    bottom += y_val
+
+        ax.set_xlabel(x_var)
+        ax.set_ylabel('Criteria values')
+
+        legend_patches = [patches.Patch(color=c, label=l) for c, l in zip(colors, y_vars)]
+        ax.legend(handles=legend_patches, bbox_to_anchor=(0., 1.02, 1., .102), loc='upper left', ncols=len(y_vars),
+                  mode='expand')
+
+        plt.tight_layout()
+        self.figures['vars_alternative'] = fig
 
     def parallel(self):
         fig3 = plt.figure(figsize=(self.n_crit * 5, 7))
