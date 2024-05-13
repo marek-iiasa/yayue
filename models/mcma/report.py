@@ -76,11 +76,12 @@ class Report:
         if self.mc.cur_stage < 4:   # don't store solutions during payOff table computations
             return
 
+        # todo: modify to skip storing dominated solutions
         if len(self.rep_vars):
             self.req_vals()     # extract and store values of the core-model variables requested to be reported
 
-        if self.mc.par_rep is None:    # initialize ParRep() object (must be after payOff table was computed)
-            self.mc.par_rep = ParRep(self.mc)
+        # if self.mc.par_rep is None:    # initialize ParRep() object (must be after payOff table was computed)
+        #     self.mc.par_rep = ParRep(self.mc)
 
         # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
         self.mc.par_rep.addSol(self.itr_id)
@@ -192,10 +193,10 @@ class Report:
         plots.plot3D()    # 3D plot
         # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # plots.kde_stages()  # KDE + histograms vs stages
-        plots.plot2D()    # 2D plots
-        plots.parallel()  # Parallel coordinates plot
-        plots.vars('actS')    # plot the requested model variables
-        plots.vars_alternative()
+        # plots.plot2D()    # 2D plots
+        # plots.parallel()  # Parallel coordinates plot
+        # plots.vars('actS')    # plot the requested model variables
+        # plots.vars_alternative()
 
         plots.save_figures()
         if plots.show_plot:

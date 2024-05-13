@@ -44,11 +44,17 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
         self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
+        self.iniSolDone = False    # set to True after all initial Pareto-sol (except of neutral) computed
         self.neutralDone = False    # set to True (in set_stage()) after neutral sol. computed
 
         self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term
         # print(f'epsilon = {self.epsilon}')
         print(f'epsilon = {self.epsilon:.1e}')
+        do_neutral = self.cfg.get('neutral') == True
+        self.neutralDone = not do_neutral
+        print(f'generate neutral solution = {do_neutral}')
+        ini_solution_id = self.opt('ini_sol', 'undefined')  # id of initial solution method
+        print(f'initial solution method id = {ini_solution_id}')
         self.rdCritSpc()    # read criteria specs from the config file
         self.rd_payoff()    # Load payOff table if previously stored (initialized to undefined by Crit ctor)
 
@@ -209,15 +215,17 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 self.cur_cr = None     # should no longer be used
                 self.neutralDone = True     # declare as done (to prevent repetition at cur_stage==4 below
             return self.cur_stage
-        elif self.cur_stage == 4:  # comes here to compute neutral solution
-            if not self.neutralDone:
-                self.cur_cr = None  # should not be used
-                self.neutralDone = True     # declare as done
-            else:   # neutral sol. already computed, switch to handle preferences for Pareto sols
-                print('Finished computation of neutral Pareto solution.')
-                print('Switch to using preferences.')
+        elif self.cur_stage == 4:  # comes here to compute initial Pareto solutions, incl. optionally neutral sol.
+            self.cur_cr = None  # should no longer be used
+            if not self.iniSolDone:     # set preferences for the initial set of Pareto solutions
+                pass        # nothing to do here, ini-solutions controlled in ParRep::pref()
+            elif not self.neutralDone:
+                self.neutralDone = True  # declare as done
+            else:  # neutral sol. already computed, switch to handle preferences for Pareto sols
+                # print('Finished computation of neutral Pareto solution.')
+                print('Switch to generating/using preferences.')
                 self.cur_stage = 5
-            return self.cur_stage   # return to set pref for neutral solution and compute it
+            return self.cur_stage  # return to set pref for neutral solution and compute it
         elif self.cur_stage == 5:  # comes here while processing preferences
             # after debugging, nothing to do here
             # print('Continue to get and handle user preferences.')
@@ -259,10 +267,14 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 else:
                     crit.is_active = False
             return
-        elif self.cur_stage == 4:     # set A and R for neutral solution
-            print(f'---\nMcma::set_pref(): for neutral solution, stage: {self.cur_stage}.')
-            for crit in self.cr:
-                crit.setAR()
+        elif self.cur_stage == 4:   # initial solutions (Pareto-corners) and (optional) neutral sol
+            if self.is_par_rep and not self.iniSolDone:
+                self.par_pref()    # generate preferences for finding next initial solution
+            elif not self.neutralDone:     # set A and R for neutral solution
+                print(f'---\nMcma::set_pref(): for neutral solution, stage: {self.cur_stage}.')
+                for crit in self.cr:
+                    crit.setAR()
+                self.neutralDone = True
             return
         elif self.cur_stage == 5:     # generate pref (for Pareto repr.) or get user-defined preferences
             if self.is_par_rep:
@@ -277,7 +289,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
     def par_pref(self):  # generate preferences for finding next solution in Pareto set representation
         assert self.is_par_rep, f'CtrMca::par_pref() should not be used for usr-def pref.'
         assert self.par_rep is not None, f'CtrMca::par_pref() should be initialized earlier.'
-        assert self.cur_stage == 5, f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
+        assert self.cur_stage in [4, 5], f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
         self.par_rep.pref()     # define largest cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
 
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
