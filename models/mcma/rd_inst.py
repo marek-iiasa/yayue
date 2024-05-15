@@ -12,7 +12,7 @@ def rd_inst(cfg):  # load the core model
         m1 = dill.load(f)
     print(f'\nModel "{m1.name}" loaded from the dill-format file "{f_name}"')
 
-    if cfg.get('verb') > 2:
+    if cfg.get('verb') > 3:
         print('\ncore model display: -----------------------------------------------------------------------------')
         m1.pprint()
         print('end of model display: ------------------------------------------------------------------------\n')

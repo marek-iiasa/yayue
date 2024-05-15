@@ -86,7 +86,7 @@ def driver(cfg):
             # print('mc-part generated.\n')
             # mc_part.pprint()
             m.add_component('mc_part', mc_part)  # add_component() used instead of simple assignment
-            if mc.verb > 2:
+            if mc.verb > 3:
                 print('core-model and mc-part blocks added to the model instance; ready for optimization.')
                 m.pprint()
 

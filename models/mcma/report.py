@@ -5,7 +5,7 @@ Reporting results of the MCMA iterations. Handling core-model is generic, i.e., 
 import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
-from .par_repr import ParRep
+# from .par_repr import ParRep
 from .plots import Plots
 # from ctr_mca import CtrMca
 # from crit import Crit
@@ -56,14 +56,17 @@ class Report:
             return  # refrain from storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
+        cri_ach = {}    # all criteria values in current solution
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
             m_var = m_vars[var_name]
             val = m_var.value
-            cr_name = self.cr_names[i]
-            cri_val.update({cr_name: val})  # add to the dict of crit. values of the current solution
+            cr = self.mc.cr[i]
+            cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
+            if self.mc.cur_stage > 3:  # don't store solutions during payOff table computations
+                cri_ach.update({cr.name: cr.val2ach(val)})  # add to the dict of crit. achiv. of the current solution
             if self.mc.verb > 2:
-                print(f'Value of variable "{var_name}" defining criterion "{cr_name}" = {val:.2e}')
+                print(f'Value of variable "{var_name}" defining criterion "{cr.name}" = {val:.2e}')
         if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
 
@@ -106,13 +109,22 @@ class Report:
             asp = crit.asp
             if asp is not None:
                 asp = round(asp, 1)
-            new_row.update({self.cols[cur_col]: asp})
+            if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+                new_row.update({self.cols[cur_col]: asp})
+            else:
+                new_row.update({self.cols[cur_col]: crit.val2ach(asp)})
             cur_col += 1
-            new_row.update({self.cols[cur_col]: round(crit.val, 1)})
+            if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+                new_row.update({self.cols[cur_col]: round(crit.val, 1)})
+            else:
+                new_row.update({self.cols[cur_col]: crit.a_val})
             cur_col += 1
             res = crit.res
             if res is not None:
-                res = round(res, 1)
+                if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+                    res = round(res, 1)
+                else:
+                    res = round(crit.val2ach(res), 1)
             new_row.update({self.cols[cur_col]: res})
             cur_col += 1
             new_row.update({self.cols[cur_col]: crit.nadir})
@@ -191,10 +203,10 @@ class Report:
         # plot solutions
         plots = Plots(self.mc, self.df_vars)    # plots
         plots.plot3D()    # 3D plot
-        # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
-        # plots.kde_stages()  # KDE + histograms vs stages
+        plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        plots.kde_stages()  # KDE + histograms vs stages
         # plots.plot2D()    # 2D plots
-        # plots.parallel()  # Parallel coordinates plot
+        plots.parallel()  # Parallel coordinates plot
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()
 

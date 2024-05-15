@@ -19,9 +19,12 @@ class McMod:
         """sub-model generator, called at each itr having preferences defined through criteria attributes."""
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
+        nign_cr = []    # indices of not ignored criteria (to be included in reg_term
         for (i, cr) in enumerate(self.mc.cr):
             if cr.is_active:
                 act_cr.append(i)
+            if not cr.is_ignored:
+                nign_cr.append(i)
         if self.mc.verb > 3:
             print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
 
@@ -60,9 +63,10 @@ class McMod:
         # define sets and variables needed for all stages but utopia
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
         m.A = pe.Set(initialize=act_cr)   # set of active criteria indices (defined above)
+        m.R = pe.Set(initialize=nign_cr)  # set of criteria indices (defined above) to be included in reg_term
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
         n_pwls = self.mc.n_crit     # number of CAFs and PWLs
-        if self.mc.deg_exp is False:    # fix the vars corresponding the degenerated cube dimension(s)
+        if self.mc.deg_exp is False:    # fix the vars of the degenerated cube dimension(s), if not expanded
             for (i, cr) in enumerate(self.mc.cr):
                 if cr.is_fixed:
                     n_pwls -= 1
@@ -189,7 +193,7 @@ class McMod:
 
         @m.Constraint()
         def cafRegD(mx):    # regularizing term
-            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
+            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.R)
 
         @m.Constraint()
         def afDef(mx):
@@ -199,7 +203,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb > 2:
+        if self.mc.verb > 2:    # set to 1 for testing, restore 2 after testing
             print('\nMC_block (returned to driver):')
             m.pprint()
 

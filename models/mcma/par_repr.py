@@ -1,5 +1,7 @@
 import pandas as pd
+from operator import itemgetter
 from .cube import ParSol, Cubes, aCube
+from .ini_sol import Corners
 
 
 # noinspection SpellCheckingInspection
@@ -15,17 +17,17 @@ class ParProg:
         self.ini_steps()    # initialize steps
 
     def ini_steps(self):  # steps of progress
-        self.steps = [50, 40, 30, 20, 10, 7, 6, 5, 3, 2, 1]
+        self.steps = [50, 30, 20, 10, 7, 5, 3, 2, 1]
 
-    def update(self, cube_size):     # store info of pairs of neighbors waiting for processing
-        if cube_size > self.steps[self.cur_step]:
+    def update(self, cube_size, is_last):     # store info of pairs of neighbors waiting for processing
+        if cube_size > self.steps[self.cur_step] and not is_last:
             return
         itr = self.parRep.cur_itr
         n_sol = len(self.parRep.sols)
         # pairs = self.parRep.neigh.copy()
         pairs = self.parRep.cubes.cand.copy()
         print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbor-pairs remain for processing.')
-        if cube_size > 0.:
+        if not is_last:
             self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
             # print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
             self.cur_step += 1
@@ -116,10 +118,10 @@ class ParRep:     # representation of Pareto set
         self.ini_old()
 
     def ini_mm(self):     # initial solutions MM
-        self.ini_obj = 'aqqq'   # place-holder for the approach-specific persistent object
-        # self.mc.iniSolDone = True     # uncomment, if A/R are set for the last initial solution
-        print('ini_mm() not implemented yet; using ini_old().')
-        self.ini_old()
+        if self.ini_obj is None:
+            self.ini_obj = Corners(self.mc)   # persistent object handling A/R specs for all Pareto-set corners
+            print('specs of Pareto corners defined.')
+        self.mc.iniSolDone = self.ini_obj.next_corner()   # return True, if A/R for the last corner defined
 
     def pref(self):     # entry point for each new iteration
         if not self.from_cube:  # no cubes yet, generate A/R for next initial solution (excl. neutral solution)
@@ -135,7 +137,7 @@ class ParRep:     # representation of Pareto set
         else:   # all selfish solutions ready
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
-                self.progr.update(cube.size)
+                self.progr.update(cube.size, False)
             # else:
             #     self.progr.update(0.)
             if cube is None:
@@ -219,7 +221,7 @@ class ParRep:     # representation of Pareto set
                 print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
                 self.sols.remove(s2)
 
-        if self.n_corner == len(self.mc.cr):
+        if self.mc.iniSolDone or self.n_corner == len(self.mc.cr):
             self.from_cube = True   # next preferences to be generated from cubes
             # self.mc.iniSolDone = True   # initial solutions (except of (optional) neutral)
 
@@ -242,8 +244,13 @@ class ParRep:     # representation of Pareto set
 
     def summary(self):  # summary report
         # self.cubes.lst_cubes()  # list cubes
+        cand = sorted(self.cubes.cand, key=itemgetter(1), reverse=True)  # sort by size (just getting the largest)
+        if len(cand) > 0:
+            mx_size = cand[0][1]
+        else:
+            mx_size = 0
         print('\n')
-        self.progr.update(0.)   # store info on the unprocessed cubes, if any remain
+        self.progr.update(mx_size, True)   # store info on the unprocessed cubes, if any remain
         self.progr.summary()   # process info on the computation progress
 
         # prepare df with solutions for plots and storing as csv

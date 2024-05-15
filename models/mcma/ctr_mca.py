@@ -50,7 +50,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term
         # print(f'epsilon = {self.epsilon}')
         print(f'epsilon = {self.epsilon:.1e}')
-        do_neutral = self.cfg.get('neutral') == True
+        do_neutral = self.cfg.get('neutral') is True
         self.neutralDone = not do_neutral
         print(f'generate neutral solution = {do_neutral}')
         ini_solution_id = self.opt('ini_sol', 'undefined')  # id of initial solution method
@@ -220,7 +220,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             if not self.iniSolDone:     # set preferences for the initial set of Pareto solutions
                 pass        # nothing to do here, ini-solutions controlled in ParRep::pref()
             elif not self.neutralDone:
-                self.neutralDone = True  # declare as done
+                pass
             else:  # neutral sol. already computed, switch to handle preferences for Pareto sols
                 # print('Finished computation of neutral Pareto solution.')
                 print('Switch to generating/using preferences.')
@@ -272,7 +272,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 self.par_pref()    # generate preferences for finding next initial solution
             elif not self.neutralDone:     # set A and R for neutral solution
                 print(f'---\nMcma::set_pref(): for neutral solution, stage: {self.cur_stage}.')
-                for crit in self.cr:
+                for crit in self.cr:    # set AR for neutral solution
                     crit.setAR()
                 self.neutralDone = True
             return

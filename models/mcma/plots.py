@@ -6,16 +6,15 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
-from matplotlib.ticker import LinearLocator
+# from matplotlib.ticker import LinearLocator
 import seaborn as sns
-
 from .interactive_parallel import InteractiveParallel
 
 # import mplcursors     # for interactive plots, currently not used
 sns.set()  # settings for seaborn plotting style
 
 
-# todo: Plots should preferably be prepared (as self.xxxx figs), then saved in one function, and shown in another func.
+# todo: Horizontal size of all plots should not be larger than the A4 paper width minus 20mm
 # noinspection SpellCheckingInspection
 class Plots:
     def __init__(self, mc, df_vars):  # driver for plots
@@ -232,6 +231,7 @@ class Plots:
         self.figures['vars_alternative'] = fig
 
     def parallel(self):
+        # todo: the app freezes when a criterion choice button is clicked
         fig3 = plt.figure(figsize=(self.n_crit * 5, 7))
         fig3.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')
@@ -247,6 +247,9 @@ class Plots:
 
     def sol_stages(self):  # two subplots: 1. iters + solutions, 2. stage-max cube-size + actual max-size
         summary_df = self.mc.par_rep.progr.df_stages
+        if summary_df is None:
+            print('\nPlots::sol_stage(): no data for solution stages yet.')
+            return
         fig = plt.figure(figsize=(10, 5))
         fig.canvas.manager.set_window_title(f'Summary data of {len(self.mc.par_rep.progr.neigh)} computation stages')
 
@@ -287,14 +290,17 @@ class Plots:
         self.figures['sol_stages'] = fig
 
     def kde_stages(self):  # for each stage: histogram + KDE
-        mx_hight = 9.0
-        ncols = 2
         n_plots = len(self.mc.par_rep.progr.neigh)
+        if n_plots < 2:
+            print('\nPlots::kde_stages(): no data for KDE stages yet.')
+            return
+        mx_hight = 9.0
+        ncols = 3
         if len(self.mc.par_rep.progr.neigh[self.mc.par_rep.progr.cur_step - 1][-1]) == 0:
             n_plots -= 1  # plot for last stage not generated
         nrows = n_plots // 2 + n_plots % 2
         # print(f'{nrows = } {n_plots = } rest {n_plots % 2}--------------------------')
-        fig = plt.figure(figsize=(5 * ncols, min(mx_hight, 2.8 * nrows)))
+        fig = plt.figure(figsize=(4 * ncols, min(mx_hight, 2.8 * nrows)))
         fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
         fig.subplots_adjust(wspace=0.3, hspace=0.85)
 
@@ -325,8 +331,8 @@ class Plots:
                 ax.plot(x, y, color='k', linewidth=4)
 
             ax.set_xticks(range(0, 60, 10))
-            ax.set_xlabel('Distance between neighbor solutions')
-            ax.set_ylabel('Probability Density')
+            ax.set_xlabel('Distance between neighbors')
+            ax.set_ylabel('Prob. Density')
             ax.set_title(f'Stage {step}')
 
         plt.tight_layout()
@@ -354,9 +360,12 @@ class Plots:
 
         # Cubes drawing
         cubes = self.mc.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
+        mxCubePlot = self.mc.opt('mxCubePlot', 0)
         for i, cube in cubes.items():
             # p1 = cube.aspAch
             # p2 = cube.resAch
+            if i >= mxCubePlot:
+                break
             p1 = cube.s1.a_vals
             p2 = cube.s2.a_vals
             c = 'k' if cube.used else 'r'
@@ -375,11 +384,12 @@ class Plots:
         # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
         # ax.view_init(elev=3, azim=-135, roll=0)
         ax.view_init(elev=15, azim=45, roll=0)
+        mxLabelPlot = self.mc.opt('mxLabelPlot', 0)
         for (i, seq) in enumerate(self.seq):
             # noinspection PyTypeChecker
+            if i > mxLabelPlot:
+                break
             ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
                     f'{seq}', fontdict=None)
-            if i > 20:
-                break
 
         self.figures['plot3D'] = fig2

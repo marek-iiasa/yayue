@@ -244,6 +244,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
     # define A/R values for splitting the cuboid (i.e., to find a new solution between s1 and s2)
     def setAR(self):
         for (i, cr) in enumerate(self.mc.cr):
+            cr.is_ignored = None    # ignored can be only for selfish solutions
             v1 = self.s1.vals[i]
             v2 = self.s2.vals[i]
             if cr.isBetter(v1, v2):  # s1 has better crit. value than s2

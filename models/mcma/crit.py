@@ -26,7 +26,8 @@ class Crit:     # definition and attributes of a single criterion
         self.minRange = 0.001  # min U/N range
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
-        self.is_active = None
+        self.is_active = None   # either True (for active) or False (for not-active) or None (for ignored)
+        self.is_ignored = None  # used in calculation Pareto-set corners
         self.is_fixed = False   # if True, then the crit. value is fixed at the self.asp value
         self.utopia = None  # set only once
         self.nadir = None   # checked, and possibly updated, every iteration, see self.updNadir()
@@ -142,6 +143,7 @@ class Crit:     # definition and attributes of a single criterion
 
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
+        self.is_ignored = None  # make sure the criterion is not itnored
         self.is_fixed = False
         is_max = self.mult == 1  # 1 for max-crit, -1 for min.
         delta = abs(self.utopia - self.nadir) / 3.  # equal distance between U, A, R, N
