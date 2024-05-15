@@ -290,6 +290,8 @@ class Plots:
         self.figures['sol_stages'] = fig
 
     def kde_stages(self):  # for each stage: histogram + KDE
+        # todo: AS: pls improve vertical size (number of cols changed to 2); appears to be wrong for even
+        #   number of plots
         n_plots = len(self.mc.par_rep.progr.neigh)
         if n_plots < 2:
             print('\nPlots::kde_stages(): no data for KDE stages yet.')
@@ -339,7 +341,7 @@ class Plots:
         self.figures['kde_stages'] = fig
 
     def plot3D(self):
-        if self.n_crit < 3:      # just return for bi-criteria problem
+        if self.n_crit < 3:  # just return for bi-criteria problem
             return
         if self.n_crit > 3:
             # todo: implement 3D subplots for more than 3 criteria
