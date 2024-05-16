@@ -287,7 +287,7 @@ class Plots:
         ax.legend(loc='upper right')
 
         plt.tight_layout()
-        self.figures['sol_stages'] = fig
+        self.figures['stageProg'] = fig
 
     def kde_stages(self):  # for each stage: histogram + KDE
         # todo: AS: pls improve vertical size (number of cols changed to 2); appears to be wrong for even
@@ -338,7 +338,7 @@ class Plots:
             ax.set_title(f'Stage {step}')
 
         plt.tight_layout()
-        self.figures['kde_stages'] = fig
+        self.figures['stageKDE'] = fig
 
     def plot3D(self):
         if self.n_crit < 3:  # just return for bi-criteria problem
