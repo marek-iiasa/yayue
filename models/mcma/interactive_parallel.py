@@ -154,7 +154,7 @@ class InteractiveParallel:
         # Update colors and data (order)
         for (i, row), c, line in zip(self.df[cols].iterrows(), self.colors, self.lines):
             line.set_color(c)
-            line.set_ydata(row)
+            line.set_ydata(row.to_numpy())
 
         # Update xticklabels
         self.axes['plot'].set_xticklabels(names)
