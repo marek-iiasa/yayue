@@ -8,7 +8,7 @@ import matplotlib as mpl
 from matplotlib.colors import ListedColormap
 # from matplotlib.ticker import LinearLocator
 import seaborn as sns
-from .interactive_parallel import InteractiveParallel
+from .plots2 import InteractiveParallel
 
 # import mplcursors     # for interactive plots, currently not used
 sns.set()  # settings for seaborn plotting style
