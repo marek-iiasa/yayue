@@ -37,9 +37,9 @@ class Plots:
         self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue'])  # mono-color ALL crit-plots
         self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')  # seq_id of category
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
-        self.slider = None  # If we want to save figures elsewhere but slider to work, we should ensure Python garbage
-        # collector won't delete its object so saving it in self seems to be good solution for it?
         self.df[self.cr_name] = self.df[self.cr_name].astype('float')
+        self.int_parallel = None
+        self.dpi = 200
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -62,17 +62,16 @@ class Plots:
                     i_cat += 1
                     i_memb = 0
 
-        if self.hire_plot:
-            SMALL_SIZE = 14
-            MEDIUM_SIZE = SMALL_SIZE + 2
+        SMALL_SIZE = 8
+        MEDIUM_SIZE = SMALL_SIZE + 2
 
-            plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
-            plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-            plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
-            plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the ax title
-            plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-            plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
-            plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
+        plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
+        plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
+        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+        plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the ax title
+        plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
 
     def show_figures(self):
         plt.show()
@@ -90,14 +89,14 @@ class Plots:
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
-        fig_heig = 4.5 * n_percol
+        fig_heig = 2 * n_percol
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
-        fig1 = plt.figure(figsize=(15, fig_heig))  # y was 10 (for one chart)
+        fig1 = plt.figure(figsize=(7, fig_heig), dpi=self.dpi)  # y was 10 (for one chart)
         fig1.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
 
-        ticks = np.linspace(0, 100, 6)
+        ticks = np.linspace(0, 100, 6).astype('int')
         cr_ticklabels = []
         for i in range(self.n_crit):
             ticklabels = np.linspace(self.cr_defs[i].nadir, self.cr_defs[i].utopia, 6)
@@ -105,16 +104,18 @@ class Plots:
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
-        m_size = 20  # marker size  (was 30)
+        m_size = 5  # marker size  (was 30)
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
             for i_second in range(i_first + 1, self.n_crit):
                 name2 = self.cr_name[i_second]
                 print(f'Subplot {i_plot}, criteria: ({name1}, {name2})')
                 ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # subplots numbered from 1
-                ax[i_plot].set_xlabel(name1)
-                ax[i_plot].set_ylabel(name2)
-                ax[i_plot].set_title(name1 + ' vs ' + name2)
+                ax[i_plot].set_xlabel(name1, va='center')
+                ax[i_plot].set_ylabel(name2, va='center')
+                ax[i_plot].set_xticks(ticks, labels=ticks, fontsize=6)
+                ax[i_plot].set_yticks(ticks, labels=ticks, fontsize=6)
+                # ax[i_plot].set_title(name1 + ' vs ' + name2)  # Names of the criteria are visible on axis labels
 
                 ax[i_plot].set_xlim(-5, 105)
                 ax[i_plot].set_ylim(-5, 105)
@@ -122,12 +123,12 @@ class Plots:
 
                 ax_y = ax[i_plot].twinx()
                 ax_y.set_ylim(-5, 105)
-                ax_y.set_yticks(ticks, labels=cr_ticklabels[i_second])
+                ax_y.set_yticks(ticks, labels=cr_ticklabels[i_second], fontsize=6)
                 ax_y.grid(False)
 
                 ax_x = ax[i_plot].twiny()
                 ax_x.set_xlim(-5, 105)
-                ax_x.set_xticks(ticks, labels=cr_ticklabels[i_first], rotation=30, ha='left')
+                ax_x.set_xticks(ticks, labels=cr_ticklabels[i_first], rotation=30, ha='left', fontsize=6)
                 ax_x.grid(False)
 
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
@@ -167,7 +168,7 @@ class Plots:
             return
         print(f'Plotting requested core model variable "{var_name}" not implemented yet.')
         # df_vars constains values labeled as varName_index, where index is e.g., the technology ID (BTL, OTL, PTL)
-        fig, ax = plt.subplots(figsize=(10, 7))
+        fig, ax = plt.subplots(figsize=(7, 5), dpi=self.dpi)
 
         # TODO Marek: Please check what variables should be used as X and Y and change it to fit general case
         x_var = 'cost'  # Variable used for X axis
@@ -193,7 +194,7 @@ class Plots:
     def vars_alternative(self):
         colors = mpl.rcParams['axes.prop_cycle'].by_key()['color']
 
-        fig, ax = plt.subplots(figsize=(11, 7))
+        fig, ax = plt.subplots(figsize=(7, 5), dpi=self.dpi)
         # TODO Marek: Please check what variables should be used as X and Y and change it to fit general case
         x_var = 'cost'  # Variable used for X axis
         y_vars = [c for c in self.df_vars.columns if 'act' in c]
@@ -232,16 +233,16 @@ class Plots:
 
     def parallel(self):
         # todo: the app freezes when a criterion choice button is clicked
-        fig3 = plt.figure(figsize=(self.n_crit * 5, 7))
+        fig3 = plt.figure(figsize=(7, 3.2), dpi=self.dpi)
         fig3.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')
 
-        InteractiveParallel(self.df,
-                            self.cr_name,
-                            self.cr_col,
-                            self.cr_defs,
-                            self.cmap,
-                            fig3)
+        self.int_parallel = InteractiveParallel(self.df,
+                                                self.cr_name,
+                                                self.cr_col,
+                                                self.cr_defs,
+                                                self.cmap,
+                                                fig3)
 
         self.figures['parallel'] = fig3
 
@@ -250,23 +251,23 @@ class Plots:
         if summary_df is None:
             print('\nPlots::sol_stage(): no data for solution stages yet.')
             return
-        fig = plt.figure(figsize=(10, 5))
+        fig = plt.figure(figsize=(6, 2.5), dpi=self.dpi)
         fig.canvas.manager.set_window_title(f'Summary data of {len(self.mc.par_rep.progr.neigh)} computation stages')
 
-        plot_kw = dict(marker='o', markersize=10, linestyle='--', linewidth=3)
+        plot_kw = dict(marker='o', markersize=5, linestyle='--', linewidth=2)
         ax = fig.add_subplot(1, 2, 1)
         ax.plot(summary_df['step'], summary_df['itr'],
                 color='tab:blue',
-                label='Number of iterations',
+                label='Iterations',
                 **plot_kw)
 
         ax.plot(summary_df['step'], summary_df['n_sol'],
                 color='tab:orange',
-                label='Number of distinct solutions',
+                label='Distinct solutions',
                 **plot_kw)
 
         ax.set_xticks(summary_df['step'])
-        ax.set_ylabel('Number of iterations/solutions')
+        ax.set_ylabel('Iterations/solutions')
         ax.set_xlabel('Computation stage')
         ax.legend(loc='upper left')
 
@@ -300,11 +301,11 @@ class Plots:
         ncols = 3
         if len(self.mc.par_rep.progr.neigh[self.mc.par_rep.progr.cur_step - 1][-1]) == 0:
             n_plots -= 1  # plot for last stage not generated
-        nrows = n_plots // 2 + n_plots % 2
-        # print(f'{nrows = } {n_plots = } rest {n_plots % 2}--------------------------')
-        fig = plt.figure(figsize=(4 * ncols, min(mx_hight, 2.8 * nrows)))
+        nrows = n_plots // ncols
+        if nrows * ncols < n_plots:
+            nrows += 1
+        fig = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
         fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
-        fig.subplots_adjust(wspace=0.3, hspace=0.85)
 
         for step in self.mc.par_rep.progr.neigh:
             if len(self.mc.par_rep.progr.neigh[step][-1]) == 0:
@@ -321,21 +322,23 @@ class Plots:
                 neighbour_cube_sizes.append(cube_size)
 
             ax.hist(neighbour_cube_sizes,
-                    bins=50,
+                    bins=25,
                     range=(0, 50),  # was 100
-                    density=True)
+                    density=True,
+                    linewidth=0.5)
 
             # Check if list has at least two different values, so we can calculate KDE
             if neighbour_cube_sizes[0] != neighbour_cube_sizes[-1]:
                 kde = mlab.GaussianKDE(neighbour_cube_sizes)
                 x = np.linspace(0, 50, 200)
                 y = kde(x)
-                ax.plot(x, y, color='k', linewidth=4)
+                ax.plot(x, y, color='k', linewidth=2)
 
             ax.set_xticks(range(0, 60, 10))
-            ax.set_xlabel('Distance between neighbors')
-            ax.set_ylabel('Prob. Density')
-            ax.set_title(f'Stage {step}')
+            ax.set_xlabel('Dist. between neighbors')
+            if step % ncols == 0:
+                ax.set_ylabel('Prob. Density')
+            ax.set_title(f'Stage {step}', va='center')
 
         plt.tight_layout()
         self.figures['stageKDE'] = fig
@@ -348,7 +351,7 @@ class Plots:
             print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
             return
         # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
-        fig2 = plt.figure(figsize=(12, 9))
+        fig2 = plt.figure(figsize=(7, 7), dpi=self.dpi)
         fig2.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
         ax = fig2.add_subplot(projection='3d')
