@@ -1,5 +1,4 @@
 # data for Matouqin
-# three type of tanks
 
 param nHrs :=
 8760 
@@ -12,7 +11,6 @@ Elec1
 set Sh :=
 Tank1 
 Tank2 
-Tank3 
 ;
 
 set Sc :=
@@ -8798,26 +8796,22 @@ param mxCap :=
 Elec1 5 
 Tank1 10.0 
 Tank2 5.0 
-Tank3 100.0 
 Cell1 0.3 
 ;
 
 param hMxIn :=
 Tank1 3.0 
 Tank2 1.0 
-Tank3 0.5 
 ;
 
 param hMxOut :=
 Tank1 3.0 
 Tank2 1.0 
-Tank3 0.5 
 ;
 
 param hini :=
 Tank1 0.0 
 Tank2 0.0 
-Tank3 0.0 
 ;
 
 param eh2 :=
@@ -8827,13 +8821,11 @@ Elec1 0.2
 param eph2 :=
 Tank1 0.1 
 Tank2 0.1 
-Tank3 1.5 
 ;
 
 param h2Res :=
 Tank1 1 
 Tank2 1 
-Tank3 1 
 ;
 
 param h2e :=
@@ -8844,7 +8836,6 @@ param sInv :=
 Elec1 561.7 
 Tank1 40.12 
 Tank2 24.07 
-Tank3 280.85 
 Cell1 48.15 
 ;
 
@@ -8852,6 +8843,5 @@ param sOmc :=
 Elec1 5.0 
 Tank1 1.0 
 Tank2 1.0 
-Tank3 2.0 
 Cell1 5.0 
 ;
