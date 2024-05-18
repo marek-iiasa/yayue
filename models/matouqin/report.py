@@ -30,6 +30,7 @@ class Report:
         self.cap_df = pd.DataFrame(index=self.m1.S)
         self.flow_df = pd.DataFrame(index=self.m1.T)
         self.dvflow_df = pd.DataFrame(index=self.m1.T)
+        self.flow_all_df = pd.DataFrame(index=self.m1.T)
 
     # extract and store values of the variables to be included in the report
     # parse indexed and un-indexed variable, rewrite the values
@@ -78,15 +79,20 @@ class Report:
         self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
         # self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
         self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
-        self.finance_df.loc[0, 'OverCost'] = pe.value(self.m1.overCost)
+        self.finance_df.loc[0, 'SurpCost'] = pe.value(self.m1.surpCost)
         self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
         self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.balCost)
 
         # capacity related results
         for s in self.m1.sNum:
-            self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
+            # self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
+            self.cap_df.loc[s, 'sNum'] = pe.value(self.m1.sNum[s])
         for s in self.m1.sCap:
-            self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
+            # self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
+            if 'Tank' in s:
+                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s]) / 10     # unit change to [thousand kg]
+            else:
+                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s])
 
         # supply and average inflows
         supply = pe.value(self.m1.supply)
@@ -102,19 +108,36 @@ class Report:
             self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
             self.flow_df.loc[t, 'sOut'] = round(pe.value(self.m1.sOut[t]), 2)
             self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
-            self.flow_df.loc[t, 'eSurplus'] = -round(pe.value(self.m1.eSurplus[t]), 2)
-            self.flow_df.loc[t, 'eBought'] = round(pe.value(self.m1.eBought[t]), 2)
+            self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
+            self.flow_df.loc[t, 'eB'] = round(pe.value(self.m1.eB[t]), 2)
+
+            self.flow_all_df.loc[t, 'inflow'] = pe.value(self.m1.inflow[t])
+            self.flow_all_df.loc[t, 'dOut'] = pe.value(self.m1.dOut[t])
+            self.flow_all_df.loc[t, 'sIn'] = pe.value(self.m1.sIn[t])
+            self.flow_all_df.loc[t, 'sOut'] = pe.value(self.m1.sOut[t])
+            self.flow_all_df.loc[t, 'ePrs'] = pe.value(self.m1.ePrs[t])
+            self.flow_all_df.loc[t, 'eS'] = pe.value(self.m1.eS[t])
+            self.flow_all_df.loc[t, 'eB'] = pe.value(self.m1.eB[t])
 
         for t in self.m1.T:
             for dv in self.m1.Se:
                 self.dvflow_df.loc[t, f'eIn_{dv}'] = round(pe.value(self.m1.eIn[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'eIn_{dv}'] = pe.value(self.m1.eIn[dv, t])
             for dv in self.m1.Sh:
                 self.dvflow_df.loc[t, f'hIn_{dv}'] = round(pe.value(self.m1.hIn[dv, t]), 2)
                 self.dvflow_df.loc[t, f'hOut_{dv}'] = -round(pe.value(self.m1.hOut[dv, t]), 2)
                 self.dvflow_df.loc[t, f'hVol_{dv}'] = round(pe.value(self.m1.hVol[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'hIn_{dv}'] = pe.value(self.m1.hIn[dv, t])
+                self.flow_all_df.loc[t, f'hOut_{dv}'] = pe.value(self.m1.hOut[dv, t])
+                self.flow_all_df.loc[t, f'hVol_{dv}'] = pe.value(self.m1.hVol[dv, t])
             for dv in self.m1.Sc:
                 self.dvflow_df.loc[t, f'hInc_{dv}'] = round(pe.value(self.m1.hInc[dv, t]), 2)
                 self.dvflow_df.loc[t, f'cOut_{dv}'] = -round(pe.value(self.m1.cOut[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'hInc_{dv}'] = pe.value(self.m1.hInc[dv, t])
+                self.flow_all_df.loc[t, f'cOut_{dv}'] = pe.value(self.m1.cOut[dv, t])
 
         # print(f'Finance results:\n {self.finance_df} \n')
         # print(f'Capacity results:\n {self.cap_df} \n')
@@ -127,8 +150,93 @@ class Report:
             self.supply_df.to_excel(writer, sheet_name='supply', index=True)
             self.flow_df.to_excel(writer, sheet_name='flow', index=True)
             self.dvflow_df.to_excel(writer, sheet_name='dvflow', index=True)
+            self.flow_all_df.to_excel(writer, sheet_name='flow_all', index=True)
 
         print(f'Variables for plotting are saved to: {self.rep_dir}plot_vars.xlsx')
+
+    def toCsv(self):
+        print(f'\nGet results')
+
+        # finance related results
+        self.finance_df.loc[0, 'Revenue'] = pe.value(self.m1.revenue)
+        self.finance_df.loc[0, 'Income'] = pe.value(self.m1.income)
+        self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
+        # self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
+        self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
+        self.finance_df.loc[0, 'SurpCost'] = pe.value(self.m1.surpCost)
+        self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
+        self.finance_df.loc[0, 'BalCost'] = pe.value(self.m1.balCost)
+
+        # capacity related results
+        for s in self.m1.sNum:
+            # self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
+            self.cap_df.loc[s, 'sNum'] = pe.value(self.m1.sNum[s])
+        for s in self.m1.sCap:
+            # self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
+            if 'Tank' in s:
+                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s]) / 10  # unit change to [thousand kg]
+            else:
+                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s])
+
+        # supply and average inflows
+        supply = pe.value(self.m1.supply)
+        avg_inflow = sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs
+
+        self.supply_df['supply'] = [supply]
+        self.supply_df['avg_inflow'] = [avg_inflow]
+
+        # flows results
+        for t in self.m1.T:
+            self.flow_df.loc[t, 'inflow'] = round(pe.value(self.m1.inflow[t]), 2)
+            self.flow_df.loc[t, 'dOut'] = round(pe.value(self.m1.dOut[t]), 2)
+            self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
+            self.flow_df.loc[t, 'sOut'] = round(pe.value(self.m1.sOut[t]), 2)
+            self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
+            self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
+            self.flow_df.loc[t, 'eB'] = round(pe.value(self.m1.eB[t]), 2)
+
+            self.flow_all_df.loc[t, 'inflow'] = pe.value(self.m1.inflow[t])
+            self.flow_all_df.loc[t, 'dOut'] = pe.value(self.m1.dOut[t])
+            self.flow_all_df.loc[t, 'sIn'] = pe.value(self.m1.sIn[t])
+            self.flow_all_df.loc[t, 'sOut'] = pe.value(self.m1.sOut[t])
+            self.flow_all_df.loc[t, 'ePrs'] = pe.value(self.m1.ePrs[t])
+            self.flow_all_df.loc[t, 'eS'] = pe.value(self.m1.eS[t])
+            self.flow_all_df.loc[t, 'eB'] = pe.value(self.m1.eB[t])
+
+        for t in self.m1.T:
+            for dv in self.m1.Se:
+                self.dvflow_df.loc[t, f'eIn_{dv}'] = round(pe.value(self.m1.eIn[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'eIn_{dv}'] = pe.value(self.m1.eIn[dv, t])
+            for dv in self.m1.Sh:
+                self.dvflow_df.loc[t, f'hIn_{dv}'] = round(pe.value(self.m1.hIn[dv, t]), 2)
+                self.dvflow_df.loc[t, f'hOut_{dv}'] = -round(pe.value(self.m1.hOut[dv, t]), 2)
+                self.dvflow_df.loc[t, f'hVol_{dv}'] = round(pe.value(self.m1.hVol[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'hIn_{dv}'] = pe.value(self.m1.hIn[dv, t])
+                self.flow_all_df.loc[t, f'hOut_{dv}'] = pe.value(self.m1.hOut[dv, t])
+                self.flow_all_df.loc[t, f'hVol_{dv}'] = pe.value(self.m1.hVol[dv, t])
+            for dv in self.m1.Sc:
+                self.dvflow_df.loc[t, f'hInc_{dv}'] = round(pe.value(self.m1.hInc[dv, t]), 2)
+                self.dvflow_df.loc[t, f'cOut_{dv}'] = -round(pe.value(self.m1.cOut[dv, t]), 2)
+
+                self.flow_all_df.loc[t, f'hInc_{dv}'] = pe.value(self.m1.hInc[dv, t])
+                self.flow_all_df.loc[t, f'cOut_{dv}'] = pe.value(self.m1.cOut[dv, t])
+
+        # print(f'Finance results:\n {self.finance_df} \n')
+        # print(f'Capacity results:\n {self.cap_df} \n')
+        # print(f'Flow results:\n {self.flow_df} \n')
+        # print(f'Dv_flow results:\n {self.dvflow_df} \n')
+
+        self.finance_df.to_csv(f'{self.rep_dir}finance.csv', index=True)
+        self.cap_df.to_csv(f'{self.rep_dir}capacity.csv', index=True)
+        self.supply_df.to_csv(f'{self.rep_dir}supply.csv', index=True)
+        self.flow_all_df.to_csv(f'{self.rep_dir}allflows.csv', index=True)
+        self.flow_df.to_csv(f'{self.rep_dir}flow.csv', index=True)
+        self.dvflow_df.to_csv(f'{self.rep_dir}dvflow.csv', index=True)
+
+        print(f'Variables for plotting are saved to 5 csv files')
+        print(f'All flow results are saved to {self.rep_dir}allflows.csv')
 
     def check(self):
         print(f'\nResults check')
@@ -170,21 +278,31 @@ class Report:
         else:
             print(f'Storage correct')
 
-    def analyze(self):
-        # logging.basicConfig(level=logging.INFO,
-        #                     # format='%(asctime)s - %(levelname)s - %(message)s',
-        #                     handlers=[
-        #                         logging.FileHandler(f'{self.rep_dir}output.log'),
-        #                         logging.StreamHandler()
-        #                     ])
-        #
-        # logging.info(f'\nResults analysis')
+    def decision_var(self):
+        print('Values of decision variables ------------------------------------------------')
+        print('1) Supply ------------------------------------------------------------------------')
+        supply = round(pe.value(self.m1.supply), 2)
+        print(f'Supply = {supply} MW per hour')
 
+        print('2) Storage investment ---------------------------------------------')
+        for s in self.m1.S:
+            num = pe.value(self.m1.sNum[s])
+            if num == 0:
+                continue
+            else:
+                snum = pe.value(self.m1.sNum[s])
+                # scap = round(pe.value(self.m1.sCap[s]), 2)
+
+            print(f'Numbers of {s} = {snum}')
+            # print(f'Total capacity of {s} = {scap} MW')
+
+    def analyze(self):
+        print(f'\n Results analysis')
         print('1) Values of inflow -----------------------------------------------------------------------')
         ave_inflow = round((sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs), 2)
         print(f'Average inflow = {ave_inflow} MW per hour')
 
-        print('\n2) Values of decision variables ------------------------------------------------')
+        print('\n2) Values of supply and storage investment ------------------------------------------------')
         print('2.1 Supply ------------------------------------------------------------------------')
         supply = round(pe.value(self.m1.supply), 2)
         r_sa = round((supply / ave_inflow), 2)
@@ -194,13 +312,22 @@ class Report:
         for s in self.m1.S:
             num = pe.value(self.m1.sNum[s])
             if num == 0:
+                print(f'There is no investment to {s}.')
                 continue
             else:
                 mxcap = self.m1.mxCap[s]
+
                 sinv = self.m1.sInv[s]
+                if sinv >= 1000:
+                    # unit in [million]
+                    sinv = sinv / 1e3
+                else:
+                    # unit in [thousand]
+                    sinv = sinv
+
                 snum = pe.value(self.m1.sNum[s])
                 scap = round(pe.value(self.m1.sCap[s]), 2)
-                inv = round((sinv * num), 2)     # yearly investment of storage devices
+                inv = round((sinv * num), 2)     # yearly investment of the storage type
 
             print(f'\nInvestment of {s}:')
             print(f'Unit capacity of {s} is {mxcap} MW')
@@ -210,21 +337,34 @@ class Report:
             print(f'Total investment cost of {s} = {inv} million RMB')
 
         print('\n3) Overview of outcome variables -------------------------------------------------------------------')
-        revenue = round(pe.value(self.m1.revenue), 4)
-        income = round(pe.value(self.m1.income), 2)
-        invcost = round(pe.value(self.m1.invCost), 2)
-        omc = round(pe.value(self.m1.OMC), 2)
-        overcost = round(pe.value(self.m1.overCost), 2)
-        buycost = round(pe.value(self.m1.buyCost), 2)
-        balcost = round(pe.value(self.m1.balCost), 2)
+        revenue = pe.value(self.m1.revenue)
+        if revenue > 1000:
+            # unit in [million yuan]
+            unit = 'million'
+            revenue = round(pe.value(self.m1.revenue) / 1e3, 2)
+            income = round(pe.value(self.m1.income) / 1e3, 2)
+            invcost = round(pe.value(self.m1.invCost) / 1e3, 2)
+            omc = round(pe.value(self.m1.OMC) / 1e3, 2)
+            overcost = round(pe.value(self.m1.surpCost) / 1e3, 2)
+            buycost = round(pe.value(self.m1.buyCost) / 1e3, 2)
+            balcost = round(pe.value(self.m1.balCost) / 1e3, 2)
+        else:
+            unit = 'thousand'
+            revenue = round(pe.value(self.m1.revenue), 2)
+            income = round(pe.value(self.m1.income), 2)
+            invcost = round(pe.value(self.m1.invCost), 2)
+            omc = round(pe.value(self.m1.OMC), 2)
+            overcost = round(pe.value(self.m1.surpCost), 2)
+            buycost = round(pe.value(self.m1.buyCost), 2)
+            balcost = round(pe.value(self.m1.balCost), 2)
 
-        print(f'Total revenue  = {revenue} million RMB')
-        print(f'Income  = {income} million RMB')
-        print(f'Balance cost  = {balcost} million RMB')
-        print(f'Investment cost  = {invcost} million RMB')
-        print(f'Operation and maintenance cost  = {omc} million RMB')
-        print(f'Surplus cost  = {overcost} million RMB')
-        print(f'Shortage cost  = {buycost} million RMB')
+        print(f'Total revenue  = {revenue} {unit} RMB')
+        print(f'Income  = {income} {unit} RMB')
+        print(f'Balance cost  = {balcost} {unit} RMB')
+        print(f'Investment cost  = {invcost} {unit} RMB')
+        print(f'Operation and maintenance cost  = {omc} {unit} RMB')
+        print(f'Surplus cost  = {overcost} {unit} RMB')
+        print(f'Shortage cost  = {buycost} {unit} RMB')
 
         cost = invcost + omc + balcost
         storcost = invcost + omc
@@ -238,12 +378,12 @@ class Report:
         if revenue > 0:
             r_ir = round((income / revenue), 2)
             print(f'Income is {r_ir} times of revenue')
-            print(f'Total cost is {cost} million RMB, the cost-income ratio is {r_ci}%')
+            print(f'Total cost is {cost} {unit} RMB, the cost-income ratio is {r_ci}%')
         else:
             r_ic = round((income / cost), 2)
             r_cr = round((cost / revenue), 2)
             print(f'\nIncome is {r_ic} times of revenue')
-            print(f'\nTotal cost is {cost} million RMB, the cost-revenue ratio is {r_cr}%')
+            print(f'\nTotal cost is {cost} {unit} RMB, the cost-revenue ratio is {r_cr}%')
 
         print(f'\nCost structure:')
         if cost != 0:
@@ -275,8 +415,8 @@ class Report:
         sin_total = round((sum(pe.value(self.m1.sIn[t]) for t in self.m1.T)), 2)
         sout_total = round((sum(pe.value(self.m1.sOut[t]) for t in self.m1.T)), 2)
         # eprs_total = round((sum(pe.value(self.m1.ePrs[t]) for t in self.m1.T)), 2)
-        esurplus_total = round((sum(pe.value(self.m1.eSurplus[t]) for t in self.m1.T)), 2)
-        ebought_total = round((sum(pe.value(self.m1.eBought[t]) for t in self.m1.T)), 2)
+        esurplus_total = round(pe.value(self.m1.eSurplus), 2)
+        ebought_total = round(pe.value(self.m1.eBought), 2)
 
         er_si = round((sin_total / inflow_total * 100), 2)
         # ev4 = round((eprs_total / inflow_total * 100), 2)
