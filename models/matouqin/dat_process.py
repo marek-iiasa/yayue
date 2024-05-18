@@ -7,11 +7,88 @@ import pandas as pd
 import os
 
 
+# modify periods, select a certain amount periods and match the corresponding data
+# deal with price
+def handle_ePrice(line, n_periods):  # redefine sInv and sOmc
+    parts = line.split()
+    val = float(parts[0])
+    val_new = val / 8760 * n_periods  # cost related to the n_periods
+    new_line = f'{val_new}\n'
+    return new_line
+
+
+# deal with costs, sInv and sOmc
+def handle_cost(line, n_periods):  # redefine sInv and sOmc
+    parts = line.split()
+    item = parts[0]
+    val = float(parts[1])
+    val_new = val / 8760 * n_periods  # cost related to the n_periods
+    val_new = round(val_new, 2)
+    new_line = f'{item} {val_new}\n'
+    return new_line
+
+
+# modify periods
+def modify_periods(base_filename, new_filename, n_periods):
+    with (open(base_filename, 'r') as dat_base):
+        lines = dat_base.readlines()
+
+        new_lines = []
+        params = ['nHrs', 'inflow', 'ePrice', 'sInv', 'sOmc']
+        param_started = False  # not in inflow data part
+        param_count = 0  # counting time periods in inflow
+
+        for line in lines:
+            if any(f'param {p} :=' in line for p in params):
+                param = line.split()[1].strip(' :=')
+                new_lines.append(line)
+                param_started = True
+                param_count = 0  # begin recording data
+            elif param_started:
+                if line.strip() == ';':
+                    if param == 'inflow' and param_count < n_periods:
+                        print(f'{n_periods} is exceeded the time periods in inflow')
+                    new_lines.append(';\n')  # end recording inflow by hand
+                    param_started = False  # end recording inflow by hand
+                else:
+                    processed_line = None
+                    if param == 'nHrs':
+                        processed_line = f'{n_periods}\n'
+                    elif param == 'inflow':
+                        if param_count < n_periods:
+                            processed_line = line
+                            param_count += 1
+                        else:
+                            continue
+                    elif param == 'ePrice':
+                        processed_line = handle_ePrice(line, n_periods)
+                    elif param == 'sInv':
+                        processed_line = handle_cost(line, n_periods)
+                    elif param == 'sOmc':
+                        processed_line = handle_cost(line, n_periods)
+
+                    if processed_line:
+                        new_lines.append(processed_line)
+                    else:
+                        # exceed the specified time periods
+                        new_lines.append(';')
+                        param_started = False
+            else:
+                new_lines.append(line)
+
+    try:
+        with open(new_filename, 'w') as dat_file:  # write data to new ample formate file
+            for line in new_lines:
+                dat_file.write(line)
+    except IOError as e:
+        print(f'Unable to write to file {output_filename}. Error: {e}')
+
+
 class Params:
-    def __init__(self, data_dir, data_excel, name_ampl, n_periods):
+    def __init__(self, data_dir, data_excel, ampl_file, n_periods):
         self.dat_dir = data_dir
         self.f_dat = data_excel
-        self.name_ampl = name_ampl
+        self.ampl_file = ampl_file
         self.T = n_periods
 
         # read initial data from excel file
@@ -23,7 +100,7 @@ class Params:
         self.hytank_df = pd.read_excel(self.f_dat, sheet_name='tank')
         self.fcell_df = pd.read_excel(self.f_dat, sheet_name='fuel-cell')
 
-        # print data read from excel file
+        # print data read from Excel file
         # print(f'Capacity factor:\n {self.cf_df.head()}')
         # print(f'Generation: \n {self.gen_df}')
         # print(f'Time related parameters:\n {self.time_df}')
@@ -42,7 +119,7 @@ class Params:
         # define default parameters
         self.inflow = pd.DataFrame
         self.nHrs = self.ydis = None
-        self.penalty = self.ePrice = self.eOver = self.eBprice = None
+        self.penalty = self.ePrice = self.eSprice = self.eBprice = None
         self.eh2 = self.eph2 = self.h2Ratio = self.h2Res = self.h2e = None
         self.sInv = None
 
@@ -56,7 +133,7 @@ class Params:
         self.set_fcell()
 
         # store parameters
-        # self.write_to_ampl()
+        self.write_to_ampl()        # store in ampl format .dat file
         # self.write_to_excel()
 
     # data processing
@@ -71,8 +148,7 @@ class Params:
 
             # check generation devices name is consistent
             if name in self.cf_df.columns:
-                dv_inflow[f'inflow_{name}'] = self.cf_df[name] * capacity * number
-                # dv_inflow[f'inflow_{name}'] = self.cEle * self.cf_df[name] * capacity * number
+                dv_inflow[f'inflow_{name}'] = self.cf_df[name] * capacity * number  # unit in MW
             else:
                 print(f"Warning: '{name}' not found in {self.cf_df}")
 
@@ -92,17 +168,22 @@ class Params:
     # 3) set price unit in MW/h
     def set_price(self):
         ep = self.price_df.loc[0, 'eP']  # unit contract price, unit in [RMB/kWh]
+        ep = ep * self.nHrs * self.cEle / 1e3  # unit in [thousand RMB/MWh]
+
         oc = self.price_df.loc[0, 'eO']  # unit price of managed electricity surplus, unit in [RMB/kWh]
+        oc = oc * self.cEle / 1e3  # unit in [thousand RMB/MWh]
+
         # hc = self.price_df.loc[0, 'hUse']   # unit cost of using hydrogen, unit in [RMB/kg]
-        self.penalty = self.price_df.loc[0, 'penalty']  # penalty factor, define the price for buying electricity
-        self.ePrice = round((ep / 1e6 * 1e3), 4)  # unit contract price, unit in [million RMB/MWh]
-        self.eOver = round((oc / 1e6 * 1e3), 4)  # unit price of managed electricity surplus, [million RMB/MWh]
+        self.penalty = self.price_df.loc[0, 'penalty']  # penalty factor, define the electricity purchase price
+
+        self.ePrice = ep  # unit contract price, unit in [thousand RMB/MWh]
+        self.eSprice = oc  # unit price of managed electricity surplus, [thousand RMB/MWh]
+        # self.ePrice = ep  * self.nHrs * self.cEle / 1e6  # unit contract price, unit in [million RMB/MWh]
+        # self.eSprice = oc * self.cEle / 1e6  # unit price of managed electricity surplus, [million RMB/MWh]
         # self.hCost = hc / 1e6   # unit cost of using hydrogen, unit in [million RMB/kg]
-        # self.ePrice = ep  # unit contract price, unit in [thousands RMB/MWh]
-        # self.eOver = oc  # unit price of managed electricity surplus, [thousands RMB/MWh]
 
         self.price_df['ePrice'] = self.ePrice
-        self.price_df['eOver'] = self.eOver
+        self.price_df['eSprice'] = self.eSprice
         # self.price_df['hCost'] = self.hCost
 
         print(f'Price related parameters are added')
@@ -112,8 +193,10 @@ class Params:
 
     # 4) generate electricity prices (purchased/loss)
     def add_price(self):
-        self.eBprice = self.penalty * self.ePrice  # purchase price of buying electricity, unit in [million RMB/MWh]
-
+        ep = self.price_df.loc[0, 'eP']  # unit contract price, unit in [RMB/kWh]
+        ep = ep * self.cEle / 1e3  # unit in [thousand RMB/MWh]
+        # self.eBprice = self.penalty * (ep * self.cEle / 1e6 )  # purchase price, unit in million RMB/MWh
+        self.eBprice = self.penalty * ep
         self.price_df['eBprice'] = self.eBprice
 
         print(f'Price related parameters are updated')
@@ -121,7 +204,8 @@ class Params:
 
     # 5) read and generate new parameters related to electrolyzers
     def set_elec(self):
-        eh2 = 1 / self.elec_df['toHprd'] * self.cEle * self.cH2
+        # eh2 = 1 / self.elec_df['toHprd'] * self.cEle * self.cH2  # unit in [kg/MW]
+        eh2 = 1 / self.elec_df['toHprd'] * self.cEle * self.cH2 / 100  # unit in [100kg/MW]
         # annuity factor used to generate annualized investment cost (pay at the end of year)
         invshare = (((1 + self.ydis) ** self.elec_df['n'] * self.ydis)
                     / ((1 + self.ydis) ** self.elec_df['n'] - 1))
@@ -130,9 +214,9 @@ class Params:
         # invshare = (((1 + self.ydis) ** (self.elec_df['n']+1) * self.ydis)
         #             / ((1 + self.ydis) ** self.elec_df['n'] - 1))
 
-        # sinv = invshare * self.elec_df['sInvcost']
-        sinv = invshare * self.elec_df['sInvcost'] / 8760 * self.T
-        omc = self.elec_df['sOmc'] / 8760 * self.T
+        # sinv = invshare * self.elec_df['sInvcost']    # yearly investment cost
+        sinv = invshare * self.elec_df['sInvcost'] / 8760 * self.T  # inv cost scaling based on numbers of time periods
+        omc = self.elec_df['sOmc'] / 8760 * self.T      # omc cost scaling based on numbers of time periods
 
         self.elec_df['eh2'] = eh2
         self.elec_df['invshare'] = invshare
@@ -144,7 +228,8 @@ class Params:
 
     # 6) read and generate new parameters related to hydrogen tanks
     def set_hyTank(self):
-        eph2 = (1 / self.cEle) * self.hytank_df['toHstr']
+        # eph2 = (1 / self.cEle) * self.hytank_df['toHstr']     # unit in [MW/kg]
+        eph2 = (1 / self.cEle) * self.hytank_df['toHstr'] * 100     # unit in [MW/100kg]
         h2res = 1 - self.hytank_df['h2Loss']
         # annuity factor used to generate annualized investment cost (pay at the end of year)
         invshare = (((1 + self.ydis) ** self.hytank_df['n'] * self.ydis)
@@ -154,8 +239,8 @@ class Params:
         #             / ((1 + self.ydis) ** self.hytank_df['n'] - 1))
 
         # sinv = invshare * self.hytank_df['sInvcost']
-        sinv = invshare * self.hytank_df['sInvcost'] / 8760 * self.T
-        omc = self.hytank_df['sOmc'] / 8760 * self.T
+        sinv = invshare * self.hytank_df['sInvcost'] / 8760 * self.T  # inv cost scaling based on time periods
+        omc = self.hytank_df['sOmc'] / 8760 * self.T        # omc cost scaling based on numbers of time periods
 
         self.hytank_df['eph2'] = eph2
         self.hytank_df['h2Res'] = h2res
@@ -168,8 +253,9 @@ class Params:
 
     # 7) read and generate new parameters related to fuel-cells
     def set_fcell(self):
-        h2ratio = self.hCal * (1 / self.cEle)
-        h2e = h2ratio * self.fcell_df['e']
+        h2ratio = self.hCal * (1 / self.cEle)       # unit in [MW/kg]
+        # h2e = h2ratio * self.fcell_df['e']        # unit in [MW/kg]
+        h2e = h2ratio * self.fcell_df['e'] * 100    # unit in [MW/100kg]
         # annuity factor used to generate annualized investment cost (pay at the end of year)
         invshare = (((1 + self.ydis) ** self.fcell_df['n'] * self.ydis)
                     / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
@@ -179,8 +265,8 @@ class Params:
         #             / ((1 + self.ydis) ** self.fcell_df['n'] - 1))
 
         # sinv = invshare * self.fcell_df['sInvcost']
-        sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.T
-        omc = self.fcell_df['sOmc'] / 8760 * self.T
+        sinv = invshare * self.fcell_df['sInvcost'] / 8760 * self.T   # inv cost scaling based on time periods
+        omc = self.fcell_df['sOmc'] / 8760 * self.T     # omc cost scaling based on numbers of time periods
 
         self.fcell_df['h2ratio'] = h2ratio
         self.fcell_df['h2e'] = h2e
@@ -201,7 +287,7 @@ class Params:
 
         eprice_str = '\nparam ePrice :=\n'
         ebprice_str = '\nparam eBprice :=\n'
-        eover_str = '\nparam eOver :=\n'
+        eover_str = '\nparam eSprice :=\n'
         # hcost_str = '\nparam hCost :=\n'
 
         inflow_str = "\nparam inflow :=\n"
@@ -223,10 +309,9 @@ class Params:
         # add values
         nhrs_str += f'{self.nHrs} \n'
 
-        eprice_str += f'{self.ePrice} \n'
-        ebprice_str += f'{self.eBprice.round(4)} \n'
-        # ebprice_str += f'{self.eBprice} \n'
-        eover_str += f'{self.eOver} \n'
+        eprice_str += f'{self.ePrice:.2f} \n'
+        ebprice_str += f'{self.eBprice:.2f} \n'
+        eover_str += f'{self.eSprice:.2f} \n'
         # hcost_str += f'{self.hCost} \n'
 
         for t, value in self.inflow.items():
@@ -237,31 +322,36 @@ class Params:
 
             mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
 
-            eh2_str += f'{row["name"]} {round(row["eh2"], 4)} \n'
+            eh2_str += f'{row["name"]} {round(row["eh2"], 2)} \n'
             # eh2_str += f'{row["name"]} {row["eh2"]} \n'
 
-            sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+            sinv_str += f'{row["name"]} {round(row["sInv"], 2)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 2)} \n'
             # sinv_str += f'{row["name"]} {row["sInv"]}\n'
             # somc_str += f'{row["name"]} {row["OMC"]} \n'
 
         for index, row in self.hytank_df.iterrows():
             sh_str += f'{row["name"]} \n'
 
-            mxcap_str += f'{row["name"]} {row["mxCap"]} \n'
-            hmxin_str += f'{row["name"]} {row["hMxIn"]} \n'
-            hmxout_str += f'{row["name"]} {row["hMxOut"]} \n'
-            hini_str += f'{row["name"]} {row["hini"]} \n'
+            # mxcap_str += f'{row["name"]} {row["mxCap"]} \n'       # unit in [kg]
+            # hmxin_str += f'{row["name"]} {row["hMxIn"]} \n'
+            # hmxout_str += f'{row["name"]} {row["hMxOut"]} \n'
+            # hini_str += f'{row["name"]} {row["hini"]} \n'
             # hmi_str += f'{row["name"]} {row["hmi"]} \n'
 
-            eph2_str += f'{row["name"]} {round(row["eph2"], 4)} \n'
-            h2res_str += f'{row["name"]} {round(row["h2Res"], 4)} \n'
+            mxcap_str += f'{row["name"]} {row["mxCap"] / 100} \n'       # unit in [100kg]
+            hmxin_str += f'{row["name"]} {row["hMxIn"] / 100} \n'
+            hmxout_str += f'{row["name"]} {row["hMxOut"] / 100} \n'
+            hini_str += f'{row["name"]} {row["hini"] / 100} \n'
 
-            # eph2_str += f'{row["name"]} {row["eph2"]} \n'
+            # eph2_str += f'{row["name"]} {row["eph2"]} \n'             # unit in [MW/kg]
             # h2res_str += f'{row["name"]} {row["h2Res"]} \n'
 
-            sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+            eph2_str += f'{row["name"]} {round(row["eph2"], 2)} \n'     # unit in [MW/100kg]
+            h2res_str += f'{row["name"]} {round(row["h2Res"], 2)} \n'
+
+            sinv_str += f'{row["name"]} {round(row["sInv"], 2)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 2)} \n'
 
             # sinv_str += f'{row["name"]} {row["sInv"]}\n'
             # somc_str += f'{row["name"]} {row["OMC"]} \n'
@@ -274,8 +364,8 @@ class Params:
             h2e_str += f'{row["name"]} {round(row["h2e"], 2)} \n'
             # h2e_str += f'{row["name"]} {row["h2e"]} \n'
 
-            sinv_str += f'{row["name"]} {round(row["sInv"], 4)} \n'
-            somc_str += f'{row["name"]} {round(row["OMC"], 4)} \n'
+            sinv_str += f'{row["name"]} {round(row["sInv"], 2)} \n'
+            somc_str += f'{row["name"]} {round(row["OMC"], 2)} \n'
 
             # sinv_str += f'{row["name"]} {row["sInv"]}\n'
             # somc_str += f'{row["name"]} {row["OMC"]} \n'
@@ -316,16 +406,18 @@ class Params:
     # 9) write ample format parameters to ampl file
     def write_to_ampl(self):
         ampl_dat = self.to_ampl()
-        filename = f'{self.dat_dir}{self.name_ampl}.dat'
-        with open(filename, 'w') as file:
+        dat_file = self.ampl_file
+        with open(dat_file, 'w') as file:
             file.write(f'# test data for Matouqin \n')
             file.write(ampl_dat)
-        print(f"Data written to ampl file: {filename}")
+        print(f"Data written to ampl file: {dat_file}")
 
-    # 10) store all parameters in excel file
+    # 10) store all parameters in Excel file
     def write_to_excel(self):
         temp_dir = f'{self.dat_dir}/Temp/'
-        excel_file = f'{temp_dir}{self.name_ampl}_all_params.xlsx'
+        file_name_with_extension = os.path.basename(self.ampl_file)     # get the file name in the path
+        file_name = os.path.splitext(file_name_with_extension)[0]       # separate file names and extensions
+        excel_file = f'{temp_dir}{file_name}_all_params.xlsx'
 
         with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
             self.cf_df.to_excel(writer, sheet_name='cf', index=False)
@@ -340,20 +432,26 @@ class Params:
         print(f'All parameters are stored in: {excel_file}')
 
 
-path = '.'
-dat_dir = f'{path}/Data/'
+# ------------------------------------------------------------------------------------------------
+# Testing
 
-# select the data file
-f_data = f'{dat_dir}Raw/dat1.xlsx'
-af_name = f'dat1'
+# path = '.'
+# dat_dir = f'{path}/Data/'
+#
+# # preparing data file
+# f_data = f'{dat_dir}Raw/data_base.xlsx'      # data from Excel file
+# f_ampl = f'{dat_dir}dat_base.dat'           # model parameter in ampl format
 
-# preparing test data
-# f_data = f'{dat_dir}Raw/test1.xlsx'
-# af_name = f'test3'
+# # preparing test data
+# # f_data_base = f'{dat_dir}Raw/test_base.xlsx'      # data from Excel file
+# # f_data = f'{dat_dir}test_base.dat'            # model parameter in ampl format
+#
+# # data processing (base data in Excel): select the number of hours the model runs by changing n_periods
+# par = Params(dat_dir, f_data, f_ampl, 8760)    # prepare all model parameters
+# # par = Params(dat_dir, f_data_base, f_data, 100)    # prepare model parameters for testing
+# par.write_to_excel()    # write model parameters to Excel file
 
-# data processing: select the number of hours the model runs by changing n_periods
-# par = Params(dat_dir, f_data, af_name, 8760)    # prepare all model parameters
-par = Params(dat_dir, f_data, af_name, 8670)    # prepare model parameters for testing, 30days
-
-par.write_to_ampl()     # write model parameters to ampl format file
-par.write_to_excel()    # write model parameters to Excel file
+# data processing (base data in ampl format): select certain periods data based on _base.dat
+# data_base = f'{dat_dir}test_base.dat'             # all model parameter in ampl format
+# data_new = f'{dat_dir}test_30.dat'                # parameter in selected periods
+# modify_periods(data_base, data_new, 30)           # data processing
