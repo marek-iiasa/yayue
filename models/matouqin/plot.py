@@ -168,6 +168,7 @@ class Plot:
         self.supply_df = pd.DataFrame()
         self.flow_df = pd.DataFrame()
         self.dvflow_df = pd.DataFrame()
+        self.unit = ''
 
         self.readCsv()          # read result from csv
         # self.par = self.readPar()         # read needed parameter from .dat file
@@ -247,6 +248,13 @@ class Plot:
         print('Overview plotting start')
 
         # get values
+        revenue = self.finance_df['Revenue'].iloc[0]
+        if revenue >= 1000:
+            self.finance_df = self.finance_df / 1000
+            self.unit = 'Million'
+        else:
+            self.unit = 'Thousand'
+
         variables = self.finance_df.columns.tolist()
         values = self.finance_df.iloc[0].values
         cap = self.cap_df
@@ -273,7 +281,7 @@ class Plot:
         ax1.axhline(0, color='gray', linewidth=0.8, linestyle='--')
         # plt.ylim(-100, 160)    # Set the value range of the y-axis
         # ax1.set_xlabel('Categories')
-        ax1.set_ylabel('Million Yuan')
+        ax1.set_ylabel(f'{self.unit} Yuan')
         ax1.set_title('a) Financial Overview', y=-0.2)
         ax1.legend(title='Finance', bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0., edgecolor='black')
 
@@ -327,6 +335,108 @@ class Plot:
         # plt.close()
 
         print('Overview plotting finished \n'
+              '--------------------------------')
+
+    def plot_CS(self):
+        # cost structure
+        self.finance_df[self.finance_df < 1e-5] = 0
+        inv = self.finance_df['InvCost'].iloc[0]
+        omc = self.finance_df['OMC'].iloc[0]
+        surp_cost = self.finance_df['SurpCost'].iloc[0]
+        buy_cost = self.finance_df['BuyCost'].iloc[0]
+        bal_cost = self.finance_df['BalCost'].iloc[0]
+        stor_cost = inv + omc
+
+        revenue = self.finance_df['Revenue'].iloc[0]
+        income = self.finance_df['Income'].iloc[0]
+        labels = ['Revenue', 'Cost']
+        cost = stor_cost + bal_cost
+
+        # inner
+        inner_data = [stor_cost, bal_cost]
+        inner_labels = ['Stor', 'Bal']
+
+        # outer
+        outer_data = [inv, omc, surp_cost, buy_cost]
+        outer_labels = ['Inv', 'OMC', 'Surp', 'Buy']
+
+        # text setting
+        # def set_text(pct, all_vals):
+        #     absolute = int(pct / 100. * sum(all_vals))
+        #     #  showing percentages and raw data
+        #     return '{:.2f}%\n({:.2f})'.format(pct, absolute)
+        #     # return '{:.2f}%'.format(pct)
+
+        # create figure
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+
+        # setting edges and offsets
+        edge_props = dict(edgecolor='black', linewidth=0.8)
+        textprops = {'fontsize': 13}
+        offset_inner = [0.02] * len(inner_data)          # offset of each outer pie chart
+        offset = [0] * len(outer_data)    # offset of each outer pie chart
+
+        # 1) plotting cost and revenue
+        wedges1, texts1, autotexts1 = ax1.pie([revenue, cost],
+                                              colors=set_color(2),
+                                              labels=['Revenue', 'Cost'], textprops=textprops,
+                                              labeldistance=0.6,
+                                              pctdistance=0.7,
+                                              # autopct=lambda pct: set_text(pct, [revenue, cost]),
+                                              autopct=lambda pct: f'{pct:.2f}%',
+                                              startangle=180,           # start position
+                                              wedgeprops=dict(width=0.6, **edge_props),
+                                              explode=[0.02, 0.02]      # offset of each sector
+                                              )
+
+        # text inside
+        ax1.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax1.text(0, 0, f'Income\n{income:.2f}', horizontalalignment='center', verticalalignment='center',
+                 weight='bold', size=15)
+        ax1.set_title(f'a) Revenue and cost ({self.unit})', y=-0.2)
+        ax1.legend(wedges1, labels, title='Labels', loc='lower center',
+                   bbox_to_anchor=(0.5, -0.1), ncol=2)
+
+        # 2) plotting cost structure
+        # outer
+        wedges2, texts2, autotexts2 = ax2.pie(outer_data, colors=set_color(6),
+                                              radius=1,
+                                              explode=offset,
+                                              labels=outer_labels, textprops=textprops,
+                                              labeldistance=0.75,
+                                              # autopct=lambda pct: set_text(pct, outer_data),
+                                              autopct=lambda pct: f'{pct:.2f}%',
+                                              pctdistance=0.88,     # text position, relative to the radius of pie chart
+                                              wedgeprops=dict(width=0.3, **edge_props),)
+
+        # inner
+        wedges3, texts3, autotexts3 = ax2.pie(inner_data, colors=set_color(4),
+                                              radius=1 - 0.4,
+                                              explode=offset_inner,
+                                              labels=inner_labels, textprops=textprops,
+                                              labeldistance=0.55,
+                                              # autopct=lambda pct: set_text(pct, inner_data),
+                                              autopct=lambda pct: f'{pct:.2f}%',
+                                              pctdistance=0.75,     # text position, relative to the radius of pie chart
+                                              wedgeprops=dict(width=0.3, **edge_props))
+
+        ax2.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax2.text(0, 0, f'Cost\n{cost:.2f}', horizontalalignment='center', verticalalignment='center',
+                 weight='bold', size=15)
+        ax2.set_title(f'b) Cost composition ({self.unit})', y=-0.2)
+        ax2.legend(wedges2 + wedges3, outer_labels + inner_labels, title='Cost', loc='lower center',
+                   bbox_to_anchor=(0.5, -0.1), ncol=6)
+
+        fig.subplots_adjust(bottom=0.2)
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.979,
+                            bottom=0.172,
+                            left=0.011,
+                            right=0.971,
+                            hspace=0.2,
+                            wspace=0.051)
+        plt.savefig(f'{self.fig_dir}Cost_pie.png')
+        print('Cost plotting finished \n'
               '--------------------------------')
 
     def plot_finance(self):
@@ -623,7 +733,8 @@ class Plot:
         dv_hy_df = self.dvflow_df.filter(like='Tank')
         dv_fc_df = self.dvflow_df.filter(like='Cell')
 
-        flow_h_df = self.flow_df
+        flow_h_df = self.flow_df.copy()
+        flow_h_df = flow_h_df.abs()         # all positive values
         supply_h = self.supply_df['supply'].iloc[0]
 
         # plotting
@@ -631,19 +742,19 @@ class Plot:
 
         # data processing, day, week
         if unit == 'day':
-            dv_ele = dv_ele_df.iloc[((n - 1) * 24):(n * 24 - 1)]
-            dv_hy = dv_hy_df.iloc[((n - 1) * 24):(n * 24 - 1)]
-            dv_fc = dv_fc_df.iloc[((n - 1) * 24):(n * 24 - 1)]
-            flow = flow_h_df.iloc[((n - 1) * 24):(n * 24 - 1)]
+            dv_ele = dv_ele_df.iloc[((n - 1) * 24):(n * 24)]
+            dv_hy = dv_hy_df.iloc[((n - 1) * 24):(n * 24)]
+            dv_fc = dv_fc_df.iloc[((n - 1) * 24):(n * 24)]
+            flow = flow_h_df.iloc[((n - 1) * 24):(n * 24)]
 
             for ax in axs:
                 ax.xaxis.set_major_locator(ticker.MultipleLocator(4))
 
         elif unit == 'week':
-            dv_ele = dv_ele_df.iloc[((n - 1) * 168):(n * 168 - 1)]
-            dv_hy = dv_hy_df.iloc[((n - 1) * 168):(n * 168 - 1)]
-            dv_fc = dv_fc_df.iloc[((n - 1) * 168):(n * 168 - 1)]
-            flow = flow_h_df.iloc[((n - 1) * 168):(n * 168 - 1)]
+            dv_ele = dv_ele_df.iloc[((n - 1) * 168):(n * 168)]
+            dv_hy = dv_hy_df.iloc[((n - 1) * 168):(n * 168)]
+            dv_fc = dv_fc_df.iloc[((n - 1) * 168):(n * 168)]
+            flow = flow_h_df.iloc[((n - 1) * 168):(n * 168)]
 
             for ax in axs:
                 ax.xaxis.set_major_locator(ticker.MultipleLocator(24))
@@ -656,6 +767,7 @@ class Plot:
             print(f'There is no energy flows in the model, please check')
         else:
             flow.plot(ax=axs[0],
+                      kind='bar',
                       # color=set_color(9)
                       )
             axs[0].axhline(y=supply_h, color='grey', linestyle='--')
@@ -664,7 +776,7 @@ class Plot:
                         verticalalignment='bottom', horizontalalignment='left')
 
         axs[0].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-        axs[0].set_title(f'a) Electricity flows in the {n} {unit}', y=-0.4)
+        axs[0].set_title(f'a) Electricity flows in the {n} {unit}', y=-0.5)
         axs[0].set_xlabel('Time')
         axs[0].set_ylabel('Electricity flow (MW)')
         axs[0].tick_params(axis='x', rotation=0)
@@ -691,9 +803,11 @@ class Plot:
             axs[1].annotate(f'{min_val:.2f}', xy=(min_t, min_val), xytext=(min_t, 1.01 * (min_val-0.1)))
             # arrowprops=dict(facecolor='black', shrink=0.05))
 
+            axs[1].axhline(y=0, color='black', linestyle=':')
+
             axs[1].set_ylim([(min_val - 2), (max_val + 2)])
             axs[1].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-            axs[1].set_title(f'b) Electricity flow in eltrolyzer', y=-0.4)
+            axs[1].set_title(f'b) Electricity flow in eltrolyzer', y=-0.5)
             axs[1].set_xlabel('Time')
             axs[1].set_ylabel('Electricity flow (MW)')
             axs[1].tick_params(axis='x', rotation=0)
@@ -702,46 +816,59 @@ class Plot:
         if dv_hy.empty:
             print(f'There is no energy flows through the hydrogen tank')
         else:
-            # dv_hy_p = dv_hy.loc[:, (dv_hy != 0).any(axis=0)]  # remove 0 columns
-            # dv_hy_p.plot(ax=axs[1],
+            # dv_hy = dv_hy.loc[:, (dv_hy != 0).any(axis=0)]  # remove 0 columns
 
             dv_hy_in = dv_hy.filter(like='hIn')
             dv_hy_out = dv_hy.filter(like='hOut')
+            dv_hy_vol = dv_hy.filter(like='hVol')
 
             mmax = dv_hy_in.max().max()
             mmin = dv_hy_out.min().min()
+            hmax = dv_hy_vol.max().max()
 
-            # max_idx = dv_hy_in.idxmax()
-            # min_idx = dv_hy_out.idxmin()
-            #
-            # axs[1].annotate(f'Max: {max_hInc}',
-            #             xy=(max_idx, mmax),
-            #             xytext=(max_idx, mmax * 1.05),
-            #             arrowprops=dict(facecolor='black', arrowstyle="->"),
-            #             ha='center')
+            max_idx = dv_hy_in.idxmax().loc[dv_hy_in.max().idxmax()]
+            min_idx = dv_hy_out.idxmin().loc[dv_hy_out.max().idxmax()]
+            hmax_idx = dv_hy_vol.idxmax().loc[dv_hy_vol.max().idxmax()]
+
+            axs[2].annotate(f'{mmax:.2f}',
+                            xy=(max_idx, mmax),
+                            xytext=(max_idx, mmax * 1.05),
+                            ha='center')
+            axs[2].annotate(f'{mmin:.2f}',
+                            xy=(min_idx, mmin),
+                            xytext=(min_idx, mmin * 1.05),
+                            ha='center')
+            axs[2].annotate(f'{hmax:.2f}',
+                            xy=(hmax_idx, hmax),
+                            xytext=(hmax_idx, hmax * 1.05),
+                            ha='center')
+
+            axs[2].axhline(y=0, color='black', linestyle=':')
 
             dv_hy.plot(ax=axs[2],
                        # kind='bar', width=0.8,
                        # edgecolor='black',
                        )
-            # for container in axs[1].containers:
-            #     axs[1].bar_label(container)
+
+            # for container in axs[2].containers:
+            #     axs[2].bar_label(container)
 
             axins = inset_axes(axs[2], width='70%', height='55%', loc='lower right',
                                bbox_to_anchor=(0.4, 0.2, 0.6, 0.6),
                                bbox_transform=axs[2].transAxes)
             dv_hy.plot(ax=axins, legend=False)
-            axins.set_ylim(1.1 * (mmin-10), 1.1 * (mmax+15))
+            axins.set_ylim(1.1 * (mmin-3), 1.1 * (mmax+3))
 
             # hide axes or labels
             # axins.set_xlabel('Time (zoomed in)')
             # axins.set_ylabel('Flow (zoomed in)')
             # axins.tick_params(labelleft=False, labelbottom=False)
 
+            axs[2].set_ylim([(mmin - 2), (hmax + 2)])
             axs[2].legend(bbox_to_anchor=(1.15, 1.02), loc='upper center', ncol=1)
-            axs[2].set_title(f'c) Hydrogen flow in hydrogen tanks', y=-0.4)
+            axs[2].set_title(f'c) Hydrogen flow in hydrogen tanks', y=-0.5)
             axs[2].set_xlabel('Time')
-            axs[2].set_ylabel('Hydrogen flow (kg)')
+            axs[2].set_ylabel('Hydrogen flow (100 kg)')
             axs[2].tick_params(axis='x', rotation=0)
 
         # 3) Fuel-cell flows
@@ -766,14 +893,17 @@ class Plot:
 
             fc_e.plot(ax=axs[3], xlabel='Time', ylabel='Electricity flow (MW)', legend=False)
             # kind='bar', width=0.8, edgecolor='black',
-            axs[3].annotate(f'{max_e:.2f}', xy=(max_et, max_e), xytext=(max_et, max_e + 0.1))
-            axs[3].annotate(f'{min_e:.2f}', xy=(min_et, min_e), xytext=(min_et, min_e + 0.1))
+            axs[3].annotate(f'{max_e:.2f}', xy=(max_et, max_e), xytext=(max_et, max_e * 1.05))
+            axs[3].annotate(f'{min_e:.2f}', xy=(min_et, min_e), xytext=(min_et, min_e * 1.05))
+            #
+
+            axs[3].axhline(y=0, color='black', linestyle=':')
 
             ax3 = axs[3].twinx()
             fc_h.plot(ax=ax3, ylabel='Hydrogen (kg)', color='pink', legend=False)
-            # kind='bar', width=0.8, # edgecolor='black',
-            ax3.annotate(f'{max_h:.2f}', xy=(max_ht, max_h), xytext=(max_ht, max_h + 5))
-            ax3.annotate(f'{min_h:.2f}', xy=(min_ht, max_h), xytext=(min_ht, min_h + 5))
+            # # kind='bar', width=0.8, # edgecolor='black',
+            ax3.annotate(f'{max_h:.2f}', xy=(max_ht, max_h), xytext=(max_ht, max_h * 1.05))
+            ax3.annotate(f'{min_h:.2f}', xy=(min_ht, max_h), xytext=(min_ht, min_h * 1.05))
 
             # for container in axs[2].containers:
             #     axs[2].bar_label(container)
@@ -787,7 +917,7 @@ class Plot:
 
             axs[3].tick_params(axis='x', rotation=0)
 
-            axs[3].set_title(f'd) Energy flows in fuel cells', y=-0.4)
+            axs[3].set_title(f'd) Energy flows in fuel cells', y=-0.5)
 
             # set x coordinate interval
             # for ax in axs:
@@ -795,7 +925,7 @@ class Plot:
 
         for ax in axs.flatten():
             ax.yaxis.set_major_locator(ticker.MaxNLocator(5))
-            ax.xaxis.set_major_locator(ticker.MaxNLocator(7))
+            ax.xaxis.set_major_locator(ticker.MaxNLocator(13))
 
         plt.subplots_adjust(top=0.981,
                             bottom=0.108,
@@ -804,8 +934,8 @@ class Plot:
                             hspace=0.6,
                             wspace=0.2)
 
-        plt.tight_layout()
-        fig.set_constrained_layout(True)
+        # plt.tight_layout()
+        # fig.set_constrained_layout(True)
 
         print('Dv flows plotting finished \n'
               '--------------------------------')
@@ -820,7 +950,8 @@ class Plot:
 # f_data = f'{path}/Data/test1.dat'   # data file
 #
 # Fig = Plot(res_dir, fig_dir, f_data)
-#
+# Fig.plot_CS()
+
 # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
 # # 'kaleido' is needed for fig_save: True
 # Fig.plot_flow('original', True, True, True)
