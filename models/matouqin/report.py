@@ -336,6 +336,40 @@ class Report:
             print(f'Total capacity = {scap} MW')
             print(f'Total investment cost of {s} = {inv} million RMB')
 
+        # initialize a dictionary to store the efficiency values
+        pre_dict = {}
+        loss_dict = {}
+        eff_dict = {}
+        for s in self.m1.Se:
+            num_e = pe.value(self.m1.sNum[s])
+            if num_e != 0:
+                for u in self.m1.Sh:
+                    num_h = pe.value(self.m1.sNum[u])
+                    if num_h != 0:
+                        for v in self.m1.Sc:
+                            num_c = pe.value(self.m1.sNum[v])
+                            if num_c != 0:
+                                pre_e = 1 * self.m1.eh2[s] * self.m1.eph2[u]
+                                loss_e = 1 * self.m1.eh2[s] * self.m1.h2Res[u] * self.m1.h2e[v]
+                                stor_e = 1 - pre_e - loss_e
+
+                                # store the efficiency in the dictionary
+                                pre_dict[u] = f'{round(pre_e, 2)}MW'
+                                loss_dict[(s, u, v)] = f'{loss_e * 100}%'
+                                eff_dict[(s, u, v)] = f'{stor_e * 100}%'
+
+        print(f'\nElectricity for making high pressure: {pre_dict}')
+        print(f'Energy loss: {loss_dict}')
+        print(f'Efficiency of the storage system: {eff_dict}')
+
+        # hydrogen storage at last period
+        hvol_final = {}
+        for s in self.m1.Sh:
+            num = pe.value(self.m1.sNum[s])
+            if num != 0:
+                hvol_final[s] = pe.value(self.m1.hVol[s, self.m1.nHrs_])
+                print(f'\nFinal hydrogen in {s}: {hvol_final[s]}')
+
         print('\n3) Overview of outcome variables -------------------------------------------------------------------')
         revenue = pe.value(self.m1.revenue)
         if revenue > 1000:
