@@ -122,6 +122,10 @@ def mk_sms():      # p: model parameters prepared in the Params class
     def hVolUpper(mx, s, t):
         return mx.hVol[s, t] <= mx.sCap[s]
 
+    # @m.Constraint(m.Sh)  # Amount of hydrogen at the last period
+    # def hVolEnd(mx, s):
+    #     return mx.hVol[s, mx.nHrs_] == mx.hInit[s]
+
     @m.Constraint(m.Sh, m.T)        # Maximum flow from each type of tank to fuel cells
     def hInUpper(mx, s, t):
         return mx.hIn[s, t] <= mx.mxIn[s]
