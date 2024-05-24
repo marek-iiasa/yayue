@@ -13,6 +13,7 @@ class Corners:
         self.corners = []         # criteria states at the Pareto-set corners
         self.cur_corner = 0       # seq_no of current corner
         self.n_corners = 0        # number of prepared corners
+        self.all_done = False     # set to True, after last corner processed
         self.mk_corners()         # make list of corners
         # self.lst_corners()
         # self.next_corner()      # API for handling next corner, returns True, if the last corner is processed
@@ -50,10 +51,9 @@ class Corners:
             print(f'setting A/R for {self.cur_corner}-th out of {self.n_corners} corners defined.')
         self.set_ar()       # set A/R for specs in self.corners[self.cur_corner]
         self.cur_corner += 1
-        if self.cur_corner < self.n_corners:
-            return False
-        print(f'all {self.n_corners} corners processed.')
-        return True
+        if self.cur_corner == self.n_corners:
+            print(f'last of {self.n_corners} corners processed.')
+            self.all_done = True
 
     def set_ar(self):   # set A/R values for the current corner
         corner = self.corners[self.cur_corner]
@@ -86,6 +86,9 @@ class Corners:
                 print(f'Crit {cr.name}: active {cr.is_active}, ignored {cr.is_ignored}, A {cr.val2ach(cr.asp)}, '
                       f'R {cr.val2ach(cr.res)}')
         pass
+
+    def next_sol(self):
+        return self.all_done
 
     def lst_corners(self):
         print(f'n_crit = {self.n_crit}, n_corners = {len(self.corners)}')

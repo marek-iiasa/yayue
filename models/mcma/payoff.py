@@ -1,110 +1,137 @@
 """
-Handle data structure and control flows of the MCMA
+Handle the Payoff table (computation/read_in, update, saving)
 """
-import sys      # needed from stdout
+# import sys      # needed from stdout
 import os
-import math
-from os import R_OK, access
-from os.path import isfile
-from .crit import Crit, CrPref
+# import math
+# from os import R_OK, access
+# from os.path import isfile
+# from .crit import Crit, CrPref
 # from .par_repr import ParRep
 
 
 # noinspection SpellCheckingInspection
-class CtrMca:   # control flows of MCMA at diverse computations states
-    def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
-        self.cfg = cfg
-        # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (mcma runs in ana_dir)
-        self.f_crit = 'config.txt'   # file with criteria specification
-        # self.f_payoff = 'payoff.txt'     # file with payoff values
+class PayOff:   # payoff table: try to download, set A/R for computing, update Nadir and save, decide to reset
+    def __init__(self, mc):   # par_rep False/True controls no/yes Pareto representation mode
+        self.mc = mc
+        self.cfg = mc.cfg
+        self.cr = mc.cr       # objects of Crit class, each representing the corresponding criterion
+        self.n_crit = mc.n_crit     # number of defined criteria == len(self.cr)
+        self.f_payoff = 'payoff.txt'     # file with payoff values
+        self.stages = {'utop': 1, 'nad1': 2, 'nad2': 3, 'done': 4} # noqa
+        self.cur_stage = None    # Load payOff table, if previously stored
         # self.f_pref = 'pref.txt'     # file with defined preferences' set
-        # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
-        # self.cur_stage = 0  # initialization
+        # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (not needed; runs in this dir)
+        # self.f_crit = 'config.txt'   # file with criteria specification
         # self.cur_itr_id = None  # id of the current iteration
-        self.cr = []        # objects of Crit class, each representing the corresponding criterion
-        self.n_crit = 0     # number of defined criteria == len(self.cr)
         # self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
-        # self.payoff = None  # PayOff object (created after criteria defined)
         # self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         # self.deg_exp = False    # expansion of degenerated cube dimensions
         # self.cur_cr = None  # cr_index passed to self.set_pref()
         # self.pay_upd = False  # set to true, if current payOff differs from the store one
         # tolerances
-        self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
-        self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
-        self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
+        # self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
+        # self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
+        # self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
         #
-        self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
-        self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
+        # self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
+        # self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse
         # self.scVar = self.opt('scVar', True)   # scale core-model vars defining CAFs
-        self.scVar = self.opt('scVar', False)   # scale core-model vars defining CAFs
-        self.verb = self.opt('verb', 1)   # print verbosity: 0 - min., 1 - key, 2 - debug, 3 - detailed
-        self.pref = []    # list of preferences defined for each blocks
-        self.n_pref = 0     # number of blocks of read-in preferences
-        self.cur_pref = 0   # index of currently processed preference
-        # self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
-        # self.iniSolDone = False    # set to True after all initial Pareto-sol (except of neutral) computed
-        # self.neutralDone = False    # set to True (in set_stage()) after neutral sol. computed
+        # self.scVar = self.opt('scVar', False)   # scale core-model vars defining CAFs
+        # self.verb = self.opt('verb', 1)   # print verbosity: 0 - min., 1 - key, 2 - debug, 3 - detailed
+        # self.pref = []    # list of preferences defined for each blocks
+        # self.n_pref = 0     # number of blocks of read-in preferences
+        # self.cur_pref = 0   # index of currently processed preference
+        self.payOffChange = True    # set to False, after every storing, to True after any nadir modified
 
-        self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term
-        # print(f'epsilon = {self.epsilon}')
-        print(f'epsilon = {self.epsilon:.1e}')
-        do_neutral = self.cfg.get('neutral') is True
-        print(f'generate neutral solution = {do_neutral}')
-        # self.neutralDone = not do_neutral
-        # ini_solution_id = self.opt('ini_sol', 'undefined')  # id of initial solution method
-        # print(f'initial solution method id = {ini_solution_id}')
-        #
-        self.rdCritSpc()    # read criteria specs from the config file
+        self.rd_payoff()    # Load payOff table, if previously stored, sets self.cur_stage accordingly
 
-    def opt(self, key_id, def_val):     # return: the cfg value if specified; otherwise the default
-        val = self.cfg.get(key_id)
-        if val is None:
-            return def_val
-        else:
-            return val
+    def done(self):   # return True if PayOff table ready
+        return self.cur_stage == 4
+        # raise Exception('PayOff:: done() not impelemented yet.')
 
-    def addCrit(self, cr_name, typ, var_name):
-        """
-        Add definition of a criterion.
+    def next_pref(self):   # set_up preferences for next itr of PayOff table computations
+        raise Exception(f'PayOff::next_pref() not implemented yet for stage: {self.cur_stage}.')
 
-        :param cr_name: criterion name
-        :type cr_name:  str
-        :param var_name: name of the corresponding model variable
-        :type var_name:  str
-        :param typ: criterion type (either 'min' or 'max')
-        :type typ:  str
-        :return:  None
-        """
-        if self.cr_ind(cr_name, False) == -1:  # add, if the cr_name is not already used
-            self.cr.append(Crit(cr_name, var_name, typ))
-            self.n_crit = len(self.cr)
-        else:
-            raise Exception(f'addCrit(): duplicated criterion name: "{cr_name}".')
+    def next_sol(self):   # process results of next iteration
+        raise Exception(f'PayOff::next_sol() not implemented yet for stage: {self.cur_stage}.')
 
-    def cr_ind(self, cr_name, fatal=True):  # return index (in self.cr) of criterion having name cr_name
-        for (i, crit) in enumerate(self.cr):
+    def set_payOff(self, cr_name, utopia, nadir):   # set the previously stored utopia/nadir values
+        if utopia is None or nadir is None:
+            raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): undefined values.')
+        utopia = float(utopia)  # read-in words are of type string; have to explicitly converted
+        nadir = float(nadir)
+        if type(utopia) is not float or type(nadir) is not float:
+            print(f'{type(utopia) = }')
+            print(f'{type(nadir) = }')
+            raise Exception(f'set_payOff("{cr_name}", "{utopia}", "{nadir}"): both values should be of type float.')
+        for crit in self.cr:
             if crit.name == cr_name:
+                if crit.isBetter(utopia, nadir):
+                    crit.utopia = utopia
+                    crit.nadir = nadir
+                    return
+                else:
+                    raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): inconsistent values.')
+        raise Exception(f'set_payoff(): unknown criterion name: "{cr_name}".')
+
+    def rd_payoff(self):    # read stored utopia/nadir values and store them as self.cr attributes
+        if os.path.exists(self.f_payoff):
+            with open(self.f_payoff, "r") as reader:
+                print(f"\nReading payoff table stored in file '{self.f_payoff}':")
+                n_def = 0
+                for n_line, line in enumerate(reader):
+                    line = line.rstrip("\n")
+                    # print(f'line {line}') # noqa
+                    words = line.split()
+                    n_words = len(words)
+                    assert n_words == 5, f'line {line} has {n_words} instead of the required five.'
+                    self.set_payOff(words[0], words[2], words[4])
+                    n_def += 1
+            assert (self.n_crit == n_def), f'stored payOff table has {n_def} values for {self.n_crit} defined criteria.'
+            self.prnPayOff(True)    # print only (don't write to the file)
+            # self.hotStart = True  # if payOff provided, jump to stage==5
+            self.cur_stage = 4
+            print(f'\nPayOff table provided; skipping its computation. Compute neutral solution.')
+        else:
+            self.cur_stage = 1      # start with computing Utopia
+            print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
+            # self.hotStart = False  # payOff not provided, shall be computed
+
+    def prnPayOff(self, prn_only=False):   # store current values of utopia/nadir in a file for subsequent use
+        # to create a dir: os.makedirs(dir_name, mode=0o755)
+        # create file for writing (over-writes previous, if exists)
+        if not self.payOffChange:
+            # print('payOff table values not changed.')
+            return
+        print('PayOff table:')
+        lines = []
+        for crit in self.cr:
+            if crit.utopia is not None and crit.nadir is not None:
+                line = f'{crit.name}\t U {crit.utopia:.3e}   N {crit.nadir:.3e}'
+            else:
+                line = f'{crit.name}\t U {crit.utopia}   N {crit.nadir}'
+            print(line)
+            lines.append(line)
+        if prn_only or self.cur_stage < 4:  # don't store payOff table before neutral solution is computed:
+            if self.cfg.get('verb') > 1:
+                print(f'Current values of the payoff table NOT written to file "{self.f_payoff}":')
+        else:
+            print(f'Current values of the payoff table written to file "{self.f_payoff}":')
+            f_payOff = open(self.f_payoff, "w")
+            for line in lines:
+                f_payOff.write(line + '\n')
+            f_payOff.close()
+            self.payOffChange = False
+
+    def chk_utopia(self):    # return crit-index of criterion, whose utopia was not computed yet
+        for (i, cr) in enumerate(self.cr):
+            if cr.utopia is None:  # old version: if not cr.utopia is wrong (returns True if cr.utopia == 0.)
                 return i
-        if fatal:   # raise exception
-            raise Exception(f'cr_ind(): unknown criterion name: "{cr_name}".')
-        else:   # only inform
-            return -1
+        return -1
 
-    def scale(self):    # define scaling-coeffs (for scaling criteria values to the same range of values)
-        print(f'\nDefining criteria scaling coefficients.')
-        for cr in self.cr:
-            diff = abs(cr.utopia - cr.nadir)
-            assert diff > self.minDiff, f'Crit. "{cr.name}" utopia {cr.utopia:.4e} too close to nadir {cr.nadir}:.4e.'
-            sc_tmp = self.critScale / diff
-            magn = int(math.log10(sc_tmp))
-            cr.sc_var = math.pow(10, magn)
-            print(f'Criterion "{cr.name}", {cr.attr}: scaling coef. = {cr.sc_var:.1e}, utopia {cr.utopia:.2e}, ' 
-                  f'nadir {cr.nadir:.2e}\n\tnot-rounded scaling (to range {self.critScale:.1e}) = {sc_tmp:.4e}.')
-
-    '''
     def set_stage(self):
         """Define and return analysis stage; provide (in self.cur_cr) info for mc.set_pref()."""
 
@@ -163,7 +190,6 @@ class CtrMca:   # control flows of MCMA at diverse computations states
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
         # return self.cur_stage
-    '''
 
     def set_pref(self):
         # set automatically (according to programmed rules for each stage) crit attributes:
@@ -244,79 +270,6 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 crit.is_active = item.is_active
                 print(f'Attributes of crit "{crit.name}": A {crit.asp}, R {crit.res}, active {crit.is_active}.')
         return
-
-    def rdCritSpc(self):    # read specification of criteria
-        print(f'\nCreating criteria defined in cfg_usr.yml file.')
-        cr_def = self.cfg.get('crit_def')
-        assert cr_def is not None, f'Criteria not defined in the cfg_usr.yml file.'
-        self.n_crit = len(cr_def)
-        for i, cr in enumerate(cr_def):
-            n_words = len(cr)  # crit-name, type (min or max), name of core-model var defining the crit.
-            assert n_words == 3, f'definition of {i}-th criterion has {n_words} elements instead of the required three.'
-            self.addCrit(cr[0], cr[1], cr[2])  # store the criterion specs
-        assert (self.n_crit > 1), f'at least two criteria need to be defined, only {self.n_crit} was defined.'
-
-    def readPref(self):  # read preferences provided in file self.f_pref
-        # each line defines: cr_name, A, R, optionally activity for a criterion
-        # sets of preferences for all criteria should be separated by line having only #-char in first column
-        # preferences for criteria not specified in a set are reset to: A=utopia, R=nadir, criterion not-active
-
-        self.n_pref = 0  # number of specified sets of preferences
-        if not (isfile(self.f_pref) and access(self.f_pref, R_OK)):
-            print(f"\nUser-preferences not defined (file '{self.f_pref}' is not accessible).")
-            return
-        print(f"\nReading user-preferences defined in file '{self.f_pref}':")
-        lines = []
-        with open(self.f_pref) as reader:  # read all lines and store for processing next
-            for n_line, line in enumerate(reader):
-                line = line.rstrip("\n")
-                # print(f'line {n_line}: "{line}"')
-                if len(line) == 0 or line[0] == '*':    # skip empty or commented lines
-                    continue
-                if line[0] == "#" or len(line) == 1:  # separator of set of preferences
-                    # print(f'marker found in line {n_line}')
-                    pass
-                else:
-                    words = line.split()
-                    n_words = len(words)    # crit-name, type (min or max), name of core-model var defining the crit.
-                    assert 3 <= n_words <= 4, f'line {line} has {n_words}; required are either three or four.'
-                    for i in [1, 2]:
-                        assert type(float(words[i])) == float and words[i] is not None, \
-                            f'line "{line}": "{words[i]}" should be a float number.'
-                lines.append(line)
-        line = '#'
-        lines.append(line)  # make sure that the last line marks end of a set
-
-        print(f'Process {len(lines)} lines with user preferences.')
-        cur_set = []    # current set of preferences (specified in blocks of lines separated by #)
-        for n_line, line in enumerate(lines):
-            # print(f'processing {n_line}-th line: {line}')
-            if line[0] != '#':  # process the line
-                words = line.split()    # number of words check above
-                c_ind = self.cr_ind(words[0], False)
-                if c_ind < 0:
-                    raise Exception(f'unknown crit. name "{words[0]}" in {n_line}: "{line}".')
-                pref_item = CrPref(c_ind, float(words[1]), float(words[2]), len(words) == 3)
-                self.cr[c_ind].chkAR(pref_item, n_line)  # check correctness of A and R values
-                for item in cur_set:    # check, if crit. preferences are already defined in the current set
-                    if c_ind == item.parent:
-                        raise Exception(f'duplicated (in the current set, line {n_line}) preferences for '
-                                        f'criterion "{self.cr[c_ind].name}".')
-                cur_set.append(pref_item)   # add to the current set
-            else:
-                n_items = len(cur_set)
-                if n_items == self.n_crit:
-                    self.pref.append(cur_set)
-                else:
-                    if n_items > 0:
-                        raise Exception(f'{n_items} preference(s) in the block ending at line {n_line} for  '
-                                        f'{self.n_crit} defined criteria.')
-                    else:
-                        print(f'ignoring empty block ending at line {n_line}')
-                cur_set = []    # empty for starting a new set
-
-        self.n_pref = len(self.pref)
-        print(f'Prepared {self.n_pref} sets of user-defined preferences.')
 
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'

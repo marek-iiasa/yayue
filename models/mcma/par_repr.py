@@ -1,7 +1,7 @@
 import pandas as pd
 from operator import itemgetter
 from .cube import ParSol, Cubes, aCube
-from .ini_sol import Corners
+from .corners import Corners
 
 
 # noinspection SpellCheckingInspection
