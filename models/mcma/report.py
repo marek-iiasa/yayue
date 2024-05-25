@@ -177,11 +177,11 @@ class Report:
 
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
-        if self.mc.par_rep is None:  # Pareto-front summary
+        if self.wflow.par_rep is None:  # Pareto-front summary
             print('No report information collected.')
             return
 
-        self.mc.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
+        self.wflow.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_iters, index=True)
         print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_iters}" file.')
@@ -190,19 +190,19 @@ class Report:
         print(f'Values of core-model variables requested to be reported are stored in the DataFrame '
               f'"{self.f_vars}" file.')
 
-        if self.mc.par_rep is None:  # return if Pareto-front is not computed
+        if self.wflow.par_rep is None:  # return if Pareto-front is not computed
             return
 
-        df = self.mc.par_rep.df_sol
-        for cr in self.mc.cr:   # format criteria values
+        df = self.wflow.par_rep.df_sol
+        for cr in self.wflow.mc.cr:   # format criteria values
             df[cr.name] = df[cr.name].apply(lambda x: f'{x:.4e}')   # apply() returns series (a column)
         f_name = self.f_pareto
         df.to_csv(f_name, index=True)
         print(f'{len(df)} unique solutions stored in {f_name}. '
-              f'{len(self.mc.par_rep.clSols)} duplicated solutions skipped.')
+              f'{len(self.wflow.par_rep.clSols)} duplicated solutions skipped.')
 
         # plot solutions
-        plots = Plots(self.mc, self.df_vars)    # plots
+        plots = Plots(self.wflow, self.df_vars)    # plots
         plots.plot3D()    # 3D plot
         plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         plots.kde_stages()  # KDE + histograms vs stages

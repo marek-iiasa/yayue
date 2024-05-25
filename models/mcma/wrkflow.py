@@ -9,7 +9,7 @@ from .payoff import PayOff
 from .report import Report  # organize results of each iteration into reports
 from .corners import Corners
 # from .crit import Crit, CrPref
-# from .par_repr import ParRep
+from .par_repr import ParRep
 
 
 # noinspection SpellCheckingInspection
@@ -18,18 +18,22 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.cfg = cfg
         self.mc = CtrMca(self)   # initialize criteria
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
+        # self.rep = None  # Report ctor
         self.rep = Report(self, m1)  # Report ctor
-        self.corner = Corners(self.mc)  # initialize corners of the Pareto set
+        self.par_rep = None    # ParRep object, currently always used (not only, if is_par_rep == True)
+        self.corner = None  # initialize corners of the Pareto set
         #
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
         if self.payoff.done():
+            # self.rep = Report(self, m1)  # Report ctor
+            self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
+            self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             self.cur_stage = 2      # PayOff table uploaded, start with corners of Pareto set
         else:
             self.cur_stage = 1      # start with computing PayOff table
         self.n_itr = None           # id of current itr (TBD by self.itr_start())
         self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
-        self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         #
         # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
@@ -63,19 +67,27 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
 
     def itr_start(self, n_itr):
         self.n_itr = n_itr
-        if self.cur_stage == 1:       # continue payoff table
+        if self.cur_stage == 1:       # start or continue payoff table
             self.payoff.next_pref()
-        elif self.cur_stage == 2:     # continue computing corners
+            # if self.payoff.done():
+            #     # self.rep = Report(self, m1)  # Report ctor
+            #     self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
+            #     self.corner = Corners(self.mc)  # initialize corners of the Pareto set
+            #     self.cur_stage = 2  # PayOff table uploaded, start with corners of Pareto set
+            # return self.cur_stage
+        elif self.cur_stage == 2:     # start or continue computing corners
             self.corner.next_corner()
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 3:     # neutral solution
-            raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
+            self.par_rep.pref(True)     # True implies AR for neutral solution
+            # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # continue Pareto front
-            raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
+            self.par_rep.pref()     # the default arg False implies AR from the selected cube
+            # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:  # reset (after Nadir update), restart with Corners
             raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
-        elif self.cur_stage == 6:     # everything done, finish
-            raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
+        # elif self.cur_stage == 6:     # everything done, finish
+        #     raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_start() implementation error, stage: {self.cur_stage}.')
         return self.cur_stage
@@ -94,15 +106,21 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     next_stage = 3
                 else:
                     next_stage = 4     # skip neutral, proceed to Pareto front
+                    self.par_rep.from_cube = True   # from now on preferences to be generated from cubes
         elif self.cur_stage == 3:     # neutral solution
-            raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
+            next_stage = 4  # neutral done, proceed to Pareto front
+            self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
+            # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # start or continue Pareto front
-            raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
+            pass
+            # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:     # reset (after Nadir update)
             raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
-        # self.mc.par_rep.addSol(self.itr_id)
+        if self.cur_stage > 1:  # don't store solutions during PayOff table computations
+            # todo: check handling non-optimal solutions (should be earlier?)
+            self.par_rep.addSol(self.n_itr)
         self.cur_stage = next_stage
         return next_stage
     '''

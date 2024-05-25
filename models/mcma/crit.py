@@ -137,17 +137,17 @@ class Crit:     # definition and attributes of a single criterion
             # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is worse than N {self.nadir}.')
             is_ok = False
         if not is_ok:
-            raise Exception(f'chkAR(): preferences A = {asp}, R = {res} specified in line {n_line} for '
+            raise Exception(f'Crit::chkAR(): preferences A = {asp}, R = {res} specified in line {n_line} for '
                             f'criterion "{self.name}" are inconsistent.')
         return
 
     def setAR(self):   # set AR for neutral solution
         self.is_active = True   # make sure the criterion is active
-        self.is_ignored = None  # make sure the criterion is not itnored
+        self.is_ignored = None  # make sure that ignoring the criterion is undefined
         self.is_fixed = False
         is_max = self.mult == 1  # 1 for max-crit, -1 for min.
         delta = abs(self.utopia - self.nadir) / 3.  # equal distance between U, A, R, N
         self.asp = self.utopia - self.mult * delta
         self.res = self.asp - self.mult * delta
-        print(f"Preferences for neutral solution: cr_name = '{self.name}', {is_max = }, U = {self.utopia}, "
-              f"A = {self.asp}, R = {self.res}, N = {self.nadir}.")
+        print(f"Preferences for neutral solution: cr_name = '{self.name}', {is_max = }, U = {self.utopia:.2e}, "
+              f"A = {self.asp:.2e}, R = {self.res:.2e}, N = {self.nadir:.2e}.")

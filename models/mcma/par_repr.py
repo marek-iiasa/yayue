@@ -72,9 +72,10 @@ class ParProg:
 
 # noinspection SpellCheckingInspection
 class ParRep:     # representation of Pareto set
-    def __init__(self, mc):         # initialize corners by regularized selfish solutions
-        self.mc = mc        # CtrMca object
-        self.cfg = mc.cfg   # Config object
+    def __init__(self, wflow):         # initialize corners by regularized selfish solutions
+        self.wflow = wflow        # CtrMca object
+        self.mc = wflow.mc        # CtrMca object
+        self.cfg = wflow.cfg   # Config object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.cubes = Cubes(self)  # the object handling all cubes
@@ -88,8 +89,9 @@ class ParRep:     # representation of Pareto set
         self.dir_name = self.cfg.get('resDir')
 
         print('Initializing Pareto-set exploration. --------------------')
-        mc.scale()          # (re)define scales for criteria values
+        wflow.mc.scale()          # (re)define scales for criteria values
 
+    '''
     def ini_old(self):     # initial solutions (old)
         for (i, cr) in enumerate(self.mc.cr):
             delta = abs(cr.utopia - cr.nadir) / 3.  # take 1/3 of the (utopia, nadir) range
@@ -122,26 +124,20 @@ class ParRep:     # representation of Pareto set
             self.ini_obj = Corners(self.mc)   # persistent object handling A/R specs for all Pareto-set corners
             print('specs of Pareto corners defined.')
         self.mc.iniSolDone = self.ini_obj.next_corner()   # return True, if A/R for the last corner defined
+    '''
 
-    def pref(self):     # entry point for each new iteration
-        if not self.from_cube:  # no cubes yet, generate A/R for next initial solution (excl. neutral solution)
-            ini_ver = self.mc.opt('ini_sol', 'old')
-            if ini_ver == 'as':
-                self.ini_as()
-            elif ini_ver == 'jg':
-                self.ini_jg()
-            elif ini_ver == 'mm':
-                self.ini_mm()
-            else:
-                self.ini_old()
-        else:   # all selfish solutions ready
+    def pref(self, neutral=False):     # entry point for each new iteration
+        if neutral:     # set A/R for neutral solution
+            for cr in self.mc.cr:
+                cr.setAR()
+        else:   # set preferences from the selected cube
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
                 self.progr.update(cube.size, False)
             # else:
             #     self.progr.update(0.)
             if cube is None:
-                self.mc.cur_stage = 6  # terminate the analysis
+                self.wflow.cur_stage = 6  # terminate the analysis
                 return
                 # raise Exception(f'ParRep::pref(): no cube defined.')
             self.cur_cube = cube.id     # remember cur_cube to attach its id to the solution (after it will be provided)
@@ -221,8 +217,8 @@ class ParRep:     # representation of Pareto set
                 print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
                 self.sols.remove(s2)
 
-        if self.mc.iniSolDone or self.n_corner == len(self.mc.cr):
-            self.from_cube = True   # next preferences to be generated from cubes
+        # if self.mc.iniSolDone or self.n_corner == len(self.mc.cr):
+        #     self.from_cube = True   # next preferences to be generated from cubes
             # self.mc.iniSolDone = True   # initial solutions (except of (optional) neutral)
 
     def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous distinct-solution
