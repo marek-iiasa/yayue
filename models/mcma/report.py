@@ -13,23 +13,24 @@ from .plots import Plots
 
 # noinspection SpellCheckingInspection
 class Report:
-    def __init__(self, cfg, mc, m1):
-        self.mc = mc    # CtrMca
-        self.cfg = mc.cfg
+    def __init__(self, wflow, m1):
+        self.wflow = wflow    # WorkFlow
         self.m1 = m1    # core-model (used only for extracting solutions in stage one
-        self.rep_dir = cfg.get('resDir')  # repository of MCMA analysis instance configuration and results
+        self.cfg = wflow.mc.cfg
+        self.mc = wflow.mc    # CtrMca
+        self.rep_dir = self.cfg.get('resDir')  # repository of MCMA analysis instance configuration and results
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of mc_block variables defining criteria
         # crit-attributes: v: value, Y: y/n is_active marker, M: 1/-1 (max/min mult.)
         self.id_attr = ['_U', '_A', '_v', '_R', '_N', '_M', '_Y']
         self.cols = ['itr_id', 'af', 'cafMin', 'cafReg']
-        for crit in mc.cr:
+        for crit in self.mc.cr:
             self.cr_names.append(crit.name)
             self.var_names.append(crit.var_name)
             for idx in self.id_attr:
                 self.cols.append(crit.name + idx)
         self.itr_df = pd.DataFrame(columns=self.cols)   # df containing crit.-attributes values for each iteration.
-        self.rep_vars = mc.opt('rep_vars', [])    # names of the core-model variables to be included in the report
+        self.rep_vars = self.mc.opt('rep_vars', [])    # names of the core-model variables to be included in the report
         self.sol_vars = []  # rows with values of vars in self.sol_vars, each row for one solution/iteration
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
         self.f_iters = f'{self.rep_dir}iters.csv'  # info on iterations
@@ -63,7 +64,7 @@ class Report:
             val = m_var.value
             cr = self.mc.cr[i]
             cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
-            if self.mc.cur_stage > 3:  # don't store solutions during payOff table computations
+            if self.wflow.cur_stage > 1:  # store solutions only after payOff table computations
                 cri_ach.update({cr.name: cr.val2ach(val)})  # add to the dict of crit. achiv. of the current solution
             if self.mc.verb > 2:
                 print(f'Value of variable "{var_name}" defining criterion "{cr.name}" = {val:.2e}')

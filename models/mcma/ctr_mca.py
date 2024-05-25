@@ -14,20 +14,20 @@ from .crit import Crit, CrPref
 class CtrMca:   # control flows of MCMA at diverse computations states
     def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
-        # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (mcma runs in ana_dir)
         self.f_crit = 'config.txt'   # file with criteria specification
+        self.cr = []        # objects of Crit class, each representing the corresponding criterion
+        self.n_crit = 0     # number of defined criteria == len(self.cr)
+        self.deg_exp = False    # expansion of degenerated cube dimensions
+        # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (mcma runs in ana_dir)
         # self.f_payoff = 'payoff.txt'     # file with payoff values
         # self.f_pref = 'pref.txt'     # file with defined preferences' set
         # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
         # self.cur_stage = 0  # initialization
         # self.cur_itr_id = None  # id of the current iteration
-        self.cr = []        # objects of Crit class, each representing the corresponding criterion
-        self.n_crit = 0     # number of defined criteria == len(self.cr)
         # self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         # self.payoff = None  # PayOff object (created after criteria defined)
         # self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
-        # self.deg_exp = False    # expansion of degenerated cube dimensions
         # self.cur_cr = None  # cr_index passed to self.set_pref()
         # self.pay_upd = False  # set to true, if current payOff differs from the store one
         # tolerances

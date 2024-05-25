@@ -18,7 +18,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.cfg = cfg
         self.mc = CtrMca(cfg)   # initialize criteria
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
-        self.rep = Report(cfg, self.mc, m1)  # Report ctor
+        self.rep = Report(self, m1)  # Report ctor
         self.corner = Corners(self.mc)  # initialize corners of the Pareto set
         #
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa

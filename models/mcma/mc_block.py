@@ -5,15 +5,16 @@ from .pwl import PWL
 # noinspection SpellCheckingInspection
 class McMod:
     """generator of mc-block (concrete model of MC-part) to be integrated with core-model into MMP."""
-    def __init__(self, mc, m1):     # ctor only
-        self.mc = mc    # CtrMca class handling MCMA data and process/analysis status
+    def __init__(self, wflow, m1):     # ctor only
+        self.wflow = wflow
+        self.mc = wflow.mc    # CtrMca class handling MCMA data and process/analysis status
         self.m1 = m1    # instance of the core model (first block of the aggregate model)
 
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of m1 variables defining criteria
-        for (i, crit) in enumerate(mc.cr):
-            self.cr_names.append(mc.cr[i].name)
-            self.var_names.append(mc.cr[i].var_name)
+        for (i, crit) in enumerate(self.mc.cr):
+            self.cr_names.append(self.mc.cr[i].name)
+            self.var_names.append(self.mc.cr[i].var_name)
 
     def mc_itr(self):
         """sub-model generator, called at each itr having preferences defined through criteria attributes."""
@@ -33,7 +34,7 @@ class McMod:
         # Achievement Function (AF), maximized; af = caf_min + caf_reg, except of selfish optimizations
         m.af = pe.Var(doc='AF')
 
-        if self.mc.cur_stage == 1:   # utopia component, selfish optimization
+        if self.wflow.payoff.cur_stage == 1:   # utopia component, selfish optimization
             if len(act_cr) != 1:  # only one criterion active for utopia calculation
                 raise Exception(f'mc_itr(): computation of utopia component: {len(act_cr)} active criteria '
                                 f'instead of one.')

@@ -80,7 +80,7 @@ def driver(cfg):
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
-        mc_gen = McMod(wflow.mc, m1)  # McMod ctor (the MC-part model, i.e. the Achievement Function of MCMA)
+        mc_gen = McMod(wflow, m1)  # McMod ctor (the MC-part model, i.e. the Achievement Function of MCMA)
         mc_part = mc_gen.mc_itr()   # concrete model of the MC-part (based on the current preferences)
         if mc_part is None:
             print(f'\nThe defined preferences cannot be used for defining the mc-block')

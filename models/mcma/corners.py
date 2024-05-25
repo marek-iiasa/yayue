@@ -52,7 +52,8 @@ class Corners:
         self.set_ar()       # set A/R for specs in self.corners[self.cur_corner]
         self.cur_corner += 1
         if self.cur_corner == self.n_corners:
-            print(f'last of {self.n_corners} corners processed.')
+            if self.verb > 2:
+                print(f'preferences for the last of {self.n_corners} corners generated.')
             self.all_done = True
 
     def set_ar(self):   # set A/R values for the current corner
