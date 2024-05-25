@@ -89,6 +89,7 @@ class Corners:
         pass
 
     def next_sol(self):
+        print('\t-----------------  WARNING: Corners::next_sol(): handling of ignored criteria not implemented yet.')
         return self.all_done
 
     def lst_corners(self):

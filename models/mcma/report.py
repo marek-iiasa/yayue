@@ -71,13 +71,13 @@ class Report:
         if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
 
-        # update crit attributes (value, optionally: nadir, utopia)
-        self.mc.updCrit(cri_val)
-        self.mc.prnPayOff()     # print, and optionally store payOff table
+        # store crit values, for wflow.cur_stage > 1 (except of PayOff comp.) also CAF
+        self.mc.critVal(cri_val)
+        # self.mc.prnPayOff()     # print, and optionally store payOff table
 
         self.itr_inf(m)     # store one-line info on each iteration
 
-        if self.mc.cur_stage < 4:   # don't store solutions during payOff table computations
+        if self.wflow.cur_stage < 2:   # don't store solutions during payOff table computations
             return
 
         # todo: modify to skip storing dominated solutions
@@ -88,12 +88,12 @@ class Report:
         #     self.mc.par_rep = ParRep(self.mc)
 
         # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
-        self.mc.par_rep.addSol(self.itr_id)
+        # self.mc.par_rep.addSol(self.itr_id)   # moved tp WrkFlow::itr_sol()
 
     def itr_inf(self, m):    # add to self.itr_df one row with values of all attributes for each criterion
         af = pe.value(m.af)
         af = round(af, 1)
-        if self.mc.cur_stage > 1:
+        if self.wflow.payoff.cur_stage > 1:     # after utopia computed
             cafMin = pe.value(m.cafMin)
             cafReg = pe.value(m.cafReg)
             if self.mc.verb > 2:
@@ -101,7 +101,7 @@ class Report:
             cafMin = round(cafMin, 1)
             cafReg = round(cafReg, 1)
             new_row = {'itr_id': self.itr_id, 'af': af, 'cafMin': cafMin, 'cafReg': cafReg}
-        else:   # cafMin, cafReg not defined in stage 1
+        else:   # cafMin, cafReg not defined while computing utopia
             new_row = {'itr_id': self.itr_id, 'af': af}
         cur_col = 4
         for crit in self.mc.cr:
@@ -110,19 +110,19 @@ class Report:
             asp = crit.asp
             if asp is not None:
                 asp = round(asp, 1)
-            if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+            if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                 new_row.update({self.cols[cur_col]: asp})
             else:
                 new_row.update({self.cols[cur_col]: crit.val2ach(asp)})
             cur_col += 1
-            if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+            if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                 new_row.update({self.cols[cur_col]: round(crit.val, 1)})
             else:
                 new_row.update({self.cols[cur_col]: crit.a_val})
             cur_col += 1
             res = crit.res
             if res is not None:
-                if self.mc.cur_stage < 4:  # cannot calculate achievements before PayOff is completed
+                if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                     res = round(res, 1)
                 else:
                     res = round(crit.val2ach(res), 1)

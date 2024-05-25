@@ -16,7 +16,7 @@ from .corners import Corners
 class WrkFlow:   # payoff table: try to download, set A/R for computing, update Nadir and save, decide to reset
     def __init__(self, cfg, m1):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
-        self.mc = CtrMca(cfg)   # initialize criteria
+        self.mc = CtrMca(self)   # initialize criteria
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
         self.rep = Report(self, m1)  # Report ctor
         self.corner = Corners(self.mc)  # initialize corners of the Pareto set
@@ -78,6 +78,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_start() implementation error, stage: {self.cur_stage}.')
+        return self.cur_stage
 
     def itr_sol(self, mc_part):     # process solution, decide stage for next itr
         self.rep.itr(mc_part)
@@ -101,6 +102,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
+        # self.mc.par_rep.addSol(self.itr_id)
         self.cur_stage = next_stage
         return next_stage
     '''

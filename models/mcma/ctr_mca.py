@@ -12,8 +12,9 @@ from .crit import Crit, CrPref
 
 # noinspection SpellCheckingInspection
 class CtrMca:   # control flows of MCMA at diverse computations states
-    def __init__(self, cfg):   # par_rep False/True controls no/yes Pareto representation mode
-        self.cfg = cfg
+    def __init__(self, wflow):   # par_rep False/True controls no/yes Pareto representation mode
+        self.wflow = wflow
+        self.cfg = wflow.cfg
         self.f_crit = 'config.txt'   # file with criteria specification
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
@@ -318,8 +319,17 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.n_pref = len(self.pref)
         print(f'Prepared {self.n_pref} sets of user-defined preferences.')
 
+    def critVal(self, crit_val):  # store crit values from last solution, called from Report::itr()
+        for cr in self.cr:
+            val = crit_val.get(cr.name)
+            cr.val = val
+            if self.wflow.cur_stage > 1:
+                cr.a_val = cr.val2ach(cr.val)
+                if self.verb > 2:
+                    print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
+
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
-        assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
+        assert self.cur_stage < 0, f'CtrMca::updCrit() should no longer be use; called for stage {self.cur_stage}.'
         # print(f'Processing criteria values of the current iteration: {crit_val}')
         if self.cur_stage == 1:     # utopia computed for the only one active criterion
             for crit in self.cr:
