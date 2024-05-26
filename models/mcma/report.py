@@ -206,7 +206,7 @@ class Report:
         plots.plot3D()    # 3D plot
         plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         plots.kde_stages()  # KDE + histograms vs stages
-        # plots.plot2D()    # 2D plots
+        plots.plot2D()    # 2D plots
         plots.parallel()  # Parallel coordinates plot
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()

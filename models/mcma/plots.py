@@ -86,11 +86,11 @@ class Plots:
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
-        n_perrow = 3
-        n_percol = int(float(n_plots) / float(n_perrow))
-        if n_percol * n_perrow < n_plots:
-            n_percol += 1
-        fig_heig = 2 * n_percol
+        ncols = 3
+        nrows = n_plots // ncols
+        if nrows * ncols < n_plots:
+            nrows += 1
+        fig_heig = 2 * nrows
         print(f'\nFigure with 2D-plots of {n_plots} pairs of criteria.')
 
         fig1 = plt.figure(figsize=(7, fig_heig), dpi=self.dpi)  # y was 10 (for one chart)
@@ -111,7 +111,7 @@ class Plots:
             for i_second in range(i_first + 1, self.n_crit):
                 name2 = self.cr_name[i_second]
                 print(f'Subplot {i_plot}, criteria: ({name1}, {name2})')
-                ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # subplots numbered from 1
+                ax.append(fig1.add_subplot(nrows, ncols, i_plot + 1))  # subplots numbered from 1
                 ax[i_plot].set_xlabel(name1, va='center')
                 ax[i_plot].set_ylabel(name2, va='center')
                 ax[i_plot].set_xticks(ticks, labels=ticks, fontsize=6)
