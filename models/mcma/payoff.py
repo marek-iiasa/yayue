@@ -21,6 +21,8 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
         self.stages = {'utop': 1, 'nad1': 2, 'nad2': 3, 'done': 4} # noqa
         self.cur_stage = None    # Load payOff table, if previously stored
         self.cur_cr = None  # cr_index of the criterion to be processed
+        # tolerances
+        self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
         # self.f_pref = 'pref.txt'     # file with defined preferences' set
         # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (not needed; runs in this dir)
         # self.f_crit = 'config.txt'   # file with criteria specification
@@ -30,12 +32,10 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
         # self.par_rep = None    # ParRep object (used only, if is_par_rep == True)
         # self.deg_exp = False    # expansion of degenerated cube dimensions
         # self.pay_upd = False  # set to true, if current payOff differs from the store one
-        # tolerances
         # self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
         # self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
         # self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
         #
-        # self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
         # self.slopeR = 10.    # slope ratio between mid-segment and segments above A and below R
         # diverse
         # self.scVar = self.opt('scVar', True)   # scale core-model vars defining CAFs
@@ -65,10 +65,11 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                     else:
                         crit.is_active = False
                 return
-            else:   # all utopia computed, start 1st stage of nadir approximation
-                print('All utopia components computed. Start first stage of nadir approximation.')
-                self.cur_stage = 2
-                self.cur_cr = 0     # start with 0-th criterion
+            else:   # all utopia computed, should not come here
+                raise Exception(f'PayOff::next_pref() all crit. already processed in stage: {self.cur_stage}.')
+                # print('All utopia components computed. Start first stage of nadir approximation.')
+                # self.cur_stage = 2
+                # self.cur_cr = 0     # start with 0-th criterion
         if self.cur_stage in [2, 3]:   # nadir apr., stages 1 & 2
             if self.cur_cr >= self.n_crit:   # all crit handled in current stage, change stage
                 if self.cur_stage == 2:     # proceed to the 2nd nadir appr. (cur_stage 3)
@@ -80,18 +81,44 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
 
             # only activity set; U/N will be used for (the set as None) A/R
             print(f'Appr. Nadir of crit. other than {self.cr[self.cur_cr].name} (stage {self.cur_stage}).')
-            for (i, crit) in enumerate(self.cr):
-                crit.is_fixed = False
+            for (i, cr) in enumerate(self.cr):
+                cr.is_fixed = False
                 if self.cur_cr == i:
-                    crit.is_active = True
+                    cr.is_active = True
                 else:
-                    crit.is_active = False
-            self.cur_cr += 1  # point to the next (not yet processed) criterion
+                    cr.is_active = False
         else:
             raise Exception(f'PayOff::next_pref() should not be called for stage: {self.cur_stage}.')
 
     def next_sol(self):   # process results of next iteration
-        raise Exception(f'PayOff::next_sol() not implemented yet for stage: {self.cur_stage}.')
+        if self.cur_stage == 1:     # utopia
+            for cr in self.cr:
+                val = cr.val
+                if cr.is_active:
+                    cr.setUtopia(val)  # utopia computed
+                cr.updNadir(self.cur_stage, val, self.minDiff)
+        else:
+            print(f'---\nPayoff::next_sol(): stage {self.cur_stage}.')
+            for cr in self.cr:
+                val = cr.val
+                cr.a_val = cr.val2ach(val)
+                print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
+                if not cr.is_active:  # update nadir
+                    change = cr.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
+                    if change:
+                        self.payOffChange = True
+                        print(f'Updating nadir for inactive crit "{cr.name}" = {val} at PayOff stage {self.cur_stage}.')
+            # raise Exception(f'PayOff::next_sol() not implemented yet for stage: {self.cur_stage}.')
+
+        if self.cur_cr + 1 < self.n_crit:
+            self.cur_cr += 1  # point to the next (not yet processed) criterion (now in self.next_sol())
+        else:       # payoff stage completed, move to the next stage
+            if self.cur_stage in [1, 2]:    # move to the (next) nadir stage
+                self.cur_stage += 1
+                self.cur_cr = 0
+            else:       # payoff stage 3 (2nd nadir appr) completed, thus PayOff completed
+                self.cur_stage = 4
+        # return self.cur_stage     # PayOff stage is internal, should not be returned
 
     def set_payOff(self, cr_name, utopia, nadir):   # set the previously stored utopia/nadir values
         if utopia is None or nadir is None:

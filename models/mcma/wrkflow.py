@@ -69,12 +69,6 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.n_itr = n_itr
         if self.cur_stage == 1:       # start or continue payoff table
             self.payoff.next_pref()
-            # if self.payoff.done():
-            #     # self.rep = Report(self, m1)  # Report ctor
-            #     self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
-            #     self.corner = Corners(self.mc)  # initialize corners of the Pareto set
-            #     self.cur_stage = 2  # PayOff table uploaded, start with corners of Pareto set
-            # return self.cur_stage
         elif self.cur_stage == 2:     # start or continue computing corners
             self.corner.next_corner()
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
@@ -98,7 +92,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table
-            next_stage = self.payoff.next_sol()
+            self.payoff.next_sol()
         elif self.cur_stage == 2:     # corners
             all_done = self.corner.next_sol()
             if all_done:
@@ -121,6 +115,12 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         if self.cur_stage > 1:  # don't store solutions during PayOff table computations
             # todo: check handling non-optimal solutions (should be earlier?)
             self.par_rep.addSol(self.n_itr)
+        if self.corner is not None and self.payoff.done():  # initialize Corners and ParRep
+            # self.rep = Report(self, m1)  # Report ctor
+            self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
+            self.corner = Corners(self.mc)  # initialize corners of the Pareto set
+            next_stage = 2  # PayOff table uploaded, start with corners of Pareto set
+            self.payoff.prnPayOff()     # print to stdout and save to the file
         self.cur_stage = next_stage
         return next_stage
     '''
