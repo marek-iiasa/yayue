@@ -80,10 +80,9 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
-    # import dill  # stores and retrieves pyomo models into/from binary file
     import cloudpickle
     f_pipa = 'pipa3'
-    f_name = f'../mcma/wdir/Models/{f_pipa}.dll'
+    f_name = f'{f_pipa}.dll'
     # with dill.detect.trace():
     with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
         cloudpickle.register_pickle_by_value(sms)
