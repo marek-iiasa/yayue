@@ -12,13 +12,12 @@ import os
 from os import R_OK, access
 from os.path import isfile
 import pyomo.environ as pe
-import dill
 from datetime import datetime as dt
 # from datetime import timedelta as td
 
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from sms import mk_sms       # returns SMS;
+import sms
 from inst import inst      # return model instance
 from report import Report    # report and store results
 
@@ -72,7 +71,7 @@ if __name__ == '__main__':
         redir_out = None
 
     # noinspection SpellCheckingInspection
-    abst = mk_sms()         # generate abstract model (SMS)
+    abst = sms.mk_sms()         # generate abstract model (SMS)
     model = inst(abst, f_data)  # generate model instance
     # model.P.pprint()
     # model.H.pprint()
@@ -81,14 +80,17 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
-    '''
-    import dill  # stores and retrieves pyomo models into/from binary file
+    # import dill  # stores and retrieves pyomo models into/from binary file
+    import cloudpickle
     f_pipa = 'pipa3'
-    f_name = f'{f_pipa}.dll'
+    f_name = f'../mcma/wdir/Models/{f_pipa}.dll'
+    # with dill.detect.trace():
     with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
-        dill.dump(model, f)
+        cloudpickle.register_pickle_by_value(sms)
+        cloudpickle.dump(model, f)
+        cloudpickle.unregister_pickle_by_value(sms)
+        # dill.dump(model, f, byref=True, recurse=False, fmode=dill.FILE_FMODE)
     print(f'Model "{f_pipa}" dill-dumpped to: {f_name}')
-    '''
 
     # print('\nmodel display: -----------------------------------------------------------------------------')
     # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
@@ -101,11 +103,12 @@ if __name__ == '__main__':
 
     # ad-hoc dll store
     # dill.settings['recurse'] = True
-    with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
-        # dill.save(model, f)
-        # dill.dump(abst, f)
-        dill.dump(model, f)
-    print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
+    # with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
+    #     # dill.save(model, f)
+    #     # dill.dump(abst, f)
+    #     # dill.dump(model, f, byref=False, recurse=True)
+    #     dill.dump(model, f)
+    # print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
 
     # vars to be reported and stored in df (the list may include any variable name defined in the SMS)
     rep_vars = ['cost', 'carbBal', 'water', 'greenFTot', 'carb', 'carbCap', 'actS']
