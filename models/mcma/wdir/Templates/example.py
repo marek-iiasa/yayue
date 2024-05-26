@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     # ad-hoc dll atore
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
-        dill.dump(model, f)
+        dill.dump(model, f, byref=False, recurse=True)
     print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
 
     opt = pe.SolverFactory('glpk')
