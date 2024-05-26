@@ -9,7 +9,8 @@ class Corners:
     def __init__(self, mc):     # initialize corners by regularized selfish solutions
         self.mc = mc
         self.n_crit = mc.n_crit
-        self.verb = mc.opt('verb', 0)
+        self.verb = 3
+        # self.verb = mc.opt('verb', 0)
         self.corners = []         # criteria states at the Pareto-set corners
         self.cur_corner = 0       # seq_no of current corner
         self.n_corners = 0        # number of prepared corners

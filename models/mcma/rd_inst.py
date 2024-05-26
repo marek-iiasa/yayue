@@ -1,7 +1,7 @@
 from os import R_OK, access
 from os.path import isfile
-# import cloudpickle     # stores and retrieves pyomo models into/from binary file (porting between different OSs not tested yet)
-import dill     # stores and retrieves pyomo models into/from binary file (porting between different OSs not tested yet)
+# import cloudpickle     # stores/retrieves pyomo models into/from binary file (porting between OSs not tested yet)
+import dill     # stores/retrieves pyomo models into/from binary file (porting between OSs not tested yet)
 import pyomo.environ as pe       # more robust than using import *
 
 
@@ -10,6 +10,7 @@ def rd_inst(cfg):  # load the core model
     f_name = f'{m_name}.dll'     # alternatively the 'dill' file extension is used
     assert isfile(f_name) and access(f_name, R_OK), f'Model "{f_name}" not accessible'
     with open(f_name, 'rb') as f:
+        # m1 = cloudpickle.load(f)
         m1 = dill.load(f)
     print(f'\nModel "{m1.name}" loaded from the dill-format file "{f_name}"')
 

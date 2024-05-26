@@ -365,7 +365,7 @@ class Plots:
 
         # Cubes drawing
         cubes = self.wflow.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
-        mxCubePlot = self.wflow.opt('mxCubePlot', 0)
+        mxCubePlot = self.mc.opt('mxCubePlot', 0)
         for i, cube in cubes.items():
             # p1 = cube.aspAch
             # p2 = cube.resAch

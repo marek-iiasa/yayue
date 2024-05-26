@@ -26,6 +26,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
         if self.payoff.done():
             # self.rep = Report(self, m1)  # Report ctor
+            self.mc.scale()  # (re)define scales for criteria values
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             self.cur_stage = 2      # PayOff table uploaded, start with corners of Pareto set
@@ -33,7 +34,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.cur_stage = 1      # start with computing PayOff table
         self.n_itr = None           # id of current itr (TBD by self.itr_start())
         self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
-        self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
+        # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
+        self.is_par_rep = True    # if True, then switch to ParetoRepresentation mode (read of A/R not tested)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         #
         # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
@@ -115,8 +117,9 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         if self.cur_stage > 1:  # don't store solutions during PayOff table computations
             # todo: check handling non-optimal solutions (should be earlier?)
             self.par_rep.addSol(self.n_itr)
-        if self.corner is not None and self.payoff.done():  # initialize Corners and ParRep
+        if self.corner is None and self.payoff.done():  # initialize Corners and ParRep
             # self.rep = Report(self, m1)  # Report ctor
+            self.mc.scale()  # (re)define scales for criteria values
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             next_stage = 2  # PayOff table uploaded, start with corners of Pareto set

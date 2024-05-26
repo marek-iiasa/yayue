@@ -89,7 +89,6 @@ class ParRep:     # representation of Pareto set
         self.dir_name = self.cfg.get('resDir')
 
         print('Initializing Pareto-set exploration. --------------------')
-        wflow.mc.scale()          # (re)define scales for criteria values
 
     '''
     def ini_old(self):     # initial solutions (old)

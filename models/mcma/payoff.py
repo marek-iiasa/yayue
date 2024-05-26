@@ -156,7 +156,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             self.prnPayOff(True)    # print only (don't write to the file)
             # self.hotStart = True  # if payOff provided, jump to stage==5
             self.cur_stage = 4
-            print(f'\nPayOff table provided; skipping its computation. Compute neutral solution.')
+            print(f'\nPayOff table provided; skipping its computation.')
         else:
             self.cur_stage = 1      # start with computing Utopia
             print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
