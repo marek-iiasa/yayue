@@ -24,6 +24,8 @@ class Crit:     # definition and attributes of a single criterion
         self.sc_ach = 100.   # U/N scale of achievements [0, sc_ach]
         # self.minRange = 0.01  # min U/N range
         self.minRange = 0.001  # min U/N range
+        self.nadAdj = round(1. - 10 * self.minRange * self.mult, 3)     # multiplier to adjust Nadir value
+        self.utoAdj = round(1. / self.nadAdj, 3)     # multiplier to adjust Utopia value
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None   # either True (for active) or False (for not-active) or None (for ignored)
@@ -60,7 +62,8 @@ class Crit:     # definition and attributes of a single criterion
 
     def setUtopia(self, val):   # to be called only once for each criterion
         assert self.utopia is None, f'utopia of crit {self.name} already set.'
-        self.utopia = val
+        # todo: for small values use shift instead multiplication
+        self.utopia = self.utoAdj * val     # slightly adjusted to avoid problems with comparisons/update
         print(f'utopia of crit "{self.name}" set to {val}.')
 
     def updNadir(self, stage, val, minDiff):
@@ -102,7 +105,8 @@ class Crit:     # definition and attributes of a single criterion
 
         if shift:
             # todo: add check to prevent moving (back?) too close utopia
-            self.nadir = val    # set val as new nadir appr.
+            # todo: for small values use shift instead multiplication
+            self.nadir = self.nadAdj * val    # set val as new nadir appr.  # slightly move to avoid
             no_yes = ''
         else:
             no_yes = 'not'

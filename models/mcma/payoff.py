@@ -172,7 +172,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
         lines = []
         for crit in self.cr:
             if crit.utopia is not None and crit.nadir is not None:
-                line = f'{crit.name}\t U {crit.utopia:.3e}   N {crit.nadir:.3e}'
+                line = f'{crit.name}\t U {crit.utopia:.5e}   N {crit.nadir:.5e}'
             else:
                 line = f'{crit.name}\t U {crit.utopia}   N {crit.nadir}'
             print(line)
@@ -194,6 +194,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                 return i
         return -1
 
+    '''
     def set_stage(self):
         """Define and return analysis stage; provide (in self.cur_cr) info for mc.set_pref()."""
 
@@ -252,7 +253,9 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             raise Exception(f'set_stage(): stage {self.cur_stage} NOT implemented yet.')
 
         # return self.cur_stage
+    '''
 
+    '''
     def set_pref(self):
         # set automatically (according to programmed rules for each stage) crit attributes:
         # (activity, A/R, possibly adjust nadir app).
@@ -303,6 +306,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
+    '''
 
     def par_pref(self):  # generate preferences for finding next solution in Pareto set representation
         assert self.is_par_rep, f'CtrMca::par_pref() should not be used for usr-def pref.'
@@ -333,6 +337,24 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                 print(f'Attributes of crit "{crit.name}": A {crit.asp}, R {crit.res}, active {crit.is_active}.')
         return
 
+    def update(self, wrk_stage):  # update payOff table, if a Nadir changed, return True if updated
+        changed = False
+        if wrk_stage < 3:   # don't update during Corners; PayOff-dedicated update implemented separately
+            return changed
+        for cr in self.cr:
+            if self.mc.verb > 1:
+                print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
+                val = cr.val
+                updated = cr.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
+                if updated and not changed:
+                    changed = True
+        if changed:
+            self.payOffChange = True
+            self.prnPayOff()    # print and store
+
+        return changed
+
+    '''
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage > 0, f'store_sol should not be called for stage {self.cur_stage}.'
         # print(f'Processing criteria values of the current iteration: {crit_val}')
@@ -364,6 +386,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
+    '''
 
     def diffOK(self, i, val1, val2):  # return True if the difference of two values of i-th is large enough
         maxVal = max(abs(self.cr[i].utopia), (abs(self.cr[i].nadir)))  # value used as basis for min-differences

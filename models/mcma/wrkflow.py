@@ -17,6 +17,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
     def __init__(self, cfg, m1):   # par_rep False/True controls no/yes Pareto representation mode
         self.cfg = cfg
         self.mc = CtrMca(self)   # initialize criteria
+        self.verb = self.mc.verb
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
         # self.rep = None  # Report ctor
         self.rep = Report(self, m1)  # Report ctor
@@ -36,6 +37,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         self.is_par_rep = True    # if True, then switch to ParetoRepresentation mode (read of A/R not tested)
+        self.ign_mv = False    # move ignored crit-values (when computing corners)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         #
         # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
@@ -88,9 +90,22 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             raise Exception(f'WrkFlow::itr_start() implementation error, stage: {self.cur_stage}.')
         return self.cur_stage
 
+    def chk_range(self):     # process solution, decide stage for next itr
+        for cr in self.mc.cr:
+            val = cr.val
+            if cr.isBetter(val, cr.utopia):
+                if cr.utopia is not None:
+                    print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is better than Utopia {cr.utopia:.3e}')
+            if cr.isBetter(cr.nadir, val):
+                if cr.nadir is not None:
+                    print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is worse than Nadir {cr.nadir:.3e}')
+
     def itr_sol(self, mc_part):     # process solution, decide stage for next itr
-        self.rep.itr(mc_part)
-        # todo: check Nadir update
+        self.rep.itr(mc_part)       # extract and store in crit val/ach_val sol.-values, add info to report
+        changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
+        if changed:
+            print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
+        self.chk_range()
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table

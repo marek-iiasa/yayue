@@ -63,7 +63,8 @@ class Report:
             m_var = m_vars[var_name]
             val = m_var.value
             cr = self.mc.cr[i]
-            if cr.is_ignored:
+
+            if self.wflow.ign_mv and cr.is_ignored:
                 val_sol = val
                 val = cr.nadir
                 print(f'\tIgnored crit {cr.name}: sol_val {val_sol:.2e} reset to nadir {val:.2e} (U = {cr.utopia:.2e})')
