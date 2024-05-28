@@ -24,7 +24,7 @@ param ePrice :=
 ;
 
 param eBprice :=
-2.40 
+1.8
 ;
 
 param eSprice :=
@@ -8815,9 +8815,9 @@ Tank3 0.5
 ;
 
 param hini :=
-Tank1 0.0 
-Tank2 0.0 
-Tank3 0.0 
+Tank1 0.2
+Tank2 0.2
+Tank3 0.2
 ;
 
 param eh2 :=
