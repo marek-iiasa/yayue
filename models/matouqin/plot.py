@@ -247,7 +247,8 @@ class Plot:
     def plot_overview(self):
         print('Overview plotting start')
 
-        # get values
+        # results processing
+        # 1) unit convert
         revenue = self.finance_df['Revenue'].iloc[0]
         if revenue >= 1000:
             self.finance_df = self.finance_df / 1000
@@ -255,24 +256,49 @@ class Plot:
         else:
             self.unit = 'Thousand'
 
-        variables = self.finance_df.columns.tolist()
-        values = self.finance_df.iloc[0].values
+        # 2) new df for plotting bar charts
+        # finance_df1 = self.finance_df.drop(columns=['Cost', 'balCost'])     # all costs separately
+        # variables = finance_df1.columns.tolist()
+        # values = finance_df1.iloc[0].values
+        finance_df2 = self.finance_df[['Revenue', 'Income', 'Cost']]        # total cost
+        variables = finance_df2.columns.tolist()
+        values = finance_df2.iloc[0].values
         cap = self.cap_df
 
+        # 3) data for pie chart
+        self.finance_df[self.finance_df < 1e-5] = 0
+        inv = self.finance_df['InvCost'].iloc[0]
+        omc = self.finance_df['OMC'].iloc[0]
+        surp_cost = self.finance_df['SurpCost'].iloc[0]
+        buy_cost = self.finance_df['BuyCost'].iloc[0]
+        bal_cost = self.finance_df['BalCost'].iloc[0]
+        cost = self.finance_df['Cost'].iloc[0]
+        stor_cost = inv + omc
+
+        # inner
+        inner_data = [stor_cost, bal_cost]
+        inner_labels = ['Stor', 'Bal']
+
+        # outer
+        outer_data = [inv, omc, surp_cost, buy_cost]
+        outer_labels = ['Inv', 'OMC', 'Surp', 'Buy']
+
         # plotting
-        fig = plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(12, 10))
 
         gs = gridspec.GridSpec(2, 2, fig)
 
-        ax1 = fig.add_subplot(gs[0, :])
-        ax2 = fig.add_subplot(gs[1, 0])
-        ax3 = fig.add_subplot(gs[1, 1])
+        # ax1 = fig.add_subplot(gs[0, :])     # plotting bars for all separated costs, occupy all columns.
+        ax1 = fig.add_subplot(gs[0, 0])     # revenue, income and cost
+        ax2 = fig.add_subplot(gs[1, 0])     # total capacity for each storage devices
+        ax3 = fig.add_subplot(gs[1, 1])     # numbers of storage devices
+        ax4 = fig.add_subplot(gs[0, 1])  # cost structure pie chart
 
         color = set_color(3)
 
         # 1) finance
         bars = ax1.bar(variables, values,
-                       color=set_color(7),
+                       color=set_color(8)[-3:],
                        width=0.5,
                        edgecolor='black',
                        linewidth=0.8, label=variables)
@@ -283,23 +309,33 @@ class Plot:
         # ax1.set_xlabel('Categories')
         ax1.set_ylabel(f'{self.unit} Yuan')
         ax1.set_title('a) Financial Overview', y=-0.2)
-        ax1.legend(title='Finance', bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0., edgecolor='black')
+        ax1.legend(title='Finance', bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0., edgecolor='black')
 
         # 2) capacity
         ax22 = ax2.twinx()
 
-        non_tank_dv = cap[~cap.index.str.contains('Tank')]
-        tank_dv = cap[cap.index.str.contains('Tank')]
+        cap_ = cap.loc[(cap != 0).any(axis=1)]       # Filter out rows that do not contain all values ​​zero
+        non_tank_dv = cap_[~cap_.index.str.contains('Tank')]
+        tank_dv = cap_[cap_.index.str.contains('Tank')]
+
+        # scap_col = tank_dv.filter(like='sCap').columns
+        # tank_dv.loc[:, scap_col] = tank_dv.loc[:, scap_col] / 10     # tank unit conversion to [thousand kg]
 
         bars1 = ax2.bar(non_tank_dv.index, non_tank_dv['sCap'], edgecolor='black',
-                        color=color, label='Non-Tank (MW)')
+                        color=color, label=non_tank_dv.index)
         add_labels(bars1, non_tank_dv['sCap'], ax2, '.0f', offset=0)
-        ax2.set_title('b) Capacity of the storage system', y=-0.2)
+        ax2.set_title('b) Total capacity of storage devices', y=-0.2)
         # ax2.set_xlabel('Storage devices')
         ax2.set_ylabel('Capacity (MW)')
-        bars2 = ax22.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label='Tank (kg)')
+        bars2 = ax22.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label=tank_dv.index)
         ax22.set_ylabel('Capacity (thousand kg)')
         add_labels(bars2, tank_dv['sCap'], ax22, '.0f', offset=0)
+
+        handles1, labels1 = ax2.get_legend_handles_labels()
+        handles2, labels2 = ax22.get_legend_handles_labels()
+
+        ax2.legend(handles1 + handles2, labels1 + labels2, title='Devices', bbox_to_anchor=(1.15, 1),
+                   loc='upper left', borderaxespad=0., edgecolor='black')
         # ax2.tick_params(axis='x', rotation=45)
 
         # 3) number of storage devices
@@ -322,6 +358,59 @@ class Plot:
         ax3.legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left',
                    borderaxespad=0., edgecolor='black')
 
+        # 4) cost structure: pie chart
+        # hide label and text <5%
+        def select_label(value, total, label):    # label setting, <5% no show labels
+            pct = value / total * 100
+            return label if pct >= 5 else ''
+
+        def select_autopct(pct):                # text setting, <5% no show text
+            return f'{pct:.2f}%' if pct >= 5 else ''
+
+        # setting edges and offsets
+        edge_props = dict(edgecolor='black', linewidth=0.8)
+        # textprops = {'fontsize': 13}
+        offset_inner = [0.02] * len(inner_data)          # offset of each outer pie chart
+        offset = [0] * len(outer_data)    # offset of each outer pie chart
+
+        outer_total = sum(outer_data)
+        wedges1, texts1, autotexts1 = ax4.pie(outer_data, colors=set_color(6),
+                                              radius=1.1,
+                                              explode=offset,
+                                              # labels=outer_labels,
+                                              labels=[select_label(value, outer_total, label)
+                                                      for value, label in zip(outer_data, outer_labels)],
+                                              # textprops=textprops,
+                                              labeldistance=0.78,
+                                              autopct=lambda pct: select_autopct(pct),
+                                              # autopct=lambda pct: f'{pct:.2f}%',
+                                              pctdistance=0.9,  # text position, relative to the radius of pie chart
+                                              wedgeprops=dict(width=0.3, **edge_props), )
+
+        # inner
+        wedges2, texts2, autotexts2 = ax4.pie(inner_data, colors=set_color(4),
+                                              radius=1.1 - 0.4,
+                                              explode=offset_inner,
+                                              labels=[select_label(value, outer_total, label)
+                                                      for value, label in zip(inner_data, inner_labels)],
+                                              # textprops=textprops,
+                                              labeldistance=0.6,
+                                              autopct=lambda pct: select_autopct(pct),
+                                              # autopct=lambda pct: f'{pct:.2f}%',
+                                              pctdistance=0.8,  # text position, relative to the radius of pie chart
+                                              wedgeprops=dict(width=0.3, **edge_props))
+
+        # add a box to the pie chart
+        rect = plt.Rectangle((-1.25, -1.25), 2.5, 2.50, fill=False, color='black', lw=1.5)
+        ax4.add_patch(rect)
+
+        ax4.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax4.text(0, 0, f'Cost\n{cost:.2f}', horizontalalignment='center', verticalalignment='center',
+                 weight='bold', size=13)
+        ax4.set_title(f'b) Cost composition ({self.unit})', y=-0.2)
+        ax4.legend(wedges1 + wedges2, outer_labels + inner_labels, title='Cost', bbox_to_anchor=(1.05, 1),
+                   loc='upper left', borderaxespad=0., edgecolor='black')
+
         plt.subplots_adjust(top=0.99,
                             bottom=0.08,
                             left=0.069,
@@ -329,7 +418,7 @@ class Plot:
                             hspace=0.25,
                             wspace=0.40)
 
-        # fig.tight_layout()
+        fig.tight_layout()
         plt.savefig(f'{self.fig_dir}Finance_overview.png')
         # plt.show()
         # plt.close()
@@ -338,6 +427,13 @@ class Plot:
               '--------------------------------')
 
     def plot_CS(self):
+        def select_label(val, total, label):
+            pct = val / total * 100
+            return label if pct >= 5 else ''
+
+        def select_autopct(pct):
+            return f'{pct:.2f}%' if pct >= 5 else ''
+
         # cost structure
         self.finance_df[self.finance_df < 1e-5] = 0
         inv = self.finance_df['InvCost'].iloc[0]
@@ -349,8 +445,8 @@ class Plot:
 
         revenue = self.finance_df['Revenue'].iloc[0]
         income = self.finance_df['Income'].iloc[0]
+        cost = self.finance_df['Cost'].iloc[0]
         labels = ['Revenue', 'Cost']
-        cost = stor_cost + bal_cost
 
         # inner
         inner_data = [stor_cost, bal_cost]
@@ -399,13 +495,17 @@ class Plot:
 
         # 2) plotting cost structure
         # outer
+        outer_total = sum(outer_data)
         wedges2, texts2, autotexts2 = ax2.pie(outer_data, colors=set_color(6),
                                               radius=1,
                                               explode=offset,
-                                              labels=outer_labels, textprops=textprops,
+                                              # labels=outer_labels,
+                                              labels=[select_label(val, outer_total, label)
+                                                      for val, label in zip(outer_data, outer_labels)],
+                                              textprops=textprops,
                                               labeldistance=0.75,
-                                              # autopct=lambda pct: set_text(pct, outer_data),
-                                              autopct=lambda pct: f'{pct:.2f}%',
+                                              autopct=lambda pct: select_autopct(pct),
+                                              # autopct=lambda pct: f'{pct:.2f}%',
                                               pctdistance=0.88,     # text position, relative to the radius of pie chart
                                               wedgeprops=dict(width=0.3, **edge_props),)
 
@@ -413,10 +513,12 @@ class Plot:
         wedges3, texts3, autotexts3 = ax2.pie(inner_data, colors=set_color(4),
                                               radius=1 - 0.4,
                                               explode=offset_inner,
-                                              labels=inner_labels, textprops=textprops,
+                                              labels=[select_label(value, outer_total, label)
+                                                      for value, label in zip(inner_data, inner_labels)],
+                                              textprops=textprops,
                                               labeldistance=0.55,
-                                              # autopct=lambda pct: set_text(pct, inner_data),
-                                              autopct=lambda pct: f'{pct:.2f}%',
+                                              autopct=lambda pct: select_autopct(pct),
+                                              # autopct=lambda pct: f'{pct:.2f}%',
                                               pctdistance=0.75,     # text position, relative to the radius of pie chart
                                               wedgeprops=dict(width=0.3, **edge_props))
 
@@ -567,9 +669,11 @@ class Plot:
             print('step = daily')
 
         elif step == 'weekly':
-            n_week = round((n / 24 / 7), 2)
+            n_week = round((n / 24 / 7), 0)
             agg_df = flow.resample('7D', origin=start_date).sum()
-            avg_inflow = flow['inflow'].sum() / n_week
+            if (flow.index[-1] - agg_df.index[-1]).days < 7:
+                agg_df = agg_df.iloc[:-1]       # check if the last agg flow data  is less than 7 days
+            avg_inflow = agg_df['inflow'].sum() / n_week
             supply = supply_h * 168
             p_avg_inflow = f'Average weekly inflow = {round(avg_inflow, 2)} MW'
             p_supply = f'Average weekly supply = {round(supply, 2)} MW'
@@ -578,9 +682,10 @@ class Plot:
 
         elif step == 'monthly':
             agg_df = flow.resample('ME').sum()
-            n_month = round((n/24/30), 2)
+            n_month = flow.index.to_period('M').nunique()
             avg_inflow = flow['inflow'].sum() / n_month
-            supply = supply_h * 30
+            monthly_hours = flow.resample('ME').size()
+            supply = supply_h * monthly_hours
             p_avg_inflow = f'Average monthly inflow = {round(avg_inflow, 2)} MW'
             p_supply = f'Average monthly supply = {round(supply, 2)} MW'
             fig.update_xaxes(tickvals=agg_df.index)     # make sure the tick values match the bars
@@ -725,6 +830,7 @@ class Plot:
               '--------------------------------')
 
     def plot_dv_flow(self, n, unit='day'):
+        # todo: date; a) change
         # print hourly flows in specific day or week
         print(f'Plotting energy flows in the {unit} {n} start')
 
@@ -947,20 +1053,20 @@ class Plot:
 # path = '.'
 # res_dir = f'{path}/Results/'        # repository of results
 # fig_dir = f'{path}/Figures/'        # repository of figures
-# f_data = f'{path}/Data/test1.dat'   # data file
+# f_data = f'{path}/Data/dat1.dat'   # data file
 #
 # Fig = Plot(res_dir, fig_dir, f_data)
-# Fig.plot_CS()
-
+# # Fig.plot_CS()
+#
 # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
 # # 'kaleido' is needed for fig_save: True
-# Fig.plot_flow('original', True, True, True)
-# Fig.plot_flow('daily', False, True, False)
-# # Fig.plot_flow('weekly', False, False)
-# # Fig.plot_flow('monthly', False, False)
+# # Fig.plot_flow('original', True, True, True)
+# # Fig.plot_flow('daily', False, True, False)
+# Fig.plot_flow('weekly', False, True)
+# Fig.plot_flow('monthly', False, True)
 #
-# Fig.plot_overview()  # Finance and storage overview
-# Fig.plot_dv_flow(5, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
+# # Fig.plot_overview()  # Finance and storage overview
+# # Fig.plot_dv_flow(10, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
 #
 # # fig.plot_finance()      # Finance overview
 # # fig.plot_capacity()     # Storage capacity
