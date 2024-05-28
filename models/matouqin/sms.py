@@ -24,6 +24,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.nHrs = pe.Param(domain=pe.PositiveIntegers)       # the number of hours (time periods) in a year
     m.nHrs_ = pe.Param(initialize=m.nHrs - 1)     # index of the last time periods (hour)
     m.T = pe.RangeSet(0, m.nHrs_)       # set of time periods (hour)
+    m.Th = pe.RangeSet(-1, m.nHrs_)     # set of time periods (including initial state 't = -1')
 
     # define variables needed for demonstrating decorators
     # 1) decision variables
@@ -42,7 +43,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
     m.eB = pe.Var(m.T, within=pe.NonNegativeReals)              # electricity purchase on the market [MW].
     m.hIn = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)       # hydrogen inflow to hydrogen tank, [100kg]
     m.hOut = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # hydrogen outflow from hydrogen tank, [100kg]
-    m.hVol = pe.Var(m.Sh, m.T, within=pe.NonNegativeReals)      # amount of hydrogen stored in s-th device
+    m.hVol = pe.Var(m.Sh, m.Th, within=pe.NonNegativeReals)      # amount of hydrogen stored in s-th device
     m.hInc = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # hydrogen inflow to each fuel cell, [100kg]
     m.cOut = pe.Var(m.Sc, m.T, within=pe.NonNegativeReals)      # electricity outflow from each fuel cell, [MWh]
 
@@ -108,23 +109,30 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in each tank type
     def hVolBal(mx, s, t):
-        if t == 0:
-            return mx.hVol[s, t] == mx.hInit[s] + mx.hIn[s, t] - mx.hOut[s, t]
-        else:
-            return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t - 1)] + mx.hIn[s, t] - mx.hOut[s, t]
+        return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t - 1)] + mx.hIn[s, t] - mx.hOut[s, t]
+
+    @m.Constraint(m.Sh)  # Amount of hydrogen at the last period
+    def hVolInit(mx, s):
+        return mx.hVol[s, -1] == mx.hInit[s]
+
+    @m.Constraint(m.Sh)  # Amount of hydrogen at the last period
+    def hVolEnd(mx, s):
+        return mx.hVol[s, mx.nHrs_] == mx.hInit[s]
+
+    # @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in each tank type
+    # def hVolBal(mx, s, t):
+    #     if t == 0:
+    #         return mx.hVol[s, t] == mx.hInit[s] + mx.hIn[s, t] - mx.hOut[s, t]
+    #     else:
+    #         return mx.hVol[s, t] == mx.h2Res[s] * mx.hVol[s, (t - 1)] + mx.hIn[s, t] - mx.hOut[s, t]
 
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in tanks of each type
     def hVolLower(mx, s, t):
-        # return mx.hVol[s, t] >= mx.hMin[s]
         return mx.hVol[s, t] >= 0
 
     @m.Constraint(m.Sh, m.T)  # Amount of hydrogen in tanks of each type
     def hVolUpper(mx, s, t):
         return mx.hVol[s, t] <= mx.sCap[s]
-
-    # @m.Constraint(m.Sh)  # Amount of hydrogen at the last period
-    # def hVolEnd(mx, s):
-    #     return mx.hVol[s, mx.nHrs_] == mx.hInit[s]
 
     @m.Constraint(m.Sh, m.T)        # Maximum flow from each type of tank to fuel cells
     def hInUpper(mx, s, t):
@@ -203,7 +211,7 @@ def mk_sms():      # p: model parameters prepared in the Params class
 
     @m.Constraint(m.Sh)
     def hInitC(mx, s):
-        return mx.hInit[s] == mx.hini[s] * mx.sNum[s]
+        return mx.hInit[s] == mx.hini[s] * mx.sCap[s]
 
     @m.Constraint()
     def eSurplusBal(mx):
