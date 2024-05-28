@@ -58,8 +58,12 @@ class Report:
             else:       # indexed var
                 d_item = item[2]    # dict with values of indexed var
                 for (ind, val) in d_item.items():       # for example: sCap_cell1 : 50
+                    if val is not None:
+                        f_val = f'{val:.2e}'
+                    else:
+                        f_val = 'N/A'
                     idx = f'{item[0]}_{ind}'
-                    new_row.update({idx: f'{val:.2e}'})
+                    new_row.update({idx: f'{f_val}'})
         self.sol_vars.append(new_row)   # append to the list of rows
 
     # generate and store df's with info on criteria and the variables requested for report/plots
@@ -166,13 +170,17 @@ class Report:
         self.finance_df.loc[0, 'SurpCost'] = pe.value(self.m1.surpCost)
         self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
         self.finance_df.loc[0, 'BalCost'] = pe.value(self.m1.balCost)
+        self.finance_df.loc[0, 'Cost'] = pe.value(self.m1.invCost) + pe.value(self.m1.OMC) + pe.value(self.m1.balCost)
 
         # capacity related results
+        # for s in self.m1.sNum:
+        #     self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
+        # for s in self.m1.sCap:
+        #     self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
+
         for s in self.m1.sNum:
-            # self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
             self.cap_df.loc[s, 'sNum'] = pe.value(self.m1.sNum[s])
         for s in self.m1.sCap:
-            # self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
             if 'Tank' in s:
                 self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s]) / 10  # unit change to [thousand kg]
             else:
@@ -269,7 +277,7 @@ class Report:
                         check_hy.append({'S': s, 'T': t, 'hIn': hin, 'hOut': hout, 'hVol': hvol, 'value': value})
 
             if check_hy:
-                check_hy = pd.DataFrame(check)
+                check_hy = pd.DataFrame(check_hy)
                 check_hy.to_csv(self.check_df_hy, index=False)
                 print(f'Store and release hydrogen at the same time, please check csv file: {self.check_df_hy}')
             else:
@@ -355,8 +363,8 @@ class Report:
 
                                 # store the efficiency in the dictionary
                                 pre_dict[u] = f'{round(pre_e, 2)}MW'
-                                loss_dict[(s, u, v)] = f'{loss_e * 100}%'
-                                eff_dict[(s, u, v)] = f'{stor_e * 100}%'
+                                loss_dict[(s, u, v)] = f'{round(loss_e * 100), 4}%'
+                                eff_dict[(s, u, v)] = f'{round(stor_e * 100), 4}%'
 
         print(f'\nElectricity for making high pressure: {pre_dict}')
         print(f'Energy loss: {loss_dict}')
