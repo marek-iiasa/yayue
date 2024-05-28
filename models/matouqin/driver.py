@@ -54,8 +54,9 @@ def driver():
     # f_data = f'{data_dir}test1680.dat'              # parameter file for creating model instance
     # modify_periods(f_data_base, f_data, 1680)     # data processing, select the time period
 
-    # f_data = f'{data_dir}dat_base.dat'            # real data test by ZZ
-    f_data = f'{data_dir}test1.dat'           # small scale data for testing the model
+    f_data = f'{data_dir}dat1.dat'              # real data test by ZZ
+    # f_data = f'{data_dir}test1.dat'           # small scale data for testing the model
+    # f_data = f'{path}/Local/testx.dat'          # test data
 
     # data processing by Excel
     # f_data_base = f'{dat_dir}Raw/dat_base.xlsx'       # original data from Excel
@@ -73,15 +74,15 @@ def driver():
     print('\nsolving --------------------------------')
 
     # glpk settings
-    opt = pe.SolverFactory('glpk')
-    opt.options['log'] = f'{res_dir}glpk_log.txt'
-    opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
-    results = opt.solve(model, tee=True)  # True to pipe output to the terminal
+    # opt = pe.SolverFactory('glpk')
+    # opt.options['log'] = f'{res_dir}glpk_log.txt'
+    # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
+    # results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
     # cplex settings
-    # opt = pe.SolverFactory('gams')  # gams can be used as a solver
-    # results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
-    #                     add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
+    opt = pe.SolverFactory('gams')  # gams can be used as a solver
+    results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
+                        add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
 
     # other solvers
     # opt = pe.SolverFactory('gurobi')
@@ -117,18 +118,19 @@ def driver():
 
     # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
     # 'kaleido' is needed for fig_save: True
-    fig.plot_flow('original', True, True, True)
-    # fig.plot_flow('hourly', True, True, True)
-    # fig.plot_flow('daily', fig_show=True)
-    # fig.plot_flow('weekly', fig_show=True)
-    # fig.plot_flow('monthly', fig_show=True)
+    # fig.plot_flow('original', True, True, True)
+    fig.plot_flow('hourly', True, True, True)
+    fig.plot_flow('daily', fig_show=True)
+    fig.plot_flow('weekly', fig_show=True)
+    fig.plot_flow('monthly', fig_show=True)
 
     # Finance and storage investment overview
     fig.plot_overview()
     # Cost composition
-    fig.plot_CS()
-
-    # Detailed flow, unit: 'day', 'week'
-    fig.plot_dv_flow(1, 'day')
+    # fig.plot_CS()
+    #
+    # # Detailed flow, unit: 'day', 'week'
+    fig.plot_dv_flow(100, 'day')
+    fig.plot_dv_flow(15, 'week')
 
     show_figs()  # show figures
