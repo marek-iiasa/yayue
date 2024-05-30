@@ -247,7 +247,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             cr.is_ignored = None    # ignored can be only for selfish solutions
             v1 = self.s1.vals[i]
             v2 = self.s2.vals[i]
-            if cr.isBetter(v1, v2):  # s1 has better crit. value than s2
+            if cr.eqBetter(v1, v2):  # s1 has better (or equal)crit. value than s2
                 cr.asp = v1
                 cr.res = v2
             else:  # s2 has better crit. value than s1

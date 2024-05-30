@@ -44,7 +44,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         # check if U (set in ctor) can be replaced by the provided A
         if self.is_asp:
             if abs(self.cr.utopia - self.cr.asp) > minDiff:
-                assert self.cr.isBetter(self.cr.utopia, self.cr.asp), f'crit {self.cr_name} (is_max {self.is_max}): '
+                assert self.cr.pwlBetter(self.cr.utopia, self.cr.asp), f'crit {self.cr_name} (is_max {self.is_max}): '
                 f' A {self.cr.asp:.2e} is worse than U {self.cr.utopia:.2e}.'
                 self.asp_val = self.cr.asp
                 self.up_seg = True
@@ -57,7 +57,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         # check if N (set in ctor) can be replaced by the provided R
         if self.is_res and self.is_nadir:
             if abs(self.cr.nadir - self.cr.res) > minDiff:
-                assert self.cr.isBetter(self.cr.res, self.cr.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
+                assert self.cr.pwlBetter(self.cr.res, self.cr.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
                 f' R {self.cr.res:.2e} is worse than N {self.cr.nadir:.2e}.'
                 self.res_val = self.cr.res
                 self.lo_seg = True

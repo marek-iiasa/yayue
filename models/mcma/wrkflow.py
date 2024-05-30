@@ -90,22 +90,32 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             raise Exception(f'WrkFlow::itr_start() implementation error, stage: {self.cur_stage}.')
         return self.cur_stage
 
-    def chk_range(self):     # process solution, decide stage for next itr
+    def in_range(self):     # return True, if the value is within the [U, N] range
+        ret_val = True
         for cr in self.mc.cr:
             val = cr.val
-            if cr.isBetter(val, cr.utopia):
-                if cr.utopia is not None:
+            if cr.utopia is not None:
+                if cr.better(val, cr.utopia):
                     print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is better than Utopia {cr.utopia:.3e}')
-            if cr.isBetter(cr.nadir, val):
-                if cr.nadir is not None:
+                    ret_val = False
+            if cr.nadir is not None:
+                if cr.better(cr.nadir, val):
                     print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is worse than Nadir {cr.nadir:.3e}')
+                    ret_val = False
+        return ret_val
 
     def itr_sol(self, mc_part):     # process solution, decide stage for next itr
         self.rep.itr(mc_part)       # extract and store in crit val/ach_val sol.-values, add info to report
-        changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
-        if changed:
-            print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
-        self.chk_range()
+        if self.cur_stage > 1:  # checks/updates run after the PayOff table complete
+            changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
+            if changed:
+                print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
+            out_range = not self.in_range()
+            if changed or out_range:
+                if out_range:   # should not happen
+                    raise Exception(f'Solution outsude U/N range.')
+                if changed:
+                    self.cur_stage = 5      # reset
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table
@@ -126,7 +136,12 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             pass
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:     # reset (after Nadir update)
-            raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
+            print('\nINFO: PayOff table updated; restarting the Pareto-set reprepresentation. ------------------------')
+            self.mc.scale()  # (re)define scales for criteria values
+            self.corner = Corners(self.mc)  # initialize corners of the Pareto set
+            self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
+            next_stage = 2
+            # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
         if self.cur_stage > 1:  # don't store solutions during PayOff table computations

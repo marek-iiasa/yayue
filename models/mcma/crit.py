@@ -49,6 +49,10 @@ class Crit:     # definition and attributes of a single criterion
             f'too small difference between U {self.utopia} and N {self.nadir}.'
         a_val = self.sc_ach * abs(val - self.nadir) / rng
         a_val = round(a_val, 2)
+        if self.eqBetter(self.nadir, val):
+            print('\tCrit::val2ach(): WARNING: solution value better than (not adjusted) Nadir:')
+            print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+            a_val = - a_val
         # print(f'\tval2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
@@ -91,10 +95,10 @@ class Crit:     # definition and attributes of a single criterion
             else:       # min-crit, tight to smaller values
                 if old_val - eps > val:
                     shift = True     # move closer to U
-        # in stages: 1, 3, and RFP: relax (move away from U) "too tight" values (from previous appr.)
         # in stage 1 (selfish opt.): just collect worst values of each criterion
+        # in stages: 2, 3: relax (move away from U) "too tight" values (from previous appr.)
         # in stage 3: 2nd stage on nadir appr.: apply AF with only one criterion active
-        # in stages >= 4: RFP, AF defined by preferences (A, R, activity) set for each criterion
+        # in stages >= 4: AF defined by (A, R, activity), Nadir updated, if a crit. value is worse than Nadir appr.
         else:
             if self.mult == 1:  # max-crit, relax to smaller values
                 if old_val - eps > val:
@@ -104,8 +108,8 @@ class Crit:     # definition and attributes of a single criterion
                     shift = True     # move away from U
 
         if shift:
-            # todo: add check to prevent moving (back?) too close utopia
-            # todo: for small values use shift instead multiplication
+            # todo: add check to prevent moving (back?) too close to utopia
+            # todo: for small (abs) values use shift instead multiplication
             self.nadir = self.nadAdj * val    # set val as new nadir appr.  # slightly move to avoid
             no_yes = ''
         else:
@@ -115,6 +119,35 @@ class Crit:     # definition and attributes of a single criterion
             print(f'\tnadir appr. of crit "{self.name}": {old_val:.5e} {no_yes} changed to {val:.5e} (in {stage=}).')
         return shift
 
+    def pwlBetter(self, val1, val2):   # return true if val1 is better or equal to than val2, or if val1/val2 is none
+        if val1 is None or val2 is None:  # PWL takes care about undefined values
+            return True
+        return self.eqBetter(val1, val2)
+
+    def eqBetter(self, val1, val2):   # return true if val1 is better or equal to than val2
+        if val1 is None or val2 is None:
+            raise Exception(f'Crit::eqBetter(): crit: {self.name}, cannot compare "{val1}" and "{val2}".')
+        if self.mult == 1:  # max criterion
+            if val1 >= val2:
+                return True
+        else:  # min criterion
+            if val1 <= val2:
+                return True
+        return False
+
+    def better(self, val1, val2):   # return true if val1 is (strictly) better than val2
+        if val1 is None or val2 is None:
+            raise Exception(f'Crit::better(): crit: {self.name}, cannot compare "{val1}" and "{val2}".')
+        if self.mult == 1:  # max criterion
+            if val1 > val2:
+                return True
+        else:  # min criterion
+            if val1 < val2:
+                return True
+        return False
+
+    '''
+    # old version, no longer used
     def isBetter(self, val1, val2):   # return true if val1 is better or equal to than val2
         if val1 is None or val2 is None:  # PWL takes care about undefined values
             return True
@@ -125,19 +158,20 @@ class Crit:     # definition and attributes of a single criterion
             if val1 <= val2:
                 return True
         return False
+    '''
 
-    def chkAR(self, pref_item, n_line):   # check correctness of A and R values
+    def chkAR(self, pref_item, n_line):   # check correctness of A and R values specified by the user
         asp = pref_item.asp
         res = pref_item.res
         # print(f'chkAR(): crit "{self.name}" ({self.attr}), U {self.utopia}, {asp = }, {res = }, N {self.nadir}')
         is_ok = True
-        if not self.isBetter(self.utopia, asp):
+        if not self.eqBetter(self.utopia, asp):
             # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified A {asp} is better than U {self.utopia}')
             is_ok = False
-        if not self.isBetter(asp, res):
+        if not self.better(asp, res):
             # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is better than A {asp}')
             is_ok = False
-        if not self.isBetter(res, self.nadir):
+        if not self.eqBetter(res, self.nadir):
             # print(f'chkAR(): crit "{self.name}" ({self.attr}): specified R {res} is worse than N {self.nadir}.')
             is_ok = False
         if not is_ok:

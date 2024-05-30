@@ -328,6 +328,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
                 if self.verb > 2:
                     print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
 
+    '''
     def updCrit(self, crit_val):  # update crit attributes (nadir, utopia), called from Report::itr()
         assert self.cur_stage < 0, f'CtrMca::updCrit() should no longer be use; called for stage {self.cur_stage}.'
         # print(f'Processing criteria values of the current iteration: {crit_val}')
@@ -359,6 +360,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         else:
             sys.stdout.flush()  # needed for printing exception at the output end
             raise Exception(f'Mcma::store_sol() not implemented yet for stage: {self.cur_stage}.')
+    '''
 
     def diffOK(self, i, val1, val2):  # return True if the difference of two values of i-th is large enough
         maxVal = max(abs(self.cr[i].utopia), (abs(self.cr[i].nadir)))  # value used as basis for min-differences

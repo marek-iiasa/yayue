@@ -131,7 +131,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             raise Exception(f'set_payOff("{cr_name}", "{utopia}", "{nadir}"): both values should be of type float.')
         for crit in self.cr:
             if crit.name == cr_name:
-                if crit.isBetter(utopia, nadir):
+                if crit.better(utopia, nadir):
                     crit.utopia = utopia
                     crit.nadir = nadir
                     return
@@ -339,7 +339,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
 
     def update(self, wrk_stage):  # update payOff table, if a Nadir changed, return True if updated
         changed = False
-        if wrk_stage < 3:   # don't update during Corners; PayOff-dedicated update implemented separately
+        if wrk_stage < 2:   # don't update during PayOff: it has a dedicated update implemented separately
             return changed
         for cr in self.cr:
             if self.mc.verb > 1:
