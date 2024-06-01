@@ -57,12 +57,13 @@ class Report:
             return  # refrain from storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
-        cri_ach = {}    # all criteria values in current solution
+        # cri_ach = {}    # all criteria values in current solution
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
             m_var = m_vars[var_name]
             val = m_var.value
             cr = self.mc.cr[i]
+            cr.val = val        # has to be stored here because it is needed in in_range()
 
             '''
             print(f'mv_ign {self.wflow.ign_mv}, cr. {cr.name}, is_ignored: {cr.is_ignored}')
@@ -72,12 +73,22 @@ class Report:
                 print(f'\tIgnored crit {cr.name}: sol_val {val_sol:.2e} reset to nadir {val:.2e} (U = {cr.utopia:.2e})')
             '''
             cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
-            if self.wflow.cur_stage > 1:  # store solutions only after payOff table computations
+            '''
+            # achievements stored later
+            # store achiev. only after payOff table computations and if the val is better than nadir
+            if cr.eqBetter(val, cr.nadir) and self.wflow.cur_stage > 1:
                 cri_ach.update({cr.name: cr.val2ach(val)})  # add to the dict of crit. achiv. of the current solution
+            '''
             if self.mc.verb > 2:
                 print(f'Value of variable "{var_name}" defining criterion "{cr.name}" = {val:.2e}')
         if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
+
+        in_range = True
+        if self.wflow.cur_stage > 1:   # check, if crit-vals are within U/N range
+            in_range = self.wflow.in_range()
+            if not in_range:
+                return in_range
 
         # store crit values, for wflow.cur_stage > 1 (except of PayOff comp.) also CAF
         self.mc.critVal(cri_val)
@@ -86,7 +97,7 @@ class Report:
         self.itr_inf(m)     # store one-line info on each iteration
 
         if self.wflow.cur_stage < 2:   # don't store solutions during payOff table computations
-            return
+            return in_range
 
         # todo: modify to skip storing dominated solutions
         if len(self.rep_vars):
@@ -97,6 +108,8 @@ class Report:
 
         # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
         # self.mc.par_rep.addSol(self.itr_id)   # moved tp WrkFlow::itr_sol()
+
+        return in_range
 
     def itr_inf(self, m):    # add to self.itr_df one row with values of all attributes for each criterion
         af = pe.value(m.af)

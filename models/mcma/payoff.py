@@ -348,11 +348,12 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             return changed
         for cr in self.cr:
             if self.mc.verb > 1:
-                print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
-                val = cr.val
-                updated = cr.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
-                if updated and not changed:
-                    changed = True
+                print(f'\tCrit {cr.name}: val {cr.val:.2f}')
+                # print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')    # a_val may be unavailable
+            val = cr.val
+            updated = cr.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
+            if updated and not changed:
+                changed = True
         if changed:
             self.payOffChange = True
             self.prnPayOff()    # print and store

@@ -105,11 +105,11 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         return ret_val
 
     def itr_sol(self, mc_part):     # process solution, decide stage for next itr
-        self.rep.itr(mc_part)       # extract and store in crit val/ach_val sol.-values, add info to report
-        if self.cur_stage > 1:  # checks/updates run after the PayOff table complete
+        # extract and store in crit sol.-values, if in U/N range: add info to report
+        in_range = self.rep.itr(mc_part)
+        if not in_range and self.cur_stage > 1:  # checks/updates run after the PayOff table complete
             changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
-            # if changed:
-            #     print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
+            # double-check, if solution is within U/N after Nadir updated
             out_range = not self.in_range()
             if changed or out_range:
                 if out_range:   # should not happen
@@ -146,9 +146,10 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             return next_stage
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
-        if self.cur_stage > 1:  # don't store solutions during PayOff table computations
-            # todo: check handling non-optimal solutions (should be earlier?)
+
+        if self.cur_stage > 1:  # store solutions only if the PayOff table is available
             self.par_rep.addSol(self.n_itr)
+
         if self.corner is None and self.payoff.done():  # initialize Corners and ParRep
             # self.rep = Report(self, m1)  # Report ctor
             self.mc.scale()  # (re)define scales for criteria values
