@@ -37,9 +37,9 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         self.is_par_rep = True    # if True, then switch to ParetoRepresentation mode (read of A/R not tested)
-        self.ign_mv = False    # move ignored crit-values (when computing corners)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         #
+        # self.ign_mv = False    # move ignored crit-values (when computing corners)
         # self.stages = {'ini': 0, 'utop': 1, 'nad1': 2, 'nad2': 3, 'RFPauto': 4, 'RFPuser': 5, 'end': 6} # noqa
         # self.f_payoff = 'payoff.txt'     # file with payoff values
         # self.f_pref = 'pref.txt'     # file with defined preferences' set
@@ -95,12 +95,12 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         for cr in self.mc.cr:
             val = cr.val
             if cr.utopia is not None:
-                if cr.better(val, cr.utopia):
-                    print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is better than Utopia {cr.utopia:.3e}')
+                if cr.better(val, cr.utopia):   # strictly (by a margin) better
+                    print(f'\tWARNING: crit {cr.name}: solution val {val:.6e} is better than Utopia {cr.utopia:.6e}')
                     ret_val = False
             if cr.nadir is not None:
-                if cr.better(cr.nadir, val):
-                    print(f'\tWARNING: crit {cr.name}: solution val {val:.3e} is worse than Nadir {cr.nadir:.3e}')
+                if cr.better(cr.nadir, val):   # strictly (by a margin) better
+                    print(f'\tWARNING: crit {cr.name}: solution val {val:.6e} is worse than Nadir {cr.nadir:.6e}')
                     ret_val = False
         return ret_val
 
@@ -108,8 +108,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.rep.itr(mc_part)       # extract and store in crit val/ach_val sol.-values, add info to report
         if self.cur_stage > 1:  # checks/updates run after the PayOff table complete
             changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
-            if changed:
-                print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
+            # if changed:
+            #     print(f'\tWARNING: Payoff table changed, reset not implemented yet for stage: {self.cur_stage}.')
             out_range = not self.in_range()
             if changed or out_range:
                 if out_range:   # should not happen
@@ -136,12 +136,14 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             pass
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:     # reset (after Nadir update)
-            print('\nINFO: PayOff table updated; restarting the Pareto-set reprepresentation. ------------------------')
+            print('\nINFO: PayOff table updated; restarting the Pareto-set representation. ---------------------------')
             self.mc.scale()  # (re)define scales for criteria values
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             next_stage = 2
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
+        elif self.cur_stage == 6:  # finish, no more cubes to be processed
+            return next_stage
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
         if self.cur_stage > 1:  # don't store solutions during PayOff table computations

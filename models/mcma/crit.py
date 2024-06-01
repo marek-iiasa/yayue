@@ -15,7 +15,7 @@ class Crit:     # definition and attributes of a single criterion
         self.var_name = var_name
         if typ == 'min':
             self.attr = 'minimized'
-            self.mult = -1.  # multiplier (used for simplifying handling)
+            self.mult = -1.  # multiplier (used for handling convenience)
         elif typ == 'max':
             self.attr = 'maximized'
             self.mult = 1.
@@ -24,8 +24,8 @@ class Crit:     # definition and attributes of a single criterion
         self.sc_ach = 100.   # U/N scale of achievements [0, sc_ach]
         # self.minRange = 0.01  # min U/N range
         self.minRange = 0.001  # min U/N range
-        self.nadAdj = round(1. - 10 * self.minRange * self.mult, 3)     # multiplier to adjust Nadir value
-        self.utoAdj = round(1. / self.nadAdj, 3)     # multiplier to adjust Utopia value
+        # self.nadAdj = round(1. - 10 * self.minRange * self.mult, 3)     # multiplier to adjust Nadir value
+        # self.utoAdj = round(1. / self.nadAdj, 3)     # multiplier to adjust Utopia value
         # the below values shall be defined/updated when available
         self.sc_var = -1.   # scaling of the var value (for defining the corresponding CAF); negative means undefined
         self.is_active = None   # either True (for active) or False (for not-active) or None (for ignored)
@@ -41,7 +41,7 @@ class Crit:     # definition and attributes of a single criterion
         print(f"criterion '{cr_name}' ({self.attr}), core-model variable = '{var_name}'.")
 
     def val2ach(self, val):   # set a_val corresponding to the current val
-        if self.nadir is None:  # don't attempt to compute achievements in initial stages
+        if self.nadir is None or val is None:  # don't attempt to compute achievements in initial stages
             self.a_val = 0.
             return self.a_val
         rng = abs(self.utopia - self.nadir)
@@ -49,10 +49,13 @@ class Crit:     # definition and attributes of a single criterion
             f'too small difference between U {self.utopia} and N {self.nadir}.'
         a_val = self.sc_ach * abs(val - self.nadir) / rng
         a_val = round(a_val, 2)
-        if self.eqBetter(self.nadir, val):
-            print('\tCrit::val2ach(): WARNING: solution value better than (not adjusted) Nadir:')
-            print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+        sc = max(abs(self.nadir), abs(val), 1.0)
+        close = abs(self.nadir - val) / sc < 10. * self.minRange
+        if not close and self.better(self.nadir, val):
             a_val = - a_val
+            print('\tCrit::val2ach(): WARNING: solution value worse than (not adjusted) Nadir:')
+            print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+            # print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         # print(f'\tval2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
@@ -67,12 +70,14 @@ class Crit:     # definition and attributes of a single criterion
     def setUtopia(self, val):   # to be called only once for each criterion
         assert self.utopia is None, f'utopia of crit {self.name} already set.'
         # todo: for small values use shift instead multiplication
-        self.utopia = self.utoAdj * val     # slightly adjusted to avoid problems with comparisons/update
+        # self.utopia = self.utoAdj * val     # slightly adjusted to avoid problems with comparisons/update
+        self.utopia = val     # slightly adjusted to avoid problems with comparisons/update
         print(f'utopia of crit "{self.name}" set to {val}.')
 
     def updNadir(self, stage, val, minDiff):
         """Update nadir value, if val is a better approximation."""
         if self.nadir is None or stage == 0:    # set initial value
+            # todo: check the flow; nadir should be defined after reset; (it is correct when earlier used by scale() ! )
             self.nadir = val
             print(f'nadir of crit "{self.name}" set to {val} ({stage = }).')
             return
@@ -110,7 +115,8 @@ class Crit:     # definition and attributes of a single criterion
         if shift:
             # todo: add check to prevent moving (back?) too close to utopia
             # todo: for small (abs) values use shift instead multiplication
-            self.nadir = self.nadAdj * val    # set val as new nadir appr.  # slightly move to avoid
+            # self.nadir = self.nadAdj * val    # set val as new nadir appr.  # slightly move to avoid
+            self.nadir = val    # set val as new nadir appr.  # slightly move to avoid
             no_yes = ''
         else:
             no_yes = 'not'
@@ -138,6 +144,10 @@ class Crit:     # definition and attributes of a single criterion
     def better(self, val1, val2):   # return true if val1 is (strictly) better than val2
         if val1 is None or val2 is None:
             raise Exception(f'Crit::better(): crit: {self.name}, cannot compare "{val1}" and "{val2}".')
+        sc = max(abs(val1), abs(val2), 1.0)
+        close = abs(val1 - val2) / sc < 10. * self.minRange
+        if close:
+            return False
         if self.mult == 1:  # max criterion
             if val1 > val2:
                 return True

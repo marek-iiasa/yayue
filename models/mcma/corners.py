@@ -9,8 +9,8 @@ class Corners:
     def __init__(self, mc):     # initialize corners by regularized selfish solutions
         self.mc = mc
         self.n_crit = mc.n_crit
-        self.verb = 3
-        # self.verb = mc.opt('verb', 0)
+        # self.verb = 3
+        self.verb = mc.opt('verb', 0)
         self.corners = []         # criteria states at the Pareto-set corners
         self.cur_corner = 0       # seq_no of current corner
         self.n_corners = 0        # number of prepared corners
@@ -60,7 +60,7 @@ class Corners:
     def set_ar(self):   # set A/R values for the current corner
         corner = self.corners[self.cur_corner]
         if self.verb > 2:
-            print(f'processing corner: {corner}')
+            print(f'AR for corner: {corner}')
         for (i, cr) in enumerate(self.mc.cr):
             cr.is_fixed = False
             cr.is_active = False
@@ -90,7 +90,7 @@ class Corners:
         pass
 
     def next_sol(self):
-        print('\t-----------------  WARNING: Corners::next_sol(): handling of ignored criteria not implemented yet.')
+        # print('\t-----------------  WARNING: Corners::next_sol(): handling of ignored criteria not implemented yet.')
         return self.all_done
 
     def lst_corners(self):

@@ -102,7 +102,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             for cr in self.cr:
                 val = cr.val
                 cr.a_val = cr.val2ach(val)
-                print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
+                # print(f'\tCrit {cr.name}: val {cr.val:.2f}, a_val {cr.a_val:.2f}')
                 if not cr.is_active:  # update nadir
                     change = cr.updNadir(self.cur_stage, val, self.minDiff)  # update nadir (depends on stage)
                     if change:
@@ -129,11 +129,14 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             print(f'{type(utopia) = }')
             print(f'{type(nadir) = }')
             raise Exception(f'set_payOff("{cr_name}", "{utopia}", "{nadir}"): both values should be of type float.')
-        for crit in self.cr:
-            if crit.name == cr_name:
-                if crit.better(utopia, nadir):
-                    crit.utopia = utopia
-                    crit.nadir = nadir
+        round_eps = 1.e-4     # relative un-rounding margin
+        for cr in self.cr:
+            if cr.name == cr_name:
+                if cr.better(utopia, nadir):
+                    uto_adj = cr.mult * round_eps * utopia    # adjust/un_round abs utopia value
+                    nad_adj = cr.mult * round_eps * nadir    # adjust/un_round abs nadir value
+                    cr.utopia = utopia + uto_adj
+                    cr.nadir = nadir - nad_adj
                     return
                 else:
                     raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): inconsistent values.')
@@ -306,14 +309,15 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
 
         sys.stdout.flush()  # needed for printing exception at the output end
         raise Exception(f'Mcma::set_pref() not implemented yet for stage: {self.cur_stage}.')
-    '''
 
     def par_pref(self):  # generate preferences for finding next solution in Pareto set representation
         assert self.is_par_rep, f'CtrMca::par_pref() should not be used for usr-def pref.'
         assert self.par_rep is not None, f'CtrMca::par_pref() should be initialized earlier.'
         assert self.cur_stage in [4, 5], f'CtrMca::par_pref() should not be called for cur_stage {self.cur_stage}.'
         self.par_rep.pref()     # define largest cube, set A/R&activity in mc.cr[] in the model (not ASF) scale
+    '''
 
+    '''
     def usrPref(self):  # get user-preferences (if no more pref avail. then set self.cur_stage = 6 for a clean exit)
         # make sure that all criteria are active by default
         for crit in self.cr:
@@ -336,6 +340,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                 crit.is_active = item.is_active
                 print(f'Attributes of crit "{crit.name}": A {crit.asp}, R {crit.res}, active {crit.is_active}.')
         return
+    '''
 
     def update(self, wrk_stage):  # update payOff table, if a Nadir changed, return True if updated
         changed = False

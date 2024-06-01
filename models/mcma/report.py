@@ -64,10 +64,13 @@ class Report:
             val = m_var.value
             cr = self.mc.cr[i]
 
+            '''
+            print(f'mv_ign {self.wflow.ign_mv}, cr. {cr.name}, is_ignored: {cr.is_ignored}')
             if self.wflow.ign_mv and cr.is_ignored:
                 val_sol = val
                 val = cr.nadir
                 print(f'\tIgnored crit {cr.name}: sol_val {val_sol:.2e} reset to nadir {val:.2e} (U = {cr.utopia:.2e})')
+            '''
             cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
             if self.wflow.cur_stage > 1:  # store solutions only after payOff table computations
                 cri_ach.update({cr.name: cr.val2ach(val)})  # add to the dict of crit. achiv. of the current solution

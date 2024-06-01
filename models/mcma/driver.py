@@ -101,13 +101,18 @@ def driver(cfg):
             # todo: clarify exception (uncomment next line) while loading the results
             # m1.load(results)  # Loading solution into results object
             wflow.mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
+            '''
             if wflow.mc.is_opt:  # optimal solution found
                 # print(f'\nOptimal solution found.')
                 pass
             else:   # optimization failed
                 print(f'\nOptimization failed, solution disregarded.         ----------------------------------------')
+            '''
         # print('processing solution ----')
-        i_stage = wflow.itr_sol(mc_part)    # process solution, set next stage in wflow, and return it
+        if wflow.mc.is_opt:
+            i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
+        else:
+            print(f'\niter {n_iter}: optimization failed, solution disregarded.        -------------------------------')
         # rep.itr(mc_part)  # driver for sol-processing: update crit. attr., store sol, check domination & close sols
         m.del_component(m.core_model)  # must be deleted (otherwise m1 would have to be generated at every iteration)
         # m.del_component(m.mc_part)   # need not be deleted (a new mc_part needs to be generated for new preferences)
