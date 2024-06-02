@@ -121,7 +121,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         if self.cur_stage == 1:       # payoff table
             self.payoff.next_sol()
         elif self.cur_stage == 2:     # corners
-            all_done = self.corner.next_sol()
+            is_pareto = self.par_rep.addSol(self.n_itr)     # store here to get info, it is_Pareto
+            all_done = self.corner.next_sol(is_pareto)      # store info on corners (defined only by unique Pareto)
             if all_done:
                 if self.cfg.get('neutral') is True:
                     next_stage = 3
@@ -147,7 +148,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
 
-        if self.cur_stage > 1:  # store solutions only if the PayOff table is available
+        if self.cur_stage > 2:  # store solutions only if the PayOff table is available
             self.par_rep.addSol(self.n_itr)
 
         if self.corner is None and self.payoff.done():  # initialize Corners and ParRep

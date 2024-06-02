@@ -186,12 +186,13 @@ class ParRep:     # representation of Pareto set
             if new_sol.is_close(s2):
                 is_close = True
                 break
+        is_pareto = True
         if is_close:
+            is_pareto = False
             self.clSols.append(new_sol)
             print(f'Solution[{itr_id}] duplicates sol[{new_sol.closeTo}] (L-inf = {new_sol.distMx:.1e}). '
                   f'There are {len(self.clSols)} duplicated Pareto solutions.')
         else:   # unique solution; check dominance with all Pareto-sols found so far
-            is_pareto = True
             toPrune = []    # tmp list of solutions dominated by the current sol
             for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
                 cmp_ret = new_sol.cmp(s2)
@@ -215,6 +216,7 @@ class ParRep:     # representation of Pareto set
             for s2 in toPrune:   # remove dominated solutions from self.sols
                 print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
                 self.sols.remove(s2)
+        return is_pareto
 
         # if self.mc.iniSolDone or self.n_corner == len(self.mc.cr):
         #     self.from_cube = True   # next preferences to be generated from cubes
