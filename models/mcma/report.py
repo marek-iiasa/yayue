@@ -57,40 +57,26 @@ class Report:
             return  # refrain from storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
-        # cri_ach = {}    # all criteria values in current solution
+        # cri_ach = {}    # achievemtns cannot be defined before checking, if the solution is in the U/N range
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
             m_var = m_vars[var_name]
             val = m_var.value
             cr = self.mc.cr[i]
             cr.val = val        # has to be stored here because it is needed in in_range()
-
-            '''
-            print(f'mv_ign {self.wflow.ign_mv}, cr. {cr.name}, is_ignored: {cr.is_ignored}')
-            if self.wflow.ign_mv and cr.is_ignored:
-                val_sol = val
-                val = cr.nadir
-                print(f'\tIgnored crit {cr.name}: sol_val {val_sol:.2e} reset to nadir {val:.2e} (U = {cr.utopia:.2e})')
-            '''
             cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
-            '''
-            # achievements stored later
-            # store achiev. only after payOff table computations and if the val is better than nadir
-            if cr.eqBetter(val, cr.nadir) and self.wflow.cur_stage > 1:
-                cri_ach.update({cr.name: cr.val2ach(val)})  # add to the dict of crit. achiv. of the current solution
-            '''
             if self.mc.verb > 2:
                 print(f'Value of variable "{var_name}" defining criterion "{cr.name}" = {val:.2e}')
         if self.mc.verb > 2:
             print(f'Values of criteria {cri_val}')
 
         in_range = True
-        if self.wflow.cur_stage > 1:   # check, if crit-vals are within U/N range
+        if self.wflow.cur_stage > 1:   # check, if crit-vals are within U/N range (only after the PayOff tab is avail.)
             in_range = self.wflow.in_range()
             if not in_range:
                 return in_range
 
-        # store crit values, for wflow.cur_stage > 1 (except of PayOff comp.) also CAF
+        # store crit values, also CAF for wflow.cur_stage > 1 (except of PayOff comp.)
         self.mc.critVal(cri_val)
         # self.mc.prnPayOff()     # print, and optionally store payOff table
 
