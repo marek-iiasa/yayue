@@ -100,7 +100,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     ret_val = False
             if cr.nadir is not None:
                 if cr.better(cr.nadir, val):   # strictly (by a margin) better
-                    print(f'\tWARNING: crit {cr.name}: solution val {val:.6e} is worse than Nadir {cr.nadir:.6e}')
+                    # print(f'\tWARNING: crit {cr.name}: solution val {val:.6e} is worse than Nadir {cr.nadir:.6e}')
                     ret_val = False
         return ret_val
 

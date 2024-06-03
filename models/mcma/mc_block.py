@@ -9,6 +9,8 @@ class McMod:
         self.wflow = wflow
         self.mc = wflow.mc    # CtrMca class handling MCMA data and process/analysis status
         self.m1 = m1    # instance of the core model (first block of the aggregate model)
+        self.verb = self.mc.verb    # verbosity level
+        # self.verb = 3   # tmp/debug verbosity level
 
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of m1 variables defining criteria
@@ -20,14 +22,28 @@ class McMod:
         """sub-model generator, called at each itr having preferences defined through criteria attributes."""
         m = pe.ConcreteModel('MC_block')   # instance of the MC-part (second block of the aggregate model)
         act_cr = []     # indices of active criteria
-        nign_cr = []    # indices of not ignored criteria (to be included in reg_term
+        notAct_cr = []  # indices of not-active criteria (to be included in reg_term)
+        ign_cr = []     # indices of ignored criteria (to be included in reg_term2)
         for (i, cr) in enumerate(self.mc.cr):
             if cr.is_active:
                 act_cr.append(i)
-            if not cr.is_ignored:
-                nign_cr.append(i)
-        if self.mc.verb > 3:
-            print(f'mc_itr(): stage {self.mc.cur_stage}, {len(act_cr)} active criteria.')
+            elif cr.is_ignored:
+                ign_cr.append(i)
+            elif not cr.is_active:
+                notAct_cr.append(i)
+            else:
+                raise Exception(f'McMood::mc_itr(): crit. {cr.name} has undefined status.')
+        n_active = len(act_cr)
+        n_notAct = len(notAct_cr)
+        n_ignor = len(ign_cr)
+        do_corners = n_ignor > 0
+        assert self.mc.n_crit == n_active + n_notAct + n_ignor, \
+            f'Inconsistent cri-status: {n_active=}, {n_notAct=}, {n_ignor=}; all_crit {self.mc.n_crit}'
+        if self.verb > 2:
+            print(f'McMod::mc_itr(): stage {self.wflow.cur_stage}, number of criteria: {n_active} active, '
+                  f'{n_notAct} not-active, {n_ignor} ignored.')
+        if do_corners and self.wflow.cur_stage != 2:
+            raise Exception(f'McMood::mc_itr(): handling corners not implemented in stage {self.wflow.cur_stage}.')
 
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         # m.af = pe.Var(domain=pe.Reals, doc='AF')      # pe.Reals gives warning
@@ -43,7 +59,7 @@ class McMod:
             var_name = self.var_names[id_cr]    # name of m1-variable representing the active criterion
             m1_var = m1_vars[var_name]  # object of core model var. named m1.var_name
             mult = self.mc.cr[id_cr].mult   # multiplier (1 or -1, for max/min criteria, respectively)
-            if self.mc.verb > 3:
+            if self.verb > 3:
                 print(f'{var_name=}, {m1_var=}, {m1_var.name=}, {mult=}')
 
             @m.Constraint()
@@ -54,24 +70,25 @@ class McMod:
             def goal(mx):   # define objective
                 return mx.af
             m.goal.activate()  # only mc_block objective active, m1_block obj. deactivated in driver()
-            if self.mc.verb > 2:
+            if self.verb > 2:
                 print(f'\nmc_itr(): "{m.name}" for computing utopia of criterion "{self.cr_names[id_cr]}" '
                       f'defined by core_model variable "{var_name}" generated.')
-            if self.mc.verb > 3:
+            if self.verb > 2:
                 m.pprint()
             return m
 
         # define sets and variables needed for all stages but utopia
         m.C = pe.RangeSet(0, self.mc.n_crit - 1)   # set of all criteria indices
         m.A = pe.Set(initialize=act_cr)   # set of active criteria indices (defined above)
-        m.R = pe.Set(initialize=nign_cr)  # set of criteria indices (defined above) to be included in reg_term
+        # m.R = pe.Set(initialize=notAct_cr)  # set of non-active crit-indices to be included in reg_term1
+        # m.RI = pe.Set(initialize=ign_cr)  # set of ignored crit-indices to be included in reg_term2
         m.x = pe.Var(m.C)    # m.variables linked to the corresponding m1_var
         n_pwls = self.mc.n_crit     # number of CAFs and PWLs
         if self.mc.deg_exp is False:    # fix the vars of the degenerated cube dimension(s), if not expanded
             for (i, cr) in enumerate(self.mc.cr):
                 if cr.is_fixed:
                     n_pwls -= 1
-                    assert not cr.is_active, f'Crit. {cr.name} has fixed value; therefore, it must be in_active.'
+                    assert not cr.is_active, f'Crit. {cr.name} has fixed value; therefore, it must not be active.'
                     # m.x[i].setlb(cr.asp)
                     # m.x[i].setub(cr.asp)
                     m.x[i].fix(cr.asp)  # better than fixing LB and UB
@@ -183,18 +200,42 @@ class McMod:
         #     m.pprint()
         #     print(f'---  end of specs of the MC_blok.\n')
 
+        # min of caf_i, i in A (i.e., set of active criteria)
         @m.Constraint(m.A)
         def cafMinD(mx, ii):    # nothing to be skipped, only active criteria included in the m.A set
             # return pe.Constraint.Skip
             return mx.cafMin <= mx.caf[ii]
 
-        reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit       # scaling coef of regularizing term
-        if self.mc.verb > 2:
-            print(f'----------------------------------------------------- {reg_scale = }')
+        if do_corners:
+            assert n_active == 1, f'{n_active} ctive criteria in processing corners,'
+            assert n_notAct == 1, f'{n_notAct} not-criteria in processing corners.'
+            m.R1 = pe.Set(initialize=notAct_cr)  # set of indices of not-active crit (enter reg_term1)
+            m.R2 = pe.Set(initialize=ign_cr)  # set of indices of ignored crit (enter reg_term2)
+            reg_scal1 = 10. * self.mc.epsilon * self.mc.cafAsp  # scaling coef of 1st reg. term (inactive crit)
+            if n_ignor > 0:
+                reg_scal2 = 0.1 * self.mc.epsilon * self.mc.cafAsp / n_ignor  # scaling coef of reg. term2
+            else:       # no ignored crit in 2-criteria analysis
+                reg_scal2 = 0.
+            if self.mc.verb > 2:
+                print(f'------------------------- {reg_scal1 = }, {reg_scal2 = }')
 
-        @m.Constraint()
-        def cafRegD(mx):    # regularizing term
-            return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.R)
+            @m.Constraint()
+            def cafRegD(mx):  # regularizing term
+                term1 = reg_scal1 * sum(mx.caf[ii] for ii in mx.R1)
+                if n_ignor > 0:
+                    term2 = reg_scal2 * sum(mx.caf[ii] for ii in mx.R2)
+                else:
+                    term2 = 0.
+                return mx.cafReg == term1 + term2
+        else:
+            # m.R = pe.Set(initialize=notAct_cr)  # set of crit-indices to be included in reg_term
+            reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit  # scaling coef of regularizing term
+            if self.mc.verb > 2:
+                print(f'----------------------------------------------------- {reg_scale = }')
+
+            @m.Constraint()
+            def cafRegD(mx):  # regularizing term
+                return mx.cafReg == reg_scale * sum(mx.caf[ii] for ii in mx.C)
 
         @m.Constraint()
         def afDef(mx):
@@ -204,7 +245,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.mc.verb > 2:    # set to 1 for testing, restore 2 after testing
+        if self.verb > 2:    # set to 1 for testing, restore 2 after testing
             print('\nMC_block (returned to driver):')
             m.pprint()
 

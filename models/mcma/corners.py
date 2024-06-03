@@ -9,8 +9,8 @@ class Corners:
     def __init__(self, mc):     # initialize corners by regularized selfish solutions
         self.mc = mc
         self.n_crit = mc.n_crit
-        # self.verb = 3
-        self.verb = mc.opt('verb', 0)
+        self.verb = 3
+        # self.verb = mc.opt('verb', 0)
         self.corners = []         # criteria states at the Pareto-set corners
         self.a_corners = []       # corners defined by the achievements
         self.cur_corner = 0       # seq_no of current corner
@@ -58,7 +58,7 @@ class Corners:
                 print(f'preferences for the last of {self.n_corners} corners generated.')
             self.all_done = True
 
-    def set_ar(self):   # set A/R values for the current corner
+    def set_ar(self):   # set A/R values for the currently requested corner
         corner = self.corners[self.cur_corner]
         if self.verb > 2:
             print(f'AR for corner: {corner}')
@@ -75,15 +75,16 @@ class Corners:
                 cr.is_active = True
                 cr.asp = cr.utopia
                 cr.res = cr.utopia - cr.mult * delta
-            elif stat_id == 'n':  # criterion in-active for this selfish solution
+            elif stat_id == 'n':  # criterion in-active for this corner solution
                 # print(f'criterion in-active for this corner "{cr.name}".')
                 cr.asp = cr.nadir + cr.mult * delta
                 cr.res = cr.nadir
-            else:       # criterion ignored for this selfish solution
+            else:       # criterion ignored for this corner solution
                 # print(f'criterion ignored for this corner "{cr.name}".')
-                delta2 = abs(cr.utopia - cr.nadir) / 10.  # take 1/10 of the (utopia, nadir) range
+                # delta2 = abs(cr.utopia - cr.nadir) / 10.  # take 1/10 of the (utopia, nadir) range
                 cr.is_ignored = True
-                cr.asp = cr.nadir + cr.mult * delta2
+                # cr.asp = cr.nadir + cr.mult * delta2
+                cr.asp = cr.utopia
                 cr.res = cr.nadir
             if self.verb > 2:
                 print(f'Crit {cr.name}: active {cr.is_active}, ignored {cr.is_ignored}, A {cr.val2ach(cr.asp)}, '
