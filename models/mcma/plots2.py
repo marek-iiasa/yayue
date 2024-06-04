@@ -64,10 +64,10 @@ class InteractiveParallel:
         self.slider.on_changed(self.update_slider)
 
         # Add radio buttons
-        self.radio = RadioButtons(self.axes['radio'], labels=self.cr_name,
-                                  radio_props={'s': 40, 'c': 'tab:blue'},
-                                  label_props={'fontsize': [6]*len(self.cr_name)})
-        self.radio.on_clicked(self.update_radio)
+        # self.radio = RadioButtons(self.axes['radio'], labels=self.cr_name,
+        #                           radio_props={'s': 40, 'c': 'tab:blue'},
+        #                           label_props={'fontsize': [6]*len(self.cr_name)})
+        # self.radio.on_clicked(self.update_radio)
 
     def init_parallel_axes(self, n=6):
         ax = self.axes['plot']
@@ -119,8 +119,8 @@ class InteractiveParallel:
         self.axes = {'plot': self.fig.add_subplot(gs_right[0, 1])}
         self.axes = self.axes | {
             'colorbar': self.fig.add_subplot(gs_right[0, 0], sharey=self.axes['plot']),
-            'radio': self.fig.add_subplot(gs_left[0, 0]),
-            'slider': self.fig.add_subplot(gs_left[1, 0])
+            # 'radio': self.fig.add_subplot(gs_left[0, 0]),
+            'slider': self.fig.add_subplot(gs_left[:, 0])
         }
 
     def generate_colors(self):
