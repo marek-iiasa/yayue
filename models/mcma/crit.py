@@ -55,8 +55,6 @@ class Crit:     # definition and attributes of a single criterion
             a_val = - a_val
             print('\tCrit::val2ach(): WARNING: solution value worse than (not adjusted) Nadir:')
             print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
-            # print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=}, U {self.utopia:.2e}, N {self.nadir:.2e}')
-        # print(f'\tval2ach(): crit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
     # noinspection SpellCheckingInspection
@@ -77,7 +75,6 @@ class Crit:     # definition and attributes of a single criterion
     def updNadir(self, stage, val, minDiff):
         """Update nadir value, if val is a better approximation."""
         if self.nadir is None or stage == 0:    # set initial value
-            # todo: check the flow; nadir should be defined after reset; (it is correct when earlier used by scale() ! )
             self.nadir = val
             print(f'nadir of crit "{self.name}" set to {val} ({stage = }).')
             return
@@ -103,7 +100,7 @@ class Crit:     # definition and attributes of a single criterion
         # in stage 1 (selfish opt.): just collect worst values of each criterion
         # in stages: 2, 3: relax (move away from U) "too tight" values (from previous appr.)
         # in stage 3: 2nd stage on nadir appr.: apply AF with only one criterion active
-        # in stages >= 4: AF defined by (A, R, activity), Nadir updated, if a crit. value is worse than Nadir appr.
+        # in stages in [4, 5]: AF defined by (A, R, activity), Nadir updated, if a crit. value is worse than Nadir appr.
         else:
             if self.mult == 1:  # max-crit, relax to smaller values
                 if old_val - eps > val:
@@ -113,9 +110,6 @@ class Crit:     # definition and attributes of a single criterion
                     shift = True     # move away from U
 
         if shift:
-            # todo: add check to prevent moving (back?) too close to utopia
-            # todo: for small (abs) values use shift instead multiplication
-            # self.nadir = self.nadAdj * val    # set val as new nadir appr.  # slightly move to avoid
             self.nadir = val    # set val as new nadir appr.  # slightly move to avoid
             no_yes = ''
         else:

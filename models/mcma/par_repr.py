@@ -1,7 +1,7 @@
 import pandas as pd
 from operator import itemgetter
 from .cube import ParSol, Cubes, aCube
-from .corners import Corners
+# from .corners import Corners
 
 
 # noinspection SpellCheckingInspection
@@ -13,8 +13,8 @@ class ParProg:
         self.cur_step = 0           # index of the current step
         self.neigh = {}             # neighbors for each step
         self.df_stages = None
-
-        self.ini_steps()    # initialize steps
+        #
+        self.ini_steps()            # initialize steps
 
     def ini_steps(self):  # steps of progress
         self.steps = [50, 30, 20, 10, 7, 5, 3, 2, 1]
@@ -52,7 +52,6 @@ class ParProg:
             n_cubes = info[2]
             mx_cube = info[3]
             summary_list.append((step, itr, self.steps[step], n_sol, n_cubes, mx_cube))
-            # todo: there is a bug in reporting (when all cubes are processed) number of cubes remained
             print(f'Stage {step} (stage_UpBnd {self.steps[step]}, mxCubeSize {mx_cube}): during {itr} itrs '
                   f'{n_sol} sols. computed, {n_cubes} remained for processing.')
             # uncomment only when needed (the below produces a lot of printouts)
@@ -66,8 +65,6 @@ class ParProg:
             '''
 
         self.df_stages = pd.DataFrame(summary_list, columns=['step', 'itr', 'upBnd', 'n_sol', 'n_cubes', 'mx_cube'])
-        # self.summary_plot(self.df_stages)
-        # self.progress_plot()
 
 
 # noinspection SpellCheckingInspection
@@ -89,41 +86,6 @@ class ParRep:     # representation of Pareto set
         self.dir_name = self.cfg.get('resDir')
 
         print('Initializing Pareto-set exploration. --------------------')
-
-    '''
-    def ini_old(self):     # initial solutions (old)
-        for (i, cr) in enumerate(self.mc.cr):
-            delta = abs(cr.utopia - cr.nadir) / 3.  # take 1/3 of the (utopia, nadir) range
-            if i == self.n_corner:  # selfish sol. for i-th criterion
-                print(f'Computing Pareto-front corners: selfish opt. for crit. "{cr.name}".')
-                cr.is_active = True
-                cr.asp = cr.utopia
-                cr.res = cr.utopia - cr.mult * delta
-            else:
-                cr.is_active = False
-                cr.asp = cr.nadir + cr.mult * delta
-                cr.res = cr.nadir
-            cr.is_fixed = False
-        self.n_corner += 1
-
-    def ini_as(self):     # initial solutions AS
-        self.ini_obj = 5   # place-holder for the approach-specific persistent object
-        # self.mc.iniSolDone = True     # uncomment, if A/R are set for the last initial solution
-        print('ini_as not implemented yet; using ini_old().')
-        self.ini_old()
-
-    def ini_jg(self):     # initial solutions JG
-        self.ini_obj = 'aqqq'   # place-holder for the approach-specific persistent object
-        # self.mc.iniSolDone = True     # uncomment, if A/R are set for the last initial solution
-        print('ini_jg() not implemented yet; using ini_old().')
-        self.ini_old()
-
-    def ini_mm(self):     # initial solutions MM
-        if self.ini_obj is None:
-            self.ini_obj = Corners(self.mc)   # persistent object handling A/R specs for all Pareto-set corners
-            print('specs of Pareto corners defined.')
-        self.mc.iniSolDone = self.ini_obj.next_corner()   # return True, if A/R for the last corner defined
-    '''
 
     def pref(self, neutral=False):     # entry point for each new iteration
         if neutral:     # set A/R for neutral solution
@@ -217,10 +179,6 @@ class ParRep:     # representation of Pareto set
                 print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
                 self.sols.remove(s2)
         return is_pareto
-
-        # if self.mc.iniSolDone or self.n_corner == len(self.mc.cr):
-        #     self.from_cube = True   # next preferences to be generated from cubes
-            # self.mc.iniSolDone = True   # initial solutions (except of (optional) neutral)
 
     def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous distinct-solution
         # store_all = False

@@ -2,12 +2,12 @@ import sys		# needed for sys.exit()
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
-from .ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
+# from .ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
 from .rd_inst import rd_inst  # model instance provider
 from .wrkflow import WrkFlow  # app's workflow
 from .mc_block import McMod  # generate the AF sub-model/block and link the core-model variables with AF variables
-from .par_repr import ParRep
-from .report import Report  # organize results of each iteration into reports
+# from .par_repr import ParRep
+# from .report import Report  # organize results of each iteration into reports
 
 
 # noinspection SpellCheckingInspection
@@ -39,21 +39,14 @@ def driver(cfg):
     # initialize the WrkFlow
     wflow = WrkFlow(cfg, m1)
     verb = wflow.mc.verb
-    # is_par_rep = True/False: can be specified in cfg_usr.yml
-    # mc = CtrMca(cfg)    # CtrMca ctor
-
-    # list of the core-model variables, values of which shall be included in the report can be specified in cfg_usr.yml
-    # rep = Report(cfg, mc, m1)    # Report ctor
 
     # select solver
-    opt = pe.SolverFactory('glpk')
-    # opt = pe.SolverFactory('ipopt') # solves both LP and NLP
+    opt = pe.SolverFactory('glpk')  # solves LP and MIP
+    # opt = pe.SolverFactory('ipopt') # solves both LP and NLP, but not MIP
 
-    # todo: implement rounding of floats (in printouts only or of all/most computed values?)
     n_iter = 0
     max_itr = cfg.get('mxIter')
     print(f'Maximum number of iterations: {max_itr}')
-    # todo: verify conditions for storing the payoff table
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         # i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {wflow.cur_stage} -----------------------------------------')
@@ -119,7 +112,7 @@ def driver(cfg):
 
         # print(f'Finished current itr, count: {n_iter}.')
         if i_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
-            print(f'\nFinished the analysis for all specified preferences.')
+            print(f'\nFinished the analysis for all generated/specified preferences.')
             break       # exit the iteration loop
         n_iter += 1
         if n_iter > max_itr:

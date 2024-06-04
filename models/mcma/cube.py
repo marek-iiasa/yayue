@@ -132,14 +132,6 @@ class Cubes:     # collection of aCubes
         id2prune = []
         # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
-            '''
-            if c_size < size:    # no more candidate of the same size
-                if len(lst) > 0:    # break, if at least one candidate was found
-                    break
-                else:   # make list of cubes of a smaller size
-                    size = c_size
-                    continue
-            '''
             if self.cand_ok(c_id):
                 lst.append(c_id)
                 break   # take the first found empty-cube

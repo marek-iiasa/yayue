@@ -19,11 +19,10 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         self.cr = []        # objects of Crit class, each representing the corresponding criterion
         self.n_crit = 0     # number of defined criteria == len(self.cr)
         self.deg_exp = False    # expansion of degenerated cube dimensions
-        # self.ana_dir = cfg.get('ana_dir')  # wrk dir for the current analysis (mcma runs in ana_dir)
-        # self.f_pref = 'pref.txt'     # file with defined preferences' set
+        # self.ana_dir = cfg.get('ana_dir')  # wdir for the analysis (no longer needed: mcma runs in ana_dir)
         # tolerances
         self.cafAsp = 100.   # value of CAF at A (if A undefined, then at U)
-        self.critScale = 1000.   # range [utopia, nadir] of scaled values (no longer needed?)
+        self.critScale = 1000.   # range [utopia, nadir] of scaled values (used in self.scale())
         self.epsilon = 1.e-6  # fraction of self.cafAsp used for scaling the AF regularizing term
         #
         self.minDiff = 0.001  # min. relative differences between (U, N), (U, A), (A, R), (R, N) (was 0.01)
@@ -32,8 +31,10 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         # self.scVar = self.opt('scVar', True)   # scale core-model vars defining CAFs
         self.scVar = self.opt('scVar', False)   # scale core-model vars defining CAFs
         self.verb = self.opt('verb', 1)   # print verbosity: 0 - min., 1 - key, 2 - debug, 3 - detailed
-        self.pref = []    # list of preferences defined for each blocks
-        self.n_pref = 0     # number of blocks of read-in preferences
+        # the below to be used for user-defined preferences (currently not used)
+        # self.f_pref = 'pref.txt'     # file with defined preferences' set, currently not used
+        # self.pref = []    # list of preferences defined for each blocks
+        # self.n_pref = 0     # number of blocks of read-in preferences
         self.cur_pref = 0   # index of currently processed preference
 
         self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term

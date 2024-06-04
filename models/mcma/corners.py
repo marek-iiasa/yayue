@@ -58,6 +58,7 @@ class Corners:
                 print(f'preferences for the last of {self.n_corners} corners generated.')
             self.all_done = True
 
+    # noinspection GrazieInspection
     def set_ar(self):   # set A/R values for the currently requested corner
         corner = self.corners[self.cur_corner]
         if self.verb > 2:

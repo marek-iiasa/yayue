@@ -85,15 +85,8 @@ class Report:
         if self.wflow.cur_stage < 2:   # don't store solutions during payOff table computations
             return in_range
 
-        # todo: modify to skip storing dominated solutions
         if len(self.rep_vars):
             self.req_vals()     # extract and store values of the core-model variables requested to be reported
-
-        # if self.mc.par_rep is None:    # initialize ParRep() object (must be after payOff table was computed)
-        #     self.mc.par_rep = ParRep(self.mc)
-
-        # process sol. (defined by cr-attr.): check dominance/uniqueness, add to ParRep sols., generate cubes
-        # self.mc.par_rep.addSol(self.itr_id)   # moved tp WrkFlow::itr_sol()
 
         return in_range
 
@@ -177,10 +170,6 @@ class Report:
                     idx = f'{item[0]}_{ind}'
                     new_row.update({idx: f'{val:.2e}'})
         self.sol_vars.append(new_row)   # append to the list of rows
-        # print(f'Values of (the to be reported) core-model variables for the current iter:\n{new_row}.')
-
-        # sign-off
-        # print(f'Report::itr_id({self.itr_id}) finished.')
 
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):

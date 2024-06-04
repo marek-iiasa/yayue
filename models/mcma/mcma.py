@@ -1,7 +1,6 @@
-# infinity = float('inf')
-
 """ Main function of the mcma: configure the analysis options and work-space. """
 
+# infinity = float('inf')
 # from os import R_OK, access
 # from os.path import isfile
 import sys		# needed for sys.exit()

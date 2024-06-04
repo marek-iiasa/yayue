@@ -33,17 +33,17 @@ class McMod:
                 notAct_cr.append(i)
             else:
                 raise Exception(f'McMood::mc_itr(): crit. {cr.name} has undefined status.')
-        n_active = len(act_cr)
-        n_notAct = len(notAct_cr)
-        n_ignor = len(ign_cr)
-        do_corners = n_ignor > 0
+        n_active = len(act_cr)      # number of active criteria
+        n_notAct = len(notAct_cr)   # number of not-active criteria
+        n_ignor = len(ign_cr)       # number of ignored (while defining Pareto-set corners) criteria
+        do_corners = n_ignor > 0    # different reg-terms of the AF are used while computing the Pareto-set corners
         assert self.mc.n_crit == n_active + n_notAct + n_ignor, \
             f'Inconsistent cri-status: {n_active=}, {n_notAct=}, {n_ignor=}; all_crit {self.mc.n_crit}'
         if self.verb > 2:
             print(f'McMod::mc_itr(): stage {self.wflow.cur_stage}, number of criteria: {n_active} active, '
                   f'{n_notAct} not-active, {n_ignor} ignored.')
         if do_corners and self.wflow.cur_stage != 2:
-            raise Exception(f'McMood::mc_itr(): handling corners not implemented in stage {self.wflow.cur_stage}.')
+            raise Exception(f'McMood::mc_itr(): handling corners cannot be used in stage {self.wflow.cur_stage}.')
 
         m1_vars = self.m1.component_map(ctype=pe.Var)  # all variables of the m1 (core model)
         # m.af = pe.Var(domain=pe.Reals, doc='AF')      # pe.Reals gives warning
@@ -206,11 +206,11 @@ class McMod:
             # return pe.Constraint.Skip
             return mx.cafMin <= mx.caf[ii]
 
-        if do_corners:
+        if do_corners:  # reg-term defined specifically for computing Pareto-set corners
             assert n_active == 1, f'{n_active} ctive criteria in processing corners,'
             assert n_notAct == 1, f'{n_notAct} not-criteria in processing corners.'
-            m.R1 = pe.Set(initialize=notAct_cr)  # set of indices of not-active crit (enter reg_term1)
-            m.R2 = pe.Set(initialize=ign_cr)  # set of indices of ignored crit (enter reg_term2)
+            m.R1 = pe.Set(initialize=notAct_cr)  # set of indices of not-active crit (enters reg_term1)
+            m.R2 = pe.Set(initialize=ign_cr)  # set of indices of ignored crit (enters reg_term2)
             reg_scal1 = 10. * self.mc.epsilon * self.mc.cafAsp  # scaling coef of 1st reg. term (inactive crit)
             if n_ignor > 0:
                 reg_scal2 = 0.1 * self.mc.epsilon * self.mc.cafAsp / n_ignor  # scaling coef of reg. term2
@@ -221,14 +221,14 @@ class McMod:
 
             @m.Constraint()
             def cafRegD(mx):  # regularizing term
-                term1 = reg_scal1 * sum(mx.caf[ii] for ii in mx.R1)
-                if n_ignor > 0:
+                term1 = reg_scal1 * sum(mx.caf[ii] for ii in mx.R1)     # R1 always has one member
+                if n_ignor > 0:     # R2 has at least one member
                     term2 = reg_scal2 * sum(mx.caf[ii] for ii in mx.R2)
-                else:
+                else:       # no ignored criteria for problems with only 2 criteria
                     term2 = 0.
                 return mx.cafReg == term1 + term2
         else:
-            # m.R = pe.Set(initialize=notAct_cr)  # set of crit-indices to be included in reg_term
+            # standard reg-term (all criteria enter)
             reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit  # scaling coef of regularizing term
             if self.mc.verb > 2:
                 print(f'----------------------------------------------------- {reg_scale = }')
