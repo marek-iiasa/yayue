@@ -310,8 +310,7 @@ class Plots:
         for step in self.wflow.par_rep.progr.neigh:
             if len(self.wflow.par_rep.progr.neigh[step][-1]) == 0:
                 print(f'Empty cube list for computation stage {step}.')
-                # todo: a bug: if this happens, then no plots are generated.
-                return
+                continue
             ax = fig.add_subplot(nrows, ncols, step + 1)
             neighbour_cube_sizes = []
             if self.cfg.get('verb') > 3:
