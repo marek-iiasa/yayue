@@ -36,7 +36,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.n_itr = None           # id of current itr (TBD by self.itr_start())
         self.is_opt = None  # indicates True/False avail. of optimal solution (set in driver())
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
-        self.is_par_rep = True    # if True, then switch to ParetoRepresentation mode (read of A/R not tested)
+        self.is_par_rep = True    # only ParetoRepresentation mode is avail. (handling usr-specs of A/R not tested)
         self.deg_exp = False    # expansion of degenerated cube dimensions
         #
         # self.ign_mv = False    # move ignored crit-values (when computing corners)

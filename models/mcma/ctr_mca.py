@@ -38,7 +38,7 @@ class CtrMca:   # control flows of MCMA at diverse computations states
 
         self.epsilon = self.opt('eps', self.epsilon)  # scaling of the AF regularizing term
         print(f'epsilon = {self.epsilon:.1e}')
-        do_neutral = self.cfg.get('neutral') is True
+        do_neutral = self.opt('neutral', True) is True
         print(f'generate neutral solution = {do_neutral}')
         #
         self.rdCritSpc()    # read criteria specs from the config file
