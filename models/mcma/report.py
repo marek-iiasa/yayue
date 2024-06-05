@@ -5,10 +5,7 @@ Reporting results of the MCMA iterations. Handling core-model is generic, i.e., 
 import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
-# from .par_repr import ParRep
 from .plots import Plots
-# from ctr_mca import CtrMca
-# from crit import Crit
 
 
 # noinspection SpellCheckingInspection
@@ -54,7 +51,7 @@ class Report:
         # print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         if not self.mc.is_opt:
-            return  # refrain from storing non-optimal solutions
+            return  # refrain from handling/storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
         # cri_ach = {}    # achievemtns cannot be defined before checking, if the solution is in the U/N range
@@ -78,8 +75,6 @@ class Report:
 
         # store crit values, also CAF for wflow.cur_stage > 1 (except of PayOff comp.)
         self.mc.critVal(cri_val)
-        # self.mc.prnPayOff()     # print, and optionally store payOff table
-
         self.itr_inf(m)     # store one-line info on each iteration
 
         if self.wflow.cur_stage < 2:   # don't store solutions during payOff table computations

@@ -77,7 +77,7 @@ def main():
     tstart = dt.now()
     # print('Started at:', str(tstart))
 
-    module_dir = 'mcma'
+    module_dir = 'mcma'         # needs to be changed (in the pymcma repo) to pymcma
     module_py = 'driver.py'
     as_module = os.path.exists(f'{module_dir}/{module_py}')  # true, if run as module, false if as pymcma
     if as_module:

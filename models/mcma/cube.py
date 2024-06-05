@@ -151,8 +151,7 @@ class Cubes:     # collection of aCubes
                   f'size={best.size:.2f}, degen = {best.is_degen}.')
         else:
             print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
-            # print('Termination2')
-        # prune the candidate list
+        # prune the candidate list (the selected cube, and non-empty cubes)
         for c_id in id2prune:
             # print(f'\ncand-list before removing c_id = {c_id}: {self.cand}')
             for item in self.cand:

@@ -36,6 +36,8 @@ def driver(cfg):
     m1 = rd_inst(cfg)    # upload or generate m1 (core model)
     print(f'Generating Pareto-front representation of the core-model instance: {m1.name}.')
 
+    # todo: add to cfg option for solver selection
+
     # initialize the WrkFlow
     wflow = WrkFlow(cfg, m1)
     verb = wflow.mc.verb

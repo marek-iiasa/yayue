@@ -38,7 +38,7 @@ class McMod:
         n_ignor = len(ign_cr)       # number of ignored (while defining Pareto-set corners) criteria
         do_corners = n_ignor > 0    # different reg-terms of the AF are used while computing the Pareto-set corners
         assert self.mc.n_crit == n_active + n_notAct + n_ignor, \
-            f'Inconsistent cri-status: {n_active=}, {n_notAct=}, {n_ignor=}; all_crit {self.mc.n_crit}'
+            f'Inconsistent criteria status: {n_active=}, {n_notAct=}, {n_ignor=}; all_crit {self.mc.n_crit}'
         if self.verb > 2:
             print(f'McMod::mc_itr(): stage {self.wflow.cur_stage}, number of criteria: {n_active} active, '
                   f'{n_notAct} not-active, {n_ignor} ignored.')
@@ -206,6 +206,7 @@ class McMod:
             # return pe.Constraint.Skip
             return mx.cafMin <= mx.caf[ii]
 
+        # reg-term(s) differ for computing (1) Pareto-set corners and (2) Pareto-set representation
         if do_corners:  # reg-term defined specifically for computing Pareto-set corners
             assert n_active == 1, f'{n_active} ctive criteria in processing corners,'
             assert n_notAct == 1, f'{n_notAct} not-criteria in processing corners.'
