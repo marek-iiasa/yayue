@@ -1,8 +1,11 @@
+from itertools import combinations
+
 import numpy as np
 import pandas as pd
 from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 from matplotlib import patches
 import matplotlib as mpl
 from matplotlib.colors import ListedColormap
@@ -350,55 +353,60 @@ class Plots:
     def plot3D(self):
         if self.n_crit < 3:  # just return for bi-criteria problem
             return
-        if self.n_crit > 3:
-            # todo: implement 3D subplots for more than 3 criteria
-            print(f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.')
-            return
-        # assert self.n_crit == 3, f'Plots.plot3D(): not implemented for {self.n_crit} criteria yet.'
-        fig2 = plt.figure(figsize=(7, 7), dpi=self.dpi)
+
+        n_plots = comb(self.n_crit, k=3, exact=True)
+        n_cols = n_rows = int(np.ceil(np.sqrt(n_plots)))
+
+        fig2 = plt.figure(figsize=(3.5 * n_cols, 2.5 * n_rows), dpi=self.dpi)
+        fig2.set_facecolor('#EAEAF2')
         fig2.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
-        ax = fig2.add_subplot(projection='3d')
-        ax.set_xlabel(self.cr_name[0])
-        ax.set_ylabel(self.cr_name[1])
-        ax.set_zlabel(self.cr_name[2])
-        # noinspection PyArgumentList
-        # warning suppressed here (complains on unfilled params x and y)
-        ax.scatter(xs=self.df[self.cr_col[0]], ys=self.df[self.cr_col[1]], zs=self.df[self.cr_col[2]],
-                   label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=50)
+        gs = GridSpec(n_rows, n_cols, fig2, hspace=0.05, wspace=0.05,
+                      left=0.05, right=0.95, bottom=0.05, top=0.95)
 
-        # Cubes drawing
-        cubes = self.wflow.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
-        mxCubePlot = self.mc.opt('mxCubePlot', 0)
-        for i, cube in cubes.items():
-            # p1 = cube.aspAch
-            # p2 = cube.resAch
-            if i >= mxCubePlot:
-                break
-            p1 = cube.s1.a_vals
-            p2 = cube.s2.a_vals
-            c = 'k' if cube.used else 'r'
-            if p1 and p2:
-                bottom = [(p1[0], p1[1], p1[2]), (p1[0], p2[1], p1[2]), (p2[0], p2[1], p1[2]), (p2[0], p1[1], p1[2]),
-                          (p1[0], p1[1], p1[2])]
-                ax.plot(*zip(*bottom), c=c, lw=0.5)
+        for ax_idx, (i, j, k) in enumerate(combinations(range(self.n_crit), r=3)):
+            # ax = fig2.add_subplot(n_rows, n_cols, ax_idx, projection='3d')
+            ax = fig2.add_subplot(gs[ax_idx], projection='3d')
+            ax.set_xlabel(self.cr_name[i])
+            ax.set_ylabel(self.cr_name[j])
+            ax.set_zlabel(self.cr_name[k])
+            # noinspection PyArgumentList
+            # warning suppressed here (complains on unfilled params x and y)
+            ax.scatter(xs=self.df[self.cr_col[i]],
+                       ys=self.df[self.cr_col[j]],
+                       zs=self.df[self.cr_col[k]],
+                       label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=30)
 
-                top = [(p1[0], p1[1], p2[2]), (p1[0], p2[1], p2[2]), (p2[0], p2[1], p2[2]), (p2[0], p1[1], p2[2]),
-                       (p1[0], p1[1], p2[2])]
-                ax.plot(*zip(*top), c=c, lw=0.5)
+            ax.view_init(elev=15, azim=45, roll=0)
+            mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
+            for (idx, seq) in enumerate(self.seq):
+                # noinspection PyTypeChecker
+                if idx > mxLabelPlot:
+                    break
+                ax.text(x=self.df[self.cr_col[i]][idx] + 2,
+                        y=self.df[self.cr_col[j]][idx] + 2,
+                        z=self.df[self.cr_col[k]][idx] + 2,
+                        s=str(seq), fontdict=None)
 
-                for b, t in zip(bottom, top):
-                    ax.plot(*zip(*[b, t]), c=c, lw=0.5)
+            # Cubes drawing
+            cubes = self.wflow.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
+            mxCubePlot = self.mc.opt('mxCubePlot', 0)
+            for idx, cube in cubes.items():
+                if idx >= mxCubePlot:
+                    break
+                p1 = [cube.s1.a_vals[v] for v in [i, j, k]]
+                p2 = [cube.s2.a_vals[v] for v in [i, j, k]]
+                c = 'k' if cube.used else 'r'
+                if p1 and p2:
+                    bottom = [(p1[0], p1[1], p1[2]), (p1[0], p2[1], p1[2]), (p2[0], p2[1], p1[2]), (p2[0], p1[1], p1[2]),
+                              (p1[0], p1[1], p1[2])]
+                    ax.plot(*zip(*bottom), c=c, lw=0.5)
 
-        # font = {'family': 'serif', 'color': 'darkred', 'weight': 'normal', 'size': 16,}
-        # ax.view_init(elev=3, azim=-135, roll=0)
-        ax.view_init(elev=15, azim=45, roll=0)
-        mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
-        for (i, seq) in enumerate(self.seq):
-            # noinspection PyTypeChecker
-            if i > mxLabelPlot:
-                break
-            ax.text(self.df[self.cr_col[0]][i] + 2, self.df[self.cr_col[1]][i] + 2, self.df[self.cr_col[2]][i] + 2,
-                    f'{seq}', fontdict=None)
+                    top = [(p1[0], p1[1], p2[2]), (p1[0], p2[1], p2[2]), (p2[0], p2[1], p2[2]), (p2[0], p1[1], p2[2]),
+                           (p1[0], p1[1], p2[2])]
+                    ax.plot(*zip(*top), c=c, lw=0.5)
+
+                    for b, t in zip(bottom, top):
+                        ax.plot(*zip(*[b, t]), c=c, lw=0.5)
 
         self.figures['plot3D'] = fig2
