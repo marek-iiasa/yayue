@@ -54,6 +54,7 @@ class InteractiveParallel:
         self.axes['colorbar'].set_ylabel('CAF/Real values', labelpad=-45)
         self.axes['colorbar'].yaxis.set_ticks_position('left')
         self.axes['colorbar'].set_ylim(-5, 105)
+        self.axes['colorbar'].tick_params(bottom=False, top=False, left=False, right=False)
         self.axes['plot'].yaxis.set_tick_params(labelleft=False)
 
         # Add slider

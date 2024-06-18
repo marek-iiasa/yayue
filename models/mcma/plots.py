@@ -112,24 +112,27 @@ class Plots:
                 name2 = self.cr_name[i_second]
                 print(f'Subplot {i_plot}, criteria: ({name1}, {name2})')
                 ax.append(fig1.add_subplot(nrows, ncols, i_plot + 1))  # subplots numbered from 1
+
                 ax[i_plot].set_xlabel(name1, va='center')
                 ax[i_plot].set_ylabel(name2, va='center')
-                ax[i_plot].set_xticks(ticks, labels=ticks, fontsize=6)
-                ax[i_plot].set_yticks(ticks, labels=ticks, fontsize=6)
-                # ax[i_plot].set_title(name1 + ' vs ' + name2)  # Names of the criteria are visible on axis labels
+                ax[i_plot].set_xticks(ticks, labels=ticks, fontsize=6, va='bottom')
+                ax[i_plot].set_yticks(ticks, labels=ticks, fontsize=6, ha='center')
 
                 ax[i_plot].set_xlim(-5, 105)
                 ax[i_plot].set_ylim(-5, 105)
                 ax[i_plot].set_axisbelow(True)
 
                 ax_y = ax[i_plot].twinx()
+                ax_y.tick_params(bottom=False, top=False, left=False, right=False)
                 ax_y.set_ylim(-5, 105)
-                ax_y.set_yticks(ticks, labels=cr_ticklabels[i_second], fontsize=6)
+                ax_y.set_yticks(ticks, labels=cr_ticklabels[i_second], ha='left', fontsize=6)
                 ax_y.grid(False)
 
                 ax_x = ax[i_plot].twiny()
+                ax_x.tick_params(bottom=False, top=False, left=False, right=False)
                 ax_x.set_xlim(-5, 105)
-                ax_x.set_xticks(ticks, labels=cr_ticklabels[i_first], rotation=30, ha='left', fontsize=6)
+                ax_x.set_xticks(ticks, labels=cr_ticklabels[i_first],
+                                rotation=30, ha='left', va='center', fontsize=6)
                 ax_x.grid(False)
 
                 ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
@@ -137,7 +140,8 @@ class Plots:
 
                 ax[i_plot].set_xlim(-5, 105)
                 ax[i_plot].set_ylim(-5, 105)
-                # ax[i_plot].scatter(x=self.df[name1], y=self.df[name2], c=self.cat_num, cmap=self.cmap, s=m_size)
+                ax[i_plot].tick_params(bottom=False, top=False, left=False, right=False)
+
                 '''
                 # labels of points used only for debugging purposes
                 for (i, seq) in enumerate(self.seq):
