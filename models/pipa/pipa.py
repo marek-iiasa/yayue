@@ -14,6 +14,7 @@ from os.path import isfile
 import pyomo.environ as pe
 from datetime import datetime as dt
 # from datetime import timedelta as td
+import dill
 
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
@@ -52,7 +53,7 @@ if __name__ == '__main__':
         if not os.path.exists(sdir):
             os.makedirs(sdir, mode=0o755)
             print(f'Directory "{sdir} created.')
-    m_name = 'zpipa'     # model name (used for the dll-format file-name
+    m_name = 'vpipa'     # model name (used for the dll-format file-name
     # files
     f_out = f'{out_dir}stdout.txt'    # optionally redirected stdout
     f_data = f'{data_dir}dat4.dat'    # data for defining the model instance
@@ -80,16 +81,13 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
-    import cloudpickle
-    f_pipa = 'pipa3'
-    f_name = f'{f_pipa}.dll'
+    # f_pipa = 'pipa3'
+    # f_name = f'{f_pipa}.dll'
     # with dill.detect.trace():
-    with open(f_name, 'wb') as f:  # Serialize and save the Pyomo model
-        cloudpickle.register_pickle_by_value(sms)
-        cloudpickle.dump(model, f)
-        cloudpickle.unregister_pickle_by_value(sms)
+    with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
         # dill.dump(model, f, byref=True, recurse=False, fmode=dill.FILE_FMODE)
-    print(f'Model "{f_pipa}" dill-dumpped to: {f_name}')
+        dill.dump(model, f, recurse=True)
+    print(f'Model "{m_name}" dill-dumped to: {f_mod}')
 
     # print('\nmodel display: -----------------------------------------------------------------------------')
     # # (populated) variables with bounds, objectives, constraints (with bounds from data but without definitions)
