@@ -52,7 +52,7 @@ the following ``.condarc`` configuration file:
     ssl_verify: true
     channels:
       - conda-forge
-      - defauklts
+      - defaults
     channel_priority: flexible
     auto_activate_base: false
 

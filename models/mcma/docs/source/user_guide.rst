@@ -70,7 +70,7 @@ In particular, ``pymcma`` provides seamless integration with the core-model,
 also, if it is developed on another computer, possibly under a different
 operating system.
 Pyomo provides this critically important feature.
-Namely, two independently developed Pyomo concerete models can be
+Namely, two independently developed Pyomo concrete models can be
 included as blocks into a new concrete model.
 Such integration preserves name-spaces; therefore, there are no naming
 conflicts, typical for other model-instance integration methods,
@@ -154,7 +154,7 @@ Analysis of each core-model can be done in various ways.
 Therefore, the below suggested steps is just an example.
 
 #. Make sure that the ``pymcma`` conda environment is activated.
-    Twe activation needs to be done only once in the terminal window, where the
+    The activation needs to be done only once in the terminal window, where
     the analyses are made.
     To activate the environment execute:
 
@@ -236,7 +236,7 @@ There are only two required configuration options:
         The four criteria names of the example read: cost, carBal, water, grFuel.
 
     #. Criterion type: either ``min`` or ``max``.
-        The first three criteria are minimized, the last is maxized.
+        The first three criteria are minimized, the last is maximized.
 
     #. Name of the core model outcome variable defining the corresponding criterion.
         The four names of the core-model variables of the example read:
@@ -325,8 +325,8 @@ referred to by the corresponding key-word:
     with a larger (than the default) iteration number.
 
 #.  ``showPlot`` - to suppress showing the plots during the computations.
-    If the computation time is too long to wait for seing the plots of the results,
-    then showing the plots should be surpressed.
+    If the computation time is too long to wait for seeing the plots of the results,
+    then showing the plots should be suppressed.
     Note that plots are always stored in the ``resdir``.
 
 
