@@ -195,10 +195,10 @@ class Report:
         # plot solutions
         plots = Plots(self.wflow, self.df_vars)    # plots
         plots.plot3D()    # 3D plot
-        plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
-        plots.kde_stages()  # KDE + histograms vs stages
         plots.plot2D()    # 2D plots
         plots.parallel()  # Parallel coordinates plot
+        # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        # plots.kde_stages()  # KDE + histograms vs stages
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()
 
