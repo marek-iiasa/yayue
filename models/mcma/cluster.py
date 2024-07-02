@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 from scipy.special import comb    # for computing number of combinations
 import matplotlib
 import matplotlib.pyplot as plt
+# uncommenting the two lines below appears to have no effect
 # import seaborn as sns
 # sns.set()  # plot styling
 
@@ -40,14 +41,13 @@ class Cluster:
 
     def mk_clust(self, n_clust):
         print(f'\nClustering {self.n_sols} Pareto solutions into {n_clust} clusters.')
-        # print(sample)
-        print(f'Statistics of the normalized criteria values:\n{self.sols.describe()}')
+        print(f'Statistics of the criteria achievements:\n{self.sols.describe()}')
         kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
         kmeans.fit(self.sols)
         self.sol2cl = kmeans.predict(self.sols)
         self.centers = kmeans.cluster_centers_
         print(f'Centers: \n{self.centers}')
-        # self.centers.sort(axis=0)     # don't use it: spoils consistency with sol2cl
+        # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
         # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
         # compute: number of sols and radius
         for i_clus, center in enumerate(self.centers):  # loop on clusters
@@ -71,11 +71,10 @@ class Cluster:
                 cent_coord += f'{sep}{self.cr_names[i]}={coor_int}'
                 sep = ', '
             print(f'Cluster {i_clus}: members = {n_memb:2d}, radius = {max_dist:.1f}, center = [{cent_coord}]')
-        pass
+        # pass
         # raise Exception('Cluster::mk_lust() - not implemented yet.')
 
     def plots(self):
-        # print('Cluster::plots() - not implemented yet.')
         # raise Exception('Cluster::plots() - not implemented yet.')
         # color preparation
         cent_cmap = []  # color-levels (normalized to [0, 1]) for each center
@@ -140,7 +139,6 @@ class Cluster:
         ax[i_plot].invert_yaxis()
         txt = []
         for i in range(n_clust):
-            # txt.append('Cluster ' + str(i) + ', members ' + str(cl_memb[i]) + ', radius = ' + str(cl_radius[i]))
             txt.append(f'Cluster {str(i)}:  members {self.cl_memb[i]:2d}, radius = {self.cl_rad[i]:.2f}')
             # print(txt[i])
             ax[i_plot].text(0.01, 0.1 + 0.1 * i, txt[i], color=cmap(cent_cmap[i]), fontsize=12)
@@ -223,4 +221,4 @@ class Cluster:
         # plt.savefig(fig_file, bbox_inches='tight')  # saved plots are not interactive
         # print('Scatter 3D-plots saved to: ', fig_file)
         plt.show()
-        pass
+        # pass
