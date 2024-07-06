@@ -1,8 +1,11 @@
 """ Clustering pymcma solutions, Marek Makowski, IIASA"""
+import numpy
 import pandas as pd
 import numpy as np  # used in tutorial https://www.youtube.com/watch?v=ikt0sny_ImY
 from sklearn.cluster import KMeans
+from sklearn_extra.cluster import KMedoids
 from scipy.special import comb    # for computing number of combinations
+# from scipy.cluster.vq import vq     # get centroids at the corresponding closest solution
 import matplotlib
 import matplotlib.pyplot as plt
 # uncommenting the two lines below appears to have no effect
@@ -36,6 +39,7 @@ class Cluster:
         self.n_sols = len(self.sols)
         self.sol2cl = None  # list of cluster id for each solution: y_means returned by kmeans.predict()
         self.centers = None     # centers of clusters
+        self.medoids = None     # medoids of clusters (solutions closest to the corresponding cluster-center)
         self.cl_memb = []  # number of members in each cluster
         self.cl_rad = []  # radius of each cluster
 
@@ -43,10 +47,18 @@ class Cluster:
         print(f'\nClustering {self.n_sols} Pareto solutions into {n_clust} clusters.')
         print(f'Statistics of the criteria achievements:\n{self.sols.describe()}')
         kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
-        kmeans.fit(self.sols)
-        self.sol2cl = kmeans.predict(self.sols)
+        # kmeans.fit(self.sols)     # fitting a df works although matrix of solutions might be "more correct"
+        X = self.sols.to_numpy()    # X contains matrix of solutions
+        kmeans.fit(X)    # X used for avoiding:  UserWarning: X has feature names
+        # self.sol2cl = kmeans.predict(self.sols)
+        self.sol2cl = kmeans.predict(X)
         self.centers = kmeans.cluster_centers_
         print(f'Centers: \n{self.centers}')
+
+        # medoids
+        kmedoids = KMedoids(n_clusters=n_clust, random_state=5).fit(X)
+        self.medoids = kmedoids.cluster_centers_
+        print(f'Medoids: \n{self.medoids}')
         # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
         # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
         # compute: number of sols and radius
@@ -71,8 +83,14 @@ class Cluster:
                 cent_coord += f'{sep}{self.cr_names[i]}={coor_int}'
                 sep = ', '
             print(f'Cluster {i_clus}: members = {n_memb:2d}, radius = {max_dist:.1f}, center = [{cent_coord}]')
+
         # pass
         # raise Exception('Cluster::mk_lust() - not implemented yet.')
+
+        # medoids used instead of the below option
+        # get centroids at the corresponding closest solution
+        # cf https://stackoverflow.com/questions/21660937/get-nearest-point-to-centroid-scikit-learn
+        pass
 
     def plots(self):
         # raise Exception('Cluster::plots() - not implemented yet.')
