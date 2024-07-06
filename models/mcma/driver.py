@@ -5,7 +5,6 @@ from pyomo.opt import TerminationCondition
 # from .ctr_mca import CtrMca  # handling MCMA structure and data, uses Crit class
 from .rd_inst import rd_inst  # model instance provider
 from .wrkflow import WrkFlow  # app's workflow
-from .cluster import Cluster  # clustering object
 from .mc_block import McMod  # generate the AF sub-model/block and link the core-model variables with AF variables
 # from .par_repr import ParRep
 # from .report import Report  # organize results of each iteration into reports
@@ -48,7 +47,8 @@ def driver(cfg):
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP, but not MIP
 
     n_iter = 0
-    max_itr = cfg.get('mxIter')
+    # max_itr = cfg.get('mxIter')
+    max_itr = wflow.mc.opt('mxIter', 100)
     print(f'Maximum number of iterations: {max_itr}')
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
         # i_stage = mc.set_stage()  # define/check current analysis stage
@@ -127,8 +127,3 @@ def driver(cfg):
 
     # reports
     wflow.rep.summary()   # generate data-frames and store them as csv
-
-    # clustering solutions
-    clust = Cluster(wflow.rep)
-    clust.mk_clust(6)
-    clust.plots()

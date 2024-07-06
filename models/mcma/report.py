@@ -6,6 +6,7 @@ import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
 from .plots import Plots
+from .cluster import Cluster  # cluster object
 
 
 # noinspection SpellCheckingInspection
@@ -192,6 +193,14 @@ class Report:
         print(f'{len(df)} unique solutions stored in {f_name}. '
               f'{len(self.wflow.par_rep.clSols)} duplicated solutions skipped.')
 
+        # clustering solutions
+        n_clust = self.wflow.mc.opt('n_clust', 0)
+        if n_clust > 0:
+            self.wflow.cluster = Cluster(self.wflow.rep)
+            self.wflow.cluster.mk_clust(n_clust)
+        elif n_clust < 0:
+            raise Exception(f'negative ({n_clust}) number of clusters not allowed.')
+
         # plot solutions
         plots = Plots(self.wflow, self.df_vars)    # plots
         plots.plot3D()    # 3D plot
@@ -202,7 +211,13 @@ class Report:
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()
 
+        # plot clusters
+        if self.wflow.cluster is not None:
+            self.wflow.cluster.plots()
+
+        # todo: AS: add saving the (optionally generated) plots of clusters
         plots.save_figures()
+        # todo: AS: verify/fix showing plots after the cluster-plots were added
         if plots.show_plot:
             plots.show_figures()
 

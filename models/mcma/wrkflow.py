@@ -22,7 +22,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         # self.rep = None  # Report ctor
         self.rep = Report(self, m1)  # Report ctor
         self.par_rep = None    # ParRep object, currently always used (not only, if is_par_rep == True)
-        self.corner = None  # initialize corners of the Pareto set
+        self.corner = None  # object of the corners of the Pareto set
+        self.cluster = None  # (optional) cluster-object of solutions
         #
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
         if self.payoff.done():
