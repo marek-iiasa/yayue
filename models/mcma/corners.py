@@ -82,9 +82,12 @@ class Corners:
                 cr.res = cr.nadir
             else:       # criterion ignored for this corner solution
                 # print(f'criterion ignored for this corner "{cr.name}".')
-                # delta2 = abs(cr.utopia - cr.nadir) / 10.  # take 1/10 of the (utopia, nadir) range
                 cr.is_ignored = True
+                # delta2 = abs(cr.utopia - cr.nadir) / 10.  # take 1/10 of the (utopia, nadir) range
                 # cr.asp = cr.nadir + cr.mult * delta2
+                # the below better appr. Nadir for 4 crit than when using delta2, cf corn40, corn41, respectively
+                # also without delta2 defines 3 corners while corn41 defines only 2 corners
+                # moreover, with delta2 the water Nadir is not improved during 5000 itrs
                 cr.asp = cr.utopia
                 cr.res = cr.nadir
             if self.verb > 2:
