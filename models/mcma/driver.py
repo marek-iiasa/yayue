@@ -43,7 +43,11 @@ def driver(cfg):
     verb = wflow.mc.verb
 
     # select solver
-    opt = pe.SolverFactory('glpk')  # solves LP and MIP
+    solver_id = wflow.mc.opt('solver', 'glpk')
+    print(f'Selected solver_id: {solver_id}')
+    # opt = pe.SolverFactory('glpk')  # solves LP and MIP
+    # glpk - solves LP and MIP, iopt - solves only LP
+    opt = pe.SolverFactory(solver_id)  # solves LP and MIP
     # opt = pe.SolverFactory('ipopt') # solves both LP and NLP, but not MIP
 
     n_iter = 0
@@ -97,13 +101,7 @@ def driver(cfg):
             # todo: clarify exception (uncomment next line) while loading the results
             # m1.load(results)  # Loading solution into results object
             wflow.mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
-            '''
-            if wflow.mc.is_opt:  # optimal solution found
-                # print(f'\nOptimal solution found.')
-                pass
-            else:   # optimization failed
-                print(f'\nOptimization failed, solution disregarded.         ----------------------------------------')
-            '''
+
         # print('processing solution ----')
         if wflow.mc.is_opt:
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
