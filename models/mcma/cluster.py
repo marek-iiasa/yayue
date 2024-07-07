@@ -3,7 +3,7 @@ import numpy
 import pandas as pd
 import numpy as np  # used in tutorial https://www.youtube.com/watch?v=ikt0sny_ImY
 from sklearn.cluster import KMeans
-from sklearn_extra.cluster import KMedoids
+from sklearn_extra.cluster import KMedoids      # doesn't install through conda; pip install needed
 from scipy.special import comb    # for computing number of combinations
 # from scipy.cluster.vq import vq     # get centroids at the corresponding closest solution
 import matplotlib
@@ -47,21 +47,23 @@ class Cluster:
         print(f'\nClustering {self.n_sols} Pareto solutions into {n_clust} clusters.')
         print(f'Statistics of the criteria achievements:\n{self.sols.describe()}')
         kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
-        # kmeans.fit(self.sols)     # fitting a df works although matrix of solutions might be "more correct"
-        X = self.sols.to_numpy()    # X contains matrix of solutions
-        kmeans.fit(X)    # X used for avoiding:  UserWarning: X has feature names
+        # kmeans.fit(self.sols)     # fitting a df works but matrix of solutions is expected
+        points = self.sols.to_numpy()    # matrix of solutions
+        kmeans.fit(points)
         # self.sol2cl = kmeans.predict(self.sols)
-        self.sol2cl = kmeans.predict(X)
+        self.sol2cl = kmeans.predict(points)
         self.centers = kmeans.cluster_centers_
-        print(f'Centers: \n{self.centers}')
+        print(f'Centers:\n{self.centers}')
 
         # medoids
-        kmedoids = KMedoids(n_clusters=n_clust, random_state=5).fit(X)
+        kmedoids = KMedoids(n_clusters=n_clust, random_state=5).fit(points)
         self.medoids = kmedoids.cluster_centers_
-        print(f'Medoids: \n{self.medoids}')
+        print(f'Medoids:\n{self.medoids}')
         # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
         # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
-        # compute: number of sols and radius
+
+        # todo: discuss whether to use centers or medoids, or maybe both, or provide selection through cfg.yml
+        # number of sols and radius
         for i_clus, center in enumerate(self.centers):  # loop on clusters
             n_memb = 0      # number of members in the cluster
             max_dist = 0.   # max distance of cluster-members from the center
@@ -87,9 +89,9 @@ class Cluster:
         # pass
         # raise Exception('Cluster::mk_lust() - not implemented yet.')
 
-        # medoids used instead of the below option
-        # get centroids at the corresponding closest solution
-        # cf https://stackoverflow.com/questions/21660937/get-nearest-point-to-centroid-scikit-learn
+        # medoids used above instead of the alternative vq approach described at:
+        # https://stackoverflow.com/questions/21660937/get-nearest-point-to-centroid-scikit-learn
+        # todo: discuss whether to use sklearn-extra or implement vq instead
         pass
 
     def plots(self):
