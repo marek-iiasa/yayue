@@ -36,22 +36,17 @@ def driver(cfg):
     m1 = rd_inst(cfg)    # upload or generate m1 (core model)
     print(f'Generating Pareto-front representation of the core-model instance: {m1.name}.')
 
-    # todo: add to cfg option for solver selection
-
     # initialize the WrkFlow
     wflow = WrkFlow(cfg, m1)
     verb = wflow.mc.verb
 
-    # select solver
+    # select solver (default glpk, other solvers can be selected in cfg.yml by: solver: solver_id
+    # glpk - solves LP and MIP; iopt - solves LP and NL, but not MIP; gams uses cplex (but with the interface overhead)
     solver_id = wflow.mc.opt('solver', 'glpk')
     print(f'Selected solver_id: {solver_id}')
-    # opt = pe.SolverFactory('glpk')  # solves LP and MIP
-    # glpk - solves LP and MIP, iopt - solves only LP
-    opt = pe.SolverFactory(solver_id)  # solves LP and MIP
-    # opt = pe.SolverFactory('ipopt') # solves both LP and NLP, but not MIP
+    opt = pe.SolverFactory(solver_id)
 
     n_iter = 0
-    # max_itr = cfg.get('mxIter')
     max_itr = wflow.mc.opt('mxIter', 100)
     print(f'Maximum number of iterations: {max_itr}')
     while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion

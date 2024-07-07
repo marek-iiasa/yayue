@@ -240,5 +240,6 @@ class Cluster:
         # fig_file = f'{fig_pref}{str(n_clust)}_3D.png'
         # plt.savefig(fig_file, bbox_inches='tight')  # saved plots are not interactive
         # print('Scatter 3D-plots saved to: ', fig_file)
-        plt.show()
+        # show is applied to all Figs in another place
+        # plt.show()
         # pass
