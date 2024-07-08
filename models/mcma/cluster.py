@@ -134,6 +134,9 @@ class Cluster:
         fig1 = plt.figure(figsize=(12, fig_heig))  # y was 10 (for one chart)
         fig1.subplots_adjust(wspace=0.3, hspace=0.4)
 
+        cent = self.medoids     # use medoids as centers in the plots
+        # cent = self.centers     # use Kmeans.centers as centers in the plots
+
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         for i_first, name1 in enumerate(self.cr_names):
@@ -147,7 +150,7 @@ class Cluster:
                 ax[i_plot].set_title(name1 + ' vs ' + name2)
                 ax[i_plot].scatter(x=self.sols[name1], y=self.sols[name2], c=cmap(clust_float), s=20)
                 for i in range(n_clust):
-                    ax[i_plot].scatter(x=self.centers[i, i_first], y=self.centers[i, i_second],
+                    ax[i_plot].scatter(x=cent[i, i_first], y=cent[i, i_second],
                                        # color = cmap(cent_cmap[i]), s = 250)
                                        marker='h', linewidths=5, edgecolor=cmap(cent_cmap[i]),
                                        facecolor="None", s=250)
@@ -189,10 +192,12 @@ class Cluster:
 
         # fig = plt.figure(figsize = (12,fig_heig))   # y was 10
         # fig.subplots_adjust(wspace=0.3, hspace=0.4)
-        fig = plt.figure(figsize=(12, 10))
+        fig = plt.figure(figsize=(12, 10))      # Fig with solutions and either Kmeans.centers or medoids
+        fig2 = plt.figure(figsize=(12, 10))     # separate Fig with medoids
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
+        ax2 = []
         for i_first, name1 in enumerate(self.cr_names):
             for i_second in range(i_first + 1, n_crit):
                 name2 = self.cr_names[i_second]
@@ -205,9 +210,15 @@ class Cluster:
                     ax[i_plot].set_xlabel(name1)
                     ax[i_plot].set_ylabel(name2)
                     ax[i_plot].set_zlabel(name3)
+                    ax2.append(
+                        fig2.add_subplot(n_percol, n_perrow, i_plot + 1, projection='3d'))  # subplots numbered from 1
+                    ax2[i_plot].set_xlabel(name1)
+                    ax2[i_plot].set_ylabel(name2)
+                    ax2[i_plot].set_zlabel(name3)
                     sub_title = name1 + ' vs ' + name2 + ' vs ' + name3
                     # Placement 0, 0 would be the bottom left, 1, 1 would be the top right.
                     ax[i_plot].text2D(0.05, 0.95, sub_title, transform=ax[i_plot].transAxes)
+                    ax2[i_plot].text2D(0.05, 0.95, sub_title, transform=ax2[i_plot].transAxes)
                     # the above places title at the controlled place, the below at the center too close to chart
                     # ax[i_plot].set_title(name1 +' vs ' + name2 + ' vs ' + name3)
 
@@ -218,10 +229,14 @@ class Cluster:
                                        c=cmap(clust_float), s=20)
                     # ax[i_plot].scatter(x = sample[name1], y = sample[name2], c = cmap(clust_float), s = 50)
                     for i in range(n_clust):
-                        ax[i_plot].scatter(xs=self.centers[i, i_first], ys=self.centers[i, i_second],
-                                           zs=self.centers[i, i_third],
+                        ax[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
+                                           zs=cent[i, i_third],
                                            marker='h', facecolor=(0, 0, 0, 0),  # cmap(cent_cmap[i]),
                                            linewidths=5, edgecolor=cmap(cent_cmap[i]), s=250)
+                        ax2[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
+                                            zs=cent[i, i_third],
+                                            marker='h', facecolor=(0, 0, 0, 0),  # cmap(cent_cmap[i]),
+                                            linewidths=5, edgecolor=cmap(cent_cmap[i]), s=250)
                         # the below does not work in 3D, facecolor not accepted
                         # marker='h', edgecolor=cmap(cent_cmap[i]), facecolor="None", s = 250)
                     i_plot += 1
