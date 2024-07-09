@@ -72,7 +72,7 @@ class Cubes:     # collection of aCubes
         self.parRep = parRep    # Pareto-set representation object
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
         self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
-        self.min_size = 5.      # cube's min. LInf size for including the cube to analysis
+        self.min_size = float(parRep.mc.opt('mx_gap', 5))    # cube's min. LInf size for including the cube to analysis
         self.all_cubes = {}     # all generated cubes: keys defined by cube's id
         self.cand = []          # cubes that are candidates for next iteration
         self.small = 0      # number of small ignored

@@ -1,9 +1,8 @@
 """ Clustering pymcma solutions, Marek Makowski, IIASA"""
-import numpy
 import pandas as pd
-import numpy as np  # used in tutorial https://www.youtube.com/watch?v=ikt0sny_ImY
+import numpy as np
 from sklearn.cluster import KMeans
-from sklearn_extra.cluster import KMedoids      # doesn't install through conda; pip install needed
+from sklearn_extra.cluster import KMedoids      # on macOS: doesn't install through conda; pip install needed
 from scipy.special import comb    # for computing number of combinations
 # from scipy.cluster.vq import vq     # get centroids at the corresponding closest solution
 import matplotlib
@@ -46,21 +45,23 @@ class Cluster:
     def mk_clust(self, n_clust):
         print(f'\nClustering {self.n_sols} Pareto solutions into {n_clust} clusters.')
         print(f'Statistics of the criteria achievements:\n{self.sols.describe()}')
+        points = self.sols.to_numpy()    # matrix of solutions
+
         kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
         # kmeans.fit(self.sols)     # fitting a df works but matrix of solutions is expected
-        points = self.sols.to_numpy()    # matrix of solutions
         kmeans.fit(points)
         # self.sol2cl = kmeans.predict(self.sols)
-        self.sol2cl = kmeans.predict(points)
+        # self.sol2cl = kmeans.predict(points)
         self.centers = kmeans.cluster_centers_
         print(f'Centers:\n{self.centers}')
+        # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
+        # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
 
         # medoids
         kmedoids = KMedoids(n_clusters=n_clust, random_state=5).fit(points)
+        self.sol2cl = kmedoids.predict(points)
         self.medoids = kmedoids.cluster_centers_
         print(f'Medoids:\n{self.medoids}')
-        # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
-        # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
 
         # todo: discuss whether to use centers or medoids, or maybe both, or provide selection through cfg.yml
         # number of sols and radius
@@ -134,8 +135,8 @@ class Cluster:
         fig1 = plt.figure(figsize=(12, fig_heig))  # y was 10 (for one chart)
         fig1.subplots_adjust(wspace=0.3, hspace=0.4)
 
-        # cent = self.medoids     # use medoids as centers in the plots
-        cent = self.centers     # use Kmeans.centers as centers in the plots
+        cent = self.medoids     # use medoids as centers in the plots
+        # cent = self.centers     # use Kmeans.centers as centers in the plots
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
