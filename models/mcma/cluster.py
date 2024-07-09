@@ -134,8 +134,8 @@ class Cluster:
         fig1 = plt.figure(figsize=(12, fig_heig))  # y was 10 (for one chart)
         fig1.subplots_adjust(wspace=0.3, hspace=0.4)
 
-        cent = self.medoids     # use medoids as centers in the plots
-        # cent = self.centers     # use Kmeans.centers as centers in the plots
+        # cent = self.medoids     # use medoids as centers in the plots
+        cent = self.centers     # use Kmeans.centers as centers in the plots
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
@@ -152,8 +152,8 @@ class Cluster:
                 for i in range(n_clust):
                     ax[i_plot].scatter(x=cent[i, i_first], y=cent[i, i_second],
                                        # color = cmap(cent_cmap[i]), s = 250)
-                                       marker='h', linewidths=5, edgecolor=cmap(cent_cmap[i]),
-                                       facecolor="None", s=250)
+                                       marker='h', linewidths=2, edgecolor='black',
+                                       facecolor=cmap(cent_cmap[i]), s=250)
                 i_plot += 1
 
         ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # last subplot with text/comments
@@ -231,12 +231,12 @@ class Cluster:
                     for i in range(n_clust):
                         ax[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                            zs=cent[i, i_third],
-                                           marker='h', facecolor=(0, 0, 0, 0),  # cmap(cent_cmap[i]),
-                                           linewidths=5, edgecolor=cmap(cent_cmap[i]), s=250)
+                                           marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
+                                           linewidths=2, edgecolor='black', s=250)
                         ax2[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                             zs=cent[i, i_third],
-                                            marker='h', facecolor=(0, 0, 0, 0),  # cmap(cent_cmap[i]),
-                                            linewidths=5, edgecolor=cmap(cent_cmap[i]), s=250)
+                                            marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
+                                            linewidths=2, edgecolor='black', s=250)
                         # the below does not work in 3D, facecolor not accepted
                         # marker='h', edgecolor=cmap(cent_cmap[i]), facecolor="None", s = 250)
                     i_plot += 1
