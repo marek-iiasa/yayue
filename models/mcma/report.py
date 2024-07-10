@@ -195,7 +195,7 @@ class Report:
               f'{len(self.wflow.par_rep.clSols)} duplicated solutions skipped.')
 
         # clustering solutions
-        n_clust = self.wflow.mc.opt('n_clust', 0)
+        n_clust = self.wflow.mc.opt('nClust', 0)
         if n_clust > 0:
             self.wflow.cluster = Cluster(self.wflow.rep)
             self.wflow.cluster.mk_clust(n_clust)

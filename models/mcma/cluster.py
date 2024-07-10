@@ -66,20 +66,32 @@ class Cluster:
 
         # todo: discuss whether to use centers or medoids, or maybe both, or provide selection through cfg.yml
         # number of sols and radius
-        centres = self.medoids
         sol_labels = kmedoids.labels_
-
-        for i_clus, center in enumerate(centres):  # loop on clusters
+        # centers = self.centers
+        centers = self.medoids
+        for i_clus, center in enumerate(centers):  # loop on clusters
             n_memb = 0      # number of members in the cluster
             max_dist = 0.   # max distance of cluster-members from the center
             for i_sol in range(self.n_sols):
                 if sol_labels[i_sol] != i_clus:
                     continue    # i_sol does not belong to the current cluster
                 n_memb += 1
-                # distance between center and the current member-sol
+                # distance between center/medoid and the current member-sol
+                # tmp = self.sols.iloc[i_sol]
+                # distx = np.sqrt(np.sum([(a-b)**2 for a, b in zip(center, self.sols.iloc[i_sol])]))
                 dist = np.sqrt(np.sum((center - self.sols.iloc[i_sol])**2))
+                # print(f'Dist: {dist}, {distx = }')
                 if dist > max_dist:
                     max_dist = dist
+                    # # print(f'i_clus {i_clus}, i_sol {i_sol} ({tmp}) {center = }, new max distance: {max_dist}')
+                    # if i_clus == 4 and i_sol == 1:
+                    #     xx = 0
+                    #     for a, b in zip(center, tmp):
+                    #         xx += (a - b)**2
+                    #         print(f'{a = }, {b = }, {xx = }')
+                    #     xxx = np.sqrt(xx)
+                    #     print(f'{xxx = }')
+
             self.cl_memb.append(n_memb)
             self.cl_rad.append(round(max_dist, 2))
             cent_coord = ''   # string with rounded center coordinates
@@ -128,7 +140,7 @@ class Cluster:
         # configure number and locations of plots
         # n_plots = int((n_crit * (n_crit - 1)) / 2)   # number of pairs for n_crit
         n_plots = comb(n_crit, 2, exact=True)  # number of pairs for n_crit
-        n_plots += 1  # additional subplot with comments
+        # n_plots += 1  # additional subplot with comments
         n_perrow = 3
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
@@ -160,15 +172,16 @@ class Cluster:
                                        facecolor=cmap(cent_cmap[i]), s=150)
                 i_plot += 1
 
-        ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # last subplot with text/comments
-        ax[i_plot].axis('off')
-        ax[i_plot].set_title('Information about clusters')
-        ax[i_plot].invert_yaxis()
-        txt = []
-        for i in range(n_clust):
-            txt.append(f'Cluster {str(i)}:  members {self.cl_memb[i]:2d}, radius = {self.cl_rad[i]:.2f}')
-            # print(txt[i])
-            ax[i_plot].text(0.01, 0.1 + 0.1 * i, txt[i], color=cmap(cent_cmap[i]), fontsize=8)
+        # ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # last subplot with text/comments
+        # ax[i_plot].axis('off')
+        # ax[i_plot].set_title('Information about clusters')
+        # ax[i_plot].invert_yaxis()
+        # ax[i_plot].view_init(elev=15, azim=45, roll=0)
+        # txt = []
+        # for i in range(n_clust):
+        #     txt.append(f'Cluster {str(i)}:  members {self.cl_memb[i]:2d}, radius = {self.cl_rad[i]:.2f}')
+        #     # print(txt[i])
+        #     ax[i_plot].text(0.01, 0.1 + 0.1 * i, txt[i], color=cmap(cent_cmap[i]), fontsize=8)
 
         plt.tight_layout()
         self.rep.plots.figures['cluster2D'] = fig1
@@ -225,11 +238,13 @@ class Cluster:
                     ax[i_plot].set_xlabel(name1)
                     ax[i_plot].set_ylabel(name2)
                     ax[i_plot].set_zlabel(name3)
+                    ax[i_plot].view_init(elev=15, azim=45, roll=0)
                     ax2.append(
                         fig2.add_subplot(gs2[i_plot], projection='3d'))  # subplots numbered from 1
                     ax2[i_plot].set_xlabel(name1)
                     ax2[i_plot].set_ylabel(name2)
                     ax2[i_plot].set_zlabel(name3)
+                    ax2[i_plot].view_init(elev=15, azim=45, roll=0)
                     sub_title = name1 + ' vs ' + name2 + ' vs ' + name3
                     # Placement 0, 0 would be the bottom left, 1, 1 would be the top right.
                     ax[i_plot].text2D(0.05, 0.95, sub_title, transform=ax[i_plot].transAxes)
