@@ -129,11 +129,10 @@ class Cluster:
         n_percol = int(float(n_plots) / float(n_perrow))
         if n_percol * n_perrow < n_plots:
             n_percol += 1
-        fig_heig = 3.5 * n_percol
+        fig_heig = 2 * n_percol
         print(f'\nFigure with 2D-plots of {n_plots - 1} pairs of criteria.')
 
-        fig1 = plt.figure(figsize=(12, fig_heig))  # y was 10 (for one chart)
-        fig1.subplots_adjust(wspace=0.3, hspace=0.4)
+        fig1 = plt.figure(figsize=(7, fig_heig), dpi=self.rep.plots.dpi)  # y was 10 (for one chart)
 
         cent = self.medoids     # use medoids as centers in the plots
         # cent = self.centers     # use Kmeans.centers as centers in the plots
@@ -154,7 +153,7 @@ class Cluster:
                     ax[i_plot].scatter(x=cent[i, i_first], y=cent[i, i_second],
                                        # color = cmap(cent_cmap[i]), s = 250)
                                        marker='h', linewidths=2, edgecolor='black',
-                                       facecolor=cmap(cent_cmap[i]), s=250)
+                                       facecolor=cmap(cent_cmap[i]), s=150)
                 i_plot += 1
 
         ax.append(fig1.add_subplot(n_percol, n_perrow, i_plot + 1))  # last subplot with text/comments
@@ -165,7 +164,10 @@ class Cluster:
         for i in range(n_clust):
             txt.append(f'Cluster {str(i)}:  members {self.cl_memb[i]:2d}, radius = {self.cl_rad[i]:.2f}')
             # print(txt[i])
-            ax[i_plot].text(0.01, 0.1 + 0.1 * i, txt[i], color=cmap(cent_cmap[i]), fontsize=12)
+            ax[i_plot].text(0.01, 0.1 + 0.1 * i, txt[i], color=cmap(cent_cmap[i]), fontsize=8)
+
+        plt.tight_layout()
+        self.rep.plots.figures['cluster2D'] = fig1
 
         # fig1_file = f'{}fig_pref + str(n_clust) + '_2D.png'
         # fig1_file = f'{fig_pref}{str(n_clust)}_2D.png'
@@ -183,18 +185,22 @@ class Cluster:
         # configure number and locations of plots
         n_plots = comb(n_crit, 3, exact=True)  # number of triples for n_crit
         # n_plots += 1    # subplot with comments
-        n_perrow = 2
-        n_percol = int(float(n_plots) / float(n_perrow))
-        if n_percol * n_perrow < n_plots:
-            n_percol += 1
+        if n_plots == 1:
+            n_percol = n_perrow = 1
+        else:
+            n_perrow = 2
+            n_percol = n_plots // n_perrow
+            if n_percol * n_perrow < n_plots:
+                n_percol += 1
         # fig_heig = 10 * n_percol
         # print('number of plots:', n_plots, ', n_rows', n_percol, ', n_cols', n_perrow)
         print(f'\nFigure with 3D-of plots of {n_plots} triplets of criteria.')
 
         # fig = plt.figure(figsize = (12,fig_heig))   # y was 10
         # fig.subplots_adjust(wspace=0.3, hspace=0.4)
-        fig = plt.figure(figsize=(12, 10))      # Fig with solutions and either Kmeans.centers or medoids
-        fig2 = plt.figure(figsize=(12, 10))     # separate Fig with medoids
+        dpi = self.rep.plots.dpi
+        fig = plt.figure(figsize=(7, 7), dpi=dpi)      # Fig with solutions and either Kmeans.centers or medoids
+        fig2 = plt.figure(figsize=(7, 7), dpi=dpi)     # separate Fig with medoids
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
@@ -241,6 +247,9 @@ class Cluster:
                         # the below does not work in 3D, facecolor not accepted
                         # marker='h', edgecolor=cmap(cent_cmap[i]), facecolor="None", s = 250)
                     i_plot += 1
+
+        self.rep.plots.figures['cluster3D'] = fig
+        self.rep.plots.figures['centres3D'] = fig2
 
         # ax.append(fig.add_subplot(n_percol, n_perrow, i_plot + 1))  # last subplot 2D with text/comments
         # ax[i_plot].axis('off')

@@ -38,6 +38,7 @@ class Report:
         self.itr_id = -1
         self.prev_itr = 0   # number of previously made iters
         self.cur_itr = 0   # number of currently made iters
+        self.plots = None
 
         print(f'\nReport ctor; results/plots dir: "{self.rep_dir}".     -------------')
         print(f'Core-model variables to be reported: {self.rep_vars}')
@@ -202,10 +203,10 @@ class Report:
             raise Exception(f'negative ({n_clust}) number of clusters not allowed.')
 
         # plot solutions
-        plots = Plots(self.wflow, self.df_vars)    # plots
-        plots.plot3D()    # 3D plot
-        plots.plot2D()    # 2D plots
-        plots.parallel()  # Parallel coordinates plot
+        self.plots = Plots(self.wflow, self.df_vars)    # plots
+        self.plots.plot3D()    # 3D plot
+        self.plots.plot2D()    # 2D plots
+        self.plots.parallel()  # Parallel coordinates plot
         # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # plots.kde_stages()  # KDE + histograms vs stages
         # plots.vars('actS')    # plot the requested model variables
@@ -216,10 +217,10 @@ class Report:
             self.wflow.cluster.plots()
 
         # todo: AS: add saving the (optionally generated) plots of clusters
-        plots.save_figures()
+        self.plots.save_figures()
         # todo: AS: verify/fix showing plots after the cluster-plots were added
-        if plots.show_plot:
-            plots.show_figures()
+        if self.plots.show_plot:
+            self.plots.show_figures()
 
         # todo: 3D plots need reconfiguration: either the change the pyCharm default browser to chrome or modify the
         #  Safari version to either Safari beta or to Safari technology preview (see the Notes)
