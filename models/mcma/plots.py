@@ -81,7 +81,7 @@ class Plots:
         dpi = 300
         for name, fig in self.figures.items():
             filename = f'{self.dir_name}{name}.png'
-            fig.savefig(filename, dpi=dpi, bbox_inches='tight')
+            fig.savefig(filename, dpi=dpi)
             print(f'Plot "{name}" is saved to "{filename}".')
 
     def plot2D(self):
