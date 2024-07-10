@@ -66,15 +66,18 @@ class Cluster:
 
         # todo: discuss whether to use centers or medoids, or maybe both, or provide selection through cfg.yml
         # number of sols and radius
-        for i_clus, center in enumerate(self.centers):  # loop on clusters
+        centres = self.medoids
+        sol_labels = kmedoids.labels_
+
+        for i_clus, center in enumerate(centres):  # loop on clusters
             n_memb = 0      # number of members in the cluster
             max_dist = 0.   # max distance of cluster-members from the center
             for i_sol in range(self.n_sols):
-                if kmeans.labels_[i_sol] != i_clus:
+                if sol_labels[i_sol] != i_clus:
                     continue    # i_sol does not belong to the current cluster
                 n_memb += 1
                 # distance between center and the current member-sol
-                dist = np.sqrt(np.sum([(a-b)**2 for a, b in zip(center, self.sols.iloc[i_sol])]))
+                dist = np.sqrt(np.sum((center - self.sols.iloc[i_sol])**2))
                 if dist > max_dist:
                     max_dist = dist
             self.cl_memb.append(n_memb)
