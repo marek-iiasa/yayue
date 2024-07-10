@@ -203,13 +203,12 @@ class Cluster:
         dpi = self.rep.plots.dpi
         fig = plt.figure(figsize=(3.5 * n_perrow, 2.5 * n_percol), dpi=dpi)      # Fig with solutions and either Kmeans.centers or medoids
         fig.set_facecolor('#EAEAF2')
-        gs = GridSpec(n_percol, n_perrow, fig, hspace=0.15, wspace=0.05,
-                      left=0.05, right=0.95, bottom=0.05, top=0.95)
+        gridspec_params = dict(hspace=0.15, wspace=0.05, left=0.05, right=0.95, bottom=0.1, top=0.9)
+        gs = GridSpec(n_percol, n_perrow, fig, **gridspec_params)
 
         fig2 = plt.figure(figsize=(3.5 * n_perrow, 2.5 * n_percol), dpi=dpi)     # separate Fig with medoids
         fig2.set_facecolor('#EAEAF2')
-        gs2 = GridSpec(n_percol, n_perrow, fig2, hspace=0.15, wspace=0.05,
-                       left=0.05, right=0.95, bottom=0.05, top=0.95)
+        gs2 = GridSpec(n_percol, n_perrow, fig2, **gridspec_params)
 
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
@@ -248,11 +247,11 @@ class Cluster:
                         ax[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                            zs=cent[i, i_third],
                                            marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
-                                           linewidths=2, edgecolor='black', s=250)
+                                           linewidths=2, edgecolor='black', s=150)
                         ax2[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                             zs=cent[i, i_third],
                                             marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
-                                            linewidths=2, edgecolor='black', s=250)
+                                            linewidths=2, edgecolor='black', s=150)
                         # the below does not work in 3D, facecolor not accepted
                         # marker='h', edgecolor=cmap(cent_cmap[i]), facecolor="None", s = 250)
                     i_plot += 1
