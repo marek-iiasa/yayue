@@ -237,13 +237,13 @@ class Cluster:
                     # print('Plot', i_plot + 1, 'triplet (', name1, ',', name2, ',', name3, ')')
                     print(f'Plot {i_plot}: criteria ({name1}, {name2}, {name3})')
                     ax.append(
-                        fig.add_subplot(gs[i_plot], projection='3d'))  # subplots numbered from 1
+                        fig.add_subplot(gs[i_plot], projection='3d', computed_zorder=False))  # subplots numbered from 1
                     ax[i_plot].set_xlabel(name1)
                     ax[i_plot].set_ylabel(name2)
                     ax[i_plot].set_zlabel(name3)
                     ax[i_plot].view_init(elev=15, azim=45, roll=0)
                     ax2.append(
-                        fig2.add_subplot(gs2[i_plot], projection='3d'))  # subplots numbered from 1
+                        fig2.add_subplot(gs2[i_plot], projection='3d', computed_zorder=False))  # subplots numbered from 1
                     ax2[i_plot].set_xlabel(name1)
                     ax2[i_plot].set_ylabel(name2)
                     ax2[i_plot].set_zlabel(name3)
@@ -259,17 +259,17 @@ class Cluster:
                     # ax.view_init(60, -50)  # 70 above x-y plane, 50 rotate 50 degr, counter-clockwise about z-xis
                     ax[i_plot].scatter(xs=self.sols[name1], ys=self.sols[name2], zs=self.sols[name3],
                                        # c = col_theme[kmeans.labels_], s = 50) # cmap='viridis' colors according values
-                                       c=cmap(clust_float), s=20, alpha=0.5)
+                                       c=cmap(clust_float), s=20, alpha=0.5, zorder=4)
                     # ax[i_plot].scatter(x = sample[name1], y = sample[name2], c = cmap(clust_float), s = 50)
                     for i in range(n_clust):
                         ax[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                            zs=cent[i, i_third],
                                            marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
-                                           linewidths=2, edgecolor='black', s=150)
+                                           linewidths=2, edgecolor='black', s=100, zorder=5)
                         ax2[i_plot].scatter(xs=cent[i, i_first], ys=cent[i, i_second],
                                             zs=cent[i, i_third],
                                             marker='h', facecolor=cmap(cent_cmap[i]),  # cmap(cent_cmap[i]),
-                                            linewidths=2, edgecolor='black', s=150)
+                                            linewidths=2, edgecolor='black', s=100)
                         # the below does not work in 3D, facecolor not accepted
                         # marker='h', edgecolor=cmap(cent_cmap[i]), facecolor="None", s = 250)
                     i_plot += 1
