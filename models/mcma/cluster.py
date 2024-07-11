@@ -40,35 +40,38 @@ class Cluster:
         self.sol2cl = None  # list of cluster id for each solution: y_means returned by kmeans.predict()
         self.centers = None     # centers of clusters
         self.medoids = None     # medoids of clusters (solutions closest to the corresponding cluster-center)
+        self.n_clust = None  # number of clusters (to be defined in ::mk_clust()
         self.cl_memb = []  # number of members in each cluster
         self.cl_rad = []  # radius of each cluster
 
     def mk_clust(self, n_clust):
+        self.n_clust = n_clust
         print(f'\nClustering {self.n_sols} Pareto solutions into {n_clust} clusters.')
         print(f'Statistics of the criteria achievements:\n{self.sols.describe()}')
         points = self.sols.to_numpy()    # matrix of solutions
 
-        kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
-        # kmeans.fit(self.sols)     # fitting a df works but matrix of solutions is expected
-        kmeans.fit(points)
+        # KMeans ready to use but currently not used
+        # kmeans = KMeans(n_clusters=n_clust, random_state=5, n_init='auto')
+        # # kmeans.fit(self.sols)     # fitting a df works but matrix of solutions is expected
+        # kmeans.fit(points)
         # self.sol2cl = kmeans.predict(self.sols)
         # self.sol2cl = kmeans.predict(points)
-        self.centers = kmeans.cluster_centers_
-        print(f'Centers:\n{self.centers}')
+        # self.centers = kmeans.cluster_centers_
+        # print(f'Centers:\n{self.centers}')
+        #
         # self.centers.sort(axis=0)     # sorting centers requires the corresponding modifications of sol2cl
         # print(f'Sorted (by 0-th crit) centers: \n{self.centers}')
+        # centers = self.centers
 
         # medoids
         kmedoids = KMedoids(n_clusters=n_clust, random_state=5).fit(points)
         self.sol2cl = kmedoids.predict(points)
         self.medoids = kmedoids.cluster_centers_
+        sol_labels = kmedoids.labels_
+        centers = self.medoids
         print(f'Medoids:\n{self.medoids}')
 
-        # todo: discuss whether to use centers or medoids, or maybe both, or provide selection through cfg.yml
         # number of sols and radius
-        sol_labels = kmedoids.labels_
-        # centers = self.centers
-        centers = self.medoids
         for i_clus, center in enumerate(centers):  # loop on clusters
             n_memb = 0      # number of members in the cluster
             max_dist = 0.   # max distance of cluster-members from the center
@@ -116,7 +119,7 @@ class Cluster:
         # color preparation
         cent_cmap = []  # color-levels (normalized to [0, 1]) for each center
         n_crit = len(self.cr_names)
-        n_clust = len(self.centers)
+        n_clust = self.n_clust
         for i in range(n_clust):
             cent_cmap.append(float(i) / (float(n_clust) - 1.))
         # print('color levels of centers (normalized to [0,1]): ', cent_cmap)

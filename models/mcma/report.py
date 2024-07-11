@@ -207,8 +207,8 @@ class Report:
         self.plots.plot3D()    # 3D plot
         self.plots.plot2D()    # 2D plots
         self.plots.parallel()  # Parallel coordinates plot
-        # plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
-        # plots.kde_stages()  # KDE + histograms vs stages
+        self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        self.plots.kde_stages()  # KDE + histograms vs stages
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()
 
