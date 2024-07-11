@@ -39,6 +39,10 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         # self.is_par_rep = cfg.get('parRep')    # if True, then switch to ParetoRepresentation mode
         self.is_par_rep = True    # only ParetoRepresentation mode is avail. (handling usr-specs of A/R not tested)
         self.deg_exp = False    # expansion of degenerated cube dimensions
+        self.usrAR = self.mc.opt('usrAR', None)     # optionally defined file with usr-defined AR
+        if self.usrAR is not None:
+            self.is_par_rep = False
+            self.mc.readPref(self.usrAR)    # read usr-defined AR
 
     def itr_start(self, n_itr):
         self.n_itr = n_itr
@@ -51,7 +55,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.par_rep.pref(True)     # True implies AR for neutral solution
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # continue Pareto front
-            self.par_rep.pref()     # the default arg False implies AR from the selected cube
+            self.par_rep.pref()     # the default arg False implies AR from the selected cube or usr-defined
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:  # reset (after Nadir update), restart with Corners
             raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')

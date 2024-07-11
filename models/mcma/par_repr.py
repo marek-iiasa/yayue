@@ -91,7 +91,7 @@ class ParRep:     # representation of Pareto set
         if neutral:     # set A/R for neutral solution
             for cr in self.mc.cr:
                 cr.setAR()
-        else:   # set preferences from the selected cube
+        elif self.wflow.is_par_rep:   # set preferences from the selected cube
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
                 self.progr.update(cube.size, False)
@@ -108,6 +108,10 @@ class ParRep:     # representation of Pareto set
             if self.cfg.get('verb') > 1:
                 print(f'Proceed to generation of the optimization problem.')
             # print(f'The largest out of {len(cube_lst)} cubes has size = {mx_size:.2e}')
+        else:       # usr-defined set of AR
+            retval = self.mc.usrPref()  # True, if AR set
+            if not retval:
+                self.wflow.cur_stage = 6  # all ARs processed, terminate the analysis
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
         # it = s.itr_id

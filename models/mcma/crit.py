@@ -126,7 +126,7 @@ class Crit:     # definition and attributes of a single criterion
 
     def eqBetter(self, val1, val2):   # return true if val1 is better or equal to than val2
         if val1 is None or val2 is None:
-            raise Exception(f'Crit::eqBetter(): crit: {self.name}, cannot compare "{val1}" and "{val2}".')
+            raise Exception(f'Crit::eqBetter(): prit: {self.name}, cannot compare "{val1}" and "{val2}".')
         if self.mult == 1:  # max criterion
             if val1 >= val2:
                 return True
