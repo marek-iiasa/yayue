@@ -148,13 +148,11 @@ class CtrMca:   # control flows of MCMA at diverse computations states
         # sets of preferences for all criteria should be separated by line having only #-char in first column
         # preferences for criteria not specified in a set are reset to: A=utopia, R=nadir, criterion not-active
 
-        self.n_pref = 0  # number of specified sets of preferences
         # raise Exception('CtrMca::readPref() not adapted yet to the new workflow.')
 
-        if not (isfile(f_name) and access(f_name, R_OK)):
-            print(f"\nUser-preferences not defined (file '{f_name}' is not accessible).")
-            return
-        print(f"\nReading user-preferences defined in file '{f_name}':")
+        print(f'\nReading user-defined A/R from file "{f_name}".')
+        assert isfile(f_name) and access(f_name, R_OK), f'User-defined A/RR unreadable from file "{f_name}".'
+        self.n_pref = 0  # number of specified sets of preferences
         lines = []
         with open(f_name) as reader:  # read all lines and store for processing next
             for n_line, line in enumerate(reader):

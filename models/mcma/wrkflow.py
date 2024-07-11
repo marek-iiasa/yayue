@@ -55,7 +55,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.par_rep.pref(True)     # True implies AR for neutral solution
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # continue Pareto front
-            self.par_rep.pref()     # the default arg False implies AR from the selected cube or usr-defined
+            self.par_rep.pref()     # the default arg False implies AR from: either a selected cube or usr-defined
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:  # reset (after Nadir update), restart with Corners
             raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
