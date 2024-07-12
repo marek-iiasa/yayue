@@ -1,4 +1,5 @@
 """ Clustering pymcma solutions, Marek Makowski, IIASA"""
+import math
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
@@ -106,6 +107,40 @@ class Cluster:
                 sep = ', '
             print(f'Cluster {i_clus}: members = {n_memb:2d}, radius = {max_dist:.1f}, center = [{cent_coord}]')
 
+        # find ranges of criteria values in solutions belonging to each cluster
+        infty = float(math.inf)
+        # infty2 = np.inf
+        # x1 = min(15, infty)
+        # x2 = max(15, infty)
+        vMin = pd.DataFrame(columns=self.cr_names, index=range(self.n_clust))    # crit. min-values (index = cluster)
+        # vMin.fillna(infty, inplace=True)  # not necessary (empty df are with NaN, min/max replaces them with new val)
+        vMax = pd.DataFrame(columns=self.cr_names, index=range(self.n_clust))    # crit. max-values (index = cluster)
+        # vMax.fillna(-infty, inplace=True)     # fillna() deprecated, hence better refrain from using it.
+        for i_clus, sol in zip(sol_labels, points):  # loop on cluster-labels and solutions
+            for i_cr, cr_val in enumerate(sol):     # criteria values in the current solution
+                oldMin = vMin.iat[i_clus, i_cr]     # access by indices of: row, col
+                newMin = min(cr_val, oldMin)
+                vMin.iat[i_clus, i_cr] = newMin
+                oldMax = vMax.iat[i_clus, i_cr]
+                newMax = max(cr_val, oldMax)
+                vMax.iat[i_clus, i_cr] = newMax
+
+        print(f'\nCriteria min-achievements (by clusters):\n{vMin}')
+        print(f'Criteria max-achievements (by clusters):\n{vMax}')
+
+        # convert achievements to crit-values
+        for i_cr, cr in enumerate(self.crit):  # loop on criteria
+            for i_clust in range(self.n_clust):     # loop on clusters
+                aval = vMin.iat[i_clust, i_cr]
+                cr_val = cr.ach2val(aval)
+                vMin.iat[i_clust, i_cr] = cr_val
+                aval = vMax.iat[i_clust, i_cr]
+                cr_val = cr.ach2val(aval)
+                vMax.iat[i_clust, i_cr] = cr_val
+                pass
+
+        print(f'\nCriteria min-values (by clusters):\n{vMin}')
+        print(f'Criteria max-values (by clusters):\n{vMax}')
         # pass
         # raise Exception('Cluster::mk_lust() - not implemented yet.')
 
