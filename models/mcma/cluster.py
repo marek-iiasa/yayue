@@ -1,8 +1,8 @@
 """ Clustering pymcma solutions, Marek Makowski, IIASA"""
-import math
+# import math
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
+# from sklearn.cluster import KMeans
 from sklearn_extra.cluster import KMedoids      # on macOS: doesn't install through conda; pip install needed
 from matplotlib.gridspec import GridSpec
 from scipy.special import comb    # for computing number of combinations
@@ -27,6 +27,7 @@ import collections   # for Counter()
 '''
 
 
+# noinspection SpellCheckingInspection
 class Cluster:
     def __init__(self, rep):
         self.rep = rep      # Report object, contains: config,  dfs with solutions
@@ -42,6 +43,7 @@ class Cluster:
         self.centers = None     # centers of clusters
         self.medoids = None     # medoids of clusters (solutions closest to the corresponding cluster-center)
         self.n_clust = None  # number of clusters (to be defined in ::mk_clust()
+        # noinspection SpellCheckingInspection
         self.cl_memb = []  # number of members in each cluster
         self.cl_rad = []  # radius of each cluster
 
@@ -74,6 +76,7 @@ class Cluster:
 
         # number of sols and radius
         for i_clus, center in enumerate(centers):  # loop on clusters
+            # noinspection SpellCheckingInspection
             n_memb = 0      # number of members in the cluster
             max_dist = 0.   # max distance of cluster-members from the center
             for i_sol in range(self.n_sols):
@@ -108,7 +111,7 @@ class Cluster:
             print(f'Cluster {i_clus}: members = {n_memb:2d}, radius = {max_dist:.1f}, center = [{cent_coord}]')
 
         # find ranges of criteria values in solutions belonging to each cluster
-        infty = float(math.inf)
+        # infty = float(math.inf)
         # infty2 = np.inf
         # x1 = min(15, infty)
         # x2 = max(15, infty)
@@ -251,8 +254,9 @@ class Cluster:
         # print('number of plots:', n_plots, ', n_rows', n_percol, ', n_cols', n_perrow)
         print(f'\nFigure with 3D-of plots of {n_plots} triplets of criteria.')
 
+        # Fig with solutions and either Kmeans.centers or medoids
         dpi = self.rep.plots.dpi
-        fig = plt.figure(figsize=(3.5 * n_perrow, 2.5 * n_percol), dpi=dpi)      # Fig with solutions and either Kmeans.centers or medoids
+        fig = plt.figure(figsize=(3.5 * n_perrow, 2.5 * n_percol), dpi=dpi)
         fig.set_facecolor('#EAEAF2')
         gridspec_params = dict(hspace=0.15, wspace=0.05, left=0.05, right=0.95, bottom=0.1, top=0.9)
         gs = GridSpec(n_percol, n_perrow, fig, **gridspec_params)
@@ -272,13 +276,13 @@ class Cluster:
                     # print('Plot', i_plot + 1, 'triplet (', name1, ',', name2, ',', name3, ')')
                     print(f'Plot {i_plot}: criteria ({name1}, {name2}, {name3})')
                     ax.append(
-                        fig.add_subplot(gs[i_plot], projection='3d', computed_zorder=False))  # subplots numbered from 1
+                        fig.add_subplot(gs[i_plot], projection='3d', computed_zorder=False))
                     ax[i_plot].set_xlabel(name1)
                     ax[i_plot].set_ylabel(name2)
                     ax[i_plot].set_zlabel(name3)
                     ax[i_plot].view_init(elev=15, azim=45, roll=0)
                     ax2.append(
-                        fig2.add_subplot(gs2[i_plot], projection='3d', computed_zorder=False))  # subplots numbered from 1
+                        fig2.add_subplot(gs2[i_plot], projection='3d', computed_zorder=False))
                     ax2[i_plot].set_xlabel(name1)
                     ax2[i_plot].set_ylabel(name2)
                     ax2[i_plot].set_zlabel(name3)
