@@ -11,74 +11,71 @@ import pyomo.environ as pe       # more robust than using import *
 # from sympy import subsets  # explore this to avoid warnings
 
 
-def th_init(m):  # initialize TH set (t, v) of vintage periods prior to p=0 capacities of t-th techn.
-    for t in m.T:
-        # print(f'th_init(): {t = }, life[t] = {m.life[t]}')
-        for v in range(-m.life[t], 0):
-            # print(f'{t = }, {v = }')
-            yield t, v
 
-
-def tv_init(m):  # initialize TV set (t, v) of all vintage periods of t-th techn.
-    # use of m.periods/m.periods_ does not work: these are objects, not integers
-    # print(f'tv_init(): periods = {len(m.P)}')
-    periods = len(m.P)
-    for t in m.T:
-        hlen = m.life[t]
-        # print(f'tv_init(): {t = }, hlist_len = {hlen}')
-        v_lst1 = list(range(-hlen, 0))
-        v_lst2 = list(range(0, periods))
-        v_lst = v_lst1 + v_lst2
-        # print(f'{v_lst = }')
-        for v in v_lst:
-            # print(f'tv_init(): {t = }, {v = }')
-            yield t, v
-
-
-def tpv_init(m):  # initialize TPH set (t, p, v) of vintage periods with t-th capacities available at period p
-    for t in m.T:
-        for p in m.P:
-            # print(f'tpv_init(): {t = }, life[t] = {m.life[t]}')
-            for i in range(0, m.life[t] + 1):   # vintage period: current p and life[t] previous
-                v = p - i
-                # print(f'th_init(): {t = },  {p = }, {t = }, {v = }')
-                yield t, p, v
-
-
-# generator of v (vintage periods) for pp (planning period); the pairs stored in the Vp set (V_p)
-# filter values: None (yield all), neg (yield only negative v), nonneg (yield only non-negative v)
-def vtp_lst(mx, tt, pp, filt=None):
-    # el_lst = mx.TPV.value_list    # el_lst: list of (t, p, v) tuples
-    for t, p, v in mx.TPV:
-        if tt == t and p == pp:
-            # print(f'vtp_lst: {tt = }, {t = }, {pp = }, {p = }, {v = }')
-            if filt is None:
-                yield v
-            elif filt == 'neg':
-                if v < 0:
-                    yield v
-            elif filt == 'nonneg':
-                if v >= 0:
-                    yield v
-            else:
-                raise Exception(f'Unknown value of param filt in vtp_lst(): {filt}.')
-
-
-'''
-# for ad-hoc testing of upp-bnds for cap
-# for a proper/general approach cf: https://pyomo.readthedocs.io/en/stable/pyomo_modeling_components/Variables.html
-def bnd_cap(m, t, p):
-    if p == 0:
-        return (0., 0.)
-    elif p == 2:
-        return (0., 25.)
-    else:
-        return (0., None)
-'''
 
 
 # noinspection PyUnresolvedReferences
 def mk_sms():
+    def th_init(m):  # initialize TH set (t, v) of vintage periods prior to p=0 capacities of t-th techn.
+        for t in m.T:
+            # print(f'th_init(): {t = }, life[t] = {m.life[t]}')
+            for v in range(-m.life[t], 0):
+                # print(f'{t = }, {v = }')
+                yield t, v
+
+    def tv_init(m):  # initialize TV set (t, v) of all vintage periods of t-th techn.
+        # use of m.periods/m.periods_ does not work: these are objects, not integers
+        # print(f'tv_init(): periods = {len(m.P)}')
+        periods = len(m.P)
+        for t in m.T:
+            hlen = m.life[t]
+            # print(f'tv_init(): {t = }, hlist_len = {hlen}')
+            v_lst1 = list(range(-hlen, 0))
+            v_lst2 = list(range(0, periods))
+            v_lst = v_lst1 + v_lst2
+            # print(f'{v_lst = }')
+            for v in v_lst:
+                # print(f'tv_init(): {t = }, {v = }')
+                yield t, v
+
+    def tpv_init(m):  # initialize TPH set (t, p, v) of vintage periods with t-th capacities available at period p
+        for t in m.T:
+            for p in m.P:
+                # print(f'tpv_init(): {t = }, life[t] = {m.life[t]}')
+                for i in range(0, m.life[t] + 1):  # vintage period: current p and life[t] previous
+                    v = p - i
+                    # print(f'th_init(): {t = },  {p = }, {t = }, {v = }')
+                    yield t, p, v
+
+    # generator of v (vintage periods) for pp (planning period); the pairs stored in the Vp set (V_p)
+    # filter values: None (yield all), neg (yield only negative v), nonneg (yield only non-negative v)
+    def vtp_lst(mx, tt, pp, filt=None):
+        # el_lst = mx.TPV.value_list    # el_lst: list of (t, p, v) tuples
+        for t, p, v in mx.TPV:
+            if tt == t and p == pp:
+                # print(f'vtp_lst: {tt = }, {t = }, {pp = }, {p = }, {v = }')
+                if filt is None:
+                    yield v
+                elif filt == 'neg':
+                    if v < 0:
+                        yield v
+                elif filt == 'nonneg':
+                    if v >= 0:
+                        yield v
+                else:
+                    raise Exception(f'Unknown value of param filt in vtp_lst(): {filt}.')
+
+    '''
+    # for ad-hoc testing of upp-bnds for cap
+    # for a proper/general approach cf: https://pyomo.readthedocs.io/en/stable/pyomo_modeling_components/Variables.html
+    def bnd_cap(m, t, p):
+        if p == 0:
+            return (0., 0.)
+        elif p == 2:
+            return (0., 25.)
+        else:
+            return (0., None)
+    '''
     m: AbstractModel = pe.AbstractModel(name='pipa 1.2.3')  # PTX added, inputs/outputs to/from technologies
     # sets
     # subsets(expand_all_set_operators=True)  explore this to avoid warnings
