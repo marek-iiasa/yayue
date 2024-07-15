@@ -6,8 +6,9 @@ autonomously computes Pareto-front representation composed of efficient
 solutions that are uniformly distributed in terms of distances between neighbor
 solutions. The ``pymcma`` illustrates the Pareto-front, also for more than
 three criteria, and optionally exports the results for problems-specific
-analysis in the substantive model's
-variables space.
+analysis in the substantive model's variables space. Additionally, it is possible
+to enable clustering of the computed Pareto-front, as well as provide own
+aspiration and reservation points and even manipulate the accuracy of the results.j
 
 Overview of ``pymcma``
 ----------------------
@@ -139,6 +140,24 @@ The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
 although the example is by far too simple for actual MCMA analysis.
 For the latter we recommend to use the ``xpipa.dll`` demonstrated during the
 installation testing.
+
+In case of the complex MCMA models it is often required to split the implementation
+in several files for the sake of readability and maintainability. However, depending
+on the implementation in such situation it can be impossible to export the model
+because of the limitations of the ``dill`` library. To address this, we provide
+three additional files that shows how to prepare the implementation that can be
+properly exported:
+
+#. ``sms.py`` - This file contains symbolic model specification (SMS) of the model.
+   Notice, how all functions that are defined in this file are placed inside one
+   function. This is required to address the limitation of the ``dill`` library which
+   is unable to properly save imported modules while dumping.
+
+#. ``inst.py`` - This file contains example of ``inst()`` function that will
+   later instantiate the concrete model with prepared data.
+
+#. ``export.py`` - In this file, we demonstrate how instantiate and save the
+   concrete model using the functions defined in other two files.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
@@ -305,7 +324,7 @@ The default value can be changed by uncommenting the second line and modifying t
 default value.
 
 Here are additional information on the meaning of the optional configuration items,
-referred to by the corresponding key-word:
+referred to by the corresponding keyword:
 
 #.  ``resdir`` - name of the result sub-directory.
     The analysis results are stored in the analysis result subdirectory of
@@ -328,6 +347,44 @@ referred to by the corresponding key-word:
     If the computation time is too long to wait for seeing the plots of the results,
     then showing the plots should be suppressed.
     Note that plots are always stored in the ``resdir``.
+
+#.  ``solver`` - this option allows to choose the solver which will be used during the
+    analysis. Default solver is ``glpk``, which is able to solve linear programming (LP)
+    and mixed integer programming (MIP) problems. Other options include ``ipopt`` which
+    solves linear (LP) and non-linear (LN) problems; and ``gams`` which uses cplex but
+    the overhead is large.
+
+#.  ``mxGap`` - maximum gap between neighbour solutions represented in Achievement
+    Score Function (ASF) in range [1, 30] (range of all possible ASF values is [0, 100]).
+    Default value is 5. Larger value of this parameter will generate more sparce
+    representation of a Pareto-front, while smaller values will result in more points
+    generated.
+
+#.  ``mxItr`` - maximum number of iterations. The default value is 1000 iterations
+    which is sufficient for most of the problems. However, computing the
+    representation for problems with many criteria and/or requested fine gap
+    tolerance or some shapes of the Pareto-front may require more iterations.
+
+#.  ``nClust`` - number of clusters. The default value of 0 suppresses
+    clustering. When ``nClust > 0``, then after generation of the Pareto-front pyMCMA
+    will start cluster analysis of the created representation and create three additional
+    plots, showing clusters and centres in 2 and 3 dimensional projections, and only
+    centres of the clusters in 3 dimension projections. Depending on the number of
+    the criteria in problem, three dimensional plots can be suspended.
+
+#.  ``usrAR`` - path to specification of the Aspiration/Reservation (A/R) criteria values.
+    The A/R-based specification of the user preferences is widely used in the
+    interactive MCMA this method is also used by pyMCMA where the A/R values,
+    for each iteration, are generated autonomously.
+    The A/R file for the problem with three criteria should be formatted as follows:
+
+    .. code-block::
+
+        cost 5.1e+7  6.2e+7
+        water 2.2e+4 1.0e+5
+        grFuel 2.3e+3 500
+
+
 
 
 Results of analyses
@@ -375,6 +432,10 @@ The result directory contains:
 
     - Pair of plots showing numbers of iterations and of distinct solutions, respectively.
     - Distributions of distances between neighbor solutions.
+
+#. Plots illustrating the clusters (if enabled in configuration).
+    Two plots showing the clusters in two and three dimension projections, as well as plot
+    that shows only centres of clusters in three dimensions.
 
 Summary
 -------
