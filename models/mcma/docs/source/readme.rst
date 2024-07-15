@@ -98,10 +98,25 @@ is active in the currently used terminal window):
     $ conda activate pymcma
     $ conda install pymcma
 
-The installation will include all packages necessary for running ``pymcma``,
-as well as assure version consistency of all packages installed
-(and subsequently updated) in the created conda environment.
-The installation can be tested by running:
+Additionally, it is required to install ``scikit-learn-extra`` packages, which
+is available on the conda-forge for most of the systems. This package is required
+for clustering to work. After installation of ``pymcma`` run the following command
+to install ``scikit-learn-extra``:
+
+.. code-block:: console
+
+    $ conda install scikit-learn-extra
+
+If, however, this command fails (for example this package can't be installed
+from conda on ARM based MacOS systems) it is required to install it inside the
+conda environment using pip as follows:
+
+.. code-block:: console
+
+   $ pip install scikit-learn-extra.
+
+After installation of ``scikit-learn-extra`` ``pymcma`` software is installed
+and is ready to work. The installation can be tested by running:
 
 .. code-block:: console
 
