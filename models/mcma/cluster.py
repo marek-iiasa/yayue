@@ -1,9 +1,9 @@
 """ Clustering pymcma solutions, Marek Makowski, IIASA"""
 # import math
+import sys
 import pandas as pd
 import numpy as np
 # from sklearn.cluster import KMeans
-from sklearn_extra.cluster import KMedoids      # on macOS: doesn't install through conda; pip install needed
 from matplotlib.gridspec import GridSpec
 from scipy.special import comb    # for computing number of combinations
 # from scipy.cluster.vq import vq     # get centroids at the corresponding closest solution
@@ -12,6 +12,23 @@ import matplotlib.pyplot as plt
 # uncommenting the two lines below appears to have no effect
 # import seaborn as sns
 # sns.set()  # plot styling
+
+try:
+    from sklearn_extra.cluster import KMedoids      # on macOS: doesn't install through conda; pip install needed
+except ModuleNotFoundError:
+    print("""Your installation of pyMCMA is not completed!
+In order to finish your installation please install scikit-learn-extra package.
+It can be installed either by conda:
+
+conda install scikit-learn-extra
+
+or by pip (on macos-arm64 systems):
+
+pip install --no-deps scikit-learn-extra
+
+For the detailed instructions refer to the online documentation:
+https://pymcma.readthedocs.io/readme.html""")
+    sys.exit(1)
 
 '''
 # import sys
