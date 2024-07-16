@@ -105,7 +105,7 @@ to install ``scikit-learn-extra``:
 
 .. code-block:: console
 
-    $ conda install scikit-learn-extra
+    $ conda install --no-deps scikit-learn-extra
 
 If, however, this command fails (for example this package can't be installed
 from conda on ARM based MacOS systems) it is required to install it inside the
