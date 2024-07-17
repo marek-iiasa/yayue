@@ -60,8 +60,10 @@ def create_wdir():
     files_to_copy = [
         'wdir/Models/xpipa.dll',
         'wdir/Templates/cfg.yml',
-        'wdir/Templates/example.py',
         'wdir/Templates/example.dat',
+        'wdir/Templates/export.py',
+        'wdir/Templates/inst.py',
+        'wdir/Templates/sms.py',
         'wdir/anaTst/cfg.yml',
         ]
 
