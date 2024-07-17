@@ -172,8 +172,11 @@ current directory:
 
 #. ``Templates/`` - folder with templates of configuration file and of Pyomo model.
     This directory can be moved to any place the user prefers.
-    The provided files ``export.py``, ``sms.py``, ``inst.py`` and ``example.dat`` are
-    example of Pyomo model and export to dill format. ``cfg.yml`` is a configuration file of actual analysis template.
+    It includes the configuration file of actual analysis template in ``cfg.yml`` file.
+    It also contains example of a Pyomo model and its export in dill format.
+    The former part is composed of ``sms.py``, ``inst.py`` and ``example.dat`` files.
+    The model instance export in the ``dill`` format (used by ``pymcma`` for importing
+    model instances) is provided by ``export.py`` file, which can be reused with other models.
 
 Running the provided example of analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -8,7 +8,7 @@ solutions. The ``pymcma`` illustrates the Pareto-front, also for more than
 three criteria, and optionally exports the results for problems-specific
 analysis in the substantive model's variables space. Additionally, it is possible
 to enable clustering of the computed Pareto-front, as well as provide own
-aspiration and reservation points and even manipulate the accuracy of the results.j
+aspiration and reservation points and even manipulate the accuracy of the results.
 
 Overview of ``pymcma``
 ----------------------
@@ -121,31 +121,30 @@ Example of a core-model generation and export
 The ``Template/`` folder (created by running the ``pymcma --install`` command)
 includes four files illustrating the basic use of Pyomo for
 a core-model development, as well as the model-instance export in the ``dill``-format
-accepted by the ``pymcma``. In case of the complex MCMA models it is often required to split the implementation
-in several files for the sake of readability and maintainability.
+accepted by the ``pymcma``.
+Implementation of non-trivial is done, for the sake of readability and maintainability,
+by separate classes for handling abstract model, concrete model, data handling, and
+exporting the model to another application.
+To illustrate such a recommended approach, the example consists of four files:
 
-The example consists of four files:
+#. ``sms.py`` - contains example of symbolic model specification (SMS), aka abstract model.
 
-#. ``export.py`` - This is an example of export a very simple model developed in Pyomo to dill format.
-    Separate file define the abstract model. A concrete instance is generated
-    by applying data to defined abstract model
+#. ``inst.py`` - shows example of ``inst()`` creating model instance (concrete model) with
+    separately prepared data.
 
-#. ``sms.py`` - This file contains symbolic model specification (SMS) of the model (abstract model)
-
-#. ``inst.py`` - This file contains example of ``inst()`` function that will
-   later instantiate the concrete model with prepared data.
-
-#. ``example.dat`` - This file contains data in the AMPL format used in concrete model creation.
+#. ``example.dat`` - contains data in the AMPL format used in concrete model creation.
     In development of actual models other data formats might be more suitable.
     We suggest to consult the extensive Pyomo documentation for alternatives
     that might fit better management of data used for the core-model parameters.
 
-The instance model object is exported to the dill-format file ``example.dll``.
-The dill format is applied for serializing and de-serializing Python objects.
-The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
-although the example is by far too simple for actual MCMA analysis.
-For the latter we recommend to use the ``xpipa.dll`` demonstrated during the
-installation testing.
+#. ``export.py`` - modular function to export a given concrete model developed in Pyomo
+    in the dill format.
+    This function can be also used for exporting other models developed for analysis
+    with ``pymcma``.
+    The dill format is applied for serializing and de-serializing Python objects.
+    The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
+    although the example is by far too simple for actual MCMA analysis.
+    For the latter we recommend to use the ``xpipa.dll`` demonstrated during the installation testing.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
@@ -336,11 +335,13 @@ referred to by the corresponding keyword:
     then showing the plots should be suppressed.
     Note that plots are always stored in the ``resdir``.
 
-#.  ``solver`` - this option allows to choose the solver which will be used during the
+#.  ``solver`` - to choose another solver which will be used during the
     analysis. Default solver is ``glpk``, which is able to solve linear programming (LP)
     and mixed integer programming (MIP) problems. Other options include ``ipopt`` which
     solves linear (LP) and non-linear (LN) problems; and ``gams`` which uses cplex but
     the overhead is large.
+    Moreover, users are welcome to install other solvers, if Pyomo supports the
+    corresponding interface.
 
 #.  ``mxGap`` - maximum gap between neighbour solutions represented in Achievement
     Score Function (ASF) in range [1, 30] (range of all possible ASF values is [0, 100]).
