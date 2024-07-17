@@ -74,7 +74,7 @@ def create_wdir():
 
 # noinspection SpellCheckingInspection
 def main():
-    version = '1.1.1'
+    version = '2.0.0'
     print(f'pyMCMA ver. {version}')
     tstart = dt.now()
     # print('Started at:', str(tstart))
