@@ -105,7 +105,7 @@ to install ``scikit-learn-extra``:
 
 .. code-block:: console
 
-    $ conda install --no-deps scikit-learn-extra
+    $ conda install scikit-learn-extra
 
 If, however, this command fails (for example this package can't be installed
 from conda on ARM based MacOS systems) it is required to install it inside the
@@ -113,7 +113,7 @@ conda environment using pip as follows:
 
 .. code-block:: console
 
-   $ pip install scikit-learn-extra.
+   $ pip install --no-deps scikit-learn-extra
 
 After installation of ``scikit-learn-extra`` ``pymcma`` software is installed
 and is ready to work. The installation can be tested by running:
