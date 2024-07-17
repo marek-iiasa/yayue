@@ -172,11 +172,8 @@ current directory:
 
 #. ``Templates/`` - folder with templates of configuration file and of Pyomo model.
     This directory can be moved to any place the user prefers.
-    The two provided templates, namely ``example.py`` and ``cfg.yml``, might help in
-    development of actual simple core-model instances, and in configuration
-    of actual analyses. For the more complex example, we provide files ``export.py``,
-    ``inst.py`` and ``sms.py``, which teach how to write a core-model in several files
-    and export it successfully.
+    The provided files ``export.py``, ``sms.py``, ``inst.py`` and ``example.dat`` are
+    example of Pyomo model and export to dill format. ``cfg.yml`` is a configuration file of actual analysis template.
 
 Running the provided example of analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

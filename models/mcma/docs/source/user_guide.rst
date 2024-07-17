@@ -119,17 +119,23 @@ The next section discusses an example of the model generation and export.
 Example of a core-model generation and export
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The ``Template/`` folder (created by running the ``pymcma --install`` command)
-includes two files illustrating the basic use of Pyomo for
+includes four files illustrating the basic use of Pyomo for
 a core-model development, as well as the model-instance export in the ``dill``-format
-accepted by the ``pymcma``.
-The example consists of two files:
+accepted by the ``pymcma``. In case of the complex MCMA models it is often required to split the implementation
+in several files for the sake of readability and maintainability.
 
-#. ``example.py`` - generates a very simple model developed in Pyomo.
-    Separate functions define the abstract model and the
-    concrete model, respectively. The main function drives the model
-    generation and exports the concrete model in the dill-format.
+The example consists of four files:
 
-#. ``example.dat`` - contains data in the AMPL format used in concrete model creation.
+#. ``export.py`` - This is an example of export a very simple model developed in Pyomo to dill format.
+    Separate file define the abstract model. A concrete instance is generated
+    by applying data to defined abstract model
+
+#. ``sms.py`` - This file contains symbolic model specification (SMS) of the model (abstract model)
+
+#. ``inst.py`` - This file contains example of ``inst()`` function that will
+   later instantiate the concrete model with prepared data.
+
+#. ``example.dat`` - This file contains data in the AMPL format used in concrete model creation.
     In development of actual models other data formats might be more suitable.
     We suggest to consult the extensive Pyomo documentation for alternatives
     that might fit better management of data used for the core-model parameters.
@@ -140,24 +146,6 @@ The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
 although the example is by far too simple for actual MCMA analysis.
 For the latter we recommend to use the ``xpipa.dll`` demonstrated during the
 installation testing.
-
-In case of the complex MCMA models it is often required to split the implementation
-in several files for the sake of readability and maintainability. However, depending
-on the implementation in such situation it can be impossible to export the model
-because of the limitations of the ``dill`` library. To address this, we provide
-three additional files that shows how to prepare the implementation that can be
-properly exported:
-
-#. ``sms.py`` - This file contains symbolic model specification (SMS) of the model.
-   Notice, how all functions that are defined in this file are placed inside one
-   function. This is required to address the limitation of the ``dill`` library which
-   is unable to properly save imported modules while dumping.
-
-#. ``inst.py`` - This file contains example of ``inst()`` function that will
-   later instantiate the concrete model with prepared data.
-
-#. ``export.py`` - In this file, we demonstrate how instantiate and save the
-   concrete model using the functions defined in other two files.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
