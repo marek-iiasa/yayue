@@ -209,12 +209,14 @@ class Report:
         self.plots.parallel()  # Parallel coordinates plot
         self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         self.plots.kde_stages()  # KDE + histograms vs stages
+        if n_clust > 0:
+            self.plots.plot3D(only_centres=True)    # Only centres, only if clusters enabled
         # plots.vars('actS')    # plot the requested model variables
         # plots.vars_alternative()
 
         # plot clusters
-        if self.wflow.cluster is not None:
-            self.wflow.cluster.plots()
+        # if self.wflow.cluster is not None:
+            # self.wflow.cluster.plots()
 
         # todo: AS: add saving the (optionally generated) plots of clusters
         self.plots.save_figures()

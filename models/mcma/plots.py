@@ -36,10 +36,9 @@ class Plots:
         self.cr_col = []  # col-names containing criteria achievements values
         self.n_sol = len(self.df.index)  # number of solutions defined in the df
         self.seq = self.df[self.cols[0]]
-        self.cmap = ListedColormap(['brown', 'red', 'orange', 'blue', 'green'])  # takes every item...
-        # self.cmap = ListedColormap(['black', 'green', 'blue', 'red', 'brown'])  # takes every item...
-        self.cmap1 = ListedColormap(['blue', 'blue', 'blue', 'blue', 'blue', 'blue'])  # mono-color ALL crit-plots
-        self.cat_num = pd.Series(index=range(self.n_sol), dtype='Int64')  # seq_id of category
+        self.def_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        self.sol_colors = None
+        self.medoids = None
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
         self.df[self.cr_name] = self.df[self.cr_name].astype('float')
         self.int_parallel = None
@@ -52,19 +51,12 @@ class Plots:
             self.cr_name.append(cr.name)
             self.cr_col.append(f'a_{cr.name}')
 
-        n_cat = 4  # number of categories (including the virtual corner-solutions)
-        n_members = int((self.n_sol - self.n_crit) / (n_cat - 1))  # number of non-corner items in each category
-        i_memb = 0  # current number of members already assigned to a category
-        i_cat = 1  # id of the current category (excluding corner-solutions, which are in 0-th category)
-        for (i, sol) in enumerate(self.df[self.cols[0]]):
-            if i < self.n_crit:  # corner solution
-                self.cat_num[i] = 0
-            else:
-                self.cat_num[i] = i_cat
-                i_memb += 1
-                if i_memb == n_members:
-                    i_cat += 1
-                    i_memb = 0
+        if self.wflow.cluster is None:
+            self.sol_colors = [self.def_colors[0]]
+        else:
+            self.sol_colors = [self.def_colors[i % len(self.def_colors)]
+                               for i in self.wflow.cluster.sol2cl]
+            self.medoids = self.wflow.cluster.medoids
 
         SMALL_SIZE = 8
         MEDIUM_SIZE = SMALL_SIZE + 2
@@ -138,8 +130,13 @@ class Plots:
                                 rotation=30, ha='left', va='center', fontsize=6)
                 ax_x.grid(False)
 
-                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.cat_num,
-                                   cmap=self.cmap1, s=m_size)
+                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.sol_colors,
+                                   s=m_size)
+
+                if self.medoids is not None:
+                    ax[i_plot].scatter(x=self.medoids[:, i_first], y=self.medoids[:, i_second],
+                                       c=self.def_colors[:len(self.medoids)], marker='h', linewidths=1,
+                                       edgecolor='black', s=60)
 
                 ax[i_plot].set_xlim(-5, 105)
                 ax[i_plot].set_ylim(-5, 105)
@@ -249,7 +246,6 @@ class Plots:
                                                 self.cr_name,
                                                 self.cr_col,
                                                 self.cr_defs,
-                                                self.cmap,
                                                 fig3)
 
         self.figures['parallel'] = fig3
@@ -350,7 +346,7 @@ class Plots:
         plt.tight_layout()
         self.figures['stageKDE'] = fig
 
-    def plot3D(self):
+    def plot3D(self, only_centres=False):
         if self.n_crit < 3:  # just return for bi-criteria problem
             return
 
@@ -366,16 +362,24 @@ class Plots:
 
         for ax_idx, (i, j, k) in enumerate(combinations(range(self.n_crit), r=3)):
             # ax = fig2.add_subplot(n_rows, n_cols, ax_idx, projection='3d')
-            ax = fig2.add_subplot(gs[ax_idx], projection='3d')
+            ax = fig2.add_subplot(gs[ax_idx], projection='3d', computed_zorder=False)
             ax.set_xlabel(self.cr_name[i])
             ax.set_ylabel(self.cr_name[j])
             ax.set_zlabel(self.cr_name[k])
             # noinspection PyArgumentList
             # warning suppressed here (complains on unfilled params x and y)
-            ax.scatter(xs=self.df[self.cr_col[i]],
-                       ys=self.df[self.cr_col[j]],
-                       zs=self.df[self.cr_col[k]],
-                       label='Criteria Achievements', c=self.cat_num, cmap=self.cmap, s=30)
+            if not only_centres:
+                ax.scatter(xs=self.df[self.cr_col[i]],
+                           ys=self.df[self.cr_col[j]],
+                           zs=self.df[self.cr_col[k]],
+                           label='Criteria Achievements', c=self.sol_colors, s=30, zorder=4)
+
+            if self.medoids is not None:
+                ax.scatter(xs=self.medoids[:, i],
+                           ys=self.medoids[:, j],
+                           zs=self.medoids[:, k],
+                           label='Criteria Achievements', c=self.def_colors[:len(self.medoids)],
+                           s=80, edgecolor='black', linewidth=2, marker='h', zorder=5)
 
             ax.view_init(elev=15, azim=45, roll=0)
             mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
@@ -409,4 +413,7 @@ class Plots:
                     for b, t in zip(bottom, top):
                         ax.plot(*zip(*[b, t]), c=c, lw=0.5)
 
-        self.figures['plot3D'] = fig2
+        if only_centres:
+            self.figures['centres3D'] = fig2
+        else:
+            self.figures['plot3D'] = fig2

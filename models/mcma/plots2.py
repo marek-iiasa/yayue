@@ -8,13 +8,13 @@ import matplotlib.cm as cm
 
 
 class InteractiveParallel:
-    def __init__(self, df, cr_name, cr_col, cr_defs, cmap, fig):
+    def __init__(self, df, cr_name, cr_col, cr_defs, fig):
         self.df = df
         self.cr_name = cr_name
         self.cr_col = cr_col
         self.cr_defs = cr_defs
         self.n_crit = len(cr_col)
-        self.cmap = cmap
+        self.cmap = ListedColormap(['brown', 'red', 'orange', 'blue', 'green'])
 
         self.main_crit_idx = 0
         self.slider = None
