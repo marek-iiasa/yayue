@@ -6,8 +6,9 @@ autonomously computes Pareto-front representation composed of efficient
 solutions that are uniformly distributed in terms of distances between neighbor
 solutions. The ``pymcma`` illustrates the Pareto-front, also for more than
 three criteria, and optionally exports the results for problems-specific
-analysis in the substantive model's
-variables space.
+analysis in the substantive model's variables space. Additionally, it is possible
+to enable clustering of the computed Pareto-front, as well as provide own
+aspiration and reservation points and even manipulate the accuracy of the results.
 
 Overview of ``pymcma``
 ----------------------
@@ -70,7 +71,7 @@ In particular, ``pymcma`` provides seamless integration with the core-model,
 also, if it is developed on another computer, possibly under a different
 operating system.
 Pyomo provides this critically important feature.
-Namely, two independently developed Pyomo concerete models can be
+Namely, two independently developed Pyomo concrete models can be
 included as blocks into a new concrete model.
 Such integration preserves name-spaces; therefore, there are no naming
 conflicts, typical for other model-instance integration methods,
@@ -118,27 +119,32 @@ The next section discusses an example of the model generation and export.
 Example of a core-model generation and export
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The ``Template/`` folder (created by running the ``pymcma --install`` command)
-includes two files illustrating the basic use of Pyomo for
+includes four files illustrating the basic use of Pyomo for
 a core-model development, as well as the model-instance export in the ``dill``-format
 accepted by the ``pymcma``.
-The example consists of two files:
+Implementation of non-trivial is done, for the sake of readability and maintainability,
+by separate classes for handling abstract model, concrete model, data handling, and
+exporting the model to another application.
+To illustrate such a recommended approach, the example consists of four files:
 
-#. ``example.py`` - generates a very simple model developed in Pyomo.
-    Separate functions define the abstract model and the
-    concrete model, respectively. The main function drives the model
-    generation and exports the concrete model in the dill-format.
+#. ``sms.py`` - contains example of symbolic model specification (SMS), aka abstract model.
+
+#. ``inst.py`` - shows example of ``inst()`` creating model instance (concrete model) with
+    separately prepared data.
 
 #. ``example.dat`` - contains data in the AMPL format used in concrete model creation.
     In development of actual models other data formats might be more suitable.
     We suggest to consult the extensive Pyomo documentation for alternatives
     that might fit better management of data used for the core-model parameters.
 
-The instance model object is exported to the dill-format file ``example.dll``.
-The dill format is applied for serializing and de-serializing Python objects.
-The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
-although the example is by far too simple for actual MCMA analysis.
-For the latter we recommend to use the ``xpipa.dll`` demonstrated during the
-installation testing.
+#. ``export.py`` - modular function to export a given concrete model developed in Pyomo
+    in the dill format.
+    This function can be also used for exporting other models developed for analysis
+    with ``pymcma``.
+    The dill format is applied for serializing and de-serializing Python objects.
+    The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
+    although the example is by far too simple for actual MCMA analysis.
+    For the latter we recommend to use the ``xpipa.dll`` demonstrated during the installation testing.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
@@ -154,7 +160,7 @@ Analysis of each core-model can be done in various ways.
 Therefore, the below suggested steps is just an example.
 
 #. Make sure that the ``pymcma`` conda environment is activated.
-    Twe activation needs to be done only once in the terminal window, where the
+    The activation needs to be done only once in the terminal window, where
     the analyses are made.
     To activate the environment execute:
 
@@ -236,7 +242,7 @@ There are only two required configuration options:
         The four criteria names of the example read: cost, carBal, water, grFuel.
 
     #. Criterion type: either ``min`` or ``max``.
-        The first three criteria are minimized, the last is maxized.
+        The first three criteria are minimized, the last is maximized.
 
     #. Name of the core model outcome variable defining the corresponding criterion.
         The four names of the core-model variables of the example read:
@@ -305,7 +311,7 @@ The default value can be changed by uncommenting the second line and modifying t
 default value.
 
 Here are additional information on the meaning of the optional configuration items,
-referred to by the corresponding key-word:
+referred to by the corresponding keyword:
 
 #.  ``resdir`` - name of the result sub-directory.
     The analysis results are stored in the analysis result subdirectory of
@@ -325,9 +331,49 @@ referred to by the corresponding key-word:
     with a larger (than the default) iteration number.
 
 #.  ``showPlot`` - to suppress showing the plots during the computations.
-    If the computation time is too long to wait for seing the plots of the results,
-    then showing the plots should be surpressed.
+    If the computation time is too long to wait for seeing the plots of the results,
+    then showing the plots should be suppressed.
     Note that plots are always stored in the ``resdir``.
+
+#.  ``solver`` - to choose another solver which will be used during the
+    analysis. Default solver is ``glpk``, which is able to solve linear programming (LP)
+    and mixed integer programming (MIP) problems. Other options include ``ipopt`` which
+    solves linear (LP) and non-linear (LN) problems; and ``gams`` which uses cplex but
+    the overhead is large.
+    Moreover, users are welcome to install other solvers, if Pyomo supports the
+    corresponding interface.
+
+#.  ``mxGap`` - maximum gap between neighbour solutions represented in Achievement
+    Score Function (ASF) in range [1, 30] (range of all possible ASF values is [0, 100]).
+    Default value is 5. Larger value of this parameter will generate more sparce
+    representation of a Pareto-front, while smaller values will result in more points
+    generated.
+
+#.  ``mxItr`` - maximum number of iterations. The default value is 1000 iterations
+    which is sufficient for most of the problems. However, computing the
+    representation for problems with many criteria and/or requested fine gap
+    tolerance or some shapes of the Pareto-front may require more iterations.
+
+#.  ``nClust`` - number of clusters. The default value of 0 suppresses
+    clustering. When ``nClust > 0``, then after generation of the Pareto-front pyMCMA
+    will start cluster analysis of the created representation and create three additional
+    plots, showing clusters and centres in 2 and 3 dimensional projections, and only
+    centres of the clusters in 3 dimension projections. Depending on the number of
+    the criteria in problem, three dimensional plots can be suspended.
+
+#.  ``usrAR`` - path to specification of the Aspiration/Reservation (A/R) criteria values.
+    The A/R-based specification of the user preferences is widely used in the
+    interactive MCMA this method is also used by pyMCMA where the A/R values,
+    for each iteration, are generated autonomously.
+    The A/R file for the problem with three criteria should be formatted as follows:
+
+    .. code-block::
+
+        cost 5.1e+7  6.2e+7
+        water 2.2e+4 1.0e+5
+        grFuel 2.3e+3 500
+
+
 
 
 Results of analyses
@@ -375,6 +421,10 @@ The result directory contains:
 
     - Pair of plots showing numbers of iterations and of distinct solutions, respectively.
     - Distributions of distances between neighbor solutions.
+
+#. Plots illustrating the clusters (if enabled in configuration).
+    Two plots showing the clusters in two and three dimension projections, as well as plot
+    that shows only centres of clusters in three dimensions.
 
 Summary
 -------

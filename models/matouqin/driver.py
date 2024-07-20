@@ -54,7 +54,7 @@ def driver():
     # f_data = f'{data_dir}test1680.dat'              # parameter file for creating model instance
     # modify_periods(f_data_base, f_data, 1680)     # data processing, select the time period
 
-    f_data = f'{data_dir}dat1.dat'              # real data test by ZZ
+    # f_data = f'{data_dir}dat1.dat'              # real data test by ZZ
     # f_data = f'{data_dir}test1.dat'           # small scale data for testing the model
     # f_data = f'{path}/Local/testx.dat'          # test data
 
@@ -76,7 +76,7 @@ def driver():
     # glpk settings
     # opt = pe.SolverFactory('glpk')
     # opt.options['log'] = f'{res_dir}glpk_log.txt'
-    # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
+    # # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
     # results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
     # cplex settings
@@ -115,22 +115,27 @@ def driver():
 
     print('\nPlotting begins ----------------------------------------------------------------')
     fig = Plot(res_dir, fig_dir, f_data)
-
-    # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
-    # 'kaleido' is needed for fig_save: True
-    # fig.plot_flow('original', True, True, True)
-    fig.plot_flow('hourly', True, True, True)
-    fig.plot_flow('daily', fig_show=True)
-    fig.plot_flow('weekly', fig_show=True)
-    fig.plot_flow('monthly', fig_show=True)
-
-    # Finance and storage investment overview
-    fig.plot_overview()
-    # Cost composition
-    # fig.plot_CS()
     #
-    # # Detailed flow, unit: 'day', 'week'
-    fig.plot_dv_flow(100, 'day')
-    fig.plot_dv_flow(15, 'week')
+    # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
+    # # 'kaleido' is needed for fig_save: True
+    # fig.plot_supply('hourly', False, True, False)
+    # fig.plot_inflow('hourly', False, True, False)
+    fig.plot_supply('daily', False, True, False)
+    fig.plot_inflow('daily', False, True, False)
+    #
+    # # fig.plot_flow('original', True, True, True)
+    # # fig.plot_flow('hourly', True, True, True)
+    # # fig.plot_flow('daily', fig_show=True)
+    # # fig.plot_flow('weekly', fig_show=True)
+    # # fig.plot_flow('monthly', fig_show=True)
+    #
+    # # Finance and storage investment overview
+    fig.plot_overview_sep()
 
-    show_figs()  # show figures
+    # # fig.plot_overview()
+
+    # # Detailed flow, unit: 'day', 'week'
+    # # fig.plot_dv_flow(100, 'day')
+    # # fig.plot_dv_flow(15, 'week')
+    #
+    # show_figs()  # show figures

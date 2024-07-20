@@ -197,10 +197,13 @@ class Report:
         for t in self.m1.T:
             self.flow_df.loc[t, 'inflow'] = round(pe.value(self.m1.inflow[t]), 2)
             self.flow_df.loc[t, 'dOut'] = round(pe.value(self.m1.dOut[t]), 2)
-            self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
+            # self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
+            self.flow_df.loc[t, 'sIn'] = round(pe.value(self.m1.sIn[t]), 2)
             self.flow_df.loc[t, 'sOut'] = round(pe.value(self.m1.sOut[t]), 2)
-            self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
-            self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
+            # self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
+            # self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
+            self.flow_df.loc[t, 'ePrs'] = round(pe.value(self.m1.ePrs[t]), 2)
+            self.flow_df.loc[t, 'eS'] = round(pe.value(self.m1.eS[t]), 2)
             self.flow_df.loc[t, 'eB'] = round(pe.value(self.m1.eB[t]), 2)
 
             self.flow_all_df.loc[t, 'inflow'] = pe.value(self.m1.inflow[t])
@@ -362,7 +365,7 @@ class Report:
                                 stor_e = 1 - pre_e - loss_e
 
                                 # store the efficiency in the dictionary
-                                pre_dict[u] = f'{round(pre_e, 2)}MW'
+                                pre_dict[u] = f'{round(pre_e * 100, 2)}%'
                                 loss_dict[(s, u, v)] = f'{round(loss_e * 100), 4}%'
                                 eff_dict[(s, u, v)] = f'{round(stor_e * 100), 4}%'
 
