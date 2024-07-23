@@ -36,7 +36,8 @@ class Plots:
         self.cr_col = []  # col-names containing criteria achievements values
         self.n_sol = len(self.df.index)  # number of solutions defined in the df
         self.seq = self.df[self.cols[0]]
-        self.def_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        self.def_colors = ['blue', 'orange', 'lime', 'red', 'fuchsia',
+                           'brown', 'pink', 'green', 'cyan', 'yellow']
         self.sol_colors = None
         self.medoids = None
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
@@ -63,7 +64,7 @@ class Plots:
 
         plt.rc('font', size=SMALL_SIZE)  # controls default text sizes
         plt.rc('axes', titlesize=SMALL_SIZE)  # fontsize of the axes title
-        plt.rc('axes', labelsize=MEDIUM_SIZE)  # fontsize of the x and y labels
+        plt.rc('axes', labelsize=SMALL_SIZE)  # fontsize of the x and y labels
         plt.rc('axes', titlesize=MEDIUM_SIZE)  # fontsize of the ax title
         plt.rc('xtick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
         plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
@@ -372,20 +373,20 @@ class Plots:
                 ax.scatter(xs=self.df[self.cr_col[i]],
                            ys=self.df[self.cr_col[j]],
                            zs=self.df[self.cr_col[k]],
-                           label='Criteria Achievements', c=self.sol_colors, s=30, zorder=4)
+                           label='Criteria Achievements', c=self.sol_colors, s=10, zorder=4)
 
             if self.medoids is not None:
                 ax.scatter(xs=self.medoids[:, i],
                            ys=self.medoids[:, j],
                            zs=self.medoids[:, k],
                            label='Criteria Achievements', c=self.def_colors[:len(self.medoids)],
-                           s=80, edgecolor='black', linewidth=2, marker='h', zorder=5)
+                           s=60, edgecolor='black', linewidth=1.5, marker='h', zorder=5)
 
             ax.view_init(elev=15, azim=45, roll=0)
             mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
             for (idx, seq) in enumerate(self.seq):
                 # noinspection PyTypeChecker
-                if idx > mxLabelPlot:
+                if idx >= mxLabelPlot:
                     break
                 ax.text(x=self.df[self.cr_col[i]][idx] + 2,
                         y=self.df[self.cr_col[j]][idx] + 2,
