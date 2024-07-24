@@ -196,7 +196,7 @@ configuration specified ``anaTst/cfg.yml`` file.
 The standard output will be displayed in the terminal.
 
 After the computation of the Pareto-front representation will be completed,
-four plots (similar to those shown in the paper) will be displayed.
+four plots (similar to those shown in the paper [#f1]_) will be displayed.
 The parallel coordinates plot is interactive, i.e., one can change (by moving
 the upper and/or lower end of the slider) the range of achievements of the
 cost criterion. Closing all windows with plots will terminate the execution.
@@ -237,3 +237,8 @@ The latter can be created by installing new working space in another directory.
 Actual use of pyMCMA for Multiple-Criteria Model Analysis is documented
 in :doc:`user_guide`.
 
+Footnotes
+---------
+
+.. [#f1] Makowski, M., Granat, J., Shekhovtsov, A., Nahorski, Z., & Zhao, J. (2024).
+         pyMCMA: Uniformly distributed Pareto-front representation. SoftwareX, 27, 101801.

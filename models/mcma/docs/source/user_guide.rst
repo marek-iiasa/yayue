@@ -119,9 +119,9 @@ The next section discusses an example of the model generation and export.
 Example of a core-model generation and export
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The ``Template/`` folder (created by running the ``pymcma --install`` command)
-includes four files illustrating the basic use of Pyomo for
-a core-model development, as well as the model-instance export in the ``dill``-format
-accepted by the ``pymcma``.
+includes five files illustrating the basic use of Pyomo for
+a core-model development, the model-instance export in the ``dill``-format
+accepted by the ``pymcma`` and example configuration file.
 Implementation of non-trivial is done, for the sake of readability and maintainability,
 by separate classes for handling abstract model, concrete model, data handling, and
 exporting the model to another application.
@@ -130,21 +130,24 @@ To illustrate such a recommended approach, the example consists of four files:
 #. ``sms.py`` - contains example of symbolic model specification (SMS), aka abstract model.
 
 #. ``inst.py`` - shows example of ``inst()`` creating model instance (concrete model) with
-    separately prepared data.
+   separately prepared data.
 
 #. ``example.dat`` - contains data in the AMPL format used in concrete model creation.
-    In development of actual models other data formats might be more suitable.
-    We suggest to consult the extensive Pyomo documentation for alternatives
-    that might fit better management of data used for the core-model parameters.
+   In development of actual models other data formats might be more suitable.
+   We suggest to consult the extensive Pyomo documentation for alternatives
+   that might fit better management of data used for the core-model parameters.
 
 #. ``export.py`` - modular function to export a given concrete model developed in Pyomo
-    in the dill format.
-    This function can be also used for exporting other models developed for analysis
-    with ``pymcma``.
-    The dill format is applied for serializing and de-serializing Python objects.
-    The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
-    although the example is by far too simple for actual MCMA analysis.
-    For the latter we recommend to use the ``xpipa.dll`` demonstrated during the installation testing.
+   in the dill format.
+   This function can be also used for exporting other models developed for analysis
+   with ``pymcma``.
+   The dill format is applied for serializing and de-serializing Python objects.
+   The ``example.dll`` file can be used as a core-model for MCMA with ``pymcma``
+   although the example is by far too simple for actual MCMA analysis.
+   For the latter we recommend to use the ``xpipa.dll`` demonstrated during the installation testing.
+
+Additionally, we provide the ``cfg.yml`` file, which can be used as a reference or
+an example for creating configuration files for the future analysis.
 
 Computation of the Pareto-front representation
 ----------------------------------------------
@@ -193,7 +196,7 @@ Therefore, the below suggested steps is just an example.
     It is enough to:
 
     - know that the # character denotes a comment line
-    - refrain from modifications of the key-words (explained below)
+    - refrain from modifications of the keywords (explained below)
 
     The provided ``cfg.yml`` is self-documented.
     Therefore, meanings of keywords are explained in the provided example.
@@ -416,15 +419,15 @@ The result directory contains:
     - Two-dimensional sub-plots of all combinations of criteria pairs.
     - Parallel-coordinate plot of all criteria.
 
+    If clustering is enabled in the configuration, solutions will be colored according
+    to the clusters and centres of the clusters will be shown. Additionally, another
+    3D plot with only centres of clusters will appear.
+
 #. Plots illustrating computation progress.
     Two plots showing the state at each computation stage are generated:
 
     - Pair of plots showing numbers of iterations and of distinct solutions, respectively.
     - Distributions of distances between neighbor solutions.
-
-#. Plots illustrating the clusters (if enabled in configuration).
-    Two plots showing the clusters in two and three dimension projections, as well as plot
-    that shows only centres of clusters in three dimensions.
 
 Summary
 -------
