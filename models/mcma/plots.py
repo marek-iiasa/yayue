@@ -38,6 +38,7 @@ class Plots:
         self.seq = self.df[self.cols[0]]
         self.def_colors = ['blue', 'orange', 'lime', 'red', 'fuchsia',
                            'brown', 'pink', 'green', 'cyan', 'yellow']
+        self.def_markers = ['o', 'v', '^', 's', 'h', 'D']
         self.sol_colors = None
         self.medoids = None
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
@@ -131,13 +132,18 @@ class Plots:
                                 rotation=30, ha='left', va='center', fontsize=6)
                 ax_x.grid(False)
 
-                ax[i_plot].scatter(x=self.df[self.cr_col[i_first]], y=self.df[self.cr_col[i_second]], c=self.sol_colors,
-                                   s=m_size)
+                for clst, data in self.df.groupby(by=self.wflow.cluster.sol2cl):
+                    ax[i_plot].scatter(x=data[self.cr_col[i_first]], y=data[self.cr_col[i_second]],
+                                       c=self.def_colors[clst % len(self.def_colors)],
+                                       s=m_size,
+                                       marker=self.def_markers[clst % len(self.def_markers)])
 
                 if self.medoids is not None:
-                    ax[i_plot].scatter(x=self.medoids[:, i_first], y=self.medoids[:, i_second],
-                                       c=self.def_colors[:len(self.medoids)], marker='h', linewidths=1,
-                                       edgecolor='black', s=60)
+                    for clst, medoid in enumerate(self.medoids):
+                        ax[i_plot].scatter(x=medoid[i_first], y=medoid[i_second],
+                                           c=self.def_colors[clst % len(self.def_colors)],
+                                           s=60, edgecolor='black', linewidths=1,
+                                           marker=self.def_markers[clst % len(self.def_markers)])
 
                 ax[i_plot].set_xlim(-5, 105)
                 ax[i_plot].set_ylim(-5, 105)
@@ -370,17 +376,23 @@ class Plots:
             # noinspection PyArgumentList
             # warning suppressed here (complains on unfilled params x and y)
             if not only_centres:
-                ax.scatter(xs=self.df[self.cr_col[i]],
-                           ys=self.df[self.cr_col[j]],
-                           zs=self.df[self.cr_col[k]],
-                           label='Criteria Achievements', c=self.sol_colors, s=10, zorder=4)
+                for clst, data in self.df.groupby(by=self.wflow.cluster.sol2cl):
+                    ax.scatter(xs=data[self.cr_col[i]],
+                               ys=data[self.cr_col[j]],
+                               zs=data[self.cr_col[k]],
+                               c=self.def_colors[clst % len(self.def_colors)],
+                               s=10,
+                               marker=self.def_markers[clst % len(self.def_markers)],
+                               zorder=4)
 
             if self.medoids is not None:
-                ax.scatter(xs=self.medoids[:, i],
-                           ys=self.medoids[:, j],
-                           zs=self.medoids[:, k],
-                           label='Criteria Achievements', c=self.def_colors[:len(self.medoids)],
-                           s=60, edgecolor='black', linewidth=1.5, marker='h', zorder=5)
+                for clst, medoid in enumerate(self.medoids):
+                    ax.scatter(xs=medoid[i],
+                               ys=medoid[j],
+                               zs=medoid[k],
+                               c=self.def_colors[clst % len(self.def_colors)],
+                               s=60, edgecolor='black', linewidths=1.5, zorder=5,
+                               marker=self.def_markers[clst % len(self.def_markers)])
 
             ax.view_init(elev=15, azim=45, roll=0)
             mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
