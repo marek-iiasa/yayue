@@ -407,7 +407,11 @@ class Plots:
 
             # Cubes drawing
             cubes = self.wflow.par_rep.cubes.all_cubes  # aspiracja i rezewacja w CAF: aspAch, resAch
-            mxCubePlot = self.mc.opt('mxCubePlot', 0)
+            if only_centres:
+                mxCubePlot = 0
+            else:
+                mxCubePlot = self.mc.opt('mxCubePlot', 0)
+
             for idx, cube in cubes.items():
                 if idx >= mxCubePlot:
                     break
