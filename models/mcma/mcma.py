@@ -53,23 +53,17 @@ def create_wdir():
             found = True
     if found:
         exit(1)
-    for adir in dirs_to_create:
-        os.mkdir(adir)
-        print(f'\t"{adir}" directory created.')
 
-    files_to_copy = [
-        'wdir/Models/xpipa.dll',
-        'wdir/Templates/cfg.yml',
-        'wdir/Templates/example.dat',
-        'wdir/Templates/export.py',
-        'wdir/Templates/inst.py',
-        'wdir/Templates/sms.py',
-        'wdir/anaTst/cfg.yml',
-        ]
+    orig_wdir = os.path.join(SCRIPT_DIR, 'wdir')
+    for item in os.listdir(orig_wdir):
+        s = os.path.join(orig_wdir, item)
+        d = os.path.join('.', item)
+        print(s, d)
+        if os.path.isdir(s):
+            shutil.copytree(s, d)
+        else:
+            shutil.copy(s, d)
 
-    for file in files_to_copy:
-        shutil.copyfile(src=os.path.join(SCRIPT_DIR, file),
-                        dst=file.removeprefix('wdir/'))
 
 
 # noinspection SpellCheckingInspection
