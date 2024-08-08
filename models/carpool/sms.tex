@@ -1,0 +1,160 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{lineno}
+\usepackage{polski}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{enumitem}
+\usepackage[left=2cm, right=2cm, top=3cm, bottom=3cm]{geometry}
+
+\title{Carpooling Problem}
+\author{
+ Wiktor Wróblewski\textsuperscript{1}, Marek Makowski\textsuperscript{2}, Zbigniew Nahorski\textsuperscript{2}, Janusz Granat\textsuperscript{3}\\
+ 1. Wrocław University of Science and Technology, Wrocław, Poland\\
+ 2. Systems Research Institute, Polish Academy of Sciences, Warsaw, Poland\\
+ 3. Warsaw University of Technology, Warsaw, Poland
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\linenumbers
+
+\section{Introduction}
+Carpooling is a solution where multiple people with nearby destinations travel together by the same vehicle. This approach offers numerous benefits, including reduced traffic congestion due to fewer cars on the road, which in turn saves time. Additionally, it saves fuel, reduces the need for parking spaces, and can be significantly cheaper as the cost is distributed among multiple passengers. Traditionally, the literature assumes that drivers are also customers, meaning they travel to a specific destination and share their vehicle with others whose destinations are along their route.\\
+In contrast, a novel approach is proposed where drivers are not customers, allowing for free travel to optimize routes and maximize the number of passengers picked up. This approach emphasizes the idea that once a seat is vacated by a passenger reaching their destination, it can be reoccupied by another passenger. This model aims to maximize vehicle utilization and efficiency in passenger transport.
+
+\section{Assumptions*}
+It is assumed that:
+\begin{itemize}[left=0pt]
+    \item The time during which vehicles transport customers is limited from above.
+    \item Set of all customers does not change over time.
+    \item The distance on the graph is represented as a multiple of the basic time unit so that all operations are discreet.
+    \item Profit from a customer is obtained only after delivering them to their destination.
+    \item Once occupied, a spot can be reused after dropping off the customer occupying that spot.
+    \item The Location is represented as a complete graph. In cases where there is no direct route between selected places, the fastest possible indirect route is used as the time value between the nodes.
+    \item * - this section will be corrected after the SMS is finished
+\end{itemize}
+
+\section{Data preparation}
+\subsection{Indexes}
+\begin{itemize}
+    \item $i, j$ - indexes of nodes in the graph as a representation of places
+    \item $k$ - client
+    \item $l$ - vehicle
+    \item $t$ - timestep
+\end{itemize}
+
+\subsection{Parameters}
+\begin{itemize}
+    \item$C=[c_{ij}]$ - cost of travel between i and j (time/distance)
+    \item$P=[p_k]$ - set of all customers where $p_k=\{s_k, d_k, g_k\}$ and:
+        \subitem$s_k$ - start node of customer k
+        \subitem$d_k$ - destination node for customer k
+        \subitem$g_k$ - profit gained by servicing customer k
+    \item$V=[v_{lt}]$ - set of all vehicles where:
+        \subitem$v_{lt}$ - capacity of vehicle l in timestep t
+    \item$maxv$ - maximum capacity of each vehicle
+    \item$maxt$ - maximum time of which vehicles can work
+\end{itemize}
+
+\section{Decision variables}
+\begin{itemize}
+    \item$X=[x_{lijt}]$, where:
+        \( x_{lijt} =
+        \begin{cases}
+        1 & \text{if vehicle l travels from node i to node j at timestep t}\\
+        0 & \text{otherwise}
+        \end{cases}
+        \)
+    \item$Y=[y_{lkt}]$, where:
+        \( y_{lkt} =
+        \begin{cases}
+        1 & \text{if vehicle l picks up customer k at timestep t}\\
+        0 & \text{otherwise}
+        \end{cases}
+        \)
+    \item$Z=[z_{lkt}]$, where:
+        \( z_{lkt} =
+        \begin{cases}
+        1 & \text{if vehicle l drops off customer k at timestep t}\\
+        0 & \text{otherwise}
+        \end{cases}
+        \)
+\end{itemize}
+
+\section{Objective function}
+\begin{itemize}[label={}]
+    \item \begin{equation}
+        f(Z) = \sum_l \sum_k \sum_t z_{lkt} \times g_{k}
+    \end{equation}
+    \item \begin{equation}
+        Z^\ast = \text{argmax}(f(Z))
+    \end{equation}
+\end{itemize}
+
+\section{Constraints}
+\begin{enumerate}
+    \item Each customer cannot be picked up more than once.
+    \begin{equation}
+        \forall k: \sum_l \sum_t y_{lkt} \leq 1 
+    \end{equation}
+    
+    \item Each customer cannot be dropped off more than once.
+    \begin{equation}
+        \forall k: \sum_l \sum_t z_{lkt} \leq 1 
+    \end{equation}
+
+    \item Each vehicle can move only once per each timestep.
+    \begin{equation}
+        \forall l \forall t: \sum_i \sum_j x_{lijt} \leq 1 
+    \end{equation}
+
+    \item Each vehicle cannot travel more than maximum time of work.
+    \begin{equation}
+        \forall l: \sum_i \sum_j \sum_t x_{lijt} \times c_{ij} \leq maxt 
+    \end{equation}
+    
+    \item Each vehicle must start moving from the node where it finished its previous movement.
+    \begin{equation}
+        \forall l \forall i \forall j \quad \forall t \neq 0: x_{lij(t-1)} \times \sum_{n \neq j} \sum_m x_{lnmt} = 0
+    \end{equation}
+
+    \item Each vehicle cannot start moving again after it stops its movement.
+    \begin{equation}
+        \forall l \quad \forall t \neq 0: \sum_n \sum_m x_{lnm(t-1)} \geq \sum_k \sum_r x_{lkrt}
+    \end{equation}
+    
+    \item Each customer may be picked up only if the vehicle travels from the same node as customer's current location.
+    \begin{equation}
+        \forall l \forall k \forall t \forall j \quad \forall i=s_k: x_{lijt} \geq y_{lkt}
+    \end{equation}
+
+    \item Each customer may be dropped off only if the vehicle travels to the same node as customer's destination.
+    \begin{equation}
+        \forall l \forall k \forall t \forall i \quad \forall j=d_k: x_{lijt} \geq z_{lkt}
+    \end{equation}
+
+    \item Each customer may be dropped off only if they were picked up previously
+    \begin{equation}
+        \forall l \forall k \forall t: z_{lkt} \leq \sum_{dt \in [0, t]} y_{lk(t - dt)}
+    \end{equation}
+
+    \item The capacity of each vehicle is dependent on previously served clients.
+    \begin{equation}
+        \forall l \quad \forall t \neq 0: v_{lt} = v_{lt-1} + \sum_k z_{lk(t-1)} - \sum_k y_{lk(t-1)}
+    \end{equation}
+
+    \item The capacity of each vehicle in every timestep cannot be greater than max capacity.
+    \begin{equation}
+        \forall l \forall t: v_{lt} \leq maxv
+    \end{equation}
+
+    \item The capacity of each vehicle in every timestep cannot be less than max zero.
+    \begin{equation}
+        \forall l \forall t: v_{lt} \geq 0
+    \end{equation}
+
+\end{enumerate}
+
+\end{document}
