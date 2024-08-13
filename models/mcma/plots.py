@@ -132,7 +132,11 @@ class Plots:
                                 rotation=30, ha='left', va='center', fontsize=6)
                 ax_x.grid(False)
 
-                for clst, data in self.df.groupby(by=self.wflow.cluster.sol2cl):
+                if self.wflow.cluster:
+                    data_to_draw = self.df.groupby(by=self.wflow.cluster.sol2cl)
+                else:
+                    data_to_draw = [[0, self.df]]
+                for clst, data in data_to_draw:
                     ax[i_plot].scatter(x=data[self.cr_col[i_first]], y=data[self.cr_col[i_second]],
                                        c=self.def_colors[clst % len(self.def_colors)],
                                        s=m_size,
@@ -376,7 +380,11 @@ class Plots:
             # noinspection PyArgumentList
             # warning suppressed here (complains on unfilled params x and y)
             if not only_centres:
-                for clst, data in self.df.groupby(by=self.wflow.cluster.sol2cl):
+                if self.wflow.cluster:
+                    data_to_draw = self.df.groupby(by=self.wflow.cluster.sol2cl)
+                else:
+                    data_to_draw = [[0, self.df]]
+                for clst, data in data_to_draw:
                     ax.scatter(xs=data[self.cr_col[i]],
                                ys=data[self.cr_col[j]],
                                zs=data[self.cr_col[k]],
