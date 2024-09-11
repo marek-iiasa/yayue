@@ -21,7 +21,7 @@
 \linenumbers
 
 \section{Introduction}
-Carpooling is a solution where multiple people with nearby destinations travel together by the same vehicle. This approach offers numerous benefits, including reduced traffic congestion due to fewer cars on the road, which in turn saves time. Additionally, it saves fuel, reduces the need for parking spaces, and can be significantly cheaper as the cost is distributed among multiple passengers. Traditionally, the literature assumes that drivers are also customers, meaning they travel to a specific destination and share their vehicle with others whose destinations are along their route.\\
+Carpooling is a solution where multiple people from nearby destinations travel together in the same vehicle. This approach offers numerous benefits, including reduced traffic congestion due to fewer cars on the road, which in turn saves time. Additionally, it saves fuel, reduces the need for parking spaces, and can be significantly cheaper as the cost is distributed among multiple passengers. Traditionally, the literature assumes that drivers are also customers, meaning they travel to a specific destination and share their vehicle with others whose destinations are along their route.\\
 In contrast, a novel approach is proposed where drivers are not customers, allowing for free travel to optimize routes and maximize the number of passengers picked up. This approach emphasizes the idea that once a seat is vacated by a passenger reaching their destination, it can be reoccupied by another passenger. This model aims to maximize vehicle utilization and efficiency in passenger transport.
 
 \section{Assumptions*}
@@ -86,7 +86,7 @@ It is assumed that:
 \section{Objective function}
 \begin{itemize}[label={}]
     \item \begin{equation}
-        f(Z) = \sum_l \sum_k \sum_t z_{lkt} \times g_{k}
+        f(Z) = \sum_l \sum_k \sum_t (z_{lkt} \times g_{k})
     \end{equation}
     \item \begin{equation}
         Z^\ast = \text{argmax}(f(Z))
@@ -97,52 +97,52 @@ It is assumed that:
 \begin{enumerate}
     \item Each customer cannot be picked up more than once.
     \begin{equation}
-        \forall k: \sum_l \sum_t y_{lkt} \leq 1 
+        \forall k: \sum_l \sum_t (y_{lkt}) \leq 1 
     \end{equation}
     
     \item Each customer cannot be dropped off more than once.
     \begin{equation}
-        \forall k: \sum_l \sum_t z_{lkt} \leq 1 
+        \forall k: \sum_l \sum_t (z_{lkt}) \leq 1 
     \end{equation}
 
     \item Each vehicle can move only once per each timestep.
     \begin{equation}
-        \forall l \forall t: \sum_i \sum_j x_{lijt} \leq 1 
+        \forall l \forall t: \sum_i \sum_j (x_{lijt}) \leq 1 
     \end{equation}
 
     \item Each vehicle cannot travel more than maximum time of work.
     \begin{equation}
-        \forall l: \sum_i \sum_j \sum_t x_{lijt} \times c_{ij} \leq maxt 
+        \forall l: \sum_i \sum_j \sum_t (x_{lijt} \times c_{ij}) \leq maxt 
     \end{equation}
     
     \item Each vehicle must start moving from the node where it finished its previous movement.
     \begin{equation}
-        \forall l \forall i \forall j \quad \forall t \neq 0: x_{lij(t-1)} \times \sum_{n \neq j} \sum_m x_{lnmt} = 0
+        \forall l \forall i \forall j \quad \forall t \neq 0: x_{lij(t-1)} + \sum_{n \neq j} \sum_m (x_{lnmt}) \leq 1
     \end{equation}
 
     \item Each vehicle cannot start moving again after it stops its movement.
     \begin{equation}
-        \forall l \quad \forall t \neq 0: \sum_n \sum_m x_{lnm(t-1)} \geq \sum_k \sum_r x_{lkrt}
+        \forall l \quad \forall t \neq 0: \sum_n \sum_m (x_{lnm(t-1)}) - \sum_k \sum_r (x_{lkrt}) \geq 0
     \end{equation}
     
     \item Each customer may be picked up only if the vehicle travels from the same node as customer's current location.
     \begin{equation}
-        \forall l \forall k \forall t \forall j \quad \forall i=s_k: x_{lijt} \geq y_{lkt}
+        \forall l \forall k \forall t: \sum_{i = s_k} \sum_j (x_{lijt}) - y_{lkt} \geq 0
     \end{equation}
 
     \item Each customer may be dropped off only if the vehicle travels to the same node as customer's destination.
     \begin{equation}
-        \forall l \forall k \forall t \forall i \quad \forall j=d_k: x_{lijt} \geq z_{lkt}
+        \forall l \forall k \forall t: \sum_i \sum_{j = d_k} (x_{lijt}) - z_{lkt} \geq 0
     \end{equation}
 
     \item Each customer may be dropped off only if they were picked up previously
     \begin{equation}
-        \forall l \forall k \forall t: z_{lkt} \leq \sum_{dt \in [0, t]} y_{lk(t - dt)}
+        \forall l \forall k \forall t: z_{lkt} - \sum_{dt \in [0, t]} (y_{lk(dt)}) \leq 0
     \end{equation}
 
     \item The capacity of each vehicle is dependent on previously served clients.
     \begin{equation}
-        \forall l \quad \forall t \neq 0: v_{lt} = v_{lt-1} + \sum_k z_{lk(t-1)} - \sum_k y_{lk(t-1)}
+        \forall l \forall t: v_{lt} = maxv + \sum_k \sum_{dt \in [0, t]} (z_{lk(dt)}) - \sum_k \sum_{dt \in [0, t]} (y_{lk(dt)})
     \end{equation}
 
     \item The capacity of each vehicle in every timestep cannot be greater than max capacity.

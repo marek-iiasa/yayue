@@ -30,37 +30,31 @@ def travel_distance_constraint_rule(model, l):
 def continuity_constraint_rule(model, l, i, j, t):
     if t == 0:
         return pyo.Constraint.Skip
-    return model.x[l, i, j, t - 1] * sum(model.x[l, n, m, t] for n in model.I if n != j for m in model.J) == 0
+    return model.x[l, i, j, t - 1] + sum(model.x[l, n, m, t] for n in model.I if n != j for m in model.J) <= 1
 
 # This rule guarantee that vehicle wont start moving again after it stops its movement
 def continuity_constraint_rule2(model, l, t):
     if t == 0:
         return pyo.Constraint.Skip
-    return sum(model.x[l, n, m, t - 1] for n in model.I for m in model.J) >= sum(
-        model.x[l, k, r, t] for k in model.I for r in model.J)
+    return sum(model.x[l, n, m, t - 1] for n in model.I for m in model.J) - sum(
+        model.x[l, k, r, t] for k in model.I for r in model.J) >= 0
 
 # Each customer may be picked up only if the vehicle travels from the same node as customer's current location
-def picking_up_rule(model, l, k, t, i, j):
-    if i == model.s_k[k]:
-        return model.x[l, i, j, t] >= model.y[l, k, t]
-    else:
-        return pyo.Constraint.Skip
+def picking_up_rule(model, l, k, t):
+    return sum(model.x[l, i, j, t] for i in model.I if i == model.s_k[k] for j in model.J) - model.y[l, k, t] >= 0
 
 # Each customer may be dropped off only if the vehicle travels to the same node as customer's destination
-def dropping_off_rule(model, l, k, t, i, j):
-    if j == model.d_k[k]:
-        return model.x[l, i, j, t] >= model.z[l, k, t]
-    else:
-        return pyo.Constraint.Skip
+def dropping_off_rule(model, l, k, t):
+    return sum(model.x[l, i, j, t] for i in model.I for j in model.J if j == model.d_k[k]) - model.z[l, k, t] >= 0
 
 # Each customer may be dropped off only if they were picked up previously
 def dropping_off_rule2(model, l, k, t):
-    return sum(model.y[l, k, t - dt] for dt in range(0, t + 1)) >= model.z[l, k, t]
+    return model.z[l, k, t] - sum(model.y[l, k, dt] for dt in range(0, t + 1)) <= 0
 
 # Number of available seats is dependent on previous choices
 def capacity_continuity_rule(model, l, t):
-    return model.v[l, t] == model.initial_capacity + sum(model.z[l, k, t - dt] for k in model.K for dt in range(0, t + 1))\
-           - sum(model.y[l, k, t - dt] for k in model.K for dt in range(0, t + 1))
+    return model.v[l, t] == model.initial_capacity + sum(model.z[l, k, dt] for k in model.K for dt in range(0, t + 1))\
+           - sum(model.y[l, k, dt] for k in model.K for dt in range(0, t + 1))
 
 
 def sms():
@@ -100,8 +94,8 @@ def sms():
     model.travel_distance_constraint = pyo.Constraint(model.L, rule=travel_distance_constraint_rule)
     model.continuity_constraint = pyo.Constraint(model.L, model.I, model.J, model.T, rule=continuity_constraint_rule)
     model.continuity_constraint2 = pyo.Constraint(model.L, model.T, rule=continuity_constraint_rule2)
-    model.picking_up = pyo.Constraint(model.L, model.K, model.T, model.I, model.J, rule=picking_up_rule)
-    model.dropping_off = pyo.Constraint(model.L, model.K, model.T, model.I, model.J, rule=dropping_off_rule)
+    model.picking_up = pyo.Constraint(model.L, model.K, model.T, rule=picking_up_rule)
+    model.dropping_off = pyo.Constraint(model.L, model.K, model.T, rule=dropping_off_rule)
     model.dropping_off2 = pyo.Constraint(model.L, model.K, model.T, rule=dropping_off_rule2)
     model.capacity_continuity = pyo.Constraint(model.L, model.T, rule=capacity_continuity_rule)
 
