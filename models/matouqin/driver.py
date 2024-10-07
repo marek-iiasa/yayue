@@ -10,7 +10,8 @@ import os
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from inst import *
-from sms import *  # handles sub model/block of AF and links to the core/substantive model
+# from sms1_1 import *  # handles sub model/block of AF and links to the core/substantive model
+from sms2 import *  # handles sub model/block of AF and links to the core/substantive model
 from dat_process import *  # data processing
 from report import *    # report all variables and needed results for plotting
 from plot import *      # plot needed variables
@@ -56,7 +57,10 @@ def driver():
 
     # f_data = f'{data_dir}dat1.dat'              # real data test by ZZ
     # f_data = f'{data_dir}test1.dat'           # small scale data for testing the model
-    # f_data = f'{path}/Local/testx.dat'          # test data
+    f_data = f'{data_dir}sms2.dat'           # small scale data for testing the model
+    # f_data = f'{path}/Local/test2.dat'          # test data for sms1_1
+    # f_data = f'{path}/Local/sms2.dat'          # test data
+    # f_data = f'{path}/Local/sms2.1.1.dat'          # test data
 
     # data processing by Excel
     # f_data_base = f'{dat_dir}Raw/dat_base.xlsx'       # original data from Excel
@@ -65,10 +69,14 @@ def driver():
     # par.write_to_excel()      # write all parameters to Excel
 
     model = inst(abst, f_data)      # create model
-    print(f'\nAnalysing instance of model {model.name}.')
+
+    # add energy storage systems
+    ess = Storage(model)
+    ess.set_ess()
 
     # print the model
-    model.pprint()
+    print(f'\nAnalysing instance of model {model.name}.')
+    # model.pprint()
 
     # select solver
     print('\nsolving --------------------------------')
@@ -84,6 +92,9 @@ def driver():
     results = opt.solve(model, solver='cplex', symbolic_solver_labels=True, tee=True,
                         add_options=['GAMS_MODEL.optfile = 1;', '$onecho > cplex.opt', 'mipkappastats 1', '$offecho'])
 
+    # opt = pe.SolverFactory('cplex')     # cplex can be used as a solver
+    # results = opt.solve(model, tee=True)     # True to pipe output to the terminal
+
     # other solvers
     # opt = pe.SolverFactory('gurobi')
     # # opt.options['LogFile'] = f'{res_dir}gurobi.log'  # save log file
@@ -98,44 +109,50 @@ def driver():
     print('\nprocessing solution --------------------------------')
 
     # reporting results
-    rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income', 'invCost', 'OMC', 'surpCost', 'buyCost', 'balCost',
-                'dOut', 'sIn', 'ePrs', 'sOut', 'eIn', 'eSurplus', 'eBought', 'hIn', 'hOut', 'hVol', 'hInc', 'cOut']
+    rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income',
+                'storCost', 'balCost',
+                'invCost', 'OMC', 'splsCost', 'buyCost',
+                # 'eBought', 'eSurplus',
+                # 'dOut', 'sIn', 'sInb', 'sInc', 'sIna',
+                # 'sOut', 'sOutb', 'sOutc', 'sOuta',
+                # 'eSurplus', 'eBought', 'eVol', 'ecVol'
+                ]
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
 
     rep = Report(model, res_dir, rep_vars)      # report results
     rep.var_vals()  # extract from the solution values of the requested variables
     rep.summary()  # store the extracted values in a df
-    rep.check()  # check storage flow results
-    # rep.toExcel()   # store the extracted values in Excel for plotting
-    rep.toCsv()     # store the extracted values in the csv file for plotting
-
-    print(f'\nPlace holder for report results of model {model.name}.')
-    rep.decision_var()  # show the decision variable
-    rep.analyze()  # analyze the results
-
-    print('\nPlotting begins ----------------------------------------------------------------')
-    fig = Plot(res_dir, fig_dir, f_data)
+    # rep.check()  # check storage flow results
+    # # rep.toExcel()   # store the extracted values in Excel for plotting
+    # rep.toCsv()     # store the extracted values in the csv file for plotting
     #
-    # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
-    # # 'kaleido' is needed for fig_save: True
+    # print(f'\nPlace holder for report results of model {model.name}.')
+    # rep.decision_var()  # show the decision variable
+    # rep.analyze()  # analyze the results
+    #
+    # print('\nPlotting begins ----------------------------------------------------------------')
+    # fig = Plot(res_dir, fig_dir, f_data)
+    # #
+    # # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
+    # # # 'kaleido' is needed for fig_save: True
     # fig.plot_supply('hourly', False, True, False)
     # fig.plot_inflow('hourly', False, True, False)
-    fig.plot_supply('daily', False, True, False)
-    fig.plot_inflow('daily', False, True, False)
+    # fig.plot_supply('daily', False, True, False)
+    # fig.plot_inflow('daily', False, True, False)
+    # #
+    # # # fig.plot_flow('original', True, True, True)
+    # # # fig.plot_flow('hourly', True, True, True)
+    # # # fig.plot_flow('daily', fig_show=True)
+    # # # fig.plot_flow('weekly', fig_show=True)
+    # # # fig.plot_flow('monthly', fig_show=True)
+    # #
+    # # # Finance and storage investment overview
+    # # fig.plot_overview_sep()
     #
-    # # fig.plot_flow('original', True, True, True)
-    # # fig.plot_flow('hourly', True, True, True)
-    # # fig.plot_flow('daily', fig_show=True)
-    # # fig.plot_flow('weekly', fig_show=True)
-    # # fig.plot_flow('monthly', fig_show=True)
+    # fig.plot_overview()
     #
-    # # Finance and storage investment overview
-    fig.plot_overview_sep()
-
-    # # fig.plot_overview()
-
-    # # Detailed flow, unit: 'day', 'week'
-    # # fig.plot_dv_flow(100, 'day')
-    # # fig.plot_dv_flow(15, 'week')
-    #
+    # # # Detailed flow, unit: 'day', 'week'
+    # # # fig.plot_dv_flow(100, 'day')
+    # # # fig.plot_dv_flow(15, 'week')
+    # #
     # show_figs()  # show figures
