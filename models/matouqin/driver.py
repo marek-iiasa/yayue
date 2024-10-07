@@ -11,6 +11,7 @@ from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from inst import *
 # from sms1_1 import *  # handles sub model/block of AF and links to the core/substantive model
+# from sms import *  # handles sub model/block of AF and links to the core/substantive model
 from sms2 import *  # handles sub model/block of AF and links to the core/substantive model
 from dat_process import *  # data processing
 from report import *    # report all variables and needed results for plotting
@@ -57,10 +58,10 @@ def driver():
 
     # f_data = f'{data_dir}dat1.dat'              # real data test by ZZ
     # f_data = f'{data_dir}test1.dat'           # small scale data for testing the model
-    f_data = f'{data_dir}sms2.dat'           # small scale data for testing the model
+    f_data = f'{data_dir}sms2.dat'           # data for sms2.py
+    # f_data = f'{data_dir}sms2.1.dat'       # data for sms2.py, only two tanks
+    # f_data = f'{data_dir}sms1.dat'         # data for sms.py, only two tanks
     # f_data = f'{path}/Local/test2.dat'          # test data for sms1_1
-    # f_data = f'{path}/Local/sms2.dat'          # test data
-    # f_data = f'{path}/Local/sms2.1.1.dat'          # test data
 
     # data processing by Excel
     # f_data_base = f'{dat_dir}Raw/dat_base.xlsx'       # original data from Excel
@@ -110,8 +111,9 @@ def driver():
 
     # reporting results
     rep_vars = ['sNum', 'sCap', 'supply', 'revenue', 'income',
-                'storCost', 'balCost',
+                # 'storCost', 'balCost',
                 'invCost', 'OMC', 'splsCost', 'buyCost',
+                # 'invCost', 'OMC', 'surpCost', 'buyCost',  # for sms.py
                 # 'eBought', 'eSurplus',
                 # 'dOut', 'sIn', 'sInb', 'sInc', 'sIna',
                 # 'sOut', 'sOutb', 'sOutc', 'sOuta',
