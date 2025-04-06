@@ -97,7 +97,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.payoff.next_sol()
         elif self.cur_stage == 2:     # corners
             is_pareto = self.par_rep.addSol(self.n_itr)     # store here to get info, it is_Pareto
-            all_done = self.corner.next_sol(is_pareto)      # store info on corners (defined only by unique Pareto)
+            all_done = self.corner.next_sol(is_pareto, self.n_itr)  # store info on corners (only by unique Pareto)
             if all_done:
                 if self.cfg.get('neutral') is True:
                     next_stage = 3

@@ -28,8 +28,9 @@ class ParSol:     # one Pareto solution
             asp = max(s1.a_vals[i], s2.a_vals[i])
             val = self.a_vals[i]
             # is_act = cr.is_active
-            # print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
-            #       f's[{s2.itr_id}] {s2.a_vals[i]}')
+            # todo: add condition for print
+            print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
+                  f's[{s2.itr_id}] {s2.a_vals[i]}')
             if not res <= val <= asp:
                 pass
                 # print(f'WARNING: ParSol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
@@ -97,7 +98,7 @@ class Cubes:     # collection of aCubes
             if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:  # skip solutions defining the cube
                 continue
             if self.parRep.is_inside(s, cube.s1, cube.s2):
-                # print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
+                print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
                 cube.empty = False
                 return False    # the cube has a solution inside
         cube.empty = True
@@ -183,9 +184,10 @@ class Cubes:     # collection of aCubes
         print(f'\t{len(self.cand)} cubes remain for exploration.')
         print(f'\t{self.small} small cubes ignored.')
         print(f'\t{self.filled} non-empty cubes ignored.')
-        '''
         # use the below with care: the list might be very long
         print('\nList of cubes:')
+        # todo: fix the below commented
+        '''
         for (i, c) in enumerate(self.all_cubes):
             c.lst(i)
         print()

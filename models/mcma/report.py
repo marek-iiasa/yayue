@@ -64,9 +64,9 @@ class Report:
             cr = self.mc.cr[i]
             cr.val = val        # has to be stored here because it is needed in in_range()
             cri_val.update({cr.name: val})  # add to the dict of crit. values of the current solution
-            if self.mc.verb > 2:
+            if self.mc.verb > 3:
                 print(f'Value of variable "{var_name}" defining criterion "{cr.name}" = {val:.2e}')
-        if self.mc.verb > 2:
+        if self.mc.verb > 3:
             print(f'Values of criteria {cri_val}')
 
         in_range = True
@@ -93,7 +93,7 @@ class Report:
         if self.wflow.payoff.cur_stage > 1:     # after utopia computed
             cafMin = pe.value(m.cafMin)
             cafReg = pe.value(m.cafReg)
-            if self.mc.verb > 2:
+            if self.mc.verb > 3:
                 print(f'af = {af:.3e}, cafMin = {cafMin:3e}, cafReg = {cafReg:3e}')
             cafMin = round(cafMin, 1)
             cafReg = round(cafReg, 1)

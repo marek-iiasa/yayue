@@ -145,6 +145,7 @@ class ParRep:     # representation of Pareto set
         new_sol = ParSol(itr_id, self.cur_cube, vals, a_vals)
         if self.cur_cube is not None:   # cur_cube undefined during computation of selfish solutions
             c = self.cubes.get(self.cur_cube)     # parent cube
+            # todo: add conditional call (only for info-print)
             new_sol.neigh_inf(c)   # info on location within the solutions of the parent cube
 
         is_close = False
@@ -202,7 +203,7 @@ class ParRep:     # representation of Pareto set
         raise Exception(f'ParRep::sol_seq(): {itr_id} not in the solution set.')
 
     def summary(self):  # summary report
-        # self.cubes.lst_cubes()  # list cubes
+        self.cubes.lst_cubes()  # list cubes
         cand = sorted(self.cubes.cand, key=itemgetter(1), reverse=True)  # sort by size (just getting the largest)
         if len(cand) > 0:
             mx_size = cand[0][1]

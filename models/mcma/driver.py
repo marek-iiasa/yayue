@@ -99,6 +99,8 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
+            if n_iter == 9:
+                print(f'\niter {n_iter}: trap')
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
         else:
             print(f'\niter {n_iter}: optimization failed, solution disregarded.        -------------------------------')
@@ -114,6 +116,7 @@ def driver(cfg):
         if n_iter > max_itr:
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
             break
+        # todo: add external break control
     # the iteration loop ends here
 
     print(f'\nFinished {n_iter} analysis iterations. Summary report follows.')

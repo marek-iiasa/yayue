@@ -136,7 +136,7 @@ class McMod:
                 var_seq.append(-1)
                 if self.mc.cfg.get('verb') > 1:
                     print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
-        if self.mc.verb > 2:
+        if self.mc.verb > 3:
             print(f'\nParams of s-th segment defining PWL for i-th CAF:')
             for (i, pwl) in enumerate(pwls):
                 if pwl is None:
@@ -145,7 +145,7 @@ class McMod:
                     for (s, ab) in enumerate(pwl):
                         print(f'({i = }, sc_var {sc_var[i]:.2e}, {s = }): a = {ab[0]:.2e}, b = {ab[1]:.2e}')
 
-        if self.mc.verb > 2:
+        if self.mc.verb > 3:
             print(f'\nGenerating pairs defining two-dimensional set m.S')
         s_pairs = []    # list of pairs: (i, ns), i = index of CAF/PWL, ns = number of segments of the PWL
         for (i, pwl) in enumerate(pwls):
@@ -157,11 +157,11 @@ class McMod:
                 for (ns, ab) in enumerate(pwl):
                     pair = (i, ns)
                     s_pairs.append(pair)
-                    if self.mc.verb > 2:
+                    if self.mc.verb > 3:
                         print(f'{pair = }')
         m.S = pe.Set(dimen=2, initialize=s_pairs)   # m.S initialized by list of pairs of indices
 
-        if self.mc.verb > 2:
+        if self.mc.verb > 3:
             print(f'\nGenerating constraints for each CAF[i] and segments of its PWL.')
 
         # Constraints representing CAFs defined by the corresponding PWLs
@@ -217,7 +217,7 @@ class McMod:
                 reg_scal2 = 0.1 * self.mc.epsilon * self.mc.cafAsp / n_ignor  # scaling coef of reg. term2
             else:       # no ignored crit in 2-criteria analysis
                 reg_scal2 = 0.
-            if self.mc.verb > 2:
+            if self.mc.verb > 3:
                 print(f'------------------------- {reg_scal1 = }, {reg_scal2 = }')
 
             @m.Constraint()
@@ -231,7 +231,7 @@ class McMod:
         else:
             # standard reg-term (all criteria enter)
             reg_scale = self.mc.epsilon * self.mc.cafAsp / self.mc.n_crit  # scaling coef of regularizing term
-            if self.mc.verb > 2:
+            if self.mc.verb > 3:
                 print(f'----------------------------------------------------- {reg_scale = }')
 
             @m.Constraint()
@@ -246,7 +246,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.verb > 2:    # set to 1 for testing, restore 2 after testing
+        if self.verb > 4:    # set to 1 for testing, restore 2 after testing
             print('\nMC_block (returned to driver):')
             m.pprint()
 

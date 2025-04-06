@@ -13,6 +13,7 @@ class Corners:
         self.verb = mc.opt('verb', 0)
         self.corners = []         # criteria states at the Pareto-set corners
         self.a_corners = []       # corners defined by the achievements
+        self.s_corners = []       # id of solution defining the corresponding corner
         self.cur_corner = 0       # seq_no of current corner
         self.n_corners = 0        # number of prepared corners
         self.all_done = False     # set to True, after last corner processed
@@ -95,7 +96,7 @@ class Corners:
                       f'R {cr.val2ach(cr.res)}')
         pass
 
-    def next_sol(self, is_pareto):
+    def next_sol(self, is_pareto, n_itr):
         if is_pareto:
             cor = ''
             for (i, cr) in enumerate(self.mc.cr):
@@ -104,12 +105,14 @@ class Corners:
                 else:
                     cor = f'{cr.name}: {cr.a_val:.1f}'
             self.a_corners.append(cor)
+            self.s_corners.append(n_itr)
+            # todo: add solution id
         else:
-            print('Non-Pareto solution skipped in corners definitions.')
+            print('Non-Pareto solution ignored in corners definitions.')
         if self.all_done:
             print(f'\nPareto-set {len(self.a_corners)} (unique) corners:        ')
             for (i, cor) in enumerate(self.a_corners):
-                print(f'corner {i}:  ({cor})')
+                print(f'corner {i}, sol_id {self.s_corners[i]}:  ({cor})')
             print(f'Switch to computing Pareto-front representation based on cuboids. ===============================')
         return self.all_done
 
