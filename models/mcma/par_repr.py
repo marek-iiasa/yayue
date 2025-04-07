@@ -144,21 +144,32 @@ class ParRep:     # representation of Pareto set
                       f'U {cr.utopia:.2e}, N {cr.nadir:.2e}')
         new_sol = ParSol(itr_id, self.cur_cube, vals, a_vals)
         if self.cur_cube is not None:   # cur_cube undefined during computation of selfish solutions
-            c = self.cubes.get(self.cur_cube)     # parent cube
+            c = self.cubes.get(self.cur_cube)     # get parent cube (for its id)
             # todo: add conditional call (only for info-print)
             new_sol.neigh_inf(c)   # info on location within the solutions of the parent cube
 
         is_close = False
+        s_close = None
         for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
             if new_sol.is_close(s2):
                 is_close = True
+                s_close = s2
                 break
         is_pareto = True
         if is_close:
             is_pareto = False
             self.clSols.append(new_sol)
-            print(f'Solution[{itr_id}] duplicates sol[{new_sol.closeTo}] (L-inf = {new_sol.distMx:.1e}). '
-                  f'There are {len(self.clSols)} duplicated Pareto solutions.')
+            print(f'Solution[{itr_id}] close to sol[{new_sol.closeTo}] (L-inf = {new_sol.distMx:.1e}). '
+                  f'There are {len(self.clSols)} mutually close Pareto solutions.')
+            if self.cur_cube is not None:  # cur_cube undefined during computation of selfish solutions
+                c = self.cubes.get(self.cur_cube)  # get parent cube (for its id)
+                new_sol.neigh_inf(c, True)   # info on location within the solutions of the parent cube
+                oldInCube = self.is_inside(s_close, c.s1, c.s2)
+                if oldInCube:
+                    print('WARNING: old (close to new) solution is in the current cube -------------------------------')
+                else:
+                    # todo: print info on close (old and new) solutions (belonging to different cubes)
+                    pass
         else:   # unique solution; check dominance with all Pareto-sols found so far
             toPrune = []    # tmp list of solutions dominated by the current sol
             for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol

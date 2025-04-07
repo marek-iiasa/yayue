@@ -99,7 +99,7 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
-            if n_iter == 9:
+            if n_iter == 58:
                 print(f'\niter {n_iter}: trap')
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
         else:

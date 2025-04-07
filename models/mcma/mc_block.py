@@ -91,6 +91,7 @@ class McMod:
                     assert not cr.is_active, f'Crit. {cr.name} has fixed value; therefore, it must not be active.'
                     # m.x[i].setlb(cr.asp)
                     # m.x[i].setub(cr.asp)
+                    # todo: explore (in cube.py) to replace A by an value of f(A,R)
                     m.x[i].fix(cr.asp)  # better than fixing LB and UB
 
         # make list of variables (pyomo objects) of m1 (core model) defining criteria

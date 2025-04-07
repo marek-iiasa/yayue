@@ -20,7 +20,7 @@ class ParSol:     # one Pareto solution
         # print(f'Solution of itr_id {itr_id}: crit. values: {self.vals}, (achievements: {self.a_vals})')
         print(f'Solution[{itr_id}] a_vals: {self.a_vals}')
 
-    def neigh_inf(self, cube):     # print info on distances to corners of the parent cube
+    def neigh_inf(self, cube, do_print = False):     # print info on distances to corners of the parent cube
         s1 = cube.s1
         s2 = cube.s2
         for (i, cr) in enumerate(cube.mc.cr):
@@ -28,9 +28,10 @@ class ParSol:     # one Pareto solution
             asp = max(s1.a_vals[i], s2.a_vals[i])
             val = self.a_vals[i]
             # is_act = cr.is_active
-            # todo: add condition for print
-            print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
-                  f's[{s2.itr_id}] {s2.a_vals[i]}')
+            # todo: add verb-condition for print
+            if do_print:
+                print(f'Crit {cr.name}, s[{s1.itr_id}] {s1.a_vals[i]}, s[{self.itr_id}] {self.a_vals[i]}, '
+                      f's[{s2.itr_id}] {s2.a_vals[i]}')
             if not res <= val <= asp:
                 pass
                 # print(f'WARNING: ParSol:neigh_inf():: crit {cr.name} ({is_act=}), {val=} outside [{res=}, {asp=}]')
@@ -57,7 +58,8 @@ class ParSol:     # one Pareto solution
         self.distMx = 0.
         for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
-            minDist = 1.0   # rather demanding in [0, 100] CAF scale
+            # minDist = 1.0   # rather demanding in [0, 100] CAF scale
+            minDist = 0.001
             if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
                 self.distMx = None
                 return False
@@ -98,7 +100,7 @@ class Cubes:     # collection of aCubes
             if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:  # skip solutions defining the cube
                 continue
             if self.parRep.is_inside(s, cube.s1, cube.s2):
-                print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
+                # print(f'sol {s.itr_id} is between sols [{cube.s1.itr_id}, {cube.s2.itr_id}].')
                 cube.empty = False
                 return False    # the cube has a solution inside
         cube.empty = True
@@ -171,12 +173,6 @@ class Cubes:     # collection of aCubes
         return best
 
     def lst_cubes(self):  # list cubes
-        print('\nList of cubes remaining for analysis:')
-        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort by size (just for the listing)
-        for (i, c) in enumerate(self.cand):
-            c_id = c[0]
-            cube = self.get(c_id)
-            cube.lst_size(c_id)
         print('\nSummary of cubes:')
         print(f'\t{len(self.sols)} unique Pareto solutions generated.')
         print(f'\t{len(self.clSols)} duplicate/close Pareto solutions generated.')
@@ -184,16 +180,22 @@ class Cubes:     # collection of aCubes
         print(f'\t{len(self.cand)} cubes remain for exploration.')
         print(f'\t{self.small} small cubes ignored.')
         print(f'\t{self.filled} non-empty cubes ignored.')
+
+'''
+        print('\nList of cubes remaining for analysis (sorted by Linf size):')
+        self.cand = sorted(self.cand, key=itemgetter(1), reverse=True)  # sort by size (just for the listing)
+        for (i, c) in enumerate(self.cand):     # self.cand is a []
+            c_id = c[0]
+            cube = self.get(c_id)
+            cube.lst(c_id)
+            cube.lst_size(c_id)
         # use the below with care: the list might be very long
-        print('\nList of cubes:')
-        # todo: fix the below commented
-        '''
-        for (i, c) in enumerate(self.all_cubes):
-            c.lst(i)
-        print()
-        for (i, c) in enumerate(self.all_cubes):
-            c.lst_size(i)
-        '''
+        print('\nList of used cubes:')
+        for c_id, cube in self.all_cubes.items():     # self.all_cubes is a {}: (key_id, cube)
+            if cube.used:
+                cube.lst(c_id)
+                cube.lst_size(c_id)
+'''
 
 
 # noinspection SpellCheckingInspection
@@ -321,16 +323,18 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         edges += ']'
         if self.mc.cfg.get('verb') > 1:
             print(f'cube[{seq}] sol [{self.s1.itr_id}, {self.s2.itr_id}], size={self.size:.1f}, '
-                  f'used {self.used}, empty {self.empty}, degen {self.is_degen}, edges={edges}, '
-                  f'\n\tcorners: ([{val1}], [{val2}])')
+                  f'used {self.used}, empty {self.empty}, degen {self.is_degen}, edges={edges}')
+            if self.mc.cfg.get('verb') > 2:
+                print(f'\n\tcorners: ([{val1}], [{val2}])')
 
         # the below are for info only; not-scaled A/R values are used for actual preferences
+        if self.mc.cfg.get('verb') < 4:
+            return
         val1 = ''
         val2 = ''
         for (v1, v2) in zip(self.aspAch, self.resAch):    # CAF values for A/R
             val1 += f'{v1:.1f} '
             val2 += f'{v2:.1f} '
-        if self.mc.cfg.get('verb') > 1:
             print(f'\tNext preferences:  A [{val1}],  R [{val2}]')
 
     def lst_size(self, c_ind):  # seq: externally defined seq_no of the list of cubes
