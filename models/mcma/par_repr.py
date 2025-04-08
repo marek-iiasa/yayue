@@ -79,6 +79,11 @@ class ParRep:     # representation of Pareto set
         self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
         self.cur_itr = None   # current itr_id
+        self.log_min = 100    # min size in the current block
+        self.log_max = 0      # max size in the current block
+        self.log_block = 1000
+        self.log_next = 1000
+        self.log_dict = {}
         self.from_cube = False   # next preferences from a cube
         self.n_corner = 0       # number of already generated selfish solutions
         self.ini_obj = None     # object a class handling initial solutions
@@ -129,6 +134,17 @@ class ParRep:     # representation of Pareto set
         # print(f'solution {it} is between solutions ({it1}, {it2}).')
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
 
+    def sizeLog(self, cube):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+        itr = self.cur_itr
+        self.log_min = min(self.log_min, cube.size)
+        self.log_max = max(self.log_max, cube.size)
+        if itr < self.log_next:
+            return      # don't log before log_next
+        self.log_dict.update({itr: [self.log_min, self.log_max]})
+        self.log_next += self.log_block
+        self.log_min = 100
+        self.log_max = 0
+
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
         assert self.mc.is_opt, f'ParRep::addSol() called for non-optimal solution'
         self.cur_itr = itr_id
@@ -147,6 +163,7 @@ class ParRep:     # representation of Pareto set
             c = self.cubes.get(self.cur_cube)     # get parent cube (for its id)
             # todo: add conditional call (only for info-print)
             new_sol.neigh_inf(c)   # info on location within the solutions of the parent cube
+            self.sizeLog(c)     # add cube size to the sizeLog
 
         is_close = False
         s_close = None
@@ -223,6 +240,12 @@ class ParRep:     # representation of Pareto set
         print('\n')
         self.progr.update(mx_size, True)   # store info on the unprocessed cubes, if any remain
         self.progr.summary()   # process info on the computation progress
+
+        print('\nEnvelops of cube-sizes in iters blocks:')
+        for itr, sizes in self.log_dict.items():
+            print(f'Iter {itr}: min_size {sizes[0]:.2f}, max_size {sizes[1]:.2f}')
+            # todo: allign itr length (precision does not work)
+            # print(f'\nIter {itr:.6d}: {sizes[0]:.2f},{sizes[1]:.2f}')  #int precision not allowed?
 
         # prepare df with solutions for plots and storing as csv
         cols = ['itr_id']

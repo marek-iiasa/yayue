@@ -150,8 +150,8 @@ class Cubes:     # collection of aCubes
             best.used = True
             id2prune.append(best.id)
             print(f'Best (of {len(self.cand)}) cube[{best.id}]: [{best.s1.itr_id}, {best.s2.itr_id}], '
-                  # f'size={best.size:.2f}, degen = {best.is_degen}; {len(lst) - 1} cubes of the same size remain.')
-                  f'size={best.size:.2f}, degen = {best.is_degen}.')
+                  # f'size={best.size:.2f}, degen = {best.degen_str}; {len(lst) - 1} cubes of the same size remain.')
+                  f'size={best.size:.2f}, degen = {best.degen_str}.')
         else:
             print(f'\nNo cube from {len(self.cand)} candidates is suitable for defining preferences.')
         # prune the candidate list (the selected cube, and non-empty cubes)
@@ -210,6 +210,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.min_edge = 0.5     # min achievement A/R difference
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge is too small
+        self.degen_str = ''  # Indices of the degen-dimension indices
         self.is_degen = False   # set to True, if any edge is too small
         self.size = 0.      # cube size = currently LInf distance(s1, s2), for scaled crit values
         self.sizeL1 = 0.    # L1-norm size
@@ -219,6 +220,8 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.resAch = []   # list of R values in Achievement scale
 
         # calculate the cube size, and distance components (diffs for each criterion)
+        ind_sep = ''
+        deg_ind = 0
         for (a1, a2) in zip(s1.a_vals, s2.a_vals):  # loop over achievements of criteria
             dist = abs(a1 - a2)
             self.sizeL1 += dist  # Manhattan (L1) distance in criteria scaled-values
@@ -228,8 +231,11 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
             if dist < self.min_edge:   # difference between achievements too small --> cube dimension degenerated
                 self.is_degen = True    # the cube degenerated
                 self.degen.append(True)  # current dimension degenerated
+                self.degen_str = f'{self.degen_str}{ind_sep} {deg_ind}'
             else:
                 self.degen.append(False)   # current dimension not degenerated
+            deg_ind += 1
+        self.degen_str = f'[{self.degen_str}]'
         self.sizeL2 = math.sqrt(self.sizeL2)     # cube size define by L2
         # uncomment only one norm to be used for the size (Linf is used for consistency with the AF)
         # self.size = self.sizeL1     # cube size defined by L1
@@ -323,7 +329,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         edges += ']'
         if self.mc.cfg.get('verb') > 1:
             print(f'cube[{seq}] sol [{self.s1.itr_id}, {self.s2.itr_id}], size={self.size:.1f}, '
-                  f'used {self.used}, empty {self.empty}, degen {self.is_degen}, edges={edges}')
+                  f'used {self.used}, empty {self.empty}, degen {self.degen_str}, edges={edges}')
             if self.mc.cfg.get('verb') > 2:
                 print(f'\n\tcorners: ([{val1}], [{val2}])')
 
@@ -339,4 +345,4 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
 
     def lst_size(self, c_ind):  # seq: externally defined seq_no of the list of cubes
         print(f'cube[{c_ind}], sol [{self.s1.itr_id:3d}, {self.s2.itr_id:3d}], '
-              f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.is_degen}')
+              f'sizes: L1={self.sizeL1:.2e}, L2={self.sizeL2:.2e}, Linf={self.sizeLinf:.2e}, degen {self.degen_str}')

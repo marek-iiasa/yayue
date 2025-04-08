@@ -1,3 +1,4 @@
+import os.path	# needed for checking the stop request
 import sys		# needed for sys.exit()
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
@@ -99,7 +100,7 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
-            if n_iter == 58:
+            if n_iter == 1001:
                 print(f'\niter {n_iter}: trap')
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
         else:
@@ -117,6 +118,10 @@ def driver(cfg):
             print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
             break
         # todo: add external break control
+        stop_file = 'stop.txt'
+        if os.path.exists(stop_file):
+            print(f"\nIteration break requested through file '{stop_file}' after {n_iter} itrs.")
+            break
     # the iteration loop ends here
 
     print(f'\nFinished {n_iter} analysis iterations. Summary report follows.')
