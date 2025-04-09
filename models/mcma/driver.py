@@ -100,8 +100,9 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
-            if n_iter == 1001:
-                print(f'\niter {n_iter}: trap')
+            if n_iter == 100:
+                # print(f'\niter {n_iter}: trap')
+                pass
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
         else:
             print(f'\niter {n_iter}: optimization failed, solution disregarded.        -------------------------------')

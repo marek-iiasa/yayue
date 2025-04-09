@@ -1,3 +1,4 @@
+import datetime
 import pandas as pd
 from operator import itemgetter
 from .cube import ParSol, Cubes, aCube
@@ -81,6 +82,7 @@ class ParRep:     # representation of Pareto set
         self.cur_itr = None   # current itr_id
         self.log_min = 100    # min size in the current block
         self.log_max = 0      # max size in the current block
+        self.log_mxCubes = 0  # max number of cubes in the current block
         self.log_block = 1000
         self.log_next = 1000
         self.log_dict = {}
@@ -134,16 +136,22 @@ class ParRep:     # representation of Pareto set
         # print(f'solution {it} is between solutions ({it1}, {it2}).')
         return True    # all crit-vals of s are between the corresponding values of s1 and s2
 
-    def sizeLog(self, cube):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+    def sizeLog(self, cube, final=False):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
         itr = self.cur_itr
-        self.log_min = min(self.log_min, cube.size)
-        self.log_max = max(self.log_max, cube.size)
-        if itr < self.log_next:
+        if not final:
+            self.log_min = min(self.log_min, cube.size)
+            self.log_max = max(self.log_max, cube.size)
+            self.log_mxCubes = max(self.log_mxCubes, len(self.cubes.cand))
+        if itr < self.log_next and not final:
             return      # don't log before log_next
-        self.log_dict.update({itr: [self.log_min, self.log_max]})
+        now = datetime.datetime.now()
+        # tm_stamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        tm_stamp = now.strftime("%H:%M:%S")
+        self.log_dict.update({itr: [self.log_min, self.log_max, self.log_mxCubes, tm_stamp]})
         self.log_next += self.log_block
         self.log_min = 100
         self.log_max = 0
+        self.log_mxCubes = 0
 
     def addSol(self, itr_id):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
         assert self.mc.is_opt, f'ParRep::addSol() called for non-optimal solution'
@@ -242,8 +250,9 @@ class ParRep:     # representation of Pareto set
         self.progr.summary()   # process info on the computation progress
 
         print('\nEnvelops of cube-sizes in iters blocks:')
+        self.sizeLog(None, True)
         for itr, sizes in self.log_dict.items():
-            print(f'Iter {itr}: min_size {sizes[0]:.2f}, max_size {sizes[1]:.2f}')
+            print(f'Iter {itr}: min_size {sizes[0]:.2f}, max_size {sizes[1]:.2f}, mxCubes {sizes[2]}, {sizes[3]}')
             # todo: allign itr length (precision does not work)
             # print(f'\nIter {itr:.6d}: {sizes[0]:.2f},{sizes[1]:.2f}')  #int precision not allowed?
 
