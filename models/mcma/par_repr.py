@@ -71,7 +71,7 @@ class ParProg:
 # noinspection SpellCheckingInspection
 class ParRep:     # representation of Pareto set
     def __init__(self, wflow):         # initialize corners by regularized selfish solutions
-        self.wflow = wflow        # CtrMca object
+        self.wflow = wflow        # WrkFlow object
         self.mc = wflow.mc        # CtrMca object
         self.cfg = wflow.cfg   # Config object
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions

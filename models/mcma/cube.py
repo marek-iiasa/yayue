@@ -76,12 +76,17 @@ class Cubes:     # collection of aCubes
         self.sols = parRep.sols    # Pareto solutions (without duplicates)
         self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
         self.min_size = float(parRep.mc.opt('mxGap', 5))    # cube's min. LInf size for including the cube to analysis
+        self.lastSize = None    # size of last-selected cube (experimental)
         self.all_cubes = {}     # all generated cubes: keys defined by cube's id
         self.cand = []          # cubes that are candidates for next iteration
         self.small = 0      # number of small ignored
         self.filled = 0     # number of non-empty ignored
 
     def add(self, cube):    # add a new cube, if it is large enough and non-empty
+        skip = self.parRep.mc.opt('skipCubes', False)
+        if skip and self.lastSize is not None and self.lastSize < cube.size:
+            # print(f'skiping new cube: size {cube.size:.2f} greater than {self.lastSize:.2f} of the last cube ---------')
+            return
         if cube.size >= self.min_size:
             if self.is_empty(cube):
                 cube.id = len(self.all_cubes)
@@ -170,6 +175,7 @@ class Cubes:     # collection of aCubes
         # if len(self.sols) > 10:
         #     print(f'Iteration test-break')
         #     return None
+        self.lastSize = best.size
         return best
 
     def lst_cubes(self):  # list cubes
