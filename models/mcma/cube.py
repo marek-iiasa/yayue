@@ -175,7 +175,8 @@ class Cubes:     # collection of aCubes
         # if len(self.sols) > 10:
         #     print(f'Iteration test-break')
         #     return None
-        self.lastSize = best.size
+        if best is not None:
+            self.lastSize = best.size
         return best
 
     def lst_cubes(self):  # list cubes
