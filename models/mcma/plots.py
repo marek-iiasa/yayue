@@ -267,7 +267,7 @@ class Plots:
             print('\nPlots::sol_stage(): no data for solution stages yet.')
             return
         fig = plt.figure(figsize=(6, 2.5), dpi=self.dpi)
-        fig.canvas.manager.set_window_title(f'Summary of {len(self.wflow.par_rep.progr.neigh)} computation stages')
+        fig.canvas.manager.set_window_title(f'Summary of {len(self.wflow.par_rep.progr.cubes2proc)} computation stages')
         plot_kw = dict(marker='o', markersize=5, linestyle='--', linewidth=2)
         ax = fig.add_subplot(1, 2, 1)
         ax.plot(summary_df['step'], summary_df['itr'],
@@ -307,13 +307,13 @@ class Plots:
     def kde_stages(self):  # for each stage: histogram + KDE
         # todo: AS: pls improve vertical size (number of cols changed to 2); appears to be wrong for even
         #   number of plots
-        n_plots = len(self.wflow.par_rep.progr.neigh)
+        n_plots = len(self.wflow.par_rep.progr.cubes2proc)
         if n_plots < 2:
             print('\nPlots::kde_stages(): no data for KDE stages yet.')
             return
         mx_hight = 9.0
         ncols = 3
-        if len(self.wflow.par_rep.progr.neigh[self.wflow.par_rep.progr.cur_step - 1][-1]) == 0:
+        if len(self.wflow.par_rep.progr.cubes2proc[self.wflow.par_rep.progr.cur_step - 1][-1]) == 0:
             n_plots -= 1  # plot for last stage not generated
         nrows = n_plots // ncols
         if nrows * ncols < n_plots:
@@ -321,16 +321,16 @@ class Plots:
         fig = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
         fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
 
-        for step in self.wflow.par_rep.progr.neigh:
-            if len(self.wflow.par_rep.progr.neigh[step][-1]) == 0:
+        for step in self.wflow.par_rep.progr.cubes2proc:
+            if len(self.wflow.par_rep.progr.cubes2proc[step][-1]) == 0:
                 print(f'Empty cube list for computation stage {step}.')
                 continue
             ax = fig.add_subplot(nrows, ncols, step + 1)
             neighbour_cube_sizes = []
             if self.cfg.get('verb') > 3:
                 print(f'{step = }')
-                print(f'neigh {self.wflow.par_rep.progr.neigh[step]}')
-            for cube_id, cube_size in self.wflow.par_rep.progr.neigh[step][-1]:
+                print(f'neigh {self.wflow.par_rep.progr.cubes2proc[step]}')
+            for cube_id, cube_size in self.wflow.par_rep.progr.cubes2proc[step][-1]:
                 if self.cfg.get('verb') > 3:
                     print(f'{cube_id = }, {cube_size = }')
                 neighbour_cube_sizes.append(cube_size)

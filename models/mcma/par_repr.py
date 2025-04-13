@@ -12,7 +12,8 @@ class ParProg:
         self.parRep = parRep        # ParRep object
         self.steps = []             # list of reporting steps (max distances between neighbors
         self.cur_step = 0           # index of the current step
-        self.neigh = {}             # neighbors for each step
+        self.cubes2proc = {}        # cubes waiting for processing at each (progress) step
+        # self.neigh = {}             # neighbors for each step
         self.df_stages = None
         #
         self.ini_steps()            # initialize steps
@@ -20,23 +21,22 @@ class ParProg:
     def ini_steps(self):  # steps of progress
         self.steps = [50, 30, 20, 10, 7, 5, 3, 2, 1]
 
-    def update(self, cube_size, is_last):     # store info of pairs of neighbors waiting for processing
+    def updCubeInf(self, cube_size, is_last):     # store info on cubes waiting for processing
         if cube_size > self.steps[self.cur_step] and not is_last:
             return
         itr = self.parRep.cur_itr
         n_sol = len(self.parRep.sols)
         # pairs = self.parRep.neigh.copy()
-        pairs = self.parRep.cubes.cand.copy()
-        print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(pairs)} neighbor-pairs remain for processing.')
+        cubesCand = self.parRep.cubes.cand.copy()
+        # add info to the dict
+        print(f'itr {itr}; {n_sol} Pareto solutions computed, {len(cubesCand)} cubes remain for processing.')
+        self.cubes2proc.update({self.cur_step: (itr, n_sol, len(cubesCand), round(cube_size, 2), cubesCand)})
         if not is_last:
-            self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
-            # print(f'List of {len(pairs)} cubes at step {self.cur_step} (distance {cube_size}) stored.')
             self.cur_step += 1
         else:
-            self.neigh.update({self.cur_step: (itr, n_sol, len(pairs), round(cube_size, 2), pairs)})
             print(f'cur_step {self.cur_step}, itr {itr}, n_sol {n_sol}.')
-            if len(pairs) > 0:
-                print(f'{len(pairs)} cubes not processed.')
+            if len(cubesCand) > 0:
+                print(f'{len(cubesCand)} cubes not processed.')
             else:
                 print(f'All cubes were processed.')
 
@@ -45,9 +45,9 @@ class ParProg:
         n_itrs = self.parRep.cur_itr + 1    # cur_itr counted from 0
         print(f'\nOverall during {n_itrs} itrs {len(self.parRep.sols)} Pareto sols. were computed, '
               f'{len(cubes.all_cubes)} hyper-cubes were generated.')
-        print(f'\nSummary data of {len(self.neigh)} computation stages.')
+        print(f'\nSummary cubes-data at {len(self.cubes2proc)} computation stages.')
         summary_list = []
-        for step, info in self.neigh.items():
+        for step, info in self.cubes2proc.items():
             itr = info[0]
             n_sol = info[1]
             n_cubes = info[2]
@@ -101,9 +101,9 @@ class ParRep:     # representation of Pareto set
         elif self.wflow.is_par_rep:   # set preferences from the selected cube
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
-                self.progr.update(cube.size, False)
+                self.progr.updCubeInf(cube.size, False)
             # else:
-            #     self.progr.update(0.)
+            #     self.progr.updCubeInf(0.)
             if cube is None:
                 self.wflow.cur_stage = 6  # terminate the analysis
                 return
@@ -246,7 +246,7 @@ class ParRep:     # representation of Pareto set
         else:
             mx_size = 0
         print('\n')
-        self.progr.update(mx_size, True)   # store info on the unprocessed cubes, if any remain
+        self.progr.updCubeInf(mx_size, True)   # store info on the unprocessed cubes, if any remain
         self.progr.summary()   # process info on the computation progress
 
         print('\nEnvelops of cube-sizes in iters blocks:')
