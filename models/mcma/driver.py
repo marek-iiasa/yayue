@@ -54,6 +54,9 @@ def driver(cfg):
         # i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {wflow.cur_stage} -----------------------------------------')
         i_stage = wflow.itr_start(n_iter)   # set preferences, return current stage
+        if i_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
+            print(f'\nFinished the analysis for all generated/specified preferences.')
+            break       # exit the iteration loop
 
         '''
         if i_stage > 3 and mc.is_par_rep and mc.par_rep is None:    # init ParRep() (must be after payOff table done)
@@ -100,10 +103,14 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
-            if n_iter == 100:
+            if n_iter == 15:
                 # print(f'\niter {n_iter}: trap')
+                # wflow.par_rep.solDistr()
                 pass
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
+            if n_iter < 20 and i_stage > 3:
+                wflow.par_rep.solDistr()
+                pass
         else:
             print(f'\niter {n_iter}: optimization failed, solution disregarded.        -------------------------------')
         # rep.itr(mc_part)  # driver for sol-processing: update crit. attr., store sol, check domination & close sols
