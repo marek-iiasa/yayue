@@ -81,8 +81,8 @@ class ParRep:     # representation of Pareto set
         self.cur_cube = None  # cube_id of the last used cube
         self.cur_itr = None   # current itr_id
         self.sampleSeq = 0    # number of distribution samples stored
-        self.neighDist = {}   # summary of distances between neighbor solutions (key = sampleSeq)
-        self.allNeigh = {}    # individual distances between neighbor solutions (key = sampleSeq)
+        self.neigh = {}         # neighbors in the current solution set {itr_id1: [itr_id2, dist]}
+        self.distances = []     # distances between current neighbors
         self.neighInf = {}    # info on distances between Pareto solutions found so far
         self.log_min = 100    # min size in the current block
         self.log_max = 0      # max size in the current block
@@ -100,44 +100,57 @@ class ParRep:     # representation of Pareto set
 
     def solDistr(self):     # distribution of distances between neighbor solutions
         #  Note: neighbor (for each solution) is the closest other solution
-        maxDist = 0.    # max distance between neighbors
-        minDist = 101.  # min distance between neighbors
-        # allDist = []    # distances between neighbors for the current sample
-        allNeigh = {}   # neighbors of each solution
-        # allNeigh = {}  # neighbors of s1: {key: s1.itr_id, value = {neigh} } (not needed)
-        mx_pair = [None, None, 0.]    # ids of sols defining most distant neighbors, and the corresponding distance
-        n_sols = len(self.sols)
-        for ind1 in range(n_sols - 1):  # last solution has no neighbor
+        n_sols = len(self.sols)       # number of Pareto-sols computed so far
+        for s in self.sols:     # initialize neigh and dist. for each solution
+            self.neigh.update({s.itr_id: [None, float('inf')]})
+        for ind1 in range(n_sols - 1):  # last solution has no next to compara with
             s1 = self.sols[ind1]
-            # neigh = {}  # neighbors of s1: {key: s2.itr_id, value = dist}
-            min_dist = float('inf')     # min Linf-distance between s1 and other (only later) solutions
-            neigh_pair = [None, None, 0.]   # neighbor of s1
-            # print(f'ind1 {ind1} : s1.itr_id {s1.itr_id}')
-            pass
+            id1 = s1.itr_id
+            neigh = self.neigh[id1]
+            s1Dist = neigh[1]     # min Linf-distance between s1 and the other (found so far) closest solutions
+            # if id1 == 12:
+            #     print('trap')
+            #     pass
+            # pass
             for ind2 in range(ind1 + 1, n_sols):    # find the closest neighbor
                 s2 = self.sols[ind2]
+                id2 = s2.itr_id
                 # print(f'ind1 {ind1}, ind2 {ind2}: s1.itr_id {s1.itr_id}, s2.itr_id {s2.itr_id}')
-                if s1.itr_id == s2.itr_id:
+                if id1 == id2:
                     raise Exception(f'ParRep::solDistr() - duplicate itr_id: {s1.itr_id}.')
-                dist = 0.   # distance between the current pair of solutions
+                dist = 0.   # Linf distance between the current pair of solutions
                 for (a1, a2) in zip(s1.a_vals, s2.a_vals):  # loop over achievements of criteria
                     edge = abs(a1 - a2)
                     dist = max(dist, edge)      # Linf dist defined by the max edge
-                if dist < min_dist:     # a closer (than any previously found) neighbor found
-                    min_dist = dist     # distance to the closest neighbor
-                    neigh_pair = [s1.itr_id, s2.itr_id, dist]   # itr_id seq differs from sol[] indices
-                minDist = min(minDist, dist)
-                # allDist.append(dist)
-                # neigh.update({s2.itr_id: dist})
-            if maxDist < min_dist:  # most distant sol-pair found
-                maxDist = min_dist
-                mx_pair = neigh_pair
-            allNeigh.update({s1.itr_id: neigh_pair})
-        # self.neighDist.update({self.sampleSeq: [maxDist, minDist, n_neigh, allDist]})
-        self.allNeigh.update({self.sampleSeq: allNeigh})    # info on all current neighbors
-        self.neighInf.update({self.cur_itr: [maxDist, mx_pair[0], mx_pair[1], minDist]})    # info on all current neighbors
+                if dist < s1Dist:     # a closer (than any previously found) s1 neighbor found
+                    s1Dist = dist     # distance to the closest neighbor
+                    self.neigh.update({id1: [id2, s1Dist]})     # update neighbor of s1
+                s2prev = self.neigh.get(id2)
+                prevDist = s2prev[1]
+                if dist < prevDist:
+                    self.neigh.update({id2: [id1, dist]})     # update neighbor of s2
+                    pass
+                # continue with next s2
+            pass
+            # continue with next s1
+        # finished all pairs of current solutions
+        maxDist = 0.    # max distance between closest neighbors
+        minDist = float('inf')  # min distance between closest neighbors
+        mxPair = []     # consists of: itr_id oth other solution and the distance between them
+        self.distances = []     # to clean previous valuees
+        for id1, pair in self.neigh.items():
+            dist = pair[1]
+            # maybe store here the pairs of sols distant by more than the (currently desired?) gap
+            self.distances.append(dist)  # distribution of distances (for plots?)
+            if dist > maxDist:
+                maxDist = dist
+                mxPair = [id1, pair[0]]
+            if dist < minDist:
+                minDist = dist
+        #
+        self.neighInf.update({self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors
         # print(f'\nSample {self.sampleSeq} of neighbor solutions: '
-        #       f'maxDist {maxDist:.3f} ({mx_pair[0]}, {mx_pair[1]}), minDist {minDist:.3f}')
+        #       f'maxDist {maxDist:.3f} ({mxPair[0]}, {mxPair[1]}), minDist {minDist:.3f}')
         self.sampleSeq += 1
         pass
 
