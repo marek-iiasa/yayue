@@ -357,6 +357,38 @@ class Plots:
         plt.tight_layout()
         self.figures['stageKDE'] = fig
 
+        distrAll = self.wflow.par_rep.allDist
+        print(f'{len(distrAll)} distribution samples available')
+        itr = n_pairs = min_dist = max_dist = 0
+        dist = []
+        for itr, dist in distrAll.items():
+            n_pairs = len(dist)
+            min_dist = dist[0]
+            max_dist = dist[-1]
+            # print(f'{itr= }, {n_pairs = }, {min_dist = }, {max_dist = }')
+            pass
+        pass
+
+        # plot two distributions of the last sample (whole, and without small [currently 2.5] items)
+        small = 2.5     # to be removed from the distribution for the second histogram
+        for iFig, cut_off in enumerate([0, small]):
+            if iFig > 0:
+                n_rm = 0
+                while dist[0] < cut_off:
+                    dist.pop(0)
+                    n_rm += 1
+                print(f'{n_rm} distances smaller than {cut_off} removed from the distribution.')
+                n_pairs = len(dist)
+            print(f'Histogram for {itr= }, {n_pairs = }, {cut_off = }, {max_dist = }')
+            fig = plt.figure(figsize=(7, 3.2), dpi=self.dpi)
+            fig.canvas.manager.set_window_title(f'Distances between {n_pairs} pairs of neighbors at {itr =}.')
+            ax = fig.add_subplot(1, 1, 1)
+            ax.hist(dist, bins=25, range=(int(cut_off), int(max_dist)+1), density=True, linewidth=0.5)
+            self.figures[f'PFdistr{iFig}'] = fig
+            pass
+        pass
+
+
     def plot3D(self, only_centres=False):
         if self.n_crit < 3:  # just return for bi-criteria problem
             return

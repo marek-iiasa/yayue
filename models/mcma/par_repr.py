@@ -83,12 +83,13 @@ class ParRep:     # representation of Pareto set
         self.sampleSeq = 0    # number of distribution samples stored
         self.neigh = {}         # neighbors in the current solution set {itr_id1: [itr_id2, dist]}
         self.distances = []     # distances between current neighbors
+        self.allDist = {}     # copies of distances stored for each sample
         self.neighInf = {}    # info on distances between Pareto solutions found so far
         self.log_min = 100    # min size in the current block
         self.log_max = 0      # max size in the current block
         self.log_mxCubes = 0  # max number of cubes in the current block
-        self.log_block = 1000
-        self.log_next = 1000
+        self.log_block = 100
+        self.log_next = 100
         self.log_dict = {}
         self.from_cube = False   # next preferences from a cube
         self.n_corner = 0       # number of already generated selfish solutions
@@ -148,6 +149,9 @@ class ParRep:     # representation of Pareto set
             if dist < minDist:
                 minDist = dist
         #
+        self.distances.sort()
+        print(f'Distances: items {len(self.distances)}, min {self.distances[0]}, max {self.distances[-1]}')
+        self.allDist.update({self.cur_itr: self.distances})  # distances stored for each sample
         self.neighInf.update({self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors
         # print(f'\nSample {self.sampleSeq} of neighbor solutions: '
         #       f'maxDist {maxDist:.3f} ({mxPair[0]}, {mxPair[1]}), minDist {minDist:.3f}')
