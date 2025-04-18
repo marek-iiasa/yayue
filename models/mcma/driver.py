@@ -108,9 +108,9 @@ def driver(cfg):
                 # wflow.par_rep.solDistr()
                 pass
             i_stage = wflow.itr_sol(mc_part)  # process solution, set next stage in wflow, and return it
-            if n_iter < 20 and i_stage > 3:
-                wflow.par_rep.solDistr()
-                pass
+            # if n_iter < 20 and i_stage > 3:
+            #     wflow.par_rep.solDistr()
+            #     pass
         else:
             print(f'\niter {n_iter}: optimization failed, solution disregarded.        -------------------------------')
         # rep.itr(mc_part)  # driver for sol-processing: update crit. attr., store sol, check domination & close sols

@@ -81,15 +81,15 @@ class ParRep:     # representation of Pareto set
         self.cur_cube = None  # cube_id of the last used cube
         self.cur_itr = None   # current itr_id
         self.sampleSeq = 0    # number of distribution samples stored
-        self.neigh = {}         # neighbors in the current solution set {itr_id1: [itr_id2, dist]}
+        self.neigh = {}       # neighbors in the current solutions set {itr_id1: [itr_id2, dist]} (dominated excluded)
         self.distances = []     # distances between current neighbors
         self.allDist = {}     # copies of distances stored for each sample
-        self.neighInf = {}    # info on distances between Pareto solutions found so far
+        self.neighInf = {}    # distances between Pareto solutions found at the curent iter
         self.log_min = 100    # min size in the current block
         self.log_max = 0      # max size in the current block
         self.log_mxCubes = 0  # max number of cubes in the current block
-        self.log_block = 100
-        self.log_next = 100
+        self.log_block = 1000
+        self.log_next = 1000
         self.log_dict = {}
         self.from_cube = False   # next preferences from a cube
         self.n_corner = 0       # number of already generated selfish solutions
@@ -102,11 +102,18 @@ class ParRep:     # representation of Pareto set
     def solDistr(self):     # distribution of distances between neighbor solutions
         #  Note: neighbor (for each solution) is the closest other solution
         n_sols = len(self.sols)       # number of Pareto-sols computed so far
+        self.neigh = {}         # renew the working dict for neighbors
         for s in self.sols:     # initialize neigh and dist. for each solution
             self.neigh.update({s.itr_id: [None, float('inf')]})
-        for ind1 in range(n_sols - 1):  # last solution has no next to compara with
+        for ind1 in range(n_sols - 1):  # the last solution has no next to compare with
             s1 = self.sols[ind1]
             id1 = s1.itr_id
+            # if id1 == 98 or id1 == 119:
+            #     print(f'trap s1: {id1 = }, {n_sols = }')
+            #     pass
+            if s1.domin < 0:
+                print(f'dominated solution s1 {id1}i skipped in solDistr().')
+                continue    # skip dominated solutions
             neigh = self.neigh[id1]
             s1Dist = neigh[1]     # min Linf-distance between s1 and the other (found so far) closest solutions
             # if id1 == 12:
@@ -116,6 +123,11 @@ class ParRep:     # representation of Pareto set
             for ind2 in range(ind1 + 1, n_sols):    # find the closest neighbor
                 s2 = self.sols[ind2]
                 id2 = s2.itr_id
+                # if id1 in [97, 98, 99] and id2 in [118, 119, 120]:
+                #     print(f'trap s2: {id1 = }, {id2 = }, {n_sols = }')
+                #     pass
+                if s2.domin < 0:
+                    raise Exception(f'ParRep::solDistr() - dominated solution in self.sols (id: {id2}).')
                 # print(f'ind1 {ind1}, ind2 {ind2}: s1.itr_id {s1.itr_id}, s2.itr_id {s2.itr_id}')
                 if id1 == id2:
                     raise Exception(f'ParRep::solDistr() - duplicate itr_id: {s1.itr_id}.')
@@ -126,10 +138,12 @@ class ParRep:     # representation of Pareto set
                 if dist < s1Dist:     # a closer (than any previously found) s1 neighbor found
                     s1Dist = dist     # distance to the closest neighbor
                     self.neigh.update({id1: [id2, s1Dist]})     # update neighbor of s1
-                s2prev = self.neigh.get(id2)
-                prevDist = s2prev[1]
+                s2prev = self.neigh.get(id2)    # previosly found neighbor of s2
+                prevDist = s2prev[1]        # previously found distance between si2 and and this neighbor
                 if dist < prevDist:
                     self.neigh.update({id2: [id1, dist]})     # update neighbor of s2
+                    # if id2 == 98:
+                    #     raise Exception(f'ParRep::solDistr() - sol {id2 = }')
                     pass
                 # continue with next s2
             pass
@@ -298,6 +312,8 @@ class ParRep:     # representation of Pareto set
     def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous distinct-solution
         verb = self.cfg.get('verb') > 2
         for s1 in self.sols:
+            if s1.domin < 0:
+                continue    # skip dominated solutions
             if s.itr_id == s1.itr_id:
                 continue    # skip self (already included in self.sols)
             n_cube = aCube(self.mc, s1, s)
