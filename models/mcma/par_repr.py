@@ -99,7 +99,7 @@ class ParRep:     # representation of Pareto set
 
         print('Initializing Pareto-set exploration. --------------------')
 
-    def solDistr(self):     # distribution of distances between neighbor solutions
+    def solDistr(self):     # distribution of distances between neighbor solutions, called by sizeLog
         #  Note: neighbor (for each solution) is the closest other solution
         n_sols = len(self.sols)       # number of Pareto-sols computed so far
         self.neigh = {}         # renew the working dict for neighbors
@@ -141,14 +141,11 @@ class ParRep:     # representation of Pareto set
                 s2prev = self.neigh.get(id2)    # previosly found neighbor of s2
                 prevDist = s2prev[1]        # previously found distance between si2 and and this neighbor
                 if dist < prevDist:
-                    self.neigh.update({id2: [id1, dist]})     # update neighbor of s2
-                    # if id2 == 98:
-                    #     raise Exception(f'ParRep::solDistr() - sol {id2 = }')
-                    pass
+                    self.neigh.update({id2: [id1, dist]})     # update previously found s2 neighbor
                 # continue with next s2
-            pass
             # continue with next s1
-        # finished all pairs of current solutions
+            pass
+        # finished all pairs of Pareto-solutions found so far
         maxDist = 0.    # max distance between closest neighbors
         minDist = float('inf')  # min distance between closest neighbors
         mxPair = []     # consists of: itr_id oth other solution and the distance between them
@@ -164,7 +161,8 @@ class ParRep:     # representation of Pareto set
                 minDist = dist
         #
         self.distances.sort()
-        print(f'Distances: items {len(self.distances)}, min {self.distances[0]}, max {self.distances[-1]}')
+        print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
+              f'max {self.distances[-1]:.2e}')
         self.allDist.update({self.cur_itr: self.distances})  # distances stored for each sample
         self.neighInf.update({self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors
         # print(f'\nSample {self.sampleSeq} of neighbor solutions: '
@@ -179,7 +177,7 @@ class ParRep:     # representation of Pareto set
         elif self.wflow.is_par_rep:   # set preferences from the selected cube
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
-                self.progr.updCubeInf(cube.size, False)
+                self.progr.updCubeInf(cube.size, False)     # check if next comp-stage was reached
             # else:
             #     self.progr.updCubeInf(0.)
             if cube is None:

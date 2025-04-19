@@ -319,7 +319,7 @@ class Plots:
         if nrows * ncols < n_plots:
             nrows += 1
         fig = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
-        fig.canvas.manager.set_window_title(f'Distribution of distance between neighbour solutions.')
+        fig.canvas.manager.set_window_title(f'Distribution of cuboids sizes.')
 
         for step in self.wflow.par_rep.progr.cubes2proc:
             if len(self.wflow.par_rep.progr.cubes2proc[step][-1]) == 0:
@@ -358,36 +358,76 @@ class Plots:
         self.figures['stageKDE'] = fig
 
         distrAll = self.wflow.par_rep.allDist
-        print(f'{len(distrAll)} distribution samples available')
-        itr = n_pairs = min_dist = max_dist = 0
-        dist = []
-        for itr, dist in distrAll.items():
+        n_plots = n_samples = len(distrAll)
+        print(f'{n_samples} distribution samples available')
+        # dist = []
+        small = 2.5     # smaller items to be removed from the distribution for the second histogram
+        n_cols = 3   # 3 histograms for each row
+        # n_rows = max(1, n_samples // n_cols)
+        n_rows = n_samples // n_cols
+        if n_rows * n_cols < n_samples:
+            n_rows += 1
+        # fig1 = plt.figure(figsize=(18, 8))  # fig with the whole distributions (for all samples)
+        # fig2 = plt.figure(figsize=(18, 8))  # fig with the distributions without small distances (for all samples)
+        # fig1 = plt.figure(figsize=(18, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
+        # fig2 = plt.figure(figsize=(18, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
+        fig1 = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
+        fig2 = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
+        # fig1 = plt.figure(figsize=(18, mx_hight), dpi=self.dpi, tight_layout=True)
+        # fig2 = plt.figure(figsize=(18, mx_hight), dpi=self.dpi, tight_layout=True)
+        fig1.canvas.manager.set_window_title(f'Distributions of all distance between neighbour solutions.')
+        fig2.canvas.manager.set_window_title(f'Distributions of distance between neighbour solutions greater '
+                                             f'than {small}.')
+        # cur_plot = cur_col = cur_row = 1   # counted from 1
+        cur_plot = 1   # counted from 1
+        for i_sample, (itr, dist) in enumerate(distrAll.items()):
             n_pairs = len(dist)
             min_dist = dist[0]
             max_dist = dist[-1]
-            # print(f'{itr= }, {n_pairs = }, {min_dist = }, {max_dist = }')
-            pass
-        pass
+            print(f'sample {i_sample}, {itr = }, {n_pairs = }, min_dist {min_dist:.2e}, max_dist {max_dist:.2e}')
+            dist2 = dist.copy()
+            n_rm = 0
+            while dist2[0] < small:
+                dist2.pop(0)
+                n_rm += 1
+            print(f'{n_rm} distances smaller than {small} removed from the second distribution.')
+            min_dist2 = dist2[0]
 
-        # plot two distributions of the last sample (whole, and without small [currently 2.5] items)
-        small = 2.5     # to be removed from the distribution for the second histogram
-        for iFig, cut_off in enumerate([0, small]):
-            if iFig > 0:
-                n_rm = 0
-                while dist[0] < cut_off:
-                    dist.pop(0)
-                    n_rm += 1
-                print(f'{n_rm} distances smaller than {cut_off} removed from the distribution.')
-                n_pairs = len(dist)
-            print(f'Histogram for {itr= }, {n_pairs = }, {cut_off = }, {max_dist = }')
-            fig = plt.figure(figsize=(7, 3.2), dpi=self.dpi)
-            fig.canvas.manager.set_window_title(f'Distances between {n_pairs} pairs of neighbors at {itr =}.')
-            ax = fig.add_subplot(1, 1, 1)
-            ax.hist(dist, bins=25, range=(int(cut_off), int(max_dist)+1), density=True, linewidth=0.5)
-            self.figures[f'PFdistr{iFig}'] = fig
-            pass
-        pass
+            # plot two distributions of the sample (whole, and without small [currently 2.5] items)
+            print(f'Histogram 0: {itr= }, n_pairs {len(dist) }, min_dist {min_dist: .2e} max_dist {max_dist: .2e}')
+            print(f'Histogram 1: {itr= }, n_pairs {len(dist2) }, min_dist {min_dist2: .2e} max_dist {max_dist: .2e}')
+            # fig = plt.figure(figsize=(7, 3.2), dpi=self.dpi)
+            # fig.canvas.manager.set_window_title(f'Distances between {n_pairs} pairs of neighbors at {itr =}.')
+            # ax = fig1.subplot(n_rows, n_cols, cur_plot)   # subplot works only with pyplot
+            ax = fig1.add_subplot(n_rows, n_cols, cur_plot)
+            ax.hist(dist, bins=20, range=(0, int(max_dist) + 1), density=True, linewidth=0.5)
+            ax = fig2.add_subplot(n_rows, n_cols, cur_plot)
+            ax.hist(dist2, bins=20, range=(int(small), int(max_dist) + 1), density=True, linewidth=0.5)
 
+            # plot two distributions of the sample (whole, and without small [currently 2.5] items)
+            # in fig1 and fig2, respectively
+            # fig = fig1
+            # for iFig, cut_off in enumerate([0, small]):
+            #     if iFig > 0:
+            #         fig = fig2
+            #         n_rm = 0
+            #         while dist[0] < cut_off:
+            #             dist.pop(0)
+            #             n_rm += 1
+            #         print(f'{n_rm} distances smaller than {cut_off} removed from the distribution.')
+            #         n_pairs = len(dist)
+            #     print(f'Histogram for {itr= }, {n_pairs = }, {cut_off = }, {max_dist = }')
+            #     # fig = plt.figure(figsize=(7, 3.2), dpi=self.dpi)
+            #     # fig.canvas.manager.set_window_title(f'Distances between {n_pairs} pairs of neighbors at {itr =}.')
+            #     ax = fig.add_subplot(n_rows, n_cols, cur_plot)
+            #     # ax = fig.add_subplot(n_cols, n_rows, cur_plot)
+            #     ax.hist(dist, bins=15, range=(int(cut_off), int(max_dist)+1), density=True, linewidth=0.5)
+            pass
+            # plot next sample
+            cur_plot += 1
+        pass
+        self.figures[f'PFdistr0'] = fig1
+        self.figures[f'PFdistr1'] = fig2
 
     def plot3D(self, only_centres=False):
         if self.n_crit < 3:  # just return for bi-criteria problem
