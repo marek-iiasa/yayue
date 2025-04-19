@@ -112,7 +112,7 @@ fig2.suptitle('Kernel density estimation (KDE) and Empirical cumulative distribu
 c1, c2, c3, c4 = sns.color_palette('Set1', 4)  # best for 4 colors: either Dark2 or Set1
 
 # first plot: daily prices, twin axis ax3, ax3a
-ax3 = fig2.add_subplot(221)  # per-col, per_row, subplot numebr (starts from 1)
+ax3 = fig2.add_subplot(221)  # per-col, per_row, subplot number (starts from 1)
 ax3a = plt.twinx()
 ax3a.grid(False)
 ax3.set(xlim=(-25, 150))
