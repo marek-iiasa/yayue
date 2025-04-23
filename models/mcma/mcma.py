@@ -120,7 +120,15 @@ def main():
     print('\nStarted at: ', str(tstart))
     print('Finished at:', str(tend))
     time_diff = tend - tstart
+    # Format timedelta as hours:minutes:seconds
+    hours, remainder = divmod(time_diff.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Display in HH:MM:SS format
+    formatted_time = f'Wall-clock execution time: {int(hours):02}:{int(minutes):02}:{int(seconds):02}'
     print(f'Wall-clock execution time: {time_diff.seconds} sec.')
+    print(formatted_time)  # Output: 01:01:01
+
 
     if redir_stdo:  # close the redirected output
         f_out.close()

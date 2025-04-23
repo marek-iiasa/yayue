@@ -13,7 +13,7 @@ class ParProg:
         self.steps = []             # list of reporting steps (max distances between neighbors
         self.cur_step = 0           # index of the current step
         self.cubes2proc = {}        # cubes waiting for processing at each (progress) step
-        # self.neigh = {}             # neighbors for each step
+        # self.neigh = {}           # neighbors for each step
         self.df_stages = None
         #
         self.ini_steps()            # initialize steps
@@ -69,7 +69,7 @@ class ParProg:
 
 
 # noinspection SpellCheckingInspection
-class ParRep:     # representation of Pareto set
+class ParRep:     # representation of the Pareto set
     def __init__(self, wflow):         # initialize corners by regularized selfish solutions
         self.wflow = wflow        # WrkFlow object
         self.mc = wflow.mc        # CtrMca object
@@ -85,11 +85,11 @@ class ParRep:     # representation of Pareto set
         self.distances = []     # distances between current neighbors
         self.allDist = {}     # copies of distances stored for each sample
         self.neighInf = {}    # distances between Pareto solutions found at the curent iter
-        self.log_min = 100    # min size in the current block
-        self.log_max = 0      # max size in the current block
+        self.log_min = 100    # min cube-size in the current block
+        self.log_max = 0      # max cube-size in the current block
         self.log_mxCubes = 0  # max number of cubes in the current block
-        self.log_block = 1000
-        self.log_next = 1000
+        self.log_block = self.mc.opt('logBlock', 1000)
+        self.log_next = self.log_block
         self.log_dict = {}
         self.from_cube = False   # next preferences from a cube
         self.n_corner = 0       # number of already generated selfish solutions
@@ -139,16 +139,16 @@ class ParRep:     # representation of Pareto set
                     s1Dist = dist     # distance to the closest neighbor
                     self.neigh.update({id1: [id2, s1Dist]})     # update neighbor of s1
                 s2prev = self.neigh.get(id2)    # previosly found neighbor of s2
-                prevDist = s2prev[1]        # previously found distance between si2 and and this neighbor
+                prevDist = s2prev[1]        # previously found distance between s2 and this neighbor
                 if dist < prevDist:
                     self.neigh.update({id2: [id1, dist]})     # update previously found s2 neighbor
-                # continue with next s2
-            # continue with next s1
+                # continue with the next s2
+            # continue with the next s1
             pass
         # finished all pairs of Pareto-solutions found so far
         maxDist = 0.    # max distance between closest neighbors
         minDist = float('inf')  # min distance between closest neighbors
-        mxPair = []     # consists of: itr_id oth other solution and the distance between them
+        mxPair = []     # consists of: itr_id the other solution and the distance between them
         self.distances = []     # to clean previous valuees
         for id1, pair in self.neigh.items():
             dist = pair[1]
@@ -171,13 +171,13 @@ class ParRep:     # representation of Pareto set
         pass
 
     def pref(self, neutral=False):     # entry point for each new iteration
-        if neutral:     # set A/R for neutral solution
+        if neutral:     # set A/R for the neutral solution
             for cr in self.mc.cr:
                 cr.setAR()
         elif self.wflow.is_par_rep:   # set preferences from the selected cube
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
-                self.progr.updCubeInf(cube.size, False)     # check if next comp-stage was reached
+                self.progr.updCubeInf(cube.size, False)     # check if the next comp-stage was reached
             # else:
             #     self.progr.updCubeInf(0.)
             if cube is None:
@@ -276,12 +276,12 @@ class ParRep:     # representation of Pareto set
             toPrune = []    # tmp list of solutions dominated by the current sol
             for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
                 cmp_ret = new_sol.cmp(s2)
-                if cmp_ret == 0:    # is Pareto
+                if cmp_ret == 0:    # is Pareto?
                     continue    # check next solution
                 elif cmp_ret > 0:   # new_sol dominates s2
                     if self.cfg.get('verb') > -1:
                         print(f'\t-------------     current solution[{itr_id}] dominates solution[{s2.itr_id}].')
-                    s2.domin = -itr_id      # mark s2 as dominated by the new solution, and continue checking next sol.
+                    s2.domin = -itr_id      # mark s2 as dominated by the new solution and continue checking next sol.
                     toPrune.append(s2)
                 else:           # new_sol is dominated by s2
                     if self.cfg.get('verb') > -1:
@@ -301,13 +301,13 @@ class ParRep:     # representation of Pareto set
                 self.sols.remove(s2)
         return is_pareto
 
-    def updCubes(self, s):  # regenerate list of cube candidates, if needed
+    def updCubes(self, s):  # regenerate the list of cube candidates, if needed
         if len(self.cubes.cand):
-            return  # do nothing, if there are waiting cubes
+            return  # do nothing if there are waiting cubes
         # write and call a dedicated cube generator (of sizes depending on the current stage)
         raise Exception('ParRep::updCubes() - not implemented yet.')
 
-    def mk_cubes(self, s):  # generate cubes defined by the new solution s with each of previous distinct-solution
+    def mk_cubes(self, s):  # generate cubes defined by the new solution with each previous distinct-solution
         verb = self.cfg.get('verb') > 2
         for s1 in self.sols:
             if s1.domin < 0:
@@ -333,7 +333,7 @@ class ParRep:     # representation of Pareto set
         else:
             mx_size = 0
         print('\n')
-        self.progr.updCubeInf(mx_size, True)   # store info on the unprocessed cubes, if any remain
+        self.progr.updCubeInf(mx_size, True)   # store info on the unprocessed cubes if any remain
         self.progr.summary()   # process info on the computation progress
 
         self.solDistr()     # generate final sample of distribution of distances between neighbor solutions
