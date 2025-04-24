@@ -96,8 +96,8 @@ def main():
     # process the run configuration options and configure the working space
     config = Config()    # process yaml config. file
     cfg = config.data   # dict with config. options
-    if cfg.get('verb') > 1:
-        print(f'Configuration options after processing:\n\t{cfg}')
+    # if cfg.get('verb') > 1:
+    #     print(f'Configuration options after processing:\n\t{cfg}')
 
     # optional standard output redirection
     default_stdout = sys.stdout
@@ -113,6 +113,7 @@ def main():
         print(f'Stdout redirected to: "{fn_out}".')
         f_out = open(fn_out, 'w')
         sys.stdout = f_out
+        print(f'User-defined cfg-options:\n{config.usrOptions}')
 
     driver(cfg)  # driver and all needed objects of classes get all needed params from the cfg dict
 
@@ -126,7 +127,7 @@ def main():
 
     # Display in HH:MM:SS format
     formatted_time = f'Wall-clock execution time: {int(hours):02}:{int(minutes):02}:{int(seconds):02}'
-    print(f'Wall-clock execution time: {time_diff.seconds} sec.')
+    # print(f'Wall-clock execution time: {time_diff.seconds} sec.')
     print(formatted_time)  # Output: 01:01:01
 
 
@@ -136,7 +137,8 @@ def main():
         print(f'\nRedirected stdout stored in {fn_out}. Now writing to the console.')
         print('\nStarted at: ', str(tstart))
         print('Finished at:', str(tend))
-        print(f'Wall-clock execution time: {time_diff.seconds} sec.')
+        # print(f'Wall-clock execution time: {time_diff.seconds} sec.')
+        print(formatted_time)  # Output: 01:01:01
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ class Config:
     def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         self.f_sys = './../Sys/cfg_sys.yml'    # full path to the system config file
         self.f_usr = './cfg.yml'    # usr config
+        self.usrOptions = ''    # user-defined (read from self.f_user file) options
         self.data = None      # config data read from both Sys and usr config files
         self.rd_cfg(self.f_sys)
         self.rd_cfg(self.f_usr)   # usr_cfg is in the current dir
@@ -36,6 +37,8 @@ class Config:
                 usr_data = yaml.load(f, Loader=SafeLoader)
                 for k, v in usr_data.items():   # add or over-write options by options defined in cfg_usr
                     self.data.update({k: v})
+                    self.usrOptions += f'\t{k}: {v}\n'
+                print(f'User-defined cfg-options:\n{self.usrOptions}')
 
     def sys_default(self):       # set default values of Sys/cfg
         sysDefaults = {'resDir': 'Results/', 'mxIter': 1000, 'showPlot': True, 'neutral': True, 'verb': 0}
