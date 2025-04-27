@@ -252,8 +252,9 @@ class ParRep:     # representation of the Pareto set
 
         is_close = False
         s_close = None
+        tolClose = self.cfg.get('tolClose', 0.01)
         for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
-            if new_sol.is_close(s2):
+            if new_sol.is_close(s2, tolClose):
                 is_close = True
                 s_close = s2
                 break

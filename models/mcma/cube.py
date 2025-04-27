@@ -54,13 +54,13 @@ class ParSol:     # one Pareto solution
             return -1   # current sol is dominated by s2
         return 0    # self is Pareto, i.e., neither dominating nor dominated
 
-    def is_close(self, s2):     # set self.closeTo and return True, if self is close to solution s2
+    def is_close(self, s2, minDist):     # set self.closeTo and return True, if self is close to solution s2
         self.distMx = 0.
         for (a1, a2) in zip(self.a_vals, s2.a_vals):  # loop over scaled values of criteria
             dist = abs(a1 - a2)
             # minDist = 1.0   # rather demanding in [0, 100] CAF scale
-            minDist = 0.001
-            if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close/duplicated solutions
+            # minDist = 0.001
+            if dist > minDist:   # L-inf (Tchebyshev) norm used for defining close solutions
                 self.distMx = None
                 return False
             self.distMx = max(self.distMx, dist)
@@ -73,8 +73,8 @@ class ParSol:     # one Pareto solution
 class Cubes:     # collection of aCubes
     def __init__(self, parRep):
         self.parRep = parRep    # Pareto-set representation object
-        self.sols = parRep.sols    # Pareto solutions (without duplicates)
-        self.clSols = parRep.clSols    # Pareto solutions (without duplicates)
+        self.sols = parRep.sols    # Pareto solutions (without close (pruned) solutions)
+        self.clSols = parRep.clSols    # Pareto solutions (without close (pruned) solutions)
         self.min_size = float(parRep.mc.opt('mxGap', 5))    # cube's min. LInf size for including the cube to analysis
         self.lastSize = None    # size of last-selected cube (experimental)
         self.all_cubes = {}     # all generated cubes: keys defined by cube's id
@@ -182,7 +182,7 @@ class Cubes:     # collection of aCubes
     def lst_cubes(self):  # list cubes
         print('\nSummary of cubes:')
         print(f'\t{len(self.sols)} unique Pareto solutions generated.')
-        print(f'\t{len(self.clSols)} duplicate/close Pareto solutions generated.')
+        print(f'\t{len(self.clSols)} close Pareto solutions pruned on-the-fly.')
         print(f'\t{len(self.all_cubes)} cubes generated.')
         print(f'\t{len(self.cand)} cubes remain for exploration.')
         print(f'\t{self.small} small cubes ignored.')
