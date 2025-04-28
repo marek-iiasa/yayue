@@ -84,7 +84,7 @@ class ParRep:     # representation of the Pareto set
         self.neigh = {}       # neighbors in the current solutions set {itr_id1: [itr_id2, dist]} (dominated excluded)
         self.distances = []     # distances between current neighbors
         self.allDist = {}     # copies of distances stored for each sample
-        self.neighInf = {}    # distances between Pareto solutions found at the curent iter
+        self.neighInf = {}    # key: cur_itr, [max_dist, itr_id1, itr_id2, min_dist]
         self.log_min = 100    # min cube-size in the current block
         self.log_max = 0      # max cube-size in the current block
         self.log_mxCubes = 0  # max number of cubes in the current block
@@ -103,8 +103,8 @@ class ParRep:     # representation of the Pareto set
         #  Note: neighbor (for each solution) is the closest other solution
         n_sols = len(self.sols)       # number of Pareto-sols computed so far
         self.neigh = {}         # renew the working dict for neighbors
-        for s in self.sols:     # initialize neigh and dist. for each solution
-            self.neigh.update({s.itr_id: [None, float('inf')]})
+        for ind1 in range(n_sols - 1):  # the last solution has no next to compare with
+            self.neigh.update({self.sols[ind1].itr_id: [None, float('inf')]})
         for ind1 in range(n_sols - 1):  # the last solution has no next to compare with
             s1 = self.sols[ind1]
             id1 = s1.itr_id
@@ -138,10 +138,13 @@ class ParRep:     # representation of the Pareto set
                 if dist < s1Dist:     # a closer (than any previously found) s1 neighbor found
                     s1Dist = dist     # distance to the closest neighbor
                     self.neigh.update({id1: [id2, s1Dist]})     # update neighbor of s1
+                '''
+                # The below prevents finding another (say s3) neighbor of s2, if s2 is closer to s1 than s2 to s3.
                 s2prev = self.neigh.get(id2)    # previosly found neighbor of s2
                 prevDist = s2prev[1]        # previously found distance between s2 and this neighbor
                 if dist < prevDist:
                     self.neigh.update({id2: [id1, dist]})     # update previously found s2 neighbor
+                '''
                 # continue with the next s2
             # continue with the next s1
             pass
@@ -161,12 +164,12 @@ class ParRep:     # representation of the Pareto set
                 minDist = dist
         #
         self.distances.sort()
-        print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
-              f'max {self.distances[-1]:.2e}')
+        # print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
+        #       f'max {self.distances[-1]:.2e}')
         self.allDist.update({self.cur_itr: self.distances})  # distances stored for each sample
         self.neighInf.update({self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors
-        # print(f'\nSample {self.sampleSeq} of neighbor solutions: '
-        #       f'maxDist {maxDist:.3f} ({mxPair[0]}, {mxPair[1]}), minDist {minDist:.3f}')
+        print(f'\nSample {self.sampleSeq} of {len(self.distances)} neighbor solutions: '
+              f'maxDist {maxDist:.3f} ({mxPair[0]}, {mxPair[1]}), minDist {minDist:.3f}')
         self.sampleSeq += 1
         pass
 
