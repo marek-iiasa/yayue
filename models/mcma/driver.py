@@ -50,7 +50,7 @@ def driver(cfg):
     n_iter = 0
     max_itr = wflow.mc.opt('mxIter', 100)
     print(f'Maximum number of iterations: {max_itr}')
-    while n_iter < max_itr:   # just for safety; should not be needed for a proper stop criterion
+    while n_iter <= max_itr:   # just for safety; should not be needed for a proper stop criterion
         # i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {wflow.cur_stage} -----------------------------------------')
         i_stage = wflow.itr_start(n_iter)   # set preferences, return current stage
@@ -121,11 +121,10 @@ def driver(cfg):
         if i_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
             print(f'\nFinished the analysis for all generated/specified preferences.')
             break       # exit the iteration loop
-        n_iter += 1
-        if n_iter > max_itr:
-            print(f'\nMax iters {max_itr} reached; breaking the iteration loop.\n')
+        if n_iter >= max_itr - 1:    # n_itr counted from 0 (used also as sol.id), thus the last n_iter == max_itr - 1
+            print(f'\nMax iters {max_itr} done; breaking the iteration loop.\n')
             break
-        # todo: add external break control
+        n_iter += 1
         stop_file = 'stop.txt'
         if os.path.exists(stop_file):
             print(f"\nIteration break requested through file '{stop_file}' after {n_iter} itrs.")
