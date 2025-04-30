@@ -457,8 +457,8 @@ class Plots:
                                s=60, edgecolor='black', linewidths=1.5, zorder=5,
                                marker=self.def_markers[clst % len(self.def_markers)])
 
-            # ax.view_init(elev=15, azim=45, roll=0)     # front origin: (100, 100)
-            ax.view_init(elev=15, azim=225, roll=0)     # front origin: (0, 0)
+            ax.view_init(elev=15, azim=45, roll=0)     # front origin: (100, 100)
+            # ax.view_init(elev=15, azim=225, roll=0)     # front origin: (0, 0); worse than that above
             mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
             for (idx, seq) in enumerate(self.seq):
                 # noinspection PyTypeChecker
