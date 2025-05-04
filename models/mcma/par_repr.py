@@ -200,22 +200,41 @@ class ParRep:     # representation of the Pareto set
                 self.wflow.cur_stage = 6  # all ARs processed, terminate the analysis
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
-        # it = s.itr_id
-        # it1 = s1.itr_id
-        # it2 = s2.itr_id
+        if self.mc.opt('neighZN', False):
+            it = s.itr_id
+            it1 = s1.itr_id
+            it2 = s2.itr_id
+            r = 0.
+            for (i, cr) in enumerate(self.mc.cr):
+                r = max(r, abs(s1.vals[i] - s2.vals[i]))
+            for (i, cr) in enumerate(self.mc.cr):
+                v = s.vals[i]
+                v1 = s1.vals[i]
+                v2 = s2.vals[i]
+                if not max(v1, v2) - r <= v <= min(v1, v2) + r:
+                    print(f'sol {it} is outside sols ({it1}, {it2}): crit {cr.name}: r {r:.2f} v {v:.2f}, '
+                          f'(v1, v2) = ({v1:.2f}, {v2:.2f)}.')
+                    return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
+            print(f'sol {it} {s.vals} is inside sols {it1} {s1.vals} and {it2} {s1.vals}; r {r:.2f}')
+            return True     # s is inside the cube(s1, s2)
+        #   end of using the ZN definition of neighbors
+
+        # use the standard definition of empty cubes, i.e., no other solution in the cube defined by s1 and s2
         for (i, cr) in enumerate(self.mc.cr):
             v = s.vals[i]
             v1 = s1.vals[i]
             v2 = s2.vals[i]
             if not min(v1, v2) <= v <= max(v1, v2):
-                # print(f'sol {it} is between sols ({it1}, {it2}): crit {cr.name}: {v} is outside ({v1}, {v2}).')
-                return False  # v outside the range [v1, v2]
+                # print(f'sol {it} is outside sols ({it1}, {it2}): crit {cr.name}: {v} is outside ({v1}, {v2}).')
+                return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
             # else:
             #     print(f'crit {cr.name}: {v} is in the range of ({v1}, {v2}); continue check.')
         # print(f'solution {it} is between solutions ({it1}, {it2}).')
-        return True    # all crit-vals of s are between the corresponding values of s1 and s2
+        return True  # s is inside the cube(s1, s2): all its crit-vals are between the corresponding values of s1 and s2
 
-    def sizeLog(self, cube, final=False):  # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+    # todo: improve comments below
+    # add solution (uses crit-values updated in mc.cr). called from CtrMca::updCrit()
+    def sizeLog(self, cube, final=False):
         itr = self.cur_itr
         if not final:
             self.log_min = min(self.log_min, cube.size)
