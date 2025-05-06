@@ -83,12 +83,17 @@ class Cubes:     # collection of aCubes
         self.filled = 0     # number of non-empty ignored
 
     def add(self, cube):    # add a new cube, if it is large enough and non-empty
-        skip = self.parRep.mc.opt('skipCubes', False)
+        skip = self.parRep.mc.opt('skipCubes', False)   # ZN method: skip cubes larger than the previous cube
         if skip and self.lastSize is not None and self.lastSize < cube.size:
-            # print(f'skiping new cube: size {cube.size:.2f} greater than {self.lastSize:.2f} of the last cube ---------')
+            # print(f'skiping new cube: size {cube.size:.2f} > the last cube size: {self.lastSize:.2f} ---------')
             return
         if cube.size >= self.min_size:
-            if self.is_empty(cube):
+            if self.parRep.mc.opt('mCube', False):  # skip empty-cube check for mCube option
+                cube.empty = True
+                is_empty = True
+            else:
+                is_empty = self.is_empty(cube)  # check if the cube to be added is empty
+            if is_empty:
                 cube.id = len(self.all_cubes)
                 self.all_cubes.update({cube.id: cube})
                 self.cand.append((cube.id, cube.size))
@@ -140,7 +145,7 @@ class Cubes:     # collection of aCubes
         id2prune = []
         # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
-            if self.cand_ok(c_id):
+            if  self.parRep.mc.opt('mCube', False) or  self.cand_ok(c_id):  # if 'mCube' option skip the cube check
                 lst.append(c_id)
                 break   # take the first found empty-cube
             else:
@@ -214,7 +219,8 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.id = None  # id corresponds to the sequence of the cubes generation
         self.used = False   # set to True, when the cube was used for generating a solution inside
         self.empty = None   # set to True/False if a solution is/isNot inside
-        self.min_edge = 0.5     # min achievement A/R difference
+        # todo: min_edge should be controlled by cfg
+        self.min_edge = 0.5  # min achievement A/R difference (used to set the degenerated dimension
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge is too small
         self.degen_str = ''  # Indices of the degen-dimension indices
