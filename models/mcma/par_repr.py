@@ -390,7 +390,7 @@ class ParRep:     # representation of the Pareto set
         s2 = self.get(mxPair[1])
         n_cube = aCube(self.mc, s1, s2)
         # print(f'ParRep::mk_aCube(): there are {len(self.cubes.cand)} cubes in the candidate list.')
-        print(f'adding cube defined by sols [{s1.itr_id}, {s2.itr_id}], size {n_cube.size:.2f}')
+        # print(f'adding cube defined by sols [{s1.itr_id}, {s2.itr_id}], size {n_cube.size:.2f}')
         # Note: n_cube size might be larger than the mx_diff
         self.cubes.add(n_cube)  # adds to the list only large-enough cubes (assumes empty for 'mCube' option)
         n_cand = len(self.cubes.cand)

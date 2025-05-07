@@ -328,6 +328,21 @@ class Plots:
             if len(self.wflow.par_rep.progr.cubes2proc[step][-1]) == 0:
                 print(f'Empty cube list for computation stage {step}.')
                 continue
+            # todo: next statement causes exception (probably due to incomplete data for stages):
+            '''
+           File "/Users/marek/Documents/GitHub/yayue/models/mcma/plots.py", line 331, in kde_stages
+            ax = fig.add_subplot(nrows, ncols, step + 1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          File "/Users/marek/anaconda3/envs/pyo11new/lib/python3.11/site-packages/matplotlib/figure.py", line 768, in add_subplot
+            ax = projection_class(self, *args, **pkw)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          File "/Users/marek/anaconda3/envs/pyo11new/lib/python3.11/site-packages/matplotlib/axes/_base.py", line 686, in __init__
+            subplotspec = SubplotSpec._from_subplot_args(fig, args)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          File "/Users/marek/anaconda3/envs/pyo11new/lib/python3.11/site-packages/matplotlib/gridspec.py", line 589, in _from_subplot_args
+            raise ValueError(
+        ValueError: num must be an integer with 1 <= num <= 3, not 4 
+            '''
             ax = fig.add_subplot(nrows, ncols, step + 1)
             neighbour_cube_sizes = []
             if self.cfg.get('verb') > 3:
@@ -360,6 +375,8 @@ class Plots:
         plt.tight_layout()
         self.figures['stageKDE'] = fig
 
+    def neighDist(self):  # plot distributions of neighbouring solutions
+        mx_hight = 9.0
         distrAll = self.wflow.par_rep.allDist
         n_samples = len(distrAll)
         print(f'{n_samples} distribution samples available')
@@ -372,8 +389,8 @@ class Plots:
         n_rows = n_samples // n_cols
         if n_rows * n_cols < n_samples:
             n_rows += 1
-        fig1 = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
-        fig2 = plt.figure(figsize=(7, min(mx_hight, 2 * nrows)), dpi=self.dpi, tight_layout=True)
+        fig1 = plt.figure(figsize=(7, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
+        fig2 = plt.figure(figsize=(7, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
         fig1.canvas.manager.set_window_title(f'Distributions of all distance between neighbor solutions.')
         fig1.suptitle(f'Distributions of distances between all neighbor solutions for {n_samples} samples.')
         fig2.suptitle(f'Distributions of distances > {small:.1f} between neighbor solutions for {n_samples} samples.')

@@ -208,7 +208,9 @@ class Report:
         self.plots.plot2D()    # 2D plots
         self.plots.parallel()  # Parallel coordinates plot
         self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
-        self.plots.kde_stages()  # KDE + histograms vs stages
+        # todo: uncomment the kde plot when the bug (commented in the code) will be fixed
+        # self.plots.kde_stages()  # KDE + histograms vs stages
+        self.plots.neighDist()  # distribution of neighbours' distances'
         if n_clust > 0:
             self.plots.plot3D(only_centres=True)    # Only centres, only if clusters enabled
         # plots.vars('actS')    # plot the requested model variables
