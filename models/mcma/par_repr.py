@@ -69,6 +69,192 @@ class ParProg:
 
 
 # noinspection SpellCheckingInspection
+class Neigh:     # representation of the neighbors
+    def __init__(self, parRep):         # initialize corners by regularized selfish solutions
+        self.wflow = parRep.wflow        # WrkFlow object
+        self.mc = parRep.wflow.mc        # CtrMca object
+        self.parRep = parRep
+        self.sols = parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
+        self.solSort = []           # sols sorted for each criterion by increasing achievements
+        self.points = {}            # key - solution id, val - vector of achievements
+        self.points2 = []           # self.points converted to a list (to easy sorting)
+        self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
+        self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
+        self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
+        self.addsol()       # initialize the neighbors by selfish (and optionally neutral) solutions
+        pass
+
+    @staticmethod
+    def sortPair(pair):
+        if pair[0] > pair[1]:   # sort the pair's indices
+            tmp = pair[0]
+            pair[0] = pair[1]
+            pair[1] = tmp
+        return pair
+
+    def chk(self, pair):    # check, if the pair of sol-ids was used
+        pair = self.sortPair(pair)
+        return (pair[0], pair[1]) in self.done.keys()
+
+    def addsol(self, s=None, is_close=False):  # add a Pareto solution
+        if is_close:
+            print(f'Neigh::addsol(): skipping the close solution.')
+            pass    # last solution is close, shall be ignored; try to find a pair from previous solutions
+        elif s is None:   # initial call, use the corner solutions
+            # n_sols = len(self.sols)
+            print(f'Neigh::addsol(): adding corner solutions.')
+            for s1 in self.sols:
+                self.points.update({s1.itr_id: s1.a_vals})
+                tmp = s1.a_vals.copy()
+                tmp.insert(0, s1.itr_id)
+                self.points2.append(tmp)
+                # self.points2.append(tmp.insert(0, s1.itr_id))     # this doesn't work
+        else:
+            self.points.update({s.itr_id: s.a_vals})
+            tmp = s.a_vals.copy()
+            tmp.insert(0, s.itr_id)
+            self.points2.append(tmp)
+        print(f'Neigh::addsol(): there are {len(self.points)} solutions, {len(self.done)} pairs done.')
+        # raise Exception(f'Neigh::addSol() - not implemented yet.')
+        if len(self.cand):
+            self.selCand()
+        else:
+            self.find()      # indices of the pair of most distant neighbors stored in self.lastPair
+
+    def selCand(self):   # select from the previously found candidates the pair of the most distant neighbors
+        pass
+
+    def find(self):   # find and store the pair of the most distant neighbors to be used for defining new cube
+        self.solSort = []  # drop the old sorted lists
+        bestPair = [None, None]
+        for i in range(self.mc.n_crit):     # sort points by achievements for each criterion separately
+            # sort the list by i-crit value by increasing order
+            # tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
+            # self.solSort.append(tmp)
+            self.solSort.append(sorted(self.points2, key=itemgetter(i + 1), reverse=False))
+        pass
+        n_sol = len(self.sols)
+        # pair = [None, None]     # ids of most distant neighbor solutions
+        dist = 0.
+        for seq in range(1, n_sol, 2):  # select every 2nd sol as the base to compare with the previous and the next
+            if seq > n_sol - 2:
+                break
+            low = self.solSort[0][seq - 1]      # point with smaller achievement
+            id_low = low[0]
+            base = self.solSort[0][seq]     # base point
+            id_base = base[0]
+            if seq < n_sol - 1:
+                upp = self.solSort[0][seq + 1]      # the sol with achievement > the base achievement
+                id_upp = upp[0]
+            else:
+                upp = None
+                id_upp = None
+                # raise Exception(f'Neigh::find() - the case not implemented yet.')
+            pass
+
+            # select either (base, low) or (base, upp) based on the achievement diff in 0-th criterion
+            pairLow = [id_base, id_low]
+            done = self.chk(pairLow)
+            if done:
+                diffLow = 0.
+            else:
+                diffLow = base[1] - low[1]
+            if upp is not None:
+                pairUpp = [id_base, id_upp]
+                done = self.chk(pairUpp)
+                if done:
+                    diffUpp = 0.
+                else:
+                    diffUpp = upp[1] - base[1]
+                pass
+            else:
+                diffUpp = 0.
+                pairUpp = [None, None]
+            if diffLow > diffUpp:
+                diff = diffLow
+                pair = pairLow
+            else:
+                diff = diffUpp
+                pair = pairUpp
+            pass
+            print(f'Pair: ({pair[0]}, {pair[1]}), distance {diff:.1f}, crit_id = 0.')
+            if dist <  diff:    # distance between neighbors based on the 0-th criterion
+                dist = diff
+                bestPair = pair
+                print(f'Current best pair: ({bestPair[0]}, {bestPair[1]}), distance {dist:.1f}, crit_id = 0.')
+
+            # check achievements of the better neighbors' pair (base, upp) or (base, low) in the remaining criteria
+            for i in range(1, self.mc.n_crit):
+                found = False
+                for seq2 in range(n_sol):   # find the base in the list sorted by i-th criterion
+                    cand = self.solSort[i][seq2]
+                    if cand[0] == id_base:
+                        found = True    # found the base in the list sorted by i-th criterion
+                        if seq2 > 0:
+                            low = self.solSort[i][seq2 - 1]
+                        else:
+                            low = None  # the base is the very first in the sorted list
+                            # raise Exception(f'Neigh::find() - the case not implemented yet.')
+                        pass
+                        if seq2 < n_sol - 1:
+                            upp = self.solSort[i][seq2 + 1]
+                        else:
+                            upp = None      # the base is the very last in the sorted list
+                            # raise Exception(f'Neigh::find() - the case not implemented yet.')
+                        break
+                if not found:
+                    raise Exception(f'Neigh::find() - the case not implemented yet.')
+                pass
+                if low is not None:
+                    pairLow = [id_base, low[0]]
+                    done = self.chk(pairLow)
+                    if done:
+                        diffLow = 0.
+                        pairLow = [None, None]
+                    else:
+                        diffLow = base[i + 1] - low[i + 1]
+                    pass
+                else:       # no worse solution (in the sorted list)
+                    diffLow = 0.
+                    pairLow = [None, None]
+                if upp is not None:
+                    pairUpp = [id_base, upp[0]]
+                    done = self.chk(pairUpp)
+                    if done:
+                        diffUpp = 0.
+                        pairUpp = [None, None]
+                    else:
+                        diffUpp = upp[i + 1] - base[i + 1]
+                    pass
+                else:       # no better solution (in the sorted list)
+                    diffUpp = 0.
+                    pairUpp = [None, None]
+                if diffLow > diffUpp:
+                    diff = diffLow
+                    pair = pairLow
+                else:
+                    diff = diffUpp
+                    pair = pairUpp
+                pass
+                print(f'Crit_id {i}, pair: ({pair[0]}, {pair[1]}), distance {diff:.1f}, crit_id = {i}.')
+                if dist < diff:  # distance between neighbors based on the i-th and previous criteria
+                    dist = diff
+                    bestPair = pair
+                    print(f'Current best pair: ({bestPair[0]}, {bestPair[1]}), distance {dist:.1f}, crit_id = {i}.')
+
+                # end of checking the best pair for i-th (and previoudly checked) criterion
+                pass
+            pass
+
+        # most distant neighbors found
+        bestPair = self.sortPair(bestPair)
+        print(f'Most distant neighbors found, sols_id: ({bestPair[0]}, {bestPair[1]}), distance {dist:.1f}.')
+        self.lastPair = (bestPair[0], bestPair[1])
+        self.done.update({self.lastPair: dist})
+        # raise Exception(f'Neigh::find() - cube creation not implemented yet.')
+
+
+# noinspection SpellCheckingInspection
 class ParRep:     # representation of the Pareto set
     def __init__(self, wflow):         # initialize corners by regularized selfish solutions
         self.wflow = wflow        # WrkFlow object
@@ -77,6 +263,7 @@ class ParRep:     # representation of the Pareto set
         self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.sols_wrk = []  # work-list of solutions (to be used for finding a most distant (in L^inf) sol-pair
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
+        self.neighSol = None  # object handling neighbor solutions
         self.cubes = Cubes(self)  # the object handling all cubes
         self.progr = ParProg(self)  # the object handling computation progress
         self.cur_cube = None  # cube_id of the last used cube
@@ -185,6 +372,9 @@ class ParRep:     # representation of the Pareto set
             for cr in self.mc.cr:
                 cr.setAR()
         elif self.wflow.is_par_rep:   # set preferences from the selected cube
+            if self.mc.opt('mCube', False):
+                self.mk_aCube()
+                pass
             cube = self.cubes.select()  # the cube defining A/R for new iteration
             if cube is not None:
                 self.progr.updCubeInf(cube.size, False)     # check if the next comp-stage was reached
@@ -208,9 +398,9 @@ class ParRep:     # representation of the Pareto set
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
         if self.mc.opt('neighZN', False):
-            it = s.itr_id
-            it1 = s1.itr_id
-            it2 = s2.itr_id
+            # it = s.itr_id
+            # it1 = s1.itr_id
+            # it2 = s2.itr_id
             r = 0.
             eps = 1.e-4
             for (i, cr) in enumerate(self.mc.cr):
@@ -219,7 +409,7 @@ class ParRep:     # representation of the Pareto set
                 v = s.vals[i]
                 v1 = s1.vals[i]
                 v2 = s2.vals[i]
-                if not max(v1, v2) - r <= v + eps <= min(v1, v2) + r:
+                if not max(v1, v2) - r < v + eps < min(v1, v2) + r:
                     # print(f'sol {it} is outside sols ({it1}, {it2}): crit {cr.name}: r {r:.2f} v {v:.2f}, '
                     #       f'(v1, v2) = ({v1:.2f}, {v2:.2f}).')
                     return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
@@ -232,7 +422,8 @@ class ParRep:     # representation of the Pareto set
             v = s.vals[i]
             v1 = s1.vals[i]
             v2 = s2.vals[i]
-            if not min(v1, v2) <= v <= max(v1, v2):
+            eps = 1.e-4
+            if not min(v1, v2) - eps < v < max(v1, v2) + eps:
                 # print(f'sol {it} is outside sols ({it1}, {it2}): crit {cr.name}: {v} is outside ({v1}, {v2}).')
                 return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
             # else:
@@ -304,7 +495,8 @@ class ParRep:     # representation of the Pareto set
                     # todo: print info on close (old and new) solutions (belonging to different cubes)
                     pass
                 if self.mc.opt('mCube', False):
-                    self.mk_aCube(None)  # make a cube from previously available solutions
+                    self.neighSol.addsol(None, True)    # close solution shall be ignored
+                    # self.mk_aCube()  # make a cube from previously available solutions
         else:   # unique solution; check dominance with all Pareto-sols found so far
             toPrune = []    # tmp list of solutions dominated by the current sol
             for s2 in self.sols:   # check if the new sol is close to any previous unique (i.e., not-close) sol
@@ -326,7 +518,19 @@ class ParRep:     # representation of the Pareto set
                 if self.cfg.get('verb') > 1:
                     print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
                 if self.mc.opt('mCube', False):
-                    self.mk_aCube(new_sol)    # define cubes candidates, if needed
+                    # self.mk_aCube(new_sol)    # define cubes candidates, if needed
+                    if self.wflow.cur_stage == 4:   # computing the PF (i.e., after Corners, neutral)
+                        if self.neighSol is None:
+                            # self.neighSol = Neigh(self)
+                            raise Exception('ParRep::addSol(): Neigh should have been created in WrkFlow.itr_sol()')
+                        else:
+                            self.neighSol.addsol(new_sol)
+                            pass
+                        # self.mk_aCube0(new_sol)
+                        # raise Exception('ParRep::addSol(): mCube option not implemented yet for PF computation.')
+                    else:
+                        # raise Exception('ParRep::addSol(): should not come here.')
+                        pass    # do nothing before finishing Corners and neutral solution
                 else:
                     self.mk_cubes(new_sol)    # define cubes generated by this solution
             for s2 in toPrune:   # remove dominated solutions from self.sols
@@ -334,7 +538,20 @@ class ParRep:     # representation of the Pareto set
                 self.sols.remove(s2)
         return is_pareto
 
-    def mk_aCube(self, xx):  # find a pair of most distant neighbor solutions and define a cube.cand around them
+    def mk_aCube(self):  # find a pair of most distant neighbor solutions and define a cube.cand around them
+        pair = self.neighSol.lastPair
+        s1 = self.get(pair[0])
+        s2 = self.get(pair[1])
+        n_cube = aCube(self.mc, s1, s2)
+        self.cubes.add(n_cube)  # adds to the list only large-enough cubes (assumes empty for 'mCube' option)
+        n_cand = len(self.cubes.cand)
+        # print(f'ParRep::mk_aCube(): there are {n_cand} cubes in the candidate list.')
+        if not n_cand == 1:
+            print(f'WARNING: there are {n_cand} cubes in the candidate list.')
+            # raise Exception(f'ParRep::mk_aCube() - there are {n_cand} candidate cubes.')
+        pass
+
+    def mk_aCube1(self, xx):  # find a pair of most distant neighbor solutions and define a cube.cand around them
         n_sols = len(self.sols)
         if n_sols < 2:
             return
@@ -369,7 +586,7 @@ class ParRep:     # representation of the Pareto set
                         break  # don't check other solutions, if there is one between
                 pass
                 if are_adj:     # no sol between s1 and s2
-                    # check, if s1 and s2 are most distant
+                    # check if s1 and s2 are most distant
                     dist = 0.   # distance between s1 and s2
                     nAdjoint += 1
                     for i in range(self.mc.n_crit):
@@ -399,7 +616,6 @@ class ParRep:     # representation of the Pareto set
             print(f'WARNING: there are {n_cand} cubes in the candidate list.')
             # raise Exception(f'ParRep::mk_aCube() - there are {n_cand} candidate cubes.')
         pass
-        pass
 
 
     def mk_aCube0(self, s):  # find a pair of most distant neighbor solutions and define a cube.cand around them
@@ -407,7 +623,7 @@ class ParRep:     # representation of the Pareto set
             print('\nWARNING: incomplete representation (handling of close solutions) not implemented yet.)-----------')
             return
         else:
-            # add solution to the sol-work list
+            # add the solution to the sol-work list
             item = [s.itr_id]
             for val in s.a_vals:
                 item.append(val)
@@ -420,7 +636,7 @@ class ParRep:     # representation of the Pareto set
 
         # find the most distant pair of sorted solutions: check neighbors for each criterion separately
         mx_dist = 0.
-        mx_crit = None  # index of the criterion having max gap (diff between consecutive sorted values)
+        mx_crit = None  # index of the criterion having the max gap (diff between consecutive sorted values)
         pair_id = []    # sol.itr_id of the pair of the most distant solutions
         n_sols = len(self.sols_wrk)
         for i in range(self.mc.n_crit):

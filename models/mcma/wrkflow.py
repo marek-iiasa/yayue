@@ -9,7 +9,7 @@ from .payoff import PayOff
 from .report import Report  # organize results of each iteration into reports
 from .corners import Corners
 # from .crit import Crit, CrPref
-from .par_repr import ParRep
+from .par_repr import ParRep, Neigh
 
 
 # noinspection SpellCheckingInspection
@@ -91,6 +91,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     raise Exception(f'Solution outsude U/N range.')
                 if changed:
                     self.cur_stage = 5      # reset
+                    self.par_rep.neighSol = None    # destroy the neighbors object
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table
@@ -104,9 +105,21 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                 else:
                     next_stage = 4     # skip neutral, proceed to Pareto front
                     self.par_rep.from_cube = True   # from now on preferences to be generated from cubes
+                    if self.mc.opt('mCube', False):
+                        if self.par_rep.neighSol is None:
+                            self.par_rep.neighSol = Neigh(self.par_rep)
+                        else:
+                            raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
+                        pass
         elif self.cur_stage == 3:     # neutral solution
             next_stage = 4  # neutral done, proceed to Pareto front
             self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
+            if self.mc.opt('mCube', False):
+                if self.par_rep.neighSol is None:
+                    self.par_rep.neighSol = Neigh(self.par_rep)
+                else:
+                    raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
+                pass
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # start or continue Pareto front
             pass
