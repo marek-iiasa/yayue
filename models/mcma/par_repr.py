@@ -2,7 +2,7 @@ import datetime
 import pandas as pd
 from operator import itemgetter
 
-from numpy.ma.core import append
+# from numpy.ma.core import append
 
 from .cube import ParSol, Cubes, aCube
 # from .corners import Corners
@@ -87,8 +87,9 @@ class Neigh:     # representation of the neighbors
         self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
         self.wrkCand = []   # work-list of candidates' pairs (for info only)
         self.wrkPairs = {}   # work-list of candidates' pairs
-        self.gap = 5        # required gap (to be replaced by the gap actually specified in options
-        self.verbose = 2    # print verbose level
+        self.gap = 5        # required gap (to be replaced by the gap actually specified in options)
+        self.achDiff = 0.01 * self.gap
+        self.verbose = 1    # print verbose level
         self.addsol()       # initialize the neighbors by selfish (and optionally neutral) solutions
         pass
 
@@ -100,7 +101,7 @@ class Neigh:     # representation of the neighbors
             pair[1] = tmp
         return pair
 
-    def dist(self, pair):
+    def dist(self, pair):   # return the distance between the sol-pairs
         p1 = self.points[pair[0]]
         p2 = self.points[pair[1]]
         val = 0.
@@ -108,7 +109,7 @@ class Neigh:     # representation of the neighbors
             val = max(val, abs(p1[i] - p2[i]))
         return val
 
-    def chk(self, pair):    # check, if the pair of sol-ids was used
+    def chk(self, pair):    # check, if the pair of sol-ids was already used
         pair = self.sortPair(pair)
         return (pair[0], pair[1]) in self.done.keys()
 
@@ -140,11 +141,11 @@ class Neigh:     # representation of the neighbors
             self.explore()      # indices of the pair of most distant neighbors stored in self.lastPair
             self.selCand()
 
-    def selCand(self):   # select from the previously found candidates the pair of the most distant neighbors
+    def selCand(self):   # select (from the previously found candidates) the pair of the most distant neighbors
         d =  sorted(self.cand.items(), key= operator.itemgetter(1), reverse=True)   # default False: ascending
         for pair, val in d:
             is_used = self.chk(pair)
-            if is_used:
+            if is_used:     # should not happen, but just in case...
                 raise Exception(f'Neigh::selCand() - pair {pair} was already used.')
             self.lastPair = pair
             self.done.update({self.lastPair: val})
@@ -160,77 +161,92 @@ class Neigh:     # representation of the neighbors
         else:
             self.lastPair = (None, None)
             print(f'Neigh::selCand(): no more candidates. No more cubes to generate.')
+            pass
             # raise Exception(f'Neigh::selCand() - not implemented yet.')
 
-    def mkCand(self, base):   # make candidate pairs with the base (a given solution)
-        n_sol = len(self.sols)
+    def mkCand(self, base):   # make candidate pairs with the selected base (a given solution)
         id_base = base[0]
         for i in range(self.mc.n_crit):
+            if self.verbose > 3:
+                print(f'------------------------ candidate pairs for base {id_base} and criterion {i}')
             seq2 = 0     # just to avoid the compiler warning
             found = False
-            for seq2 in range(n_sol):  # find the base in the list sorted by i-th criterion
+            for seq2 in range(len(self.solSort[i])):  # find the base in the list sorted by i-th criterion
                 cand = self.solSort[i][seq2]
                 if cand[0] == id_base:
                     found = True  # found the base in the list sorted by i-th criterion
                     break
             if not found:
-                raise Exception(f'Neigh::find() - the case not implemented yet.')
+                print(f'------ Neigh::mkCand(): skipping base {id_base} (not in the {i}-th sorted list).')
+                # continue      # relevant, if solSort are shorten by removing a sol from the already used adjoint pair
+                raise Exception(f'Neigh::mkCand() - solution with id {id_base} not found in the sorted list.')
             pass
-            if seq2 > 0:
-                low = self.solSort[i][seq2 - 1]
-            else:
-                low = None
+            lows = []       # alternative low-achievements for the base
+            k = seq2 - 1    # index of points having worse (than the base) achievements
+            is_first = True
+            achFirst = None
+            while k >= 0:
+                low = self.solSort[i][k]
+                ach = low[i + 1]
+                if is_first:
+                    is_first = False
+                    achFirst = ach
+                else:
+                    diff = abs(achFirst - ach)
+                    if diff > self.achDiff:     # alternative low-achievements with similar achievements
+                        break   # don't check points with worse achievements than that found
+                lows.append(low)
+                k -= 1
+                pass
+            pass
 
-            if seq2 < n_sol - 1:
-                upp = self.solSort[i][seq2 + 1]
-            else:
-                upp = None
+            upps = []       # alternative better-achievement pairs for the base
+            k = seq2 + 1    # index of points having better (than the base) achievements
+            is_first = True
+            achFirst = None
+            while k < len(self.solSort[i]):
+                upp = self.solSort[i][k]
+                ach = upp[i + 1]
+                if is_first:
+                    is_first = False
+                    achFirst = ach
+                else:
+                    diff = abs(achFirst - ach)
+                    if diff > self.achDiff:     # alternative low-achievements with similar achievements
+                        break   # don't check points with better achievements than that found
+                upps.append(upp)
+                k += 1
+                pass
+            pass
 
-            # find differences of achievements relative to the base
-            if low is not None:
+            # store pairs composed of the base and either worse or better achievements
+            for low in lows:
                 pairLow = [id_base, low[0]]
                 done = self.chk(pairLow)
-                if done:    # ignore already used pairs
-                    diffLow = -1.   # to mark already done
-                else:
-                    diffLow = base[i + 1] - low[i + 1]
-                pass
-            else:  # no worse solution (in the sorted list)
-                diffLow = 0.
-                pairLow = [id_base, None]
-            if upp is not None:
-                pairUpp = [id_base, upp[0]]
-                done = self.chk(pairUpp)
                 if done:
-                    diffUpp = -1.
-                else:
-                    diffUpp = upp[i + 1] - base[i + 1]
-                pass
-            else:  # no better solution (in the sorted list)
-                diffUpp = 0.
-                pairUpp = [id_base, None]
-            pass
-            # end of computing achievement diffs for i=th criterion between the base and
-            # the immediately worse and better sols (low and upp, respectively)
-
-            if self.verbose > 3:
-                print(f'Crit_id {i}, base_id {id_base}, pairLow: ({pairLow[0]}, {pairLow[1]}), distance {diffLow:.1f}')
-                print(f'Crit_id {i}, base_id {id_base}, pairUpp: ({pairUpp[0]}, {pairUpp[1]}), distance {diffUpp:.1f}')
-            if pairLow[1] is not None:
+                    continue
+                diffLow = base[i + 1] - low[i + 1]
                 self.wrkCand.append([i, pairLow, diffLow])
                 pair = self.sortPair(pairLow)
                 self.wrkPairs.update({(pair[0], pair[1]): diffLow})   # remove duplicate pairs, diff will be recalculated
-            if pairUpp[1] is not None:
+                if self.verbose > 3:
+                    print(f'Crit_id {i}, base_id {id_base}, pairLow: ({pairLow[0]}, {pairLow[1]}), dist. {diffLow:.1f}')
+                pass
+            for upp in upps:
+                pairUpp = [id_base, upp[0]]
+                done = self.chk(pairUpp)
+                if done:
+                    continue
+                diffUpp = upp[i + 1] - base[i + 1]
                 self.wrkCand.append([i, pairUpp, diffUpp])
                 pair = self.sortPair(pairUpp)
                 self.wrkPairs.update({(pair[0], pair[1]): diffUpp})   # remove duplicate pairs, diff will be recalculated
+                if self.verbose > 3:
+                    print(f'Crit_id {i}, base_id {id_base}, pairUpp: ({pairUpp[0]}, {pairUpp[1]}), dist. {diffUpp:.1f}')
+                pass
             pass
-            if (pairLow[0], pairLow[1]) == (1, 8):
-                print('trap pairLow (1, 8')
-                pass
-            if (pairUpp[0], pairUpp[1]) == (1, 8):
-                print('trap pairUpp (1, 8')
-                pass
+            # end of computing achievement diffs for i=th criterion between the base and
+            # the immediately worse and better sols (low and upp, respectively)
         pass
 
         '''
@@ -255,14 +271,29 @@ class Neigh:     # representation of the neighbors
     def explore(self):   # find and store the pair of the most distant neighbors to be used for defining new cube
         self.solSort = []  # drop the old sorted lists
         for i in range(self.mc.n_crit):     # sort points by achievements for each criterion separately
-            self.solSort.append(sorted(self.points2, key=itemgetter(i + 1), reverse=False))
+            tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
+            '''
+            # rm from points2 thee first of the adjoint items representing already used pairs
+            toPrune = []    # positions of the items to be removed from the list
+            for seq, item1 in enumerate(tmp):
+                if seq == len(tmp) - 1:
+                    break   # the last item has no next to check
+                item2 = tmp[seq + 1]
+                id1 = item1[0]
+                id2 = item2[0]
+                pass
+                if self.chk([id1, id2]):
+                    toPrune.insert(0, seq)   # remove the first item from the list (removing from the end)
+                pass
+            for seq in toPrune:
+                tmp.pop(seq)
+            '''
+            self.solSort.append(tmp)
 
         n_sol = len(self.sols)
-        self.wrkCand = []   # refresh the list before each exxploration
-        for seq in range(0, n_sol, 2):  # select every 2nd sol as the base to compare with the previous and the next
-            # if seq > n_sol - 2:
-            #     break
-            # base = self.solSort[0][seq]     # base point
+        self.wrkCand = []   # refresh the list before each exploration
+        # for seq in range(0, n_sol, 2):  # select every 2nd sol as the base to compare with the previous and the next
+        for seq in range(n_sol):  # select every sol as the base to compare with the previous and the next
             base = self.points2[seq]     # base point/solution
             self.mkCand(base)  # make candidate solution pairs with the currently selected base sol.
         pass
@@ -287,6 +318,9 @@ class Neigh:     # representation of the neighbors
                 else:
                     # print(f'Neigh::explore(): skipping already used pair {pair}.')
                     pass
+                pass
+            else:       # mark the close-pair as done
+                self.done.update({pair: val})
                 pass
             pass
         pass
