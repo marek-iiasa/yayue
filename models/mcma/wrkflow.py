@@ -9,7 +9,8 @@ from .payoff import PayOff
 from .report import Report  # organize results of each iteration into reports
 from .corners import Corners
 # from .crit import Crit, CrPref
-from .par_repr import ParRep, Neigh
+from .par_repr import ParRep
+from .neigh import Neigh
 
 
 # noinspection SpellCheckingInspection
@@ -147,7 +148,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             next_stage = 2  # PayOff table uploaded, start with corners of Pareto set
             self.payoff.prnPayOff()     # print to stdout and save to the file
         if self.par_rep.neighSol is not None:
-            if self.par_rep.neighSol.lastPair == (None, None):
+            if self.par_rep.neighSol.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
         self.cur_stage = next_stage
