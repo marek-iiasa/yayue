@@ -9,47 +9,52 @@ from operator import itemgetter
 
 # noinspection SpellCheckingInspection
 class Neigh:     # representation of the neighbors
-    def __init__(self, parRep):         # initialize corners by regularized selfish solutions
-        self.wflow = parRep.wflow        # WrkFlow object
-        self.mc = parRep.wflow.mc        # CtrMca object
-        self.parRep = parRep
-        self.sols = parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
-        self.solSort = []           # sols sorted for each criterion by increasing achievements
-        self.points = {}            # key - solution id, val - vector of achievements
-        self.points2 = []           # self.points converted to a list (to easy sorting)
+    def __init__(self, parRep):      # initialize by the corner, and optionally neutral, solutions
+        # references for convenience access
+        self.wflow = parRep.wflow    # WrkFlow object
+        self.mc = parRep.wflow.mc    # CtrMca object
+        self.parRep = parRep         # PF representation object
+        self.sols = parRep.sols  # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
+        #
+        self.points = {}         # key - solution id, val - vector of achievements
+        self.points2 = []        # self.points converted to a list (to easy sorting)
+        self.solSort = []        # self.points2 sorted for each criterion by increasing achievements
+        self.neigh = {}          # neighbors of each solution: key - sol-id, val - see self.mkNeigh()
         self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
         self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
         self.wrkCand = []   # work-list of candidates' pairs (for info only)
-        self.wrkPairs = {}   # work-list of candidates' pairs
+        self.wrkPairs = {}  # work-list of candidates' pairs
+        #
         self.gap = 5        # required gap (to be replaced by the gap actually specified in options)
-        self.achDiff = 0.01 * self.gap
-        self.verbose = 1    # print verbose level
+        self.achDiff = 0.01 * self.gap  # tolerance for diffentiating achievements
+        self.verbose = 1    # print verbosity level
+        #
         self.addSol()       # initialize the neighbors by selfish (and optionally neutral) solutions
         pass
 
-    # Entry point: add a solution (also called for close solutions)
-    # called from the ctor to store the corner (and optionally neutral) solutions
-    # the only return point returns nothing.
-    # The self.getPair() returns either a pair of solutions' ids to be used for
-    # defining a cube or (None, None) if there are no more pairs to be used for defining a cube
-    def addSol(self, s=None, is_close=False):  # add a Pareto solution
-        if is_close:
-            print(f'Neigh::addsol(): skipping the close solution.')
-            pass    # last solution is close, shall be ignored; try to find a pair from previous solutions
+    # Entry point: add a new solution and prepare the next pair of solutions to be used for a new cube.
+    # Called from the ctor to store the corner (and optionally neutral) solutions, as well as for each subsequently
+    # found solution; also called for ignored solutions (close to another solution).
+    # The only return point; returns nothing.
+    # The self.getPair() returns either a pair of solutions' ids to be used for defining
+    # a next cube or (None, None) if there are no more pairs to be used for defining a cube
+    def addSol(self, s=None, was_close=False):  # add a Pareto solution
+        if was_close:    # the last solution was close (not included in tthe PF); find a pair from previous solutions
+            if self.verbose > 2:
+                print(f'Neigh::addSol(): last solution was close to another solution.')
+            pass
         elif s is None:   # initial call, use the corner solutions
-            # n_sols = len(self.sols)
-            print(f'Neigh::addsol(): adding corner solutions.')
+            print(f'Neigh::addSol(): the ctor initialized with corner (and optionally, neutral) solutions.')
             for s1 in self.sols:
                 self.points.update({s1.itr_id: s1.a_vals})
                 tmp = s1.a_vals.copy()
-                tmp.insert(0, s1.itr_id)
+                tmp.insert(0, s1.itr_id)    # for convenience, put itr_id in front of each item
                 self.points2.append(tmp)
-                # self.points2.append(tmp.insert(0, s1.itr_id))     # this doesn't work
         else:
             self.points.update({s.itr_id: s.a_vals})
             tmp = s.a_vals.copy()
-            tmp.insert(0, s.itr_id)
+            tmp.insert(0, s.itr_id)    # for convenience, put itr_id in front of each item
             self.points2.append(tmp)
         print(f'Neigh::addsol(): there are {len(self.points)} solutions, {len(self.done)} pairs done.')
         # raise Exception(f'Neigh::addSol() - not implemented yet.')
@@ -66,6 +71,7 @@ class Neigh:     # representation of the neighbors
             print(f'\nNeigh::selCand(): all suitable pairs were provided. Terminate the iterations. ------------------')
         return  # the pair of solution ids (for defining a cube) is available by self.getPair()
 
+    # return indices of the solution-pair selected for making a next cube
     def getPair(self):
         return self.lastPair
 
@@ -84,10 +90,11 @@ class Neigh:     # representation of the neighbors
         val = 0.
         for i in range(self.mc.n_crit):
             val = max(val, abs(p1[i] - p2[i]))
+        print(f'pair {pair}: p1 = {p1}, p2 = {p2}, L^inf dist = {val:.2f}')
         return val
 
-    def chk(self, pair):    # check, if the pair of sol-ids was already used
-        pair = self.sortPair(pair)
+    def chk(self, pair):    # check if the pair of sol-ids was already used
+        pair = self.sortPair(pair)      # the done-dict is hashed by ordered sol-ids
         return (pair[0], pair[1]) in self.done.keys()
 
     # end of helpers
@@ -304,10 +311,10 @@ class Neigh:     # representation of the neighbors
                     break
             if not found:
                 print(f'------ Neigh::mkCand(): skipping base {id_base} (not in the {i}-th sorted list).')
-                # continue      # relevant, if solSort are shorten by removing a sol from the already used adjoint pair
+                # continue      # relevant if solSort are shortened by removing a sol from the already used adjoint pair
                 raise Exception(f'Neigh::mkCand() - solution with id {id_base} not found in the sorted list.')
             pass
-            lows = []       # alternative low-achievements for the base
+            lows = []       # alternative low achievements for the base
             k = seq2 - 1    # index of points having worse (than the base) achievements
             is_first = True
             achFirst = None
@@ -319,7 +326,7 @@ class Neigh:     # representation of the neighbors
                     achFirst = ach
                 else:
                     diff = abs(achFirst - ach)
-                    if diff > self.achDiff:     # alternative low-achievements with similar achievements
+                    if diff > self.achDiff:     # alternative low achievements with similar achievements
                         break   # don't check points with worse achievements than that found
                 lows.append(low)
                 k -= 1
@@ -354,7 +361,7 @@ class Neigh:     # representation of the neighbors
                 diffLow = base[i + 1] - low[i + 1]
                 self.wrkCand.append([i, pairLow, diffLow])
                 pair = self.sortPair(pairLow)
-                self.wrkPairs.update({(pair[0], pair[1]): diffLow})   # remove duplicate pairs, diff will be recalculated
+                self.wrkPairs.update({(pair[0], pair[1]): diffLow})   # to overwrite the pair duplicate
                 if self.verbose > 3:
                     print(f'Crit_id {i}, base_id {id_base}, pairLow: ({pairLow[0]}, {pairLow[1]}), dist. {diffLow:.1f}')
                 pass
@@ -366,12 +373,12 @@ class Neigh:     # representation of the neighbors
                 diffUpp = upp[i + 1] - base[i + 1]
                 self.wrkCand.append([i, pairUpp, diffUpp])
                 pair = self.sortPair(pairUpp)
-                self.wrkPairs.update({(pair[0], pair[1]): diffUpp})   # remove duplicate pairs, diff will be recalculated
+                self.wrkPairs.update({(pair[0], pair[1]): diffUpp})   # to overwrite the pair duplicate
                 if self.verbose > 3:
                     print(f'Crit_id {i}, base_id {id_base}, pairUpp: ({pairUpp[0]}, {pairUpp[1]}), dist. {diffUpp:.1f}')
                 pass
             pass
-            # end of computing achievement diffs for i=th criterion between the base and
+            # end of computing achievement diffs for the i-th criterion between the base and
             # the immediately worse and better sols (low and upp, respectively)
         pass
 

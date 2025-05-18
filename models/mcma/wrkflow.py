@@ -1,12 +1,12 @@
 """ Control the application work-flow """
-# import sys      # needed from stdout
+# import sys # needed from stdout
 # import os
 # import math
 # from os import R_OK, access
 # from os.path import isfile
 from .ctr_mca import CtrMca
 from .payoff import PayOff
-from .report import Report  # organize results of each iteration into reports
+from .report import Report  # organize the results of each iteration into reports
 from .corners import Corners
 # from .crit import Crit, CrPref
 from .par_repr import ParRep
@@ -23,7 +23,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         # self.rep = None  # Report ctor
         self.rep = Report(self, m1)  # Report ctor
         self.par_rep = None    # ParRep object, currently always used (not only, if is_par_rep == True)
-        self.corner = None  # object of the corners of the Pareto set
+        self.corner = None  # object handling corners of the PF
         self.cluster = None  # (optional) cluster-object of solutions
         #
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
@@ -32,7 +32,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.mc.scale()  # (re)define scales for criteria values
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
-            self.cur_stage = 2      # PayOff table uploaded, start with corners of Pareto set
+            self.cur_stage = 2      # PayOff table uploaded, start with corners of the PF
         else:
             self.cur_stage = 1      # start with computing PayOff table
         self.n_itr = None           # id of current itr (TBD by self.itr_start())
@@ -76,7 +76,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     ret_val = False
             if cr.nadir is not None:
                 if cr.better(cr.nadir, val):   # strictly (by a margin) better
-                    # print(f'\tWARNING: crit {cr.name}: solution val {val:.6e} is worse than Nadir {cr.nadir:.6e}')
+                    # print(f'\tWARNING: crit {cr.name}: the solution val {val:.6e} is worse than Nadir {cr.nadir:.6e}')
                     ret_val = False
         return ret_val
 
@@ -84,15 +84,15 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         # extract and store in crit sol.-values, if in U/N range: add info to report
         in_range = self.rep.itr(mc_part)
         if not in_range and self.cur_stage > 1:  # checks/updates run after the PayOff table complete
-            changed = self.payoff.update(self.cur_stage)  # update payOff table, if a nadir changed
-            # double-check, if solution is within U/N after Nadir updated
+            changed = self.payoff.update(self.cur_stage)  # update payOff table if a nadir changed
+            # double-check if the solution is within U/N after Nadir updated
             out_range = not self.in_range()
             if changed or out_range:
                 if out_range:   # should not happen
                     raise Exception(f'Solution outsude U/N range.')
                 if changed:
                     self.cur_stage = 5      # reset
-                    self.par_rep.neighSol = None    # destroy the neighbors object
+                    self.par_rep.neighSol = None    # destroy the neighbors' object
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table
@@ -108,16 +108,16 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     self.par_rep.from_cube = True   # from now on preferences to be generated from cubes
                     if self.mc.opt('mCube', False):
                         if self.par_rep.neighSol is None:
-                            self.par_rep.neighSol = Neigh(self.par_rep)
+                            self.par_rep.neighSol = Neigh(self.par_rep) # initialize with corners
                         else:
                             raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                         pass
         elif self.cur_stage == 3:     # neutral solution
-            next_stage = 4  # neutral done, proceed to Pareto front
+            next_stage = 4  # the neutral done, proceed to Pareto front
             self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
             if self.mc.opt('mCube', False):
                 if self.par_rep.neighSol is None:
-                    self.par_rep.neighSol = Neigh(self.par_rep)
+                    self.par_rep.neighSol = Neigh(self.par_rep) # initialize with corners and neutral sol.
                 else:
                     raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                 pass
@@ -132,7 +132,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             next_stage = 2
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
-        elif self.cur_stage == 6:  # finish, no more cubes to be processed
+        elif self.cur_stage == 6:  # finish; no more cubes to be processed
             return next_stage
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
@@ -145,7 +145,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.mc.scale()  # (re)define scales for criteria values
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
-            next_stage = 2  # PayOff table uploaded, start with corners of Pareto set
+            next_stage = 2  # PayOff table uploaded, start with corners of the PF
             self.payoff.prnPayOff()     # print to stdout and save to the file
         if self.par_rep.neighSol is not None:
             if self.par_rep.neighSol.getPair() == (None, None):
