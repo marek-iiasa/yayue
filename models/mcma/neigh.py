@@ -20,15 +20,16 @@ class Neigh:     # representation of the neighbors
         self.points2 = []        # self.points converted to a list (to easy sorting)
         self.solSort = []        # self.points2 sorted for each criterion by increasing achievements
         self.neigh = {}          # neighbors of each solution: key - sol-id, val - see self.mkNeigh()
+        self.neighDeb = {}       # extended (optional, for debugging)info neighbors of each solution
         self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
         self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
         self.wrkCand = []   # work-list of candidates' pairs (for info only)
         self.wrkPairs = {}  # work-list of candidates' pairs
         #
-        self.gap = 5        # required gap (to be replaced by the gap actually specified in options)
+        self.gap = self.parRep.mc.opt('mxGap', 10)  # the max gap between neighbors
         self.achDiff = 0.01 * self.gap  # tolerance for diffentiating achievements
-        self.verbose = 1    # print verbosity level
+        self.verbose = 2    # print verbosity level
         #
         self.addSol()       # initialize the neighbors by selfish (and optionally neutral) solutions
         pass
@@ -44,7 +45,7 @@ class Neigh:     # representation of the neighbors
             if self.verbose > 2:
                 print(f'Neigh::addSol(): last solution was close to another solution.')
             pass
-        elif s is None:   # initial call, use the corner solutions
+        elif s is None:   # initial call, use the corner, optionally also neutral, solutions
             print(f'Neigh::addSol(): the ctor initialized with corner (and optionally, neutral) solutions.')
             for s1 in self.sols:
                 self.points.update({s1.itr_id: s1.a_vals})
@@ -59,14 +60,17 @@ class Neigh:     # representation of the neighbors
         print(f'Neigh::addsol(): there are {len(self.points)} solutions, {len(self.done)} pairs done.')
         # raise Exception(f'Neigh::addSol() - not implemented yet.')
         if len(self.cand):
-            found = self.selCand()
+            found = self.selCand()  # select the pair of the most distant neighbors to be used for defining new cube
             if found:
-                return
+                return      # indices of the pair of most distant neighbors available by self.getPair()
+            else:
+                print(f'\nNeigh::addSol(): no more pair candidates. Recalculate neighbors. --------------------------')
 
-        # explore neighbors to find a new set of solution pairs for cube generation
-        self.explore()      # indices of the pair of most distant neighbors stored in self.lastPair
+        # empty list of candidate pairs; (re)calculate neighbors of each solution
+        self.mkNeigh()     # find neighbors of each solution
+        self.mkCand()      # select from the neighbors' sol-pairs candidates for making cubes, store them in self.cand{}
         found = self.selCand()
-        if not found:
+        if not found:   # no suitable pairs were found, terminate the iterations
             self.lastPair = (None, None)
             print(f'\nNeigh::selCand(): all suitable pairs were provided. Terminate the iterations. ------------------')
         return  # the pair of solution ids (for defining a cube) is available by self.getPair()
@@ -77,6 +81,7 @@ class Neigh:     # representation of the neighbors
 
     # helpers
     @staticmethod
+    # sort ids, input and retun should be a list
     def sortPair(pair):
         if pair[0] > pair[1]:   # sort the pair's indices
             tmp = pair[0]
@@ -99,10 +104,141 @@ class Neigh:     # representation of the neighbors
 
     # end of helpers
 
+    # find closest neighbors (two for each criterion) of each solution
+    def mkNeigh(self):
+        self.wrkCand = []  # drop the old lists and dictionary
+        self.solSort = []
+        self.wrkPairs = {}
+        self.neigh = {}     # neighbors for each point/solution and criterion
+        self.neighDeb = {}
+
+        # sort points by increasing achievements for each criterion separately
+        for i in range(self.mc.n_crit):
+            tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
+            self.solSort.append(tmp)
+
+        # find neighbors for each solution: for each criterion two (for worse and better than base) achievements)
+        for i in range(self.mc.n_crit):     # loop on criteria
+            for seq, base in enumerate(self.solSort[i]):  # take consecutive base-sol from the list sorted by i-th crit,
+                id_base = base[0]
+
+                # find adjoint to each base two sols with immediate worse and better achiev. in the i-th criterion
+                # first, the sol with worse achievement
+                k = seq - 1         # position (relative to the base) in the solSort[i] (must be before the base)
+                id_worse = None     # set for the case no suitable worse sol will be found
+                diff_worse = 0.     # achievement difference between base and a worse sol
+                achFirst = None
+                while k >= 0:
+                    worse = self.solSort[i][k]   # closest sol with worse achievement in the i-th criterion
+                    ach = worse[i + 1]
+                    diff_base = abs(base[i + 1] - ach)
+                    if achFirst is None:
+                        achFirst = ach
+                        print(f'base {id_base}, {i}-th crit, closest worse {worse[0]} ach {ach:.1f} diff {diff_base:.1f}')
+                    else:
+                        diff = abs(ach - achFirst)
+                        if diff > self.achDiff:
+                            print(f'Neigh::mkNeigh(): next worse sol {worse[0]} differs by {diff:.1f} from the first')
+                            break   # the subsequent worse is too much worse than the first found
+                    k -= 1  # seq of the possibly next-previous to check
+                    if diff_base < self.achDiff:
+                        print(f'Neigh::mkNeigh(): next worse sol {worse[0]} too close to the base {diff_base:.1f}')
+                        continue  # try next worse
+                    pair = self.sortPair([id_base, worse[0]])
+                    is_done = self.chk(pair)
+                    if is_done:
+                        print(f'Neigh::mkNeigh(): pair {pair} was already used. Checking the next worse sol.')
+                        continue    # the pair was used, try the next-previous worse sol.
+                    id_worse = worse[0]
+                    diff_worse = abs(base[i + 1] - worse[i + 1])
+                    break   # break the loop: suitable worse sol found
+                print(f'sol {id_base}, crit {i}: id_worse {id_worse}, dist_worse {diff_worse:.1f}')
+
+                # second, find the the neighbor sol with better achievement
+                k = seq + 1
+                id_better = None     # set for the case no suitable worse sol will be found
+                diff_better = 0.
+                achFirst = None
+                while k  < len(self.solSort[i]):
+                    better = self.solSort[i][k]   # closest sol with better achievement in the i-th criterion
+                    ach = better[i + 1]
+                    diff_base = abs(base[i + 1] - ach)
+                    if achFirst is None:
+                        achFirst = ach
+                        print(f'base {id_base}, {i}-th crit, closest better {better[0]} ach {ach:.1f} diff {diff_base:.1f}')
+                    else:
+                        diff = abs(ach - achFirst)
+                        if diff > self.achDiff:
+                            print(f'Neigh::mkNeigh(): next better sol {better[0]} differs by {diff:.1f} from the first')
+                            break   # the subsequent better is too much better than the first found
+                    k += 1  # seq of the possibly next to check
+                    if diff_base < self.achDiff:
+                        print(f'Neigh::mkNeigh(): next better sol {better[0]} too close to the base {diff_base:.1f}')
+                        print(f'{k = }')
+                        if k > 20:
+                            raise Exception(f'Neigh::mkNeigh(): something wrong here.')
+                        continue  # try next better
+                    pair = self.sortPair([id_base, better[0]])
+                    is_done = self.chk(pair)
+                    if is_done:
+                        print(f'Neigh::mkNeigh(): pair {pair} was already used. Checking the next better sol.')
+                        continue    # the pair was used, try the next better sol.
+                    id_better = better[0]
+                    diff_better = abs(base[i + 1] - better[i + 1])
+                    break       # break the loop: suitable better sol found
+                print(f'sol {id_base}, crit {i}: id_better {id_better}, dist_better {diff_better:.1f}')
+
+                # if self.verbose > 3:
+                #     print(f'Sol {id_base} crit_id {i}, pair worse: ({id_base}, {id_worse}), dist. {dist_worse:.1f}')
+                #     print(f'Sol {id_base} crit_id {i}, pair better: ({id_base}, {id_better}), dist. {dist_better:.1f}')
+                # end processing a sol on the i-th criterion
+                #
+                # store the info in self.neigh{}
+                # item1 = [id_worse, dist_worse]
+                # item2 = [id_better, dist_better]
+                # self.neighDeb.update({id_base: [i, [item1, item2]]})   # debugging info
+
+                # store pairs of (base, neighbor), where neighbors are (worse and better) sol relative to each base
+                if id_worse is not None:
+                    pair = self.sortPair([id_base, id_worse])
+                    is_done = self.chk(pair)
+                    if not is_done:
+                        key = (pair[0], pair[1])
+                        self.neigh.update({key: 0.})   # dist will be added after processing all sols
+                    else:
+                        raise Exception(f'Neigh::mkNeigh(): the worse pair {pair} was already used.')
+                if id_better is not None:
+                    pair = self.sortPair([id_base, id_better])
+                    is_done = self.chk(pair)
+                    if not is_done:
+                        key = (pair[0], pair[1])
+                        self.neigh.update({key: 0.})   # dist will be added after processing all sols
+                    else:
+                        raise Exception(f'Neigh::mkNeigh(): the better pair {pair} was already used.')
+                pass
+                # end of the loop on solutions for the selected base
+            pass
+        # end of the loop on criteria
+        pass
+
+        # set distances between neighbors
+        for pair, dist in self.neigh.items():
+            dist = self.dist(pair)
+            self.neigh.update({pair: dist})
+            pass
+
+    # make the candidate pairs from the neighbors' dict
+    def mkCand(self):
+        self.cand = {}      # drop the old list (although it should be anyway empty)
+        for pair, dist in self.neigh.items():
+            if dist > self.gap:
+                self.cand.update({pair: dist})
+        pass
+
     # select (from the previously found candidates) the pair of the most distant neighbors
     def selCand(self):
-        if len(self.cand) == 0:
-            raise Exception(f'Neigh::selCand() called for empty candidate list.')
+        # if len(self.cand) == 0:
+        #     raise Exception(f'Neigh::selCand() called for empty candidate list.')
         d =  sorted(self.cand.items(), key= itemgetter(1), reverse=True)   # default False: ascending
         for pair, val in d:
             is_used = self.chk(pair)
@@ -148,7 +284,7 @@ class Neigh:     # representation of the neighbors
         # for seq in range(0, n_sol, 2):  # select every 2nd sol as the base to compare with the previous and the next
         for seq in range(n_sol):  # select every sol as the base to compare with the previous and the next
             base = self.points2[seq]  # base point/solution
-            self.mkCand(base)  # make candidate solution pairs with the currently selected base sol.
+            self.mkCand1(base)  # make candidate solution pairs with the currently selected base sol.
         pass
         # select from the wrkCand pairs to be stored in cand{} (to be used for making cubes)
         '''
@@ -297,7 +433,7 @@ class Neigh:     # representation of the neighbors
         '''
 
     # select a set of neighbors to make pairs with the selected base (a given solution)
-    def mkCand(self, base):
+    def mkCand1(self, base):
         id_base = base[0]
         for i in range(self.mc.n_crit):
             if self.verbose > 3:
