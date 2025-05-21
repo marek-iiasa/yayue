@@ -117,12 +117,13 @@ class Neigh:     # representation of the neighbors
             tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
             self.solSort.append(tmp)
 
-        # find neighbors for each solution: for each criterion two (for worse and better than base) achievements)
-        for i in range(self.mc.n_crit):     # loop on criteria
-            for seq, base in enumerate(self.solSort[i]):  # take consecutive base-sol from the list sorted by i-th crit,
-                id_base = base[0]
-
-                # find adjoint to each base two sols with immediate worse and better achiev. in the i-th criterion
+        # find neighbors for each solution: two for each criterion (for worse and better than base) achievements)
+        oneNeigh = True    # find for each solution only two neighbors (one with worse achievement and one with better)
+        # find adjoint to each base two sols with immediate worse and better achiev. in the i-th criterion
+        for seq, base in enumerate(self.solSort[i]):
+            neighbors = []      # pair of neighbors for the i-th criterion
+            id_base = base[0]
+            for i in range(self.mc.n_crit):     # loop over criteria
                 # first, the sol with worse achievement
                 k = seq - 1         # position (relative to the base) in the solSort[i] (must be before the base)
                 id_worse = None     # set for the case no suitable worse sol will be found
@@ -131,7 +132,11 @@ class Neigh:     # representation of the neighbors
                 while k >= 0:
                     worse = self.solSort[i][k]   # closest sol with worse achievement in the i-th criterion
                     ach = worse[i + 1]
-                    diff_base = abs(base[i + 1] - ach)
+                    diff_worse = abs(base[i + 1] - ach)
+                    if oneNeigh:
+                        id_worse = worse[0]
+                        break       # don't look for alternative sols with worse achievement
+                    diff_base = diff_worse
                     if achFirst is None:
                         achFirst = ach
                         print(f'base {id_base}, {i}-th crit, closest worse {worse[0]} ach {ach:.1f} diff {diff_base:.1f}')
@@ -163,6 +168,10 @@ class Neigh:     # representation of the neighbors
                     better = self.solSort[i][k]   # closest sol with better achievement in the i-th criterion
                     ach = better[i + 1]
                     diff_base = abs(base[i + 1] - ach)
+                    if oneNeigh:
+                        id_better = better[0]
+                        diff_better = diff_base
+                        break
                     if achFirst is None:
                         achFirst = ach
                         print(f'base {id_base}, {i}-th crit, closest better {better[0]} ach {ach:.1f} diff {diff_base:.1f}')
@@ -198,33 +207,40 @@ class Neigh:     # representation of the neighbors
                 # item2 = [id_better, dist_better]
                 # self.neighDeb.update({id_base: [i, [item1, item2]]})   # debugging info
 
-                # store pairs of (base, neighbor), where neighbors are (worse and better) sol relative to each base
-                if id_worse is not None:
-                    pair = self.sortPair([id_base, id_worse])
-                    is_done = self.chk(pair)
-                    if not is_done:
-                        key = (pair[0], pair[1])
-                        self.neigh.update({key: 0.})   # dist will be added after processing all sols
-                    else:
-                        raise Exception(f'Neigh::mkNeigh(): the worse pair {pair} was already used.')
-                if id_better is not None:
-                    pair = self.sortPair([id_base, id_better])
-                    is_done = self.chk(pair)
-                    if not is_done:
-                        key = (pair[0], pair[1])
-                        self.neigh.update({key: 0.})   # dist will be added after processing all sols
-                    else:
-                        raise Exception(f'Neigh::mkNeigh(): the better pair {pair} was already used.')
+                if oneNeigh:
+                    item = [i, id_worse, id_better]
+                    neighbors.append(item)
+                else:
+                    # store pairs of (base, neighbor), where neighbors are (worse and better) sol relative to each base
+                    if id_worse is not None:
+                        pair = self.sortPair([id_base, id_worse])
+                        is_done = self.chk(pair)
+                        if not is_done:
+                            key = (pair[0], pair[1])
+                            self.neigh.update({key: 0.})   # dist will be added after processing all sols
+                        else:
+                            raise Exception(f'Neigh::mkNeigh(): the worse pair {pair} was already used.')
+                    if id_better is not None:
+                        pair = self.sortPair([id_base, id_better])
+                        is_done = self.chk(pair)
+                        if not is_done:
+                            key = (pair[0], pair[1])
+                            self.neigh.update({key: 0.})   # dist will be added after processing all sols
+                        else:
+                            raise Exception(f'Neigh::mkNeigh(): the better pair {pair} was already used.')
                 pass
-                # end of the loop on solutions for the selected base
+                # end of the loop on criteria for the selected base
+                if oneNeigh:
+                    self.neigh.update({id_base: neighbors})
             pass
-        # end of the loop on criteria
+        # end of the loop on solution
         pass
 
-        # set distances between neighbors
-        for pair, dist in self.neigh.items():
-            dist = self.dist(pair)
-            self.neigh.update({pair: dist})
+        if not oneNeigh:
+            # set distances between neighbors
+            for pair, dist in self.neigh.items():
+                dist = self.dist(pair)
+                self.neigh.update({pair: dist})
             pass
 
     # make the candidate pairs from the neighbors' dict
