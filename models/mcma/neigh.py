@@ -19,8 +19,8 @@ class Neigh:     # representation of the neighbors
         self.points = {}         # key - solution id, val - vector of achievements
         self.points2 = []        # self.points converted to a list (to easy sorting)
         self.solSort = []        # self.points2 sorted for each criterion by increasing achievements
-        self.neigh = {}          # neighbors of each solution: key - sol-id, val - see self.mkNeigh()
-        self.neighDeb = {}       # extended (optional, for debugging)info neighbors of each solution
+        self.neighCube = {}      # neighbors for generating cubes: key - ids of (sol1, sol2, crit), tmp dist in i-th crit
+        self.neighDist = {}      # neighbors for calculating the distribution
         self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
         self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
@@ -106,6 +106,43 @@ class Neigh:     # representation of the neighbors
 
     # find closest neighbors (two for each criterion) of each solution
     def mkNeigh(self):
+        self.wrkCand = []  # drop the old lists and dictionary
+        self.solSort = []
+        self.wrkPairs = {}
+        self.neigh = {}     # neighbors for each point/solution and criterion
+        self.neighDeb = {}
+
+        # sort points by increasing achievements for each criterion separately
+        for i in range(self.mc.n_crit):
+            tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
+            self.solSort.append(tmp)
+
+        # find neighbors in each criterion from the corresponding list of sorted (ascending) achievements
+        for i in range(self.mc.n_crit):
+            achiev = self.solSort[i]
+            for k, p1 in enumerate(achiev):
+                if k == len(achiev) - 1:
+                    break    # nothing to be done for the last point, process data for the next criterion
+                id1 = p1[0]
+                ach1 = p1[i + 1]
+                p2 = achiev[k + 1]
+                id2 = p2[0]
+                ach2 = p2[i + 1]
+                diff = ach2 - ach1
+                key = (id1, id2, i)
+                self.neighDist.update({key: diff})
+
+                # check, if the pair is suitable for cube generation
+                if diff > self.gap:
+                    self.neighCube.update({key: diff})
+                else:
+                    print(f'WARNING: improvement needed in Neigh:mkNeigh(): {i = }, {k = }, {key = }')
+                    pass
+            pass
+        pass
+
+    # find closest neighbors (two for each criterion) of each solution
+    def mkNeigh1(self):
         self.wrkCand = []  # drop the old lists and dictionary
         self.solSort = []
         self.wrkPairs = {}
@@ -246,9 +283,18 @@ class Neigh:     # representation of the neighbors
     # make the candidate pairs from the neighbors' dict
     def mkCand(self):
         self.cand = {}      # drop the old list (although it should be anyway empty)
-        for pair, dist in self.neigh.items():
-            if dist > self.gap:
-                self.cand.update({pair: dist})
+        for idItem, diff in self.neighCube.items():     # id composed of pt-pair and crit id
+            if diff < self.gap:
+                continue    # skip close pt-pair
+            pair = [idItem[0], idItem[1]]   # for self.sort it needs to be a list
+            was_used = self.chk(pair)
+            if was_used:
+                raise Exception(f'Neigh::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
+            pair = (pair[0], pair[1])   # for use as a key the pair needs to be tuple
+            if pair in self.cand:
+                oldDiff = self.cand.get(pair)
+                diff = max(diff, oldDiff)
+            self.cand.update({pair: diff})
         pass
 
     # select (from the previously found candidates) the pair of the most distant neighbors
