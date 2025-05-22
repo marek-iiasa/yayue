@@ -1,0 +1,45 @@
+# root-name of the core/substantive model instance; the corresponding *dll file
+model_id: ./jg3d
+
+# criteria definition
+# crit_def: [ [q0, max, x1], [q1, max, x2] ]
+crit_def: [ [q0, max, x1], [q1, max, x2], [q2, max, x3] ]
+
+# The following specs are optional.  --------------------------------------------
+# Sub-directory of the corresponding ana_dir containing results (df's and plots)
+resDir: z/
+
+# A sub-directory of the resDir for results of the corresponding execution run.
+# Note: many subdirectories can be defined to organize outcomes of diverse runs.
+# run_id: z1K5A/    # usually no subdirs needed here
+
+# file-names          -----------
+# fn_out: z.txt
+
+rep_vars: ['x1', 'x2','x3']
+
+# Control options     -----------
+# verb: 2
+
+# max number of iterations
+mxIter: 25
+logBlock: 701
+
+# skipCubes: True  # use ZN's method of cubes' selection
+# neighZN: True  # use ZN's definition of neighbor (for defining empty cubes)
+mCube: True  # MM's method for handling neighbors and generating one cube at a time
+
+neutral: False
+
+showPlot: False
+
+# mxCubePlot: 10   # mx number of cubes shown in 3D plot
+mxLabelPlot: 20   # mx number of solution labels shown in 3D plot
+# 
+
+mxGap: 40
+smallDist: 2.5
+tolClose: 1.0     # appears to be risky ("simulates" the PF gap)
+
+# nClust: 5
+#
