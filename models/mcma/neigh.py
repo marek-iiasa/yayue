@@ -67,6 +67,7 @@ class Neigh:     # representation of the neighbors
                 print(f'\nNeigh::addSol(): no more pair candidates. Recalculate neighbors. --------------------------')
 
         # empty list of candidate pairs; (re)calculate neighbors of each solution
+        print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
         self.mkNeigh()     # find neighbors of each solution
         self.mkCand()      # select from the neighbors' sol-pairs candidates for making cubes, store them in self.cand{}
         found = self.selCand()
@@ -109,8 +110,8 @@ class Neigh:     # representation of the neighbors
         self.wrkCand = []  # drop the old lists and dictionary
         self.solSort = []
         self.wrkPairs = {}
-        self.neigh = {}     # neighbors for each point/solution and criterion
-        self.neighDeb = {}
+        self.neighCube = {}     # neighbors for each point/solution and criterion
+        self.neighDist = {}
 
         # sort points by increasing achievements for each criterion separately
         for i in range(self.mc.n_crit):
@@ -129,18 +130,62 @@ class Neigh:     # representation of the neighbors
                 id2 = p2[0]
                 ach2 = p2[i + 1]
                 diff = ach2 - ach1
-                key = (id1, id2, i)
-                self.neighDist.update({key: diff})
+                pair = self.sortPair([id1, id2])
+                key = (pair[0], pair[1], i)
+                print(f'neighbor distribution data item: key {key} dist {diff:.2f}')
+                self.neighDist.update({key: diff})      # neighbor data for distribution info
 
                 # check, if the pair is suitable for cube generation
-                if diff > self.gap:
-                    self.neighCube.update({key: diff})
+                # todo: consider to optionally skip left-pt close to the previous left-pt, if they have similar ach.
+                # todo: modify to add more than one sols with similar ach.
+                seq4cube = k + 1    # seq-index of the second sol-id already used for cube generation
+                if diff > self.gap:     # the pair is suitable for cube generation
+                    if not self.chk(pair):
+                        self.neighCube.update({key: diff})
+                        print(f'pair {key}, dist {diff:.2f} added for cube generation.')
+                    else:
+                        print(f'pair {key} already used for cube generation.')
+                    continue        # take next point as the first in next pair
                 else:
-                    print(f'WARNING: improvement needed in Neigh:mkNeigh(): {i = }, {k = }, {key = }')
+                    # print(f'WARNING: improvement needed in Neigh:mkNeigh(): {i = }, {k = }, {key = }')
+                    print(f'Too small diff {diff:.2f} of pair {key} for cube generation. Try next sol-pair.')
+                    found = False
+                    j = k + 2
+                    while j < len(achiev):
+                        if j < seq4cube:
+                            print(f'Neigh::mkNeigh(): skipping sol {j}: it has worse ach. than '
+                                  f'the sol {seq4cube} used as the second in a previous pair.')
+                            j += 1      # try next sol
+                            continue
+                        p2 = achiev[j]
+                        id2 = p2[0]
+                        ach2 = p2[i + 1]
+                        diff = ach2 - ach1
+                        pair = self.sortPair([id1, id2])
+                        if diff > self.gap:  # suitable for cube generation
+                            if not self.chk(pair):
+                                key = (pair[0], pair[1], i)
+                                # noinspection PyUnusedLocal
+                                seq4cube = j
+                                found = True
+                                self.neighCube.update({key: diff})
+                                print(f'Neigh::mkNeigh(): pair {key} added for cube generation.')
+                                break
+                            else:
+                                print(f'Neigh::mkNeigh(): pair {key} already used for cube generation.')
+                                j += 1      # try next sol
+                                continue
+                        else:
+                            j += 1      # try next sol
+                        pass
+                    if not found:
+                        print(f'Neigh::mkNeigh(): no suitable sol-pair with sol {id1} found for cube generation.')
+                        continue
                     pass
             pass
         pass
 
+    '''
     # find closest neighbors (two for each criterion) of each solution
     def mkNeigh1(self):
         self.wrkCand = []  # drop the old lists and dictionary
@@ -279,22 +324,24 @@ class Neigh:     # representation of the neighbors
                 dist = self.dist(pair)
                 self.neigh.update({pair: dist})
             pass
+    '''
 
     # make the candidate pairs from the neighbors' dict
     def mkCand(self):
-        self.cand = {}      # drop the old list (although it should be anyway empty)
-        for idItem, diff in self.neighCube.items():     # id composed of pt-pair and crit id
-            if diff < self.gap:
-                continue    # skip close pt-pair
+        self.cand = {}  # drop the old list (although it should be anyway empty)
+        for idItem, diff in self.neighCube.items():  # id consists of pt-pair and crit id
             pair = [idItem[0], idItem[1]]   # for self.sort it needs to be a list
             was_used = self.chk(pair)
+            if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
+                # continue    # skip close pt-pair
+                raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
             if was_used:
                 raise Exception(f'Neigh::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
             pair = (pair[0], pair[1])   # for use as a key the pair needs to be tuple
             if pair in self.cand:
-                oldDiff = self.cand.get(pair)
+                oldDiff = self.cand.get(pair)   # the max of differences for previous criteria
                 diff = max(diff, oldDiff)
-            self.cand.update({pair: diff})
+            self.cand.update({pair: diff})  # diff here corresponds to the L^inf norm dist. between the pair of sols.
         pass
 
     # select (from the previously found candidates) the pair of the most distant neighbors
