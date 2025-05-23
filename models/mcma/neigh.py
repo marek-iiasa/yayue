@@ -105,6 +105,54 @@ class Neigh:     # representation of the neighbors
 
     # end of helpers
 
+    # mk pair(s) (for cube generation) for k-th solution and i-th criterion; achiev: sorted (for i-th crit) achievements
+    def mkPairs(self, achiev, k, i):
+        p1 = achiev[k]
+        id1 = p1[0]
+        ach1 = p1[i + 1]
+        j = k + 1   # index of the current candidate sol (for a pair with k-th sol), starts with the next to k-th
+        phase1 = True       # skip pts with ach. close to k-th (next phase: to add points close to first enough better)
+        phaseStr = 'phase1'
+        achOK = None        # ach of the distan pt
+        nFound = 0      # number of pairs found with k-th sol
+        nUsed = 0       # number of already used pairs with k-th sol
+        while j < len(achiev):
+            p2 = achiev[j]
+            id2 = p2[0]
+            ach2 = p2[i + 1]
+            diff = ach2 - ach1
+            pair = self.sortPair([id1, id2])
+            key = (pair[0], pair[1], i)
+            j += 1
+            # check, if the current point is OK for the pair with k-th pt
+            if phase1:  # looking for the first pt enough distant from k-th pt
+                isOK = diff > self.gap
+                if isOK:
+                    phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
+                    phaseStr = 'phase2'
+                    achOK = ach2       # achivement OK for the second phase
+            else:
+                if abs(achOK - ach2) < self.achDiff:
+                    isOK = True     # current point close enough to the first distant pt
+                else:
+                    break   # no (more) suitable pair(s) with k-th point
+            print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}')
+            if not isOK:
+                continue    # check the next point
+
+            # found pt suitable for the cube-generation pair
+            nFound += 1
+            if not self.chk(pair):
+                self.neighCube.update({key: diff})
+                print(f'pair {key}, dist {diff:.2f} added for cube generation.')
+            else:
+                nUsed += 1
+                print(f'pair {key} already used for cube generation.')
+            # try next pt to make a pair with k-th sol.
+        # end of looking for pairs with k-th sol.
+        print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, i-th crit {i}, incl. {nUsed} already used.')
+        pass
+
     # find closest neighbors (two for each criterion) of each solution
     def mkNeigh(self):
         self.wrkCand = []  # drop the old lists and dictionary
@@ -132,56 +180,11 @@ class Neigh:     # representation of the neighbors
                 diff = ach2 - ach1
                 pair = self.sortPair([id1, id2])
                 key = (pair[0], pair[1], i)
-                print(f'neighbor distribution data item: key {key} dist {diff:.2f}')
+                # todo: computation of the neighbor data for distrirbution info needs to be verified
+                # print(f'neighbor distribution data item: key {key} dist {diff:.2f}')
                 self.neighDist.update({key: diff})      # neighbor data for distribution info
 
-                # check, if the pair is suitable for cube generation
-                # todo: consider to optionally skip left-pt close to the previous left-pt, if they have similar ach.
-                # todo: modify to add more than one sols with similar ach.
-                seq4cube = k + 1    # seq-index of the second sol-id already used for cube generation
-                if diff > self.gap:     # the pair is suitable for cube generation
-                    if not self.chk(pair):
-                        self.neighCube.update({key: diff})
-                        print(f'pair {key}, dist {diff:.2f} added for cube generation.')
-                    else:
-                        print(f'pair {key} already used for cube generation.')
-                    continue        # take next point as the first in next pair
-                else:
-                    # print(f'WARNING: improvement needed in Neigh:mkNeigh(): {i = }, {k = }, {key = }')
-                    print(f'Too small diff {diff:.2f} of pair {key} for cube generation. Try next sol-pair.')
-                    found = False
-                    j = k + 2
-                    while j < len(achiev):
-                        if j < seq4cube:
-                            print(f'Neigh::mkNeigh(): skipping sol {j}: it has worse ach. than '
-                                  f'the sol {seq4cube} used as the second in a previous pair.')
-                            j += 1      # try next sol
-                            continue
-                        p2 = achiev[j]
-                        id2 = p2[0]
-                        ach2 = p2[i + 1]
-                        diff = ach2 - ach1
-                        pair = self.sortPair([id1, id2])
-                        if diff > self.gap:  # suitable for cube generation
-                            if not self.chk(pair):
-                                key = (pair[0], pair[1], i)
-                                # noinspection PyUnusedLocal
-                                seq4cube = j
-                                found = True
-                                self.neighCube.update({key: diff})
-                                print(f'Neigh::mkNeigh(): pair {key} added for cube generation.')
-                                break
-                            else:
-                                print(f'Neigh::mkNeigh(): pair {key} already used for cube generation.')
-                                j += 1      # try next sol
-                                continue
-                        else:
-                            j += 1      # try next sol
-                        pass
-                    if not found:
-                        print(f'Neigh::mkNeigh(): no suitable sol-pair with sol {id1} found for cube generation.')
-                        continue
-                    pass
+                self.mkPairs(achiev, k, i)      #mk pair(s) for cube generation
             pass
         pass
 
