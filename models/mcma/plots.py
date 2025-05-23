@@ -103,6 +103,7 @@ class Plots:
             ticklabels = np.linspace(self.cr_defs[i].nadir, self.cr_defs[i].utopia, 6)
             cr_ticklabels.append([f'{label:0.2e}' for label in ticklabels])
 
+        mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
         m_size = 5  # marker size  (was 30)
@@ -152,8 +153,21 @@ class Plots:
                                            s=60, edgecolor='black', linewidths=1,
                                            marker=self.def_markers[clst % len(self.def_markers)])
 
-                ax[i_plot].set_xlim(-5, 105)
-                ax[i_plot].set_ylim(-5, 105)
+                for i, row in self.df.iterrows():
+                    # noinspection PyTypeChecker
+                    if i >= mxLabelPlot:
+                        break
+                    ax[i_plot].text(x=row[self.cr_col[i_first]] + 0.5,
+                                    y=row[self.cr_col[i_second]] + 0.5,
+                                    s=row['itr_id'], fontdict=None, fontsize=5)
+
+                # Make little more space for numbers if we want to draw any
+                if mxLabelPlot > 0:
+                    ax[i_plot].set_xlim(-10, 110)
+                    ax[i_plot].set_ylim(-10, 110)
+                else:
+                    ax[i_plot].set_xlim(-5, 105)
+                    ax[i_plot].set_ylim(-5, 105)
                 ax[i_plot].tick_params(bottom=False, top=False, left=False, right=False)
 
                 '''
