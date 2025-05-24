@@ -105,55 +105,69 @@ class Neigh:     # representation of the neighbors
 
     # end of helpers
 
-    # mk pair(s) (for cube generation) for k-th solution and i-th criterion; achiev: sorted (for i-th crit) achievements
-    def mkPairs(self, achiev, k, i):
-        p1 = achiev[k]
-        id1 = p1[0]
-        ach1 = p1[i + 1]
-        j = k + 1   # index of the current candidate sol (for a pair with k-th sol), starts with the next to k-th
-        phase1 = True       # skip pts with ach. close to k-th (next phase: to add points close to first enough better)
-        phaseStr = 'phase1'
-        achOK = None        # ach of the distan pt
-        nFound = 0      # number of pairs found with k-th sol
-        nUsed = 0       # number of already used pairs with k-th sol
-        while j < len(achiev):
-            p2 = achiev[j]
-            id2 = p2[0]
-            ach2 = p2[i + 1]
-            diff = ach2 - ach1
-            pair = self.sortPair([id1, id2])
-            key = (pair[0], pair[1], i)
-            j += 1
-            # check, if the current point is OK for the pair with k-th pt
-            if phase1:  # looking for the first pt enough distant from k-th pt
-                isOK = diff > self.gap
-                if isOK:
-                    phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
-                    phaseStr = 'phase2'
-                    achOK = ach2       # achivement OK for the second phase
-            else:
-                if abs(achOK - ach2) < self.achDiff:
-                    isOK = True     # current point close enough to the first distant pt
-                else:
-                    break   # no (more) suitable pair(s) with k-th point
-            print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}')
-            if not isOK:
-                continue    # check the next point
+    # mk pair(s) (for cube generation) for k-th sol/pt and i-th crit.; achiev: sorted (for i-th crit) achievements
+    def mkPairs(self):
+        for i in range(self.mc.n_crit):     # loop over criteria
+            achiev = self.solSort[i]        # achievements sorted for i-th criterion in ascending order
+            jLast = 0   # seq of the last-used right point
+            for k, p1 in enumerate(achiev):     # k: current seq-no of p1, p1: left pt of the pair with j (to be found)
+                if k == len(achiev) - 1:
+                    break    # nothing to be done for the last point; process the next criterion
+                id1 = p1[0]         # id (solution itr_id) of the left pt in the sought pair
+                ach1 = p1[i + 1]    # i-th crit. achievement of the p1
+                j = k + 1   # index of the current candidate sol (for a pair with k-th sol), starts with the next to k-th
+                phase1 = True   # skip pts with ach. close to k-th (next phase: add points close to first better enough)
+                phaseStr = 'phase1'
+                achOK = None    # ach of the distant pt
+                nFound = 0      # number of pairs found with k-th sol
+                nUsed = 0       # number of already used pairs with k-th sol
+                while j < len(achiev):
+                    # todo: check, if the below condition is indeed useful (next left pt has likely other pattern of remaining crit.)
+                    '''
+                    if j < jLast:
+                        j += 1
+                        continue    # current point already used as the right pt in a previous pair; take a next point
+                    jLast = j
+                    '''
+                    p2 = achiev[j]
+                    id2 = p2[0]
+                    ach2 = p2[i + 1]
+                    diff = ach2 - ach1
+                    pair = self.sortPair([id1, id2])
+                    key = (pair[0], pair[1], i)
+                    j += 1
+                    # check, if the current point is OK for the pair with k-th pt
+                    if phase1:  # looking for the first pt distant enough from k-th pt
+                        isOK = diff > self.gap
+                        if isOK:    # first pair with k-th pt, use it and move to phase2
+                            phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
+                            phaseStr = 'phase2'
+                            achOK = ach2       # achivement OK for the second phase
+                    else:       # phase2: look for a pt close to the right pt of the first pair with k-th pt
+                        if abs(achOK - ach2) < self.achDiff:
+                            isOK = True     # current point close enough to the first distant pt
+                        else:
+                            print(f'{phaseStr}, skipping pt {id2}, ach {ach2:.2f}: too distant to {achOK:.2f}, '
+                                  f'taking next pt.')
+                            break   # no (more) suitable pair(s) with k-th point
+                    print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}')
+                    if not isOK:
+                        continue    # find pair(s) with the next point
 
-            # found pt suitable for the cube-generation pair
-            nFound += 1
-            if not self.chk(pair):
-                self.neighCube.update({key: diff})
-                print(f'pair {key}, dist {diff:.2f} added for cube generation.')
-            else:
-                nUsed += 1
-                print(f'pair {key} already used for cube generation.')
-            # try next pt to make a pair with k-th sol.
-        # end of looking for pairs with k-th sol.
-        print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, i-th crit {i}, incl. {nUsed} already used.')
-        pass
+                    # found pt suitable for the cube-generation pair
+                    nFound += 1
+                    if not self.chk(pair):
+                        self.neighCube.update({key: diff})
+                        print(f'pair {key}, dist {diff:.2f} added for cube generation.')
+                    else:
+                        nUsed += 1
+                        print(f'skipping pair {key} (used in a previous iteration).')
+                    # try next pt to make a pair with k-th sol.
+                # end of looking for pairs with k-th sol.
+                print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, {i}-th crit, incl. {nUsed} already used.')
+                pass
 
-    # find closest neighbors (two for each criterion) of each solution
+    # find closest neighbors (two for each criterion) of each solution, then call self.mkPairs()
     def mkNeigh(self):
         self.wrkCand = []  # drop the old lists and dictionary
         self.solSort = []
@@ -184,9 +198,10 @@ class Neigh:     # representation of the neighbors
                 # print(f'neighbor distribution data item: key {key} dist {diff:.2f}')
                 self.neighDist.update({key: diff})      # neighbor data for distribution info
 
-                self.mkPairs(achiev, k, i)      #mk pair(s) for cube generation
             pass
         pass
+
+        self.mkPairs()  # mk pair(s) for cube generation
 
     '''
     # find closest neighbors (two for each criterion) of each solution
