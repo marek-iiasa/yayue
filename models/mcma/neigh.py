@@ -143,15 +143,32 @@ class Neigh:     # representation of the neighbors
                             phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
                             phaseStr = 'phase2'
                             achOK = ach2       # achivement OK for the second phase
+                            print(f'pair {key}, diff {diff:.2f}: move to phase2')
+                        else:
+                            print(f'{phaseStr}, pt {id1}, {ach1:.2f}: skipping too close pt {id2}, ach {ach2:.2f}: '
+                                  f'checking next pt.')
+                            continue    # look for the first pt distant enough from p1
                     else:       # phase2: look for a pt close to the right pt of the first pair with k-th pt
                         if abs(achOK - ach2) < self.achDiff:
                             isOK = True     # current point close enough to the first distant pt
                         else:
                             print(f'{phaseStr}, skipping pt {id2}, ach {ach2:.2f}: too distant to {achOK:.2f}, '
-                                  f'taking next pt.')
+                                  f'checking next pt.')
                             break   # no (more) suitable pair(s) with k-th point
-                    print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}')
-                    if not isOK:
+
+                    # check, if p1 and p2 are in the same 2-dim plane
+                    neighOK = False
+                    for d in range(self.mc.n_crit):  # check if p1 & p2 are neighbors in more than i-th crit
+                        if d == i:
+                            continue    # p1 and p2 are obviously neighbors in the i-th criterion
+                        ach3 = p1[d + 1]
+                        ach4 = p2[d + 1]
+                        print(f'{phaseStr}, {key}, d {d}, ach3 {ach3:.2f}, ach4 {ach4:.2f}')
+                        if abs(ach3 - ach4) < self.achDiff:     # neighbor in d-th crit.
+                            neighOK = True
+                            break  # find pair(s) with the next point
+                    print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}, neighOK {neighOK}')
+                    if not isOK or not neighOK:
                         continue    # find pair(s) with the next point
 
                     # found pt suitable for the cube-generation pair
@@ -351,8 +368,8 @@ class Neigh:     # representation of the neighbors
             pair = [idItem[0], idItem[1]]   # for self.sort it needs to be a list
             was_used = self.chk(pair)
             if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
-                # continue    # skip close pt-pair
-                raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
+                continue    # skip pt-pair close in a dimension (should be distant in other didmension
+                # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
             if was_used:
                 raise Exception(f'Neigh::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
             pair = (pair[0], pair[1])   # for use as a key the pair needs to be tuple
