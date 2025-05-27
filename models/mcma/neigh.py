@@ -29,7 +29,7 @@ class Neigh:     # representation of the neighbors
         #
         self.gap = self.parRep.mc.opt('mxGap', 10)  # the max gap between neighbors
         self.achDiff = 0.01 * self.gap  # tolerance for diffentiating achievements
-        self.verbose = 2    # print verbosity level
+        self.verbose = 5    # print verbosity level
         #
         self.addSol()       # initialize the neighbors by selfish (and optionally neutral) solutions
         pass
@@ -109,7 +109,7 @@ class Neigh:     # representation of the neighbors
     def mkPairs(self):
         for i in range(self.mc.n_crit):     # loop over criteria
             achiev = self.solSort[i]        # achievements sorted for i-th criterion in ascending order
-            jLast = 0   # seq of the last-used right point
+            # jLast = 0   # seq of the last-used right point
             for k, p1 in enumerate(achiev):     # k: current seq-no of p1, p1: left pt of the pair with j (to be found)
                 if k == len(achiev) - 1:
                     break    # nothing to be done for the last point; process the next criterion
@@ -143,17 +143,20 @@ class Neigh:     # representation of the neighbors
                             phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
                             phaseStr = 'phase2'
                             achOK = ach2       # achivement OK for the second phase
-                            print(f'pair {key}, diff {diff:.2f}: move to phase2')
+                            if self.verbose > 4:
+                                print(f'pair {key}, diff {diff:.2f}: move to phase2')
                         else:
-                            print(f'{phaseStr}, pt {id1}, {ach1:.2f}: skipping too close pt {id2}, ach {ach2:.2f}: '
-                                  f'checking next pt.')
+                            if self.verbose > 4:
+                                print(f'{phaseStr}, pt {id1}, {ach1:.2f}: skipping too close pt {id2}, ach {ach2:.2f}: '
+                                      f'checking next pt.')
                             continue    # look for the first pt distant enough from p1
                     else:       # phase2: look for a pt close to the right pt of the first pair with k-th pt
                         if abs(achOK - ach2) < self.achDiff:
                             isOK = True     # current point close enough to the first distant pt
                         else:
-                            print(f'{phaseStr}, skipping pt {id2}, ach {ach2:.2f}: too distant to {achOK:.2f}, '
-                                  f'checking next pt.')
+                            if self.verbose > 4:
+                                print(f'{phaseStr}, skipping pt {id2}, ach {ach2:.2f}: too distant to {achOK:.2f}, '
+                                      f'checking next pt.')
                             break   # no (more) suitable pair(s) with k-th point
 
                     # check, if p1 and p2 are in the same 2-dim plane
@@ -163,11 +166,13 @@ class Neigh:     # representation of the neighbors
                             continue    # p1 and p2 are obviously neighbors in the i-th criterion
                         ach3 = p1[d + 1]
                         ach4 = p2[d + 1]
-                        print(f'{phaseStr}, {key}, d {d}, ach3 {ach3:.2f}, ach4 {ach4:.2f}')
+                        if self.verbose > 4:
+                            print(f'{phaseStr}, {key}, d {d}, ach3 {ach3:.2f}, ach4 {ach4:.2f}')
                         if abs(ach3 - ach4) < self.achDiff:     # neighbor in d-th crit.
                             neighOK = True
                             break  # find pair(s) with the next point
-                    print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}, neighOK {neighOK}')
+                    if self.verbose > 4:
+                        print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}, neighOK {neighOK}')
                     if not isOK or not neighOK:
                         continue    # find pair(s) with the next point
 
@@ -175,13 +180,16 @@ class Neigh:     # representation of the neighbors
                     nFound += 1
                     if not self.chk(pair):
                         self.neighCube.update({key: diff})
-                        print(f'pair {key}, dist {diff:.2f} added for cube generation.')
+                        if self.verbose > 4:
+                            print(f'pair {key}, dist {diff:.2f} added for cube generation.')
                     else:
                         nUsed += 1
-                        print(f'skipping pair {key} (used in a previous iteration).')
+                        if self.verbose > 4:
+                            print(f'skipping pair {key} (used in a previous iteration).')
                     # try next pt to make a pair with k-th sol.
                 # end of looking for pairs with k-th sol.
-                print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, {i}-th crit, incl. {nUsed} already used.')
+                if self.verbose > 2:
+                    print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, {i}-th crit, incl. {nUsed} already used.')
                 pass
 
     # find closest neighbors (two for each criterion) of each solution, then call self.mkPairs()

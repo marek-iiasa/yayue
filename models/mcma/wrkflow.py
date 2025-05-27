@@ -147,7 +147,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             next_stage = 2  # PayOff table uploaded, start with corners of the PF
             self.payoff.prnPayOff()     # print to stdout and save to the file
-        if self.par_rep.neighSol is not None:
+        if self.cur_stage > 3 and self.par_rep.neighSol is not None:
             if self.par_rep.neighSol.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
