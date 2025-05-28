@@ -28,8 +28,8 @@ class Neigh:     # representation of the neighbors
         self.wrkPairs = {}  # work-list of candidates' pairs
         #
         self.gap = self.parRep.mc.opt('mxGap', 10)  # the max gap between neighbors
-        self.achDiff = 0.01 * self.gap  # tolerance for diffentiating achievements
-        self.verbose = 5    # print verbosity level
+        self.achDiff = 0.1 * self.gap  # tolerance for diffentiating achievements
+        self.verbose = 2    # print verbosity level
         #
         self.addSol()       # initialize the neighbors by selfish (and optionally neutral) solutions
         pass
@@ -138,7 +138,8 @@ class Neigh:     # representation of the neighbors
                     j += 1
                     # check, if the current point is OK for the pair with k-th pt
                     if phase1:  # looking for the first pt distant enough from k-th pt
-                        isOK = diff > self.gap
+                        # isOK = diff > self.gap    # this skips neighbor closer than the gap
+                        isOK = diff > self.achDiff
                         if isOK:    # first pair with k-th pt, use it and move to phase2
                             phase1 = False     # start phase2, i.e., looking for pt close to the first distant pt
                             phaseStr = 'phase2'
@@ -160,7 +161,8 @@ class Neigh:     # representation of the neighbors
                             break   # no (more) suitable pair(s) with k-th point
 
                     # check, if p1 and p2 are in the same 2-dim plane
-                    neighOK = False
+                    neighOK = True
+                    '''
                     for d in range(self.mc.n_crit):  # check if p1 & p2 are neighbors in more than i-th crit
                         if d == i:
                             continue    # p1 and p2 are obviously neighbors in the i-th criterion
@@ -171,6 +173,7 @@ class Neigh:     # representation of the neighbors
                         if abs(ach3 - ach4) < self.achDiff:     # neighbor in d-th crit.
                             neighOK = True
                             break  # find pair(s) with the next point
+                    '''
                     if self.verbose > 4:
                         print(f'{phaseStr}, {key}, diff {diff:.2f}, isOK {isOK}, neighOK {neighOK}')
                     if not isOK or not neighOK:
