@@ -218,18 +218,30 @@ class ParRep:     # representation of the Pareto set
             # it = s.itr_id
             # it1 = s1.itr_id
             # it2 = s2.itr_id
-            r = 0.
             eps = 1.e-4
+            gap = self.mc.opt('mxGap', 10)
+            '''
+            r = 0.
             for (i, cr) in enumerate(self.mc.cr):
                 r = max(r, abs(s1.vals[i] - s2.vals[i]))
+            '''
             for (i, cr) in enumerate(self.mc.cr):
                 v = s.vals[i]
                 v1 = s1.vals[i]
                 v2 = s2.vals[i]
-                if not max(v1, v2) - r < v + eps < min(v1, v2) + r:
+                '''
+                if not max(v1, v2) - r < v + eps < min(v1, v2) + r:     # previously used condition
+                '''
+                if not min(v1, v2) - eps < v < min(v1, v2) + eps:   # modified old (commented above) condition
                     # print(f'sol {it} is outside sols ({it1}, {it2}): crit {cr.name}: r {r:.2f} v {v:.2f}, '
                     #       f'(v1, v2) = ({v1:.2f}, {v2:.2f}).')
                     return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
+                # noinspection PyChainedComparisons
+                if abs(v1-v2) < eps and eps < v1 < 100 -eps:
+                    p1 = v1 + 0.5 * gap
+                    p2 = v1 - 0.5 * gap
+                    if not min(p1, p2) - eps < v < max(p1, p2) + eps:
+                        return False     # pretend solution s is outside the cube defined by s1 and s2
             # print(f'sol {it} {s.vals} is inside sols {it1} {s1.vals} and {it2} {s1.vals}; r {r:.2f}')
             return True     # s is inside the cube(s1, s2)
         #   end of using the ZN definition of neighbors
