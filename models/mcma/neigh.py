@@ -21,14 +21,15 @@ class Neigh:     # representation of the neighbors
         self.solSort = []        # self.points2 sorted for each criterion by increasing achievements
         self.neighCube = {}      # neighbors for generating cubes: key - ids of (sol1, sol2, crit), tmp dist in i-th crit
         self.neighDist = {}      # neighbors for calculating the distribution
-        self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
-        self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
+        self.distances = []      # values of distances between neighbors (for each criterion separately)
         self.cand = {}      # candidate sol-pairs: key - (sorted) sol-ids, val - distance
-        self.wrkCand = []   # work-list of candidates' pairs (for info only)
-        self.wrkPairs = {}  # work-list of candidates' pairs
+        self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
+        # self.wrkCand = []   # work-list of candidates' pairs (for info only)
+        # self.wrkPairs = {}  # work-list of candidates' pairs
         #
+        self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.gap = self.parRep.mc.opt('mxGap', 10)  # the max gap between neighbors
-        self.achDiff = 0.1 * self.gap  # tolerance for diffentiating achievements
+        self.achDiff = 0.05 * self.gap  # tolerance for diffentiating achievements
         self.verbose = 2    # print verbosity level
         #
         self.addSol()       # initialize the neighbors by selfish (and optionally neutral) solutions
@@ -68,7 +69,7 @@ class Neigh:     # representation of the neighbors
 
         # empty list of candidate pairs; (re)calculate neighbors of each solution
         print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
-        self.mkNeigh()     # find neighbors of each solution
+        # self.mkNeigh()     # find neighbors of each solution
         self.mkCand()      # select from the neighbors' sol-pairs candidates for making cubes, store them in self.cand{}
         found = self.selCand()
         if not found:   # no suitable pairs were found, terminate the iterations
@@ -96,7 +97,7 @@ class Neigh:     # representation of the neighbors
         val = 0.
         for i in range(self.mc.n_crit):
             val = max(val, abs(p1[i] - p2[i]))
-        print(f'pair {pair}: p1 = {p1}, p2 = {p2}, L^inf dist = {val:.2f}')
+        # print(f'pair {pair}: p1 = {p1}, p2 = {p2}, L^inf dist = {val:.2f}')
         return val
 
     def chk(self, pair):    # check if the pair of sol-ids was already used
@@ -107,6 +108,11 @@ class Neigh:     # representation of the neighbors
 
     # mk pair(s) (for cube generation) for k-th sol/pt and i-th crit.; achiev: sorted (for i-th crit) achievements
     def mkPairs(self):
+        # sort points by increasing achievements for each criterion separately
+        for i in range(self.mc.n_crit):
+            tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)    # sort in ascending order
+            self.solSort.append(tmp)
+
         for i in range(self.mc.n_crit):     # loop over criteria
             achiev = self.solSort[i]        # achievements sorted for i-th criterion in ascending order
             # jLast = 0   # seq of the last-used right point
@@ -135,6 +141,10 @@ class Neigh:     # representation of the neighbors
                     diff = ach2 - ach1
                     pair = self.sortPair([id1, id2])
                     key = (pair[0], pair[1], i)
+                    # if j == k + 1 and diff > self.achDiff and not self.chk(pair):  # skip used pairs and very small diffs
+                    if j == k + 1:  # use all neighbors of i-th criterion
+                        self.neighDist.update({key: diff})  # neighbor data for distribution info
+                        self.distances.append(diff)             # store (for plots) distances between points
                     j += 1
                     # check, if the current point is OK for the pair with k-th pt
                     if phase1:  # looking for the first pt distant enough from k-th pt
@@ -194,7 +204,9 @@ class Neigh:     # representation of the neighbors
                 if self.verbose > 2:
                     print(f'Neigh::mkPairs(): {nFound} pairs found for {k}-th sol, {i}-th crit, incl. {nUsed} already used.')
                 pass
+        pass
 
+    '''
     # find closest neighbors (two for each criterion) of each solution, then call self.mkPairs()
     def mkNeigh(self):
         self.wrkCand = []  # drop the old lists and dictionary
@@ -230,6 +242,7 @@ class Neigh:     # representation of the neighbors
         pass
 
         self.mkPairs()  # mk pair(s) for cube generation
+    '''
 
     '''
     # find closest neighbors (two for each criterion) of each solution
@@ -374,15 +387,26 @@ class Neigh:     # representation of the neighbors
 
     # make the candidate pairs from the neighbors' dict
     def mkCand(self):
-        self.cand = {}  # drop the old list (although it should be anyway empty)
+        # drop all old lists and dictionaries
+        self.cand = {}
+        self.neighCube = {}  # neighbors for each point/solution and criterion
+        self.neighDist = {}     # neighbors of each point and criterion
+        self.solSort = []       # solutions sorted by increasing achievement for each criterion separately
+        self.distances = []     # list of distances between solutions (for each criterion)
+        # self.wrkCand = []  # drop the old lists and dictionary
+        # self.wrkPairs = {}
+
+        self.mkPairs()      # generate pairs of solutions suitable for the cube generation
+
+        # scan the pairs and make list of pairs for the cube generation
         for idItem, diff in self.neighCube.items():  # id consists of pt-pair and crit id
             pair = [idItem[0], idItem[1]]   # for self.sort it needs to be a list
             was_used = self.chk(pair)
-            if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
-                continue    # skip pt-pair close in a dimension (should be distant in other didmension
-                # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
             if was_used:
                 raise Exception(f'Neigh::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
+            if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
+                continue    # skip pt-pair close in i-th dimension (should be distant in other dimension)
+                # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
             pair = (pair[0], pair[1])   # for use as a key the pair needs to be tuple
             if pair in self.cand:
                 oldDiff = self.cand.get(pair)   # the max of differences for previous criteria
@@ -408,6 +432,7 @@ class Neigh:     # representation of the neighbors
         return False
         # raise Exception(f'Neigh::selCand() - not implemented yet.')
 
+    '''
     # find and store the pair of the most distant neighbors to be used for defining new cube
     def explore(self):
         self.wrkCand = []  # drop the old lists and dictionary
@@ -416,7 +441,6 @@ class Neigh:     # representation of the neighbors
 
         for i in range(self.mc.n_crit):  # sort points by achievements for each criterion separately
             tmp = sorted(self.points2, key=itemgetter(i + 1), reverse=False)
-            '''
             # rm from points2 thee first of the adjoint items representing already used pairs
             toPrune = []    # positions of the items to be removed from the list
             for seq, item1 in enumerate(tmp):
@@ -432,6 +456,7 @@ class Neigh:     # representation of the neighbors
             for seq in toPrune:
                 tmp.pop(seq)
             '''
+    '''
             self.solSort.append(tmp)
 
         n_sol = len(self.sols)
@@ -443,6 +468,7 @@ class Neigh:     # representation of the neighbors
         pass
         # select from the wrkCand pairs to be stored in cand{} (to be used for making cubes)
         '''
+    '''
         for item in self.wrkCand:   # item: [crit_id, pair (either low or upp), diff
             diff = item[2]
             if diff > self.gap:
@@ -452,6 +478,7 @@ class Neigh:     # representation of the neighbors
                 pass
             pass
         '''
+    '''
         for pair, val in self.wrkPairs.items():
             val = self.dist(pair)  # L^inf distance between the sol-pair
             self.wrkPairs.update({pair: val})
@@ -471,6 +498,7 @@ class Neigh:     # representation of the neighbors
         # raise Exception(f'Neigh::explore() - not implemented yet.')
 
         '''
+    '''
             low = self.solSort[0][seq - 1]      # point with smaller achievement
             id_low = low[0]
             id_base = base[0]
@@ -578,15 +606,13 @@ class Neigh:     # representation of the neighbors
             pass
             '''
 
-        '''
         # most distant neighbors found
-        bestPair = self.sortPair(bestPair)
-        print(f'Most distant neighbors found, sols_id: ({bestPair[0]}, {bestPair[1]}), distance {dist:.1f}.')
-        self.lastPair = (bestPair[0], bestPair[1])
-        self.done.update({self.lastPair: dist})
+        # bestPair = self.sortPair(bestPair)
+        # print(f'Most distant neighbors found, sols_id: ({bestPair[0]}, {bestPair[1]}), distance {dist:.1f}.')
+        # self.lastPair = (bestPair[0], bestPair[1])
+        # self.done.update({self.lastPair: dist})
         # raise Exception(f'Neigh::find() - cube creation not implemented yet.')
-        '''
-
+    '''
     # select a set of neighbors to make pairs with the selected base (a given solution)
     def mkCand1(self, base):
         id_base = base[0]
@@ -674,6 +700,7 @@ class Neigh:     # representation of the neighbors
         pass
 
         '''
+    '''
             if diffLow > diffUpp:
                 diff = diffLow
                 pair = pairLow

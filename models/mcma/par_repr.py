@@ -112,8 +112,17 @@ class ParRep:     # representation of the Pareto set
     def solDistr(self):     # distribution of distances between neighbor solutions, called by sizeLog
         #  Note: neighbor (for each solution) is the closest other solution
         if self.mc.opt('mCube', False):
-            print('\nWARNING: ParRep::solDistr(): should not be used, if neighbors are handled by the Neigh class .')
-            # raise Exception('ParRep::solDistr(): should not be used, if neighbors are handled by the Neigh class .')
+            self.distances = self.neighSol.distances
+            self.distances.sort()
+            # print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
+            #       f'max {self.distances[-1]:.2e}')
+            self.allDist.update({self.cur_itr: self.distances})  # distances stored for each sample
+            # self.neighInf.update(
+            #     {self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors
+            # print(f'\nSample {self.sampleSeq} of {len(self.distances)} neighbor solutions: '
+            #       f'maxDist {maxDist:.3f} ({mxPair[0]}, {mxPair[1]}), minDist {minDist:.3f}')
+            self.sampleSeq += 1
+            return
 
         n_sols = len(self.sols)       # number of Pareto-sols computed so far
         self.neigh = {}         # renew the working dict for neighbors
