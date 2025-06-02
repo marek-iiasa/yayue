@@ -44,7 +44,7 @@ class Neigh:     # representation of the neighbors
     def addSol(self, s=None, was_close=False):  # add a Pareto solution
         if was_close:    # the last solution was close (not included in tthe PF); find a pair from previous solutions
             if self.verbose > 2:
-                print(f'Neigh::addSol(): last solution was close to another solution.')
+                print(f'Neigh::addSol(): last solution was close to or dominated by, another solution.')
             pass
         elif s is None:   # initial call, use the corner, optionally also neutral, solutions
             print(f'Neigh::addSol(): the ctor initialized with corner (and optionally, neutral) solutions.')
