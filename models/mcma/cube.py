@@ -220,7 +220,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
         self.used = False   # set to True, when the cube was used for generating a solution inside
         self.empty = None   # set to True/False if a solution is/isNot inside
         # todo: min_edge should be controlled by cfg
-        self.min_edge = 0.5  # min achievement A/R difference (used to set the degenerated dimension
+        self.min_edge = 0.3  # min A/R achiev. diff. (used to set the degenerated dimension), until 3.6.25 was 0.5
         self.edges = []     # distance components (lengthes of edges for each criterion)
         self.degen = []     # True, if the corresponding edge is too small
         self.degen_str = ''  # Indices of the degen-dimension indices
@@ -297,7 +297,7 @@ class aCube:     # a Cube defined (in achievement values) by the given pair of n
                 else:   # don't expand: the cr will not enter AF, value of the corresponding m1 var will be fixed
                     cr.is_active = False
                     cr.is_fixed = True
-                    cr.res = cr.asp
+                    # cr.res = cr.asp   # modified 3.6.25 (to keep the real res)
                     achiv = cr.val2ach(self.s1.vals[i])  # CAF (same/similar for both solutions)
                     self.aspAch.append(achiv)
                     self.resAch.append(achiv)

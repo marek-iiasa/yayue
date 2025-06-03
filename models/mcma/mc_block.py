@@ -92,7 +92,9 @@ class McMod:
                     # m.x[i].setlb(cr.asp)
                     # m.x[i].setub(cr.asp)
                     # todo: explore (in cube.py) to replace A by an value of f(A,R)
-                    m.x[i].fix(cr.asp)  # better than fixing LB and UB
+                    # m.x[i].fix(cr.asp)  # better than fixing LB and UB
+                    val = (cr.asp + cr.res) / 2.0   # use the A/R average
+                    m.x[i].fix(val)  # better than fixing LB and UB
 
         # make list of variables (pyomo objects) of m1 (core model) defining criteria
         m.m1_cr_vars = []
