@@ -53,7 +53,7 @@ if __name__ == '__main__':
         if not os.path.exists(sdir):
             os.makedirs(sdir, mode=0o755)
             print(f'Directory "{sdir} created.')
-    m_name = 'tpipa'     # model name (used for the dll-format file-name
+    m_name = 'pipa25'     # model name (used for the dll-format root-name)
     # files
     f_out = f'{out_dir}stdout.txt'    # optionally redirected stdout
     f_data = f'{data_dir}dat4.dat'    # data for defining the model instance
