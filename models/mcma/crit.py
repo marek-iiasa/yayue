@@ -72,25 +72,26 @@ class Crit:     # definition and attributes of a single criterion
         self.utopia = val     # slightly adjusted to avoid problems with comparisons/update
         print(f'utopia of crit "{self.name}" set to {val}.')
 
-    def updNadir(self, stage, val, minDiff):
-        """Update nadir value, if val is a better approximation."""
+    def updNadir(self, stage, val, minDiff):    # stage: the WrkFlow stage (2:  nadir appr)
+        """Update the nadir value, if val is a better approximation."""
         if self.nadir is None or stage == 0:    # set initial value
             self.nadir = val
             print(f'nadir of crit "{self.name}" set to {val} ({stage = }).')
-            return
+            return False
         shift = False
         eps = 1.e-6     # margin to avoid setting to the same value
         old_val = self.nadir
 
         # stage 2: first appr. of nadir, regularized selfish opt. for each crit. in a row
         # tighten (move closer to U) "too bad" value from selfish opt. in stage 1
-        if stage == 2:
-            delta = 2. * minDiff * max(abs(self.utopia), abs(val))
+        if stage == 2:      # (both) Nadir appr. stages
+            # delta = 2. * minDiff * max(abs(self.utopia), abs(val))    # used for minDiff = 0.01
+            delta = 20. * minDiff * max(abs(self.utopia), abs(val))    # changed for newer minDiff = 0.001
             if abs(self.utopia - val) < delta:
                 v = val     # v only for the below printout
                 val = self.utopia - self.mult * delta
-                print(f'updNadir(): crit "{self.name}", value {v:.2e} closer to utopia {self.utopia:.2e} '
-                      f'than {delta:.2e}; nadir can be moved only to {val:.4e}.')
+                print(f'updNadir(): crit "{self.name}", value {v:.5e} closer to utopia {self.utopia:.5e} '
+                      f'than {delta:.5e}; nadir moved to {val:.5e}.')
             if self.mult == 1:  # max-crit, tight to larger values
                 if old_val + eps < val:
                     shift = True    # move closer to U

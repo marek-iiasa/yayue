@@ -22,6 +22,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.up_seg = False   # if True, then generate up-PWL segment
         self.lo_seg = False   # if True, then generate lo-PWL segment
         self.chk_ok = self.chk_param()
+        pass
 
     # noinspection PyUnreachableCode
     def chk_param(self):
@@ -69,10 +70,9 @@ class PWL:  # representation of caf(x) for i-th criterion
 
         # check, if the selected A/R (replaced, if required, by U/N) sufficiently differ
         if abs(self.asp_val - self.res_val) < minDiff:
-            print(f'crit {self.cr_name}: the provided A/R pair ({self.asp_val:.2e}, {self.res_val:.2e}) is too close '
+            print(f'crit {self.cr_name}: the provided A/R pair ({self.asp_val:.6e}, {self.res_val:.6e}) is too close '
                   f'to define a PWL.')
             return False
-
         return True
 
     def segments(self):

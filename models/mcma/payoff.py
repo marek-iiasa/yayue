@@ -50,10 +50,10 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                 # self.cur_cr = 0     # start with 0-th criterion
         if self.cur_stage in [2, 3]:   # nadir apr., stages 1 & 2
             if self.cur_cr >= self.n_crit:   # all crit handled in current stage, change stage
-                if self.cur_stage == 2:     # proceed to the 2nd nadir appr. (cur_stage 3)
+                if self.cur_stage == 2:     # proceed to the 2nd nadir appr.
                     print('Finished first nadir approximations. Start the 2nd nadir approximation.')
-                    self.cur_stage = 3
-                    self.cur_cr = 0     # start with 0-th criterion
+                    self.cur_stage = 3  # PayOff stage 3, wrkFlow stage remains 1)
+                    self.cur_cr = 0     # initial criteria loop with 0-th criterion
                 else:       # in 2nd nadir appr. (cur_stage 3)
                     raise Exception(f'PayOff::next_pref() all crit. already processed in stage: {self.cur_stage}.')
 
@@ -76,7 +76,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                     cr.setUtopia(val)  # utopia computed
                 cr.updNadir(self.cur_stage, val, self.minDiff)
         else:       # Nadir approx. (both stages)
-            print(f'---\nPayoff::next_sol(): stage {self.cur_stage}.')
+            # print(f'---\nPayoff::next_sol(): PayOff stage {self.cur_stage}.')
             for cr in self.cr:
                 val = cr.val
                 cr.a_val = cr.val2ach(val)
@@ -95,7 +95,8 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                 self.cur_stage += 1
                 self.cur_cr = 0
             else:       # payoff stage 3 (2nd nadir appr) completed, thus PayOff completed
-                self.cur_stage = 4
+                self.cur_stage = 4  # means: payoff table done
+                print(f'---Payoff::next_sol(): PayOff stage {self.cur_stage} (completed).')
         # return self.cur_stage     # PayOff stage is internal, should not be returned
 
     def set_payOff(self, cr_name, utopia, nadir):   # set the previously stored utopia/nadir values
@@ -117,7 +118,8 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
                     cr.nadir = nadir - nad_adj
                     return
                 else:
-                    raise Exception(f'set_payoff("{cr_name}", {utopia=}, {nadir=}): inconsistent values.')
+                    raise Exception(f'PayOff::set_payOff(): "{cr_name}", utopia {utopia:.6e} not (clearly) better than '
+                        f'nadir {nadir:.6e}.')
         raise Exception(f'set_payoff(): unknown criterion name: "{cr_name}".')
 
     def rd_payoff(self):    # read stored utopia/nadir values and store them as self.cr attributes
