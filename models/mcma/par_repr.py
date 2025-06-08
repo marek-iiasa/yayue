@@ -227,17 +227,18 @@ class ParRep:     # representation of the Pareto set
         # it1 = s1.itr_id
         # it2 = s2.itr_id
         if self.mc.opt('neighZN', False):
-            eps = 1.e-4
             # gap = self.mc.opt('mxGap', 10)
             '''
             r = 0.
             for (i, cr) in enumerate(self.mc.cr):
                 r = max(r, abs(s1.vals[i] - s2.vals[i]))
             '''
+            eps = 1.e-4
             for (i, cr) in enumerate(self.mc.cr):
-                v = s.vals[i]
-                v1 = s1.vals[i]
-                v2 = s2.vals[i]
+                sc = 100. / (cr.utopia - cr.nadir)
+                v = (s.vals[i] - cr.nadir) * sc     #  s.vals[i]
+                v1 = (s1.vals[i] - cr.nadir) * sc   #  s1.vals[i]
+                v2 = (s2.vals[i] - cr.nadir) * sc   #  s2.vals[i]
                 '''
                 if not max(v1, v2) - r < v + eps < min(v1, v2) + r:     # previously used condition
                 '''
