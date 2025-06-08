@@ -123,13 +123,18 @@ class Cubes:     # collection of aCubes
     def cand_ok(self, c_id):  # check, if c can be used
         c = self.get(c_id)
         assert not c.used, f'candidate cube[{c_id}] was already used.'
+        '''
         for s in [c.s1, c.s2]:  # check if both cube-sol are indeed Pareto
             if s not in self.sols:
                 return False    # sol. was removed from Pareto-sols, cube cannot be used
             assert s.domin >= 0, f'Cubes::cand_ok(): candidate Pareto sol[{s.itr_id}] dominated by sol[{-s.domin}].'
-        if self.is_empty(c):    # check, if after the cube creation a solution was insterted in the cube
+        '''
+        # check, if after the cube creation a solution was insterted in the cube
+        if not self.parRep.mc.opt('skipEmpty', True) or self.is_empty(c):
+            # print(f'cube[{c_id}], size {c.size:.2f} is ok')
             return True    # the cube can be used
         else:
+            # print(f'cube[{c_id}], size {c.size:.2f} rejected')
             return False    # the cube cannot be used
 
     def select(self):    # select a cube for generating a new Pareto solution
@@ -145,6 +150,7 @@ class Cubes:     # collection of aCubes
         id2prune = []
         # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
+            # todo: cube [11] was selected instead of the largest cube[6] (became non-empty!)
             if  self.parRep.mc.opt('mCube', False) or  self.cand_ok(c_id):  # if 'mCube' option skip the cube check
                 lst.append(c_id)
                 break   # take the first found empty-cube

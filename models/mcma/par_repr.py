@@ -223,12 +223,12 @@ class ParRep:     # representation of the Pareto set
                 self.wflow.cur_stage = 6  # all ARs processed, terminate the analysis
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
+        # it = s.itr_id
+        # it1 = s1.itr_id
+        # it2 = s2.itr_id
         if self.mc.opt('neighZN', False):
-            # it = s.itr_id
-            # it1 = s1.itr_id
-            # it2 = s2.itr_id
             eps = 1.e-4
-            gap = self.mc.opt('mxGap', 10)
+            # gap = self.mc.opt('mxGap', 10)
             '''
             r = 0.
             for (i, cr) in enumerate(self.mc.cr):

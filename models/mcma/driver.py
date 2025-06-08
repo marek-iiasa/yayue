@@ -103,7 +103,7 @@ def driver(cfg):
 
         # print('processing solution ----')
         if wflow.mc.is_opt:
-            if n_iter == 93:
+            if n_iter == 7:
                 # print(f'\niter {n_iter}: trap')
                 # wflow.par_rep.solDistr()
                 pass
