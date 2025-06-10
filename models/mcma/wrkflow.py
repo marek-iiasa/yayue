@@ -11,6 +11,7 @@ from .corners import Corners
 # from .crit import Crit, CrPref
 from .par_repr import ParRep
 from .neigh import Neigh
+from .grid import Grid
 
 
 # noinspection SpellCheckingInspection
@@ -25,6 +26,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.par_rep = None    # ParRep object, currently always used (not only, if is_par_rep == True)
         self.corner = None  # object handling corners of the PF
         self.cluster = None  # (optional) cluster-object of solutions
+        self.grid = None
         #
         self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
         if self.payoff.done():
@@ -112,6 +114,12 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                         else:
                             raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                         pass
+                    elif self.mc.opt('grid', False):
+                        if self.par_rep.grid is None:
+                            self.par_rep.grid = Grid(self)  # initialize with corners and neutral sol.
+                        else:
+                            raise Exception(f'WrkFlow::itr_sol() - duplicated Grid-object initialization.')
+                        pass
         elif self.cur_stage == 3:     # neutral solution
             next_stage = 4  # the neutral done, proceed to Pareto front
             self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
@@ -121,7 +129,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                 else:
                     raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                 pass
-            # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
+            elif self.mc.opt('grid', False):
+                raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # start or continue Pareto front
             pass
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
@@ -149,6 +158,13 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.payoff.prnPayOff()     # print to stdout and save to the file
         if self.cur_stage > 3 and self.par_rep.neighSol is not None:
             if self.par_rep.neighSol.getPair() == (None, None):
+                print('\nNo more condidates for making cubes. -------------------------------------------')
+                next_stage = 6
+        # todo: fix the below issue
+        # if self.cur_stage > 3 and self.par_rep.grid is not None:  # cur_stage kept at 2 for grid option
+        if self.par_rep.grid is not None:
+            pair =  self.par_rep.grid.getPair()
+            if self.par_rep.grid.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
         self.cur_stage = next_stage

@@ -53,6 +53,9 @@ def driver(cfg):
     while n_iter <= max_itr:   # just for safety; should not be needed for a proper stop criterion
         # i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {wflow.cur_stage} -----------------------------------------')
+        if n_iter == 6:
+            # print(f'\niter {n_iter}: trap0')
+            pass
         i_stage = wflow.itr_start(n_iter)   # set preferences, return current stage
         if i_stage == 6:   # cur_stage is set to 6 (by par_pref() or set_pref()), if all preferences are processed
             print(f'\nFinished the analysis for all generated/specified preferences.')

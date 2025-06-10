@@ -4,6 +4,7 @@ from operator import itemgetter
 # from numpy.ma.core import append
 
 from .cube import ParSol, Cubes, aCube
+# from .grid import Grid
 # from .corners import Corners
 
 # noinspection SpellCheckingInspection
@@ -74,8 +75,9 @@ class ParRep:     # representation of the Pareto set
     def __init__(self, wflow):         # initialize corners by regularized selfish solutions
         self.wflow = wflow        # WrkFlow object
         self.mc = wflow.mc        # CtrMca object
-        self.cfg = wflow.cfg   # Config object
-        self.sols = []      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
+        self.cfg = wflow.cfg      # Config object
+        self.sols = []            # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
+        self.grid = None
         self.sols_wrk = []  # work-list of solutions (to be used for finding a most distant (in L^inf) sol-pair
         self.clSols = []    # duplicated/close Pareto-solutions (ParSol objects)
         self.neighSol = None  # object handling neighbor sols (made after corners, and optionally neutral sols)
@@ -198,7 +200,7 @@ class ParRep:     # representation of the Pareto set
             for cr in self.mc.cr:
                 cr.setAR()
         elif self.wflow.is_par_rep:   # set preferences from the selected cube
-            if self.mc.opt('mCube', False):
+            if self.mc.opt('mCube', False) or self.mc.opt('grid', False):
                 self.mk_aCube()
                 pass
             cube = self.cubes.select()  # the cube defining A/R for new iteration
@@ -223,16 +225,17 @@ class ParRep:     # representation of the Pareto set
                 self.wflow.cur_stage = 6  # all ARs processed, terminate the analysis
 
     def is_inside(self, s, s1, s2):    # return False if s is outside cube(s1, s2)
+        # the below 3 stmts needed only for (current commented) debug-prints
         # it = s.itr_id
         # it1 = s1.itr_id
         # it2 = s2.itr_id
-        if self.mc.opt('neighZN', False):
-            # gap = self.mc.opt('mxGap', 10)
+        if self.mc.opt('neighZN', False):       # use ZN's definition of empty cubes
             '''
             r = 0.
             for (i, cr) in enumerate(self.mc.cr):
                 r = max(r, abs(s1.vals[i] - s2.vals[i]))
             '''
+            gap = self.mc.opt('mxGap', 10)
             eps = 1.e-4
             for (i, cr) in enumerate(self.mc.cr):
                 sc = 100. / (cr.utopia - cr.nadir)
@@ -247,13 +250,11 @@ class ParRep:     # representation of the Pareto set
                     #       f'(v1, v2) = ({v1:.2f}, {v2:.2f}).')
                     return False  # v outside the range [v1, v2] --> s in outside cube(s1, s2)
                 # noinspection PyChainedComparisons
-                '''
                 if abs(v1-v2) < eps and eps < v1 < 100 -eps:
                     p1 = v1 + 0.01 * gap
                     p2 = v2 - 0.01 * gap
                     if not min(p1, p2) - eps < v < max(p1, p2) + eps:
                         return False     # pretend solution s is outside the cube defined by s1 and s2
-                '''
             # print(f'sol {it} {s.vals} is inside sols {it1} {s1.vals} and {it2} {s1.vals}; r {r:.2f}')
             return True     # s is inside the cube(s1, s2)
         #   end of using the ZN definition of neighbors
@@ -337,6 +338,8 @@ class ParRep:     # representation of the Pareto set
                     pass
                 if self.mc.opt('mCube', False):
                     self.neighSol.addSol(None, True)    # close solution ignored, but next pair needs to be found
+                if self.mc.opt('grid', False):
+                    self.grid.addSol(None, True)    # close solution ignored, but next pair needs to be found
                     # self.mk_aCube()  # make a cube from previously available solutions
         else:   # unique solution; check dominance with all Pareto-sols found so far
             toPrune = []    # tmp list of solutions dominated by the current sol
@@ -368,6 +371,16 @@ class ParRep:     # representation of the Pareto set
                             pass
                     else:
                         pass    # do nothing before finishing Corners and neutral solution
+                elif self.mc.opt('grid', False):
+                    if self.wflow.cur_stage == 4:   # computing the PF (i.e., after Corners, neutral)
+                        if self.grid is None:
+                            raise Exception('ParRep::addSol(): Grid should have been created in WrkFlow.itr_sol()')
+                        else:
+                            self.grid.addSol(new_sol)
+                            pass
+                    else:
+                        pass    # do nothing before finishing Corners and neutral solution
+                    pass
                 else:
                     self.mk_cubes(new_sol)    # use other/old methods for defining cubes generated by this solution
             else:
@@ -387,9 +400,14 @@ class ParRep:     # representation of the Pareto set
         return is_pareto
 
     def mk_aCube(self):  # find a pair of most distant neighbor solutions and define a cube.cand around them
-        pair = self.neighSol.getPair()      # get the pair of sols' ids
-        if pair == (None, None):
-            raise Exception(f'ParRep::mk_aCube() - termination of itrs for mCube option is done in WrkFlow::itr_sol().')
+        if self.neighSol is not None:
+            pair = self.neighSol.getPair()      # get the pair of sols' ids
+            if pair == (None, None):
+                raise Exception(f'ParRep::mk_aCube() - termination of itrs for mCube option is done in WrkFlow::itr_sol().')
+        elif self.grid is not None:
+            pair = self.grid.getPair()      # get the pair of sols' ids
+        else:
+            raise Exception(f'iParRep::mk_aCube(): internal error.')
         s1 = self.get(pair[0])
         s2 = self.get(pair[1])
         n_cube = aCube(self.mc, s1, s2)
