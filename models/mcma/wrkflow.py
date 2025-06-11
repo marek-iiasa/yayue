@@ -95,6 +95,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                 if changed:
                     self.cur_stage = 5      # reset
                     self.par_rep.neighSol = None    # destroy the neighbors' object
+                    self.par_rep.grid = None    # destroy the neighbors' object
 
         next_stage = self.cur_stage   # by default, continue with the current stage
         if self.cur_stage == 1:       # payoff table
@@ -107,32 +108,27 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                     next_stage = 3
                 else:
                     next_stage = 4     # skip neutral, proceed to Pareto front
-                    self.par_rep.from_cube = True   # from now on preferences to be generated from cubes
-                    if self.mc.opt('mCube', False):
-                        if self.par_rep.neighSol is None:
-                            self.par_rep.neighSol = Neigh(self.par_rep) # initialize with corners
-                        else:
-                            raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
-                        pass
-                    elif self.mc.opt('grid', False):
-                        if self.par_rep.grid is None:
-                            self.par_rep.grid = Grid(self)  # initialize with corners and neutral sol.
-                        else:
-                            raise Exception(f'WrkFlow::itr_sol() - duplicated Grid-object initialization.')
-                        pass
+                self.par_rep.from_cube = True   # preferences for (optional) neutral and the PF to be generated from cubes
+                self.cur_stage = next_stage
         elif self.cur_stage == 3:     # neutral solution
             next_stage = 4  # the neutral done, proceed to Pareto front
-            self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
+            self.cur_stage = next_stage
+            # self.par_rep.from_cube = True  # from now on preferences to be generated from cubes
+        if self.cur_stage < 4:
+            pass    # nothing more to do here
+        elif self.cur_stage == 4:     # start or continue Pareto front
             if self.mc.opt('mCube', False):
                 if self.par_rep.neighSol is None:
                     self.par_rep.neighSol = Neigh(self.par_rep) # initialize with corners and neutral sol.
-                else:
-                    raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
+                # else:
+                #     raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                 pass
             elif self.mc.opt('grid', False):
-                raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
-        elif self.cur_stage == 4:     # start or continue Pareto front
-            pass
+                if self.par_rep.grid is None:
+                    self.par_rep.grid = Grid(self) # initialize with corners and neutral sol.
+                # else:
+                #     raise Exception(f'WrkFlow::itr_sol() - duplicated Grid-object initialization.')
+                pass
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:     # reset (after Nadir update)
             print('\nINFO: PayOff table updated; restarting the Pareto-set representation. ---------------------------')
@@ -146,6 +142,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
 
+        # todo: suppress storing the previous solution at start of the PF calculation
         if self.cur_stage > 2:  # store solutions only if the PayOff table is available
             self.par_rep.addSol(self.n_itr)
 
@@ -160,10 +157,8 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             if self.par_rep.neighSol.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
-        # todo: fix the below issue
         if self.cur_stage > 3 and self.par_rep.grid is not None:  # cur_stage kept at 2 for grid option
-        # if self.par_rep.grid is not None:
-            pair =  self.par_rep.grid.getPair()
+            # pair =  self.par_rep.grid.getPair()
             if self.par_rep.grid.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
