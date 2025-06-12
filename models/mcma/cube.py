@@ -129,6 +129,8 @@ class Cubes:     # collection of aCubes
                 return False    # sol. was removed from Pareto-sols, cube cannot be used
             assert s.domin >= 0, f'Cubes::cand_ok(): candidate Pareto sol[{s.itr_id}] dominated by sol[{-s.domin}].'
         '''
+        if self.parRep.mc.opt('grid', False):   # refrain from checking a cube is empty
+            return True
         # check, if after the cube creation a solution was insterted in the cube
         if not self.parRep.mc.opt('skipEmpty', True) or self.is_empty(c):
             # print(f'cube[{c_id}], size {c.size:.2f} is ok')
@@ -150,7 +152,6 @@ class Cubes:     # collection of aCubes
         id2prune = []
         # size = self.cand[0][1]
         for (c_id, c_size) in self.cand:
-            # todo: cube [11] was selected instead of the largest cube[6] (became non-empty!)
             if  self.parRep.mc.opt('mCube', False) or  self.cand_ok(c_id):  # if 'mCube' option skip the cube check
                 lst.append(c_id)
                 break   # take the first found empty-cube
