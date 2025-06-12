@@ -1,0 +1,243 @@
+# data for Matouqin sms3
+# five time periods
+
+param nHrs :=
+5
+;
+
+param intv :=
+1
+;
+
+set R :=
+BESS
+HESS
+CAESS1
+CAESS2
+;
+
+set E[HESS] :=
+EL
+;
+
+set E[CAESS1] :=
+COMP1
+;
+
+set E[CAESS2] :=
+COMP2
+;
+
+set S[BESS] :=
+BAT
+;
+
+set S[HESS] :=
+HT1
+HT2
+;
+
+set S[CAESS1] :=
+CAT1
+;
+
+set S[CAESS2] :=
+CAT2
+;
+
+set X[HESS] :=
+FC
+;
+
+set X[CAESS1] :=
+AE1
+;
+
+set X[CAESS2] :=
+AE2
+;
+
+param ePrice :=
+7008
+;
+
+param eBprice :=
+2.4
+;
+
+param eSprice :=
+2.4
+;
+param inflow :=
+0 1.15
+1 1.35
+2 1.05
+3 0.70
+4 0.65
+;
+
+param emxCap :=
+HESS EL 5
+CAESS1 COMP1 0.8
+CAESS2 COMP2 0.1
+;
+
+param mieCap :=
+HESS EL 0
+CAESS1 COMP1 0.08
+CAESS2 COMP2 0
+;
+
+param e2x :=
+HESS EL 0.2
+CAESS1 COMP1 4.68
+CAESS2 COMP2 0.81
+;
+
+param e2xInt :=
+HESS EL 0
+CAESS1 COMP1 -0.32
+CAESS2 COMP2 0
+;
+
+param eInv :=
+HESS EL 561.7
+CAESS1 COMP1 314.55
+CAESS2 COMP2 39
+;
+
+param eOMC :=
+HESS EL 5
+CAESS1 COMP1 5.6
+CAESS2 COMP2 0.7
+;
+
+param smxCap :=
+BESS BAT 20
+HESS HT1 10.0
+HESS HT2 5.0
+CAESS1 CAT1 50
+CAESS2 CAT2 0.125
+;
+
+param e2s :=
+BESS BAT 0
+HESS HT1 0.1
+HESS HT2 0.1
+CAESS1 CAT1 0
+CAESS2 CAT2 0
+;
+
+param mxsIn :=
+BESS BAT 5
+HESS HT1 3.0
+HESS HT2 1.0
+CAESS1 CAT1 3.5
+CAESS2 CAT2 0.08
+;
+
+param mxsOut :=
+BESS BAT 5
+HESS HT1 3.0
+HESS HT2 1.0
+CAESS1 CAT1 5.5
+CAESS2 CAT2 0.08
+;
+
+param sini :=
+BESS BAT 0.2
+HESS HT1 0.2
+HESS HT2 0.2
+CAESS1 CAT1 0.2
+CAESS2 CAT2 0.2
+;
+
+param xCh :=
+BESS BAT 0.87
+HESS HT1 1
+HESS HT2 1
+CAESS1 CAT1 1
+CAESS2 CAT2 1
+;
+
+param xDis :=
+BESS BAT 0.87
+HESS HT1 1
+HESS HT2 1
+CAESS1 CAT1 1
+CAESS2 CAT2 1
+;
+
+param xRes :=
+BESS BAT 0.99
+HESS HT1 1
+HESS HT2 1
+CAESS1 CAT1 1
+CAESS2 CAT2 1
+;
+
+param sInv :=
+BESS BAT 10
+HESS HT1 40.12
+HESS HT2 24.07
+CAESS1 CAT1 400
+CAESS2 CAT2 28
+;
+
+param sOMC :=
+BESS BAT 0.1
+HESS HT1 1
+HESS HT2 1
+CAESS1 CAT1 14
+CAESS2 CAT2 0.28
+;
+
+param xmxCap :=
+HESS FC 0.3
+CAESS1 AE1 5.5
+CAESS2 AE2 0.1
+;
+
+param mixCap :=
+HESS FC 0
+CAESS1 AE1 0.45
+CAESS2 AE2 0
+;
+
+param x2e :=
+HESS FC 2.33
+CAESS1 AE1 0.13
+CAESS2 AE2 0.79
+;
+
+param x2eInt :=
+HESS FC 0
+CAESS1 AE1 -0.44
+CAESS2 AE2 0
+;
+
+param xInv :=
+HESS FC 48.15
+CAESS1 AE1 3.37
+CAESS2 AE2 0.42
+;
+
+param xOMC :=
+HESS FC 5
+CAESS1 AE1 6.72
+CAESS2 AE2 0.84
+;
+
+
+param mixCap :=
+HESS FC 0
+CAESS1 AE1 0.45
+CAESS2 AE2 0
+;
+
+param mieCap :=
+HESS EL 0
+CAESS1 COMP1 0.08
+CAESS2 COMP2 0
+;
+
