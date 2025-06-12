@@ -88,7 +88,7 @@ class Cubes:     # collection of aCubes
             # print(f'skiping new cube: size {cube.size:.2f} > the last cube size: {self.lastSize:.2f} ---------')
             return
         if cube.size >= self.min_size:
-            if self.parRep.mc.opt('mCube', False):  # skip empty-cube check for mCube option
+            if self.parRep.mc.opt('mCube', False) or self.parRep.mc.opt('grid', False):  # skip empty-cube check
                 cube.empty = True
                 is_empty = True
             else:

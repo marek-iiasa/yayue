@@ -53,7 +53,7 @@ def driver(cfg):
     while n_iter <= max_itr:   # just for safety; should not be needed for a proper stop criterion
         # i_stage = mc.set_stage()  # define/check current analysis stage
         print(f'\nStart iteration {n_iter}, analysis stage {wflow.cur_stage} -----------------------------------------')
-        if n_iter == 6:
+        if n_iter == 15:
             # print(f'\niter {n_iter}: trap0')
             pass
         i_stage = wflow.itr_start(n_iter)   # set preferences, return current stage

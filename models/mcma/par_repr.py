@@ -83,6 +83,7 @@ class ParRep:     # representation of the Pareto set
         self.neighSol = None  # object handling neighbor sols (made after corners, and optionally neutral sols)
         self.cubes = Cubes(self)  # the object handling all cubes
         self.progr = ParProg(self)  # the object handling computation progress
+        self.gap = self.mc.opt('mxGap', 10)
         self.cur_cube = None  # cube_id of the last used cube
         self.cur_itr = None   # current itr_id
         self.sampleSeq = 0    # number of distribution samples stored
@@ -235,7 +236,7 @@ class ParRep:     # representation of the Pareto set
             for (i, cr) in enumerate(self.mc.cr):
                 r = max(r, abs(s1.vals[i] - s2.vals[i]))
             '''
-            gap = self.mc.opt('mxGap', 10)
+            gap = self.gap
             eps = 1.e-4
             for (i, cr) in enumerate(self.mc.cr):
                 sc = 100. / (cr.utopia - cr.nadir)
