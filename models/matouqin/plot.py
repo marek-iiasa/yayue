@@ -21,14 +21,14 @@ import re
 def set_plt_format():
     plt.rcParams.update({
         'font.family': 'Times New Roman',
-        'axes.titlesize': '15',  # title size
+        'axes.titlesize': '10',  # title size
         'axes.titlepad': 12,  # space between title and figure
-        'axes.labelsize': '13',  # axis title size
-        'axes.labelpad': 5,  # space between label and figure
+        'axes.labelsize': '10',  # axis title size
+        'axes.labelpad': 10,  # space between label and figure
         'xtick.labelsize': '10',  # axis scale size
         'ytick.labelsize': '10',  # axis scale size
-        'legend.fontsize': '10',  # legend font size
-        'legend.title_fontsize': '13',  # legend title font size
+        'legend.fontsize': '8',  # legend font size
+        'legend.title_fontsize': '10',  # legend title font size
         'font.size': '10',  # font size
         })
 
@@ -37,18 +37,18 @@ def set_pgo_format():
     pgo_templ1 = pgo.layout.Template(
         layout=pgo.Layout(
             width=1000, height=800,
-            font=dict(family="Times New Roman", size=13, color="black"),
-            titlefont=dict(size=15),
+            font=dict(family="Times New Roman", size=10, color="black"),
+            titlefont=dict(size=10),
             xaxis=dict(showline=True, linecolor='black',
                        linewidth=1, mirror=True,
                        showgrid=False, showticklabels=True,
-                       tickfont=dict(size=13),
+                       tickfont=dict(size=10),
                        title_standoff=12,
                        ),
             yaxis=dict(showline=True, linecolor='black',
                        linewidth=1, mirror=True,
                        showgrid=False, showticklabels=True,
-                       tickfont=dict(size=13),
+                       tickfont=dict(size=10),
                        title_standoff=12,
                        ),
             # legend=dict(x=0.325, y=0.98, traceorder="normal",
@@ -68,7 +68,7 @@ def set_pgo_format():
 def set_color(numbers):
     n = numbers
     colors = []
-    if n == 2:
+    if n <= 2:
         # light pink and purple
         # colors = ['#ffbeb4', '#b3c2ff']
 
@@ -89,10 +89,10 @@ def set_color(numbers):
 
     elif n == 4:
         # white, gray, green and blue
-        colors = ['#f4f3f3', '#dfdfdf', '#bfd8d5', '#b1bed5']
+        # colors = ['#f4f3f3', '#dfdfdf', '#bfd8d5', '#b1bed5']
 
         # pink, blue, and silver
-        # colors = ['#f9ecec', '#f0d9da', '#c8d9e8', '#ecf2f9']
+        colors = ['#f9ecec', '#f0d9da', '#c8d9e8', '#ecf2f9']
 
         # blue, purple, azure and light green
         # colors = ['#69779b', '9692af', '#acdbdf', 'd7eaea']
@@ -133,7 +133,7 @@ def set_color(numbers):
         #           '#98742c']
         colors = ['#235f93', '#3b5e57', '#ee7d2f', '#a5a6a3', '#6c179a',
                   '#70ae4a', '#599cd3', '#1f4575', '#9f4a25', '#636562',
-                  '#98742c']
+                  '#98742c', '#febf0e']
     return colors
 
 
@@ -165,27 +165,33 @@ class Plot:
         self.fig_dir = figs_dir         # figures directory
         self.dat_file = data_file       # ampl formate data file
 
-        self.finance_df = pd.DataFrame()
+        self.fin_df = pd.DataFrame()
+        self.stor_df = pd.DataFrame()
         self.cap_df = pd.DataFrame()
-        self.supply_df = pd.DataFrame()
+        self.sup_df = pd.DataFrame()
         self.flow_df = pd.DataFrame()
-        self.dvflow_df = pd.DataFrame()
-        self.unit = ''
+        self.flow_dev = pd.DataFrame()
+        self.bal_df = pd.DataFrame()
+        self.einr_df = pd.DataFrame()
+        self.eoutr_df = pd.DataFrame()
+        self.xins_df = pd.DataFrame()
+        self.flow_s_df = pd.DataFrame()
+        # self.unit = ''
         self.dpi = 200      # set figure resolution (dpi)
 
-        self.readCsv()          # read result from csv
+        # self.readCsv()          # read result from csv
         # self.par = self.readPar()         # read needed parameter from .dat file
 
         # read data from excel
-        # self.pl_excel = f'{self.res_dir}plot_vars.xlsx'
-        # self.readExcel()
+        self.pl_excel = f'{self.res_dir}plot_vars.xlsx'
+        self.readExcel()
 
         # # print and check
-        # print(f'Finance results:\n {self.finance_df} \n')
+        # print(f'Finance results:\n {self.fin_df} \n')
         # print(f'Capacity results:\n {self.cap_df} \n')
-        # print(f'Supply results:\n {self.supply_df} \n')
+        # print(f'Supply results:\n {self.sup_df} \n')
         # print(f'Flow results:\n {self.flow_df.head(10)} \n')
-        # print(f'Dv_flow results:\n {self.dvflow_df} \n')
+        # print(f'Dv_flow results:\n {self.flow_dev} \n')
         # print(self.cap_df.dtypes)
 
         # set format
@@ -193,19 +199,33 @@ class Plot:
         set_pgo_format()
 
     def readExcel(self):
-        self.finance_df = pd.read_excel(self.pl_excel, sheet_name='finance', index_col=0)
+        self.fin_df = pd.read_excel(self.pl_excel, sheet_name='finance', index_col=0)
+        self.stor_df = pd.read_excel(self.pl_excel, sheet_name='cost_Stor', index_col=0)
+        self.bal_df = pd.read_excel(self.pl_excel, sheet_name='cost_Bal', index_col=0)
         self.cap_df = pd.read_excel(self.pl_excel, sheet_name='capacity', index_col=0)
-        self.supply_df = pd.read_excel(self.pl_excel, sheet_name='supply', index_col=0)
+        self.sup_df = pd.read_excel(self.pl_excel, sheet_name='supply', index_col=0)
         self.flow_df = pd.read_excel(self.pl_excel, sheet_name='flow', index_col=0)
-        self.dvflow_df = pd.read_excel(self.pl_excel, sheet_name='dvflow', index_col=0)
+        self.einr_df = pd.read_excel(self.pl_excel, sheet_name='eInr', index_col=0)
+        self.eoutr_df = pd.read_excel(self.pl_excel, sheet_name='eOutr', index_col=0)
+        self.xins_df = pd.read_excel(self.pl_excel, sheet_name='xIns', index_col=0)
+        self.flow_dev = pd.read_excel(self.pl_excel, sheet_name='flow_dev', index_col=0)
+        self.flow_s_df = pd.read_excel(self.pl_excel, sheet_name='flow_s', index_col=0)
 
+    # read results from csv file
     def readCsv(self):
-        self.finance_df = pd.read_csv(f'{self.res_dir}finance.csv', index_col=0)
+        self.fin_df = pd.read_csv(f'{self.res_dir}finance.csv', index_col=0)
+        self.stor_df = pd.read_csv(f'{self.res_dir}cost_Stor.csv', index_col=0)
+        self.bal_df = pd.read_csv(f'{self.res_dir}cost_Bal.csv', index_col=0)
         self.cap_df = pd.read_csv(f'{self.res_dir}capacity.csv', index_col=0)
-        self.supply_df = pd.read_csv(f'{self.res_dir}supply.csv', index_col=0)
+        self.sup_df = pd.read_csv(f'{self.res_dir}supply.csv', index_col=0)
         self.flow_df = pd.read_csv(f'{self.res_dir}flow.csv', index_col=0)
-        self.dvflow_df = pd.read_csv(f'{self.res_dir}dvflow.csv', index_col=0)
+        self.einr_df = pd.read_csv(f'{self.res_dir}eInr.csv', index_col=0)
+        self.eoutr_df = pd.read_csv(f'{self.res_dir}eOutr.csv', index_col=0)
+        self.xins_df = pd.read_csv(f'{self.res_dir}xIns.csv', index_col=0)
+        self.flow_dev = pd.read_csv(f'{self.res_dir}flow_dev.csv', index_col=0)
+        self.flow_s_df = pd.read_csv(f'{self.res_dir}flow_s.csv', index_col=0)
 
+    # read needed par val for plotting
     def readPar(self):
         data = {}
 
@@ -242,237 +262,40 @@ class Plot:
 
         return data
 
-    def plot_overview(self):
-        print('Overview plotting start')
+    # cost structure, two levels
+    def plot_CS(self):
+
+        fin_df = self.fin_df
+        dpi = self.dpi
 
         # results processing
         # 1) unit convert
-        revenue = self.finance_df['Revenue'].iloc[0]
+        revenue = fin_df['revenue'].iloc[0]
         if revenue >= 1000:
-            self.finance_df = self.finance_df / 1000
-            self.unit = 'Million'
+            fin_df = fin_df / 1000
+            unit = 'Million'
         else:
-            self.unit = 'Thousand'
+            unit = 'Thousand'
 
-        # 2) new df for plotting bar charts
-        # finance_df1 = self.finance_df.drop(columns=['Cost', 'balCost'])     # all costs separately
-        # variables = finance_df1.columns.tolist()
-        # values = finance_df1.iloc[0].values
-        finance_df2 = self.finance_df[['Revenue', 'Income', 'Cost']]        # total cost
-        variables = finance_df2.columns.tolist()
-        values = finance_df2.iloc[0].values
-        cap = self.cap_df
+        fin_df['cost'] = fin_df['storCost'] + fin_df['balCost']
 
-        # 3) data for pie chart
-        self.finance_df[self.finance_df < 1e-5] = 0
-        inv = self.finance_df['InvCost'].iloc[0]
-        omc = self.finance_df['OMC'].iloc[0]
-        surp_cost = self.finance_df['SurpCost'].iloc[0]
-        buy_cost = self.finance_df['BuyCost'].iloc[0]
-        bal_cost = self.finance_df['BalCost'].iloc[0]
-        cost = self.finance_df['Cost'].iloc[0]
-        stor_cost = inv + omc
+        # data for pie chart
+        fin_df[fin_df < 1e-5] = 0
+        inv = fin_df['invCost'].iloc[0]
+        omc = fin_df['OMC'].iloc[0]
+        cost_spls = fin_df['splsCost'].iloc[0]
+        cost_buy = fin_df['buyCost'].iloc[0]
+        cost_bal = fin_df['balCost'].iloc[0]
+        cost_stor = fin_df['storCost'].iloc[0]
+        cost = fin_df['cost'].iloc[0]
 
         # inner
-        inner_data = [stor_cost, bal_cost]
+        inner_data = [cost_stor, cost_bal]
         inner_labels = ['Stor', 'Bal']
 
         # outer
-        outer_data = [inv, omc, surp_cost, buy_cost]
-        outer_labels = ['Inv', 'OMC', 'Surp', 'Buy']
-
-        # plotting
-        # fig_width_pt = 252                  # width of single col in double col Latex format
-        # fig_width = fig_width_pt / 72.27    # 1 pt = 1/72.27 inch
-        # fig_height = fig_width / 1.2
-        # fig = plt.figure(figsize=(fig_width, fig_height))
-
-        fig = plt.figure(figsize=(12, 10))
-
-        gs = gridspec.GridSpec(2, 2, fig)
-
-        # ax1 = fig.add_subplot(gs[0, :])     # plotting bars for all separated costs, occupy all columns.
-        ax1 = fig.add_subplot(gs[0, 0])     # revenue, income and cost
-        ax2 = fig.add_subplot(gs[1, 0])     # total capacity for each storage devices
-        ax3 = fig.add_subplot(gs[1, 1])     # numbers of storage devices
-        ax4 = fig.add_subplot(gs[0, 1])  # cost structure pie chart
-
-        color = set_color(3)
-
-        # 1) finance
-        bars = ax1.bar(variables, values,
-                       color=set_color(8)[-3:],
-                       width=0.5,
-                       edgecolor='black',
-                       linewidth=0.8, label=variables)
-        add_labels(bars, values, ax1, '.2f', 0.01)
-
-        ax1.axhline(0, color='gray', linewidth=0.8, linestyle='--')
-        # plt.ylim(-100, 160)    # Set the value range of the y-axis
-        # ax1.set_xlabel('Categories')
-        ax1.set_ylabel(f'{self.unit} Yuan')
-        ax1.set_title('a) Financial Overview', y=-0.2)
-        # ax1.legend(title='Finance', bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0., edgecolor='black')
-
-        # 2) capacity
-        ax22 = ax2.twinx()
-
-        cap_ = cap.loc[(cap != 0).any(axis=1)]       # Filter out rows that do not contain all values ​​zero
-        non_tank_dv = cap_[~cap_.index.str.contains('Tank')]
-        tank_dv = cap_[cap_.index.str.contains('Tank')]
-
-        # scap_col = tank_dv.filter(like='sCap').columns
-        # tank_dv.loc[:, scap_col] = tank_dv.loc[:, scap_col] / 10     # tank unit conversion to [thousand kg]
-
-        bars1 = ax2.bar(non_tank_dv.index, non_tank_dv['sCap'], edgecolor='black',
-                        color=color, label=non_tank_dv.index)
-        add_labels(bars1, non_tank_dv['sCap'], ax2, '.0f', offset=0)
-        ax2.set_title('c) Total capacity of storage devices', y=-0.2)
-        # ax2.set_title('b) Total capacity of storage devices', y=-0.32)    # for legend at bottom
-        # ax2.set_xlabel('Storage devices')
-        ax2.set_ylabel('Capacity (MW)')
-        bars2 = ax22.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label=tank_dv.index)
-        ax22.set_ylabel('Capacity (thousand kg)')
-        add_labels(bars2, tank_dv['sCap'], ax22, '.0f', offset=0)
-
-        # legend setting
-        # handles1, labels1 = ax2.get_legend_handles_labels()
-        # handles2, labels2 = ax22.get_legend_handles_labels()
-        # ax2.legend(handles1 + handles2, labels1 + labels2, title='Devices', bbox_to_anchor=(1.15, 1),
-        #            loc='upper left', borderaxespad=0., edgecolor='black')
-        # ax2.legend(handles1 + handles2, labels1 + labels2, title='Devices', bbox_to_anchor=(0.5, -0.08),
-        #            loc='upper center', borderaxespad=0., edgecolor='black', ncol=len(handles1 + handles2))
-        # ax2.tick_params(axis='x', rotation=45)
-
-        # 3) number of storage devices
-        ax3.bar(non_tank_dv.index, non_tank_dv['sNum'], color=color, edgecolor='black',
-                label=non_tank_dv.index)
-        ax3.bar(tank_dv.index, tank_dv['sNum'], color=color[2], edgecolor='black',
-                label=tank_dv.index)
-        ax3.set_title('d) Numbers of storage devices', y=-0.2)
-        # ax3.set_xlabel('Storage devices')
-        ax3.set_ylabel('Numbers')
-        # ax3.tick_params(axis='x', rotation=45)
-
-        for idx, val in enumerate(non_tank_dv['sNum']):
-            if val != 0:
-                ax3.text(idx, val, f'{val}', ha='center', va='bottom')
-        for idx, val in enumerate(tank_dv['sNum']):
-            if val != 0:
-                ax3.text((idx + len(non_tank_dv)), val, f'{val}', ha='center', va='bottom')
-
-        # ax3.legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left',
-        #            borderaxespad=0., edgecolor='black')
-        # ax3.legend(title='Devices', bbox_to_anchor=(0.8, 0.98), loc='upper left',
-        #            borderaxespad=0., edgecolor='black')     # inside legend
-
-        # 4) cost structure: pie chart
-        # hide label and text <5%
-        def select_label(value, total, label):    # label setting, <5% no show labels
-            pct = value / total * 100
-            return label if pct >= 5 else ''
-
-        def select_autopct(pct):                # text setting, <5% no show text
-            return f'{pct:.2f}%' if pct >= 5 else ''
-
-        # setting edges and offsets
-        edge_props = dict(edgecolor='black', linewidth=0.8)
-        # textprops = {'fontsize': 13}
-        offset_inner = [0.02] * len(inner_data)          # offset of each outer pie chart
-        offset = [0] * len(outer_data)    # offset of each outer pie chart
-
-        outer_total = sum(outer_data)
-        wedges1, texts1, autotexts1 = ax4.pie(outer_data, colors=set_color(6),
-                                              radius=1.1,
-                                              explode=offset,
-                                              # labels=outer_labels,
-                                              labels=[select_label(value, outer_total, label)
-                                                      for value, label in zip(outer_data, outer_labels)],
-                                              # textprops=textprops,
-                                              labeldistance=0.78,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.9,  # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props), )
-
-        # inner
-        wedges2, texts2, autotexts2 = ax4.pie(inner_data, colors=set_color(4),
-                                              radius=1.1 - 0.4,
-                                              explode=offset_inner,
-                                              labels=[select_label(value, outer_total, label)
-                                                      for value, label in zip(inner_data, inner_labels)],
-                                              # textprops=textprops,
-                                              labeldistance=0.6,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.8,  # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props))
-
-        # add a box to the pie chart
-        # todo 调整长宽
-        rect = plt.Rectangle((-1.25, -1.25), 2.5, 2.50, fill=False, color='black', lw=1.5)
-        ax4.add_patch(rect)
-
-        ax4.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        ax4.text(0, 0, f'Cost\n{cost:.2f}', horizontalalignment='center', verticalalignment='center',
-                 weight='bold', size=13)
-        ax4.set_title(f'b) Cost composition ({self.unit})', y=-0.2)
-        ax4.legend(wedges1 + wedges2, outer_labels + inner_labels, title='Cost', bbox_to_anchor=(1.05, 1),
-                   loc='upper left', borderaxespad=0., edgecolor='black')
-
-        plt.subplots_adjust(top=0.99,
-                            bottom=0.08,
-                            left=0.069,
-                            right=0.87,
-                            hspace=0.25,
-                            wspace=0.40)
-
-        fig.tight_layout()
-        plt.savefig(f'{self.fig_dir}Finance_overview.png')
-        # plt.show()
-        # plt.close()
-
-        print('Overview plotting finished \n'
-              '--------------------------------')
-
-    def plot_overview_sep(self):
-        print('Overview plotting start')
-
-        # results processing
-        # 1) unit convert
-        revenue = self.finance_df['Revenue'].iloc[0]
-        if revenue >= 1000:
-            self.finance_df = self.finance_df / 1000
-            self.unit = 'Million'
-        else:
-            self.unit = 'Thousand'
-
-        # 2) new df for plotting bar charts
-        # finance_df1 = self.finance_df.drop(columns=['Cost', 'balCost'])     # all costs separately
-        # variables = finance_df1.columns.tolist()
-        # values = finance_df1.iloc[0].values
-        finance_df2 = self.finance_df[['Revenue', 'Income', 'Cost']]        # total cost
-        variables = finance_df2.columns.tolist()
-        values = finance_df2.iloc[0].values
-        cap = self.cap_df
-
-        # 3) data for pie chart
-        self.finance_df[self.finance_df < 1e-5] = 0
-        inv = self.finance_df['InvCost'].iloc[0]
-        omc = self.finance_df['OMC'].iloc[0]
-        surp_cost = self.finance_df['SurpCost'].iloc[0]
-        buy_cost = self.finance_df['BuyCost'].iloc[0]
-        bal_cost = self.finance_df['BalCost'].iloc[0]
-        cost = self.finance_df['Cost'].iloc[0]
-        stor_cost = inv + omc
-
-        # inner
-        inner_data = [stor_cost, bal_cost]
-        inner_labels = ['Stor', 'Bal']
-
-        # outer
-        outer_data = [inv, omc, surp_cost, buy_cost]
-        outer_labels = ['Inv', 'OMC', 'Surp', 'Buy']
+        outer_data = [inv, omc, cost_spls, cost_buy]
+        outer_labels = ['Inv', 'OMC', 'Spls', 'Buy']
 
         # plotting
         # fig_width_pt = 252                  # width of single col in double col Latex format
@@ -480,140 +303,62 @@ class Plot:
         fig_width = 4.5
         fig_height = fig_width / 1.1
 
-        color = set_color(3)
+        # cost structure: pie chart
+        fig = plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+        ax = fig.add_subplot(111)
 
-        # 1) finance
-        fig1 = plt.figure(figsize=(fig_width, fig_height), dpi=self.dpi)
-        ax1 = fig1.add_subplot(111)
-        bars = ax1 .bar(variables, values,
-                        color=set_color(8)[-3:],
-                        width=0.5,
-                        edgecolor='black',
-                        linewidth=0.8, label=variables)
-        add_labels(bars, values, ax1, '.1f', 0.01)
-
-        ax1.axhline(0, color='gray', linewidth=0.8, linestyle='--')
-        # plt.ylim(-100, 160)    # Set the value range of the y-axis
-        # ax1.set_xlabel('Categories')
-        ax1.set_ylabel(f'{self.unit} Yuan')
-        # ax1.set_title('a) Financial Overview', y=-0.2)
-        # ax1.legend(title='Finance', bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0., edgecolor='black')
-
-        # 2) capacity
-        fig2 = plt.figure(figsize=(fig_width, fig_height), dpi=self.dpi)
-        ax2 = fig2.add_subplot(111)
-        ax22 = ax2.twinx()
-
-        cap_ = cap.loc[(cap != 0).any(axis=1)]       # Filter out rows that do not contain all values ​​zero
-        non_tank_dv = cap_[~cap_.index.str.contains('Tank')]
-        tank_dv = cap_[cap_.index.str.contains('Tank')]
-
-        # scap_col = tank_dv.filter(like='sCap').columns
-        # tank_dv.loc[:, scap_col] = tank_dv.loc[:, scap_col] / 10     # tank unit conversion to [thousand kg]
-
-        bars1 = ax2.bar(non_tank_dv.index, non_tank_dv['sCap'], edgecolor='black',
-                        color=color, label=non_tank_dv.index)
-        add_labels(bars1, non_tank_dv['sCap'], ax2, '.1f', offset=0)
-        # ax2.set_title('Total capacity of storage devices', y=-0.2)
-        # ax2.set_title('b) Total capacity of storage devices', y=-0.32)    # for legend at bottom
-        # ax2.set_xlabel('Storage devices')
-        ax2.set_ylabel('Capacity (MW)')
-        bars2 = ax22.bar(tank_dv.index, tank_dv['sCap'], edgecolor='black', color=color[2], label=tank_dv.index)
-        ax22.set_ylabel('Capacity (t)')
-        add_labels(bars2, tank_dv['sCap'], ax22, '.1f', offset=0)
-
-        # legend setting
-        # handles1, labels1 = ax2.get_legend_handles_labels()
-        # handles2, labels2 = ax22.get_legend_handles_labels()
-        # ax2.legend(handles1 + handles2, labels1 + labels2, title='Devices', bbox_to_anchor=(1.15, 1),
-        #            loc='upper left', borderaxespad=0., edgecolor='black')
-        # ax2.legend(handles1 + handles2, labels1 + labels2, title='Devices', bbox_to_anchor=(0.5, -0.08),
-        #            loc='upper center', borderaxespad=0., edgecolor='black', ncol=len(handles1 + handles2))
-        # ax2.tick_params(axis='x', rotation=45)
-
-        # 3) number of storage devices
-        fig3 = plt.figure(figsize=(fig_width, fig_height), dpi=self.dpi)
-        ax3 = fig3.add_subplot(111)
-        ax3.bar(non_tank_dv.index, non_tank_dv['sNum'], color=color, edgecolor='black',
-                label=non_tank_dv.index)
-        ax3.bar(tank_dv.index, tank_dv['sNum'], color=color[2], edgecolor='black',
-                label=tank_dv.index)
-        # ax3.set_title('d) Numbers of storage devices', y=-0.2)
-        # ax3.set_xlabel('Storage devices')
-        ax3.set_ylabel('Numbers')
-        # ax3.tick_params(axis='x', rotation=45)
-
-        for idx, val in enumerate(non_tank_dv['sNum']):
-            if val != 0:
-                ax3.text(idx, val, f'{val:.0f}', ha='center', va='bottom')
-        for idx, val in enumerate(tank_dv['sNum']):
-            if val != 0:
-                ax3.text((idx + len(non_tank_dv)), val, f'{val:.0f}', ha='center', va='bottom')
-
-        # ax3.legend(title='Devices', bbox_to_anchor=(1.05, 1), loc='upper left',
-        #            borderaxespad=0., edgecolor='black')
-        # ax3.legend(title='Devices', bbox_to_anchor=(0.8, 0.98), loc='upper left',
-        #            borderaxespad=0., edgecolor='black')     # inside legend
-
-        # 4) cost structure: pie chart
-        fig4 = plt.figure(figsize=(fig_width, fig_height), dpi=self.dpi)
-        ax4 = fig4.add_subplot(111)
         # hide label and text <5%
-
-        def select_label(value, total, label):    # label setting, <5% no show labels
+        def select_label(value, total, label):  # label setting, <5% no label
             pct = value / total * 100
             return label if pct >= 5 else ''
 
-        def select_autopct(pct):                # text setting, <5% no show text
+        def select_autopct(pct):  # text setting, <5% no text
             return f'{pct:.1f}%' if pct >= 5 else ''
 
         # setting edges and offsets
         edge_props = dict(edgecolor='black', linewidth=0.8)
         # textprops = {'fontsize': 13}
-        offset_inner = [0.02] * len(inner_data)          # offset of each outer pie chart
-        offset = [0] * len(outer_data)    # offset of each outer pie chart
+        offset_inner = [0.02] * len(inner_data)  # offset of each outer pie chart
+        offset = [0] * len(outer_data)  # offset of each outer pie chart
 
         outer_total = sum(outer_data)
-        wedges1, texts1, autotexts1 = ax4.pie(outer_data, colors=set_color(6),
-                                              radius=1.1,
-                                              explode=offset,
-                                              # labels=outer_labels,
-                                              labels=[select_label(value, outer_total, label)
-                                                      for value, label in zip(outer_data, outer_labels)],
-                                              # textprops=textprops,
-                                              labeldistance=0.78,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.9,  # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props), )
+        wedges1, texts1, autotexts1 = ax.pie(outer_data, colors=set_color(6), radius=1.1, explode=offset,
+                                             labels=[select_label(value, outer_total, label)
+                                                     for value, label in zip(outer_data, outer_labels)],
+                                             # textprops=textprops,
+                                             labeldistance=0.78,
+                                             autopct=lambda pct: select_autopct(pct),
+                                             # autopct=lambda pct: f'{pct:.2f}%',
+                                             pctdistance=0.9,  # text position, relative to the radius of pie chart
+                                             wedgeprops=dict(width=0.3, **edge_props), )
 
         # inner
-        wedges2, texts2, autotexts2 = ax4.pie(inner_data, colors=set_color(4),
-                                              radius=1.1 - 0.4,
-                                              explode=offset_inner,
-                                              labels=[select_label(value, outer_total, label)
-                                                      for value, label in zip(inner_data, inner_labels)],
-                                              # textprops=textprops,
-                                              labeldistance=0.6,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.8,  # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props))
+        wedges2, texts2, autotexts2 = ax.pie(inner_data, colors=set_color(4),
+                                             radius=1.1 - 0.4,
+                                             explode=offset_inner,
+                                             labels=[select_label(value, outer_total, label)
+                                                     for value, label in zip(inner_data, inner_labels)],
+                                             # textprops=textprops,
+                                             labeldistance=0.6,
+                                             autopct=lambda pct: select_autopct(pct),
+                                             # autopct=lambda pct: f'{pct:.2f}%',
+                                             pctdistance=0.8,  # text position, relative to the radius of pie chart
+                                             wedgeprops=dict(width=0.3, **edge_props))
 
         # add a box to the pie chart
         # rect = plt.Rectangle((-1.25, -1.25), 2.5, 2.50, fill=False, color='black', lw=1.5)
         # ax4.add_patch(rect)
 
-        ax4.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        ax4.text(0, 0, f'Cost\n{cost:.1f}', horizontalalignment='center', verticalalignment='center',
-                 weight='bold', size=13)
+        ax.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax.text(0, 0, f'Cost\n{cost:.1f}\n{unit}', horizontalalignment='center', verticalalignment='center',
+                weight='bold', size=13)
         # ax4.set_title(f'b) Cost composition ({self.unit})', y=-0.2)
-        ax4.legend(wedges1 + wedges2, outer_labels + inner_labels,
-                   loc='lower center', frameon=False, borderaxespad=0.5,
-                   ncol=len(outer_labels + inner_labels)/2,
-                   bbox_to_anchor=(0.5, -0.1),
-                   # edgecolor='black', title='Cost',
-                   )
+        ax.legend(wedges1 + wedges2, outer_labels + inner_labels,
+                  loc='lower center', frameon=False, borderaxespad=0.5,
+                  ncol=len(outer_labels + inner_labels) / 2,
+                  bbox_to_anchor=(0.5, -0.1),
+                  # edgecolor='black', title='Cost',
+                  )
 
         # plt.subplots_adjust(top=0.99,
         #                     bottom=0.08,
@@ -622,227 +367,380 @@ class Plot:
         #                     hspace=0.25,
         #                     wspace=0.40)
 
-        fig1.tight_layout()
-        fig2.tight_layout()
-        fig3.tight_layout()
-        fig4.tight_layout()
-        fig1.savefig(f'{self.fig_dir}Finance.png')
-        fig2.savefig(f'{self.fig_dir}Capacity.png')
-        fig3.savefig(f'{self.fig_dir}sNum.png')
-        fig4.savefig(f'{self.fig_dir}Cost_pie.png')
-        # plt.show()
-        # plt.close()
+        fig.tight_layout()
+        fig.savefig(f'{self.fig_dir}Cost_structure.png')
 
-        print('Overview plotting finished \n'
-              '--------------------------------')
-
-    def plot_CS(self):
-        def select_label(val, total, label):
-            pct = val / total * 100
-            return label if pct >= 5 else ''
-
-        def select_autopct(pct):
-            return f'{pct:.2f}%' if pct >= 5 else ''
-
-        # cost structure
-        self.finance_df[self.finance_df < 1e-5] = 0
-        inv = self.finance_df['InvCost'].iloc[0]
-        omc = self.finance_df['OMC'].iloc[0]
-        surp_cost = self.finance_df['SurpCost'].iloc[0]
-        buy_cost = self.finance_df['BuyCost'].iloc[0]
-        bal_cost = self.finance_df['BalCost'].iloc[0]
-        stor_cost = inv + omc
-
-        revenue = self.finance_df['Revenue'].iloc[0]
-        income = self.finance_df['Income'].iloc[0]
-        cost = self.finance_df['Cost'].iloc[0]
-        labels = ['Revenue', 'Cost']
-
-        # inner
-        inner_data = [stor_cost, bal_cost]
-        inner_labels = ['Stor', 'Bal']
-
-        # outer
-        outer_data = [inv, omc, surp_cost, buy_cost]
-        outer_labels = ['Inv', 'OMC', 'Surp', 'Buy']
-
-        # text setting
-        # def set_text(pct, all_vals):
-        #     absolute = int(pct / 100. * sum(all_vals))
-        #     #  showing percentages and raw data
-        #     return '{:.2f}%\n({:.2f})'.format(pct, absolute)
-        #     # return '{:.2f}%'.format(pct)
-
-        # create figure
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
-
-        # setting edges and offsets
-        edge_props = dict(edgecolor='black', linewidth=0.8)
-        textprops = {'fontsize': 13}
-        offset_inner = [0.02] * len(inner_data)          # offset of each outer pie chart
-        offset = [0] * len(outer_data)    # offset of each outer pie chart
-
-        # 1) plotting cost and revenue
-        wedges1, texts1, autotexts1 = ax1.pie([revenue, cost],
-                                              colors=set_color(2),
-                                              labels=['Revenue', 'Cost'], textprops=textprops,
-                                              labeldistance=0.6,
-                                              pctdistance=0.7,
-                                              # autopct=lambda pct: set_text(pct, [revenue, cost]),
-                                              autopct=lambda pct: f'{pct:.2f}%',
-                                              startangle=180,           # start position
-                                              wedgeprops=dict(width=0.6, **edge_props),
-                                              explode=[0.02, 0.02]      # offset of each sector
-                                              )
-
-        # text inside
-        ax1.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        ax1.text(0, 0, f'Income\n{income:.2f}', horizontalalignment='center', verticalalignment='center',
-                 weight='bold', size=15)
-        ax1.set_title(f'a) Revenue and cost ({self.unit})', y=-0.2)
-        ax1.legend(wedges1, labels, title='Labels', loc='lower center',
-                   bbox_to_anchor=(0.5, -0.1), ncol=2)
-
-        # 2) plotting cost structure
-        # outer
-        outer_total = sum(outer_data)
-        wedges2, texts2, autotexts2 = ax2.pie(outer_data, colors=set_color(6),
-                                              radius=1,
-                                              explode=offset,
-                                              # labels=outer_labels,
-                                              labels=[select_label(val, outer_total, label)
-                                                      for val, label in zip(outer_data, outer_labels)],
-                                              textprops=textprops,
-                                              labeldistance=0.75,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.88,     # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props),)
-
-        # inner
-        wedges3, texts3, autotexts3 = ax2.pie(inner_data, colors=set_color(4),
-                                              radius=1 - 0.4,
-                                              explode=offset_inner,
-                                              labels=[select_label(value, outer_total, label)
-                                                      for value, label in zip(inner_data, inner_labels)],
-                                              textprops=textprops,
-                                              labeldistance=0.55,
-                                              autopct=lambda pct: select_autopct(pct),
-                                              # autopct=lambda pct: f'{pct:.2f}%',
-                                              pctdistance=0.75,     # text position, relative to the radius of pie chart
-                                              wedgeprops=dict(width=0.3, **edge_props))
-
-        ax2.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        ax2.text(0, 0, f'Cost\n{cost:.2f}', horizontalalignment='center', verticalalignment='center',
-                 weight='bold', size=15)
-        ax2.set_title(f'b) Cost composition ({self.unit})', y=-0.2)
-        ax2.legend(wedges2 + wedges3, outer_labels + inner_labels, title='Cost', loc='lower center',
-                   bbox_to_anchor=(0.5, -0.1), ncol=6)
-
-        fig.subplots_adjust(bottom=0.2)
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.979,
-                            bottom=0.172,
-                            left=0.011,
-                            right=0.971,
-                            hspace=0.2,
-                            wspace=0.051)
-        plt.savefig(f'{self.fig_dir}Cost_pie.png')
         print('Cost plotting finished \n'
               '--------------------------------')
 
+    # cost structure, three levels
+    def plot_CS_3(self):
+
+        fin_df = self.fin_df.copy()
+        dpi = self.dpi
+        rcost_df = self.stor_df[['rInv', 'rOMC']].copy()
+        bal_df = self.bal_df.copy()
+
+        # results processing
+        # 1) unit convert
+        revenue = fin_df['revenue'].iloc[0]
+        if revenue >= 1000:
+            fin_df = fin_df / 1000
+            rcost_df = rcost_df / 1000
+            bal_df = bal_df / 1000
+            unit = 'Million'
+        else:
+            unit = 'Thousand'
+
+        # 2) data for pie chart
+        fin_df[fin_df < 1e-5] = 0
+        rcost_df[rcost_df < 1e-5] = 0
+        bal_df[bal_df < 1e-5] = 0
+
+        spls = fin_df['splsCost'].iloc[0]
+        print(spls)
+        if spls > 0:
+            fin_df['cost'] = fin_df['storCost'] + fin_df['balCost']
+        else:
+            fin_df['cost'] = fin_df['storCost'] + fin_df['buyCost']
+        cost_tot = fin_df['cost'].iloc[0]
+
+        start_date = '2019-01-01 00:00'
+        bal_df['dt'] = (pd.to_datetime(start_date) + pd.to_timedelta(bal_df.index, unit='h'))
+        bal_df.set_index('dt', inplace=True)
+        mbal_df = bal_df.resample('ME').sum()
+
+        # print(mbal_df)
+
+        inner_cols = ['storCost', 'balCost']
+        inner_rename = {'storCost': 'Stor', 'balCost': 'Bal'}
+
+        if spls > 0:
+            middle_cols = ['invCost', 'OMC', 'splsCost', 'buyCost']
+            middle_rename = {'invCost': 'Inv', 'OMC': 'OMC', 'splsCost': 'Spls', 'buyCost': 'Buy'}
+        else:
+            middle_cols = ['invCost', 'OMC', 'buyCost']
+            middle_rename = {'invCost': 'Inv', 'OMC': 'OMC', 'buyCost': 'Buy'}
+
+        inner_df = fin_df[inner_cols].rename(columns=inner_rename)
+        middle_df = fin_df[middle_cols].rename(columns=middle_rename)
+
+        # cost_outer = fin_df.columns.tolist()
+
+        # inner
+        inner_labels = inner_df.columns.tolist()
+        inner_val = inner_df.iloc[0].tolist()
+
+        # middle
+        middle_labels = middle_df.columns.tolist()
+        print(middle_labels)
+        middle_val = middle_df.iloc[0].tolist()
+
+        # outer
+        outer_labels = []
+        outer_val = []
+        outer_colors = []
+
+        ess = list(rcost_df.index)
+        months = mbal_df.index.strftime('%b').tolist()
+
+        # print(months)
+        # print(ess)
+
+        # ess_col = set_color(len(ess))
+        ess_col = ['#9692af', '#acdbdf', '#e79597', '#d7eaea']
+        mon_col = set_color(len(months))
+        ess_color = {r: ess_col[i % len(ess_col)] for i, r in enumerate(ess)}
+        mon_color = {m: mon_col[i % len(mon_col)] for i, m in enumerate(months)}
+
+        # mapping middle and outter data, not fully understand, need further explore
+        for var, labels in zip(['rInv', 'rOMC'], ['Inv', 'OMC']):
+            for r, val in rcost_df[var].items():
+                if val > 0:
+                    outer_labels.append(f'{r}')
+                    outer_val.append(val)
+                    outer_colors.append(ess_color[r])
+
+        for var, labels in zip(['Spls', 'Buy'], ['Spls', 'Buy']):
+            for ts, val in mbal_df[var].items():
+                if val > 0:
+                    m = ts.strftime('%b')
+                    outer_labels.append(f'{m}')
+                    outer_val.append(val)
+                    outer_colors.append(mon_color[m])
+
+        # plotting
+        # 1) plotting setting
+        # fig_width_pt = 252                  # width of single col in double col Latex format
+        # fig_width = fig_width_pt / 72.27    # 1 pt = 1/72.27 inch
+        fig_width = 4.5
+        fig_height = fig_width / 1.1
+
+        # hide label and text <5%
+        # def select_label(value, total, label):  # label setting, <5% no label
+        #     pct = value / total * 100
+        #     return label if pct >= 5 else ''
+
+        def select_autopct(pct):  # text setting, <5% no text
+            return f'{pct:.1f}%' if pct >= 5 else ''
+
+        # 2) plot cost structure: pie chart
+        fig = plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+        ax = fig.add_subplot(111)
+
+        # setting edges and offsets
+        edge_props = dict(edgecolor='black', linewidth=0.8)
+        offset_inn = [0.03] * len(inner_val)  # offset of each inner pie chart
+        # offset_mid = [0.02] * len(middle_val)  # offset of each middle pie chart
+        # offset_out = [0.02] * len(outer_val)  # offset of each middle pie chart
+
+        offset_mid = [0.02 * len(middle_val) if lab == 'Buy' else 0
+                      for lab in middle_labels]
+        months_set = set(months)
+        offset_out = [0.005 * len(outer_val) if lab in months_set else 0
+                      for lab in outer_labels]     # offset of each middle pie chart
+
+        # inner
+        # inner_tot = sum(inner_val)    # use for select labels
+        wedges1, texts1, autotexts1 = ax.pie(inner_val, colors=set_color(4),
+                                             radius=1.1 - 0.4,
+                                             explode=offset_inn,
+                                             labels=None,
+                                             # labels=[select_label(value, inner_tot, label)
+                                             #         for value, label in zip(inner_val, inner_labels)],
+                                             # textprops=textprops,
+                                             labeldistance=0.65,
+                                             autopct=lambda pct: select_autopct(pct),
+                                             # autopct=lambda pct: f'{pct:.2f}%',
+                                             pctdistance=0.78,  # text position, relative to the radius of pie chart
+                                             wedgeprops=dict(width=0.3, **edge_props),
+                                             startangle=0,)
+
+        # middle_tot = sum(middle_val)      # use for select labels
+        wedges2, texts2, autotexts2 = ax.pie(middle_val, colors=set_color(6), radius=1.1, explode=offset_mid,
+                                             labels=None,
+                                             # labels=[select_label(value, middle_tot, label)
+                                             #         for value, label in zip(middle_val, middle_labels)],
+                                             # textprops=textprops,
+                                             labeldistance=0.75,
+                                             autopct=lambda pct: select_autopct(pct),
+                                             # autopct=lambda pct: f'{pct:.2f}%',
+                                             pctdistance=0.85,  # text position, relative to the radius of pie chart
+                                             wedgeprops=dict(width=0.3, **edge_props),
+                                             startangle=0,)
+
+        # outer_tot = sum(outer_val)        # use for hide labels
+        wedges3, texts3, autotexts3 = ax.pie(outer_val, colors=outer_colors, radius=1.5, explode=offset_out,
+                                             labels=None,
+                                             # labels=[select_label(value, middle_tot, label)
+                                             #         for value, label in zip(outer_val, outer_labels)],
+                                             labeldistance=0.85,
+                                             autopct=lambda pct: select_autopct(pct),
+                                             # autopct=lambda pct: f'{pct:.2f}%',
+                                             pctdistance=0.90,  # text position, relative to the radius of pie chart
+                                             wedgeprops=dict(width=0.3, **edge_props),
+                                             startangle=0,)
+
+        # add a box to the pie chart
+        # rect = plt.Rectangle((-1.25, -1.25), 2.5, 2.50, fill=False, color='black', lw=1.5)
+        # ax.add_patch(rect)
+
+        # set the center and text
+        ax.set(aspect='equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        ax.text(0, 0, f'Cost\n{cost_tot:.1f}\n{unit}', horizontalalignment='center', verticalalignment='center',
+                weight='bold', size=10)
+
+        uni = {}
+        for h, l in zip(wedges3, outer_labels):
+            if l not in uni:
+                uni[l] = h
+
+        outer_handles = list(uni.values())
+        outer_labels = list(uni.keys())
+
+        left = -0.03
+        btm = -0.15
+
+        legend1 = ax.legend(wedges1, inner_labels,
+                            loc='upper left', bbox_to_anchor=(left, btm),
+                            ncol=1, frameon=False,
+                            handlelength=1.0, handletextpad=0.5)
+
+        legend2 = ax.legend(wedges2, middle_labels,
+                            loc='upper left', bbox_to_anchor=(left + 0.2, btm),
+                            ncol=1, frameon=False,
+                            handlelength=1.0, handletextpad=0.5)
+
+        # hide labels with pct < 0.3%
+        for w, at in zip(wedges3, autotexts3):
+            frac = (w.theta2 - w.theta1) / 360.0
+            if frac < 0.001:
+                w.set_visible(False)
+                at.set_visible(False)
+
+        vis_h = [w for w in outer_handles if w.get_visible()]
+        vis_l = [lbl for w, lbl in zip(outer_handles, outer_labels) if w.get_visible()]
+
+        legend3 = ax.legend(vis_h[:3], vis_l[:3],
+                            loc='upper left', bbox_to_anchor=(left + 0.4, btm),
+                            ncol=1, frameon=False,
+                            handlelength=1.0, handletextpad=0.3)
+
+        legend4 = ax.legend(vis_h[3:], vis_l[3:],
+                            loc='upper left', bbox_to_anchor=(left + 0.65, btm),
+                            ncol=max(1, math.ceil(len(vis_l) / 5)), frameon=False,
+                            handlelength=1.0, handletextpad=0.3)
+
+        # add legends
+        ax.add_artist(legend1)
+        ax.add_artist(legend2)
+        ax.add_artist(legend3)
+        ax.add_artist(legend4)
+
+        # plt.subplots_adjust(top=0.99,
+        #                     bottom=0.08,
+        #                     left=0.069,
+        #                     right=0.87,
+        #                     hspace=0.25,
+        #                     wspace=0.40)
+
+        plt.subplots_adjust(bottom=0.3)
+        # fig.tight_layout()
+        fig.savefig(f'{self.fig_dir}Cost_structure.png')
+
+        print('Cost plotting finished \n'
+              '--------------------------------')
+
+    # income, total cost and revenue
     def plot_finance(self):
         print('Finance plotting start')
 
-        variables = self.finance_df.columns.tolist()
-        values = self.finance_df.iloc[0].values
+        fin_df = self.fin_df.copy()
+        dpi = self.dpi
 
-        plt.figure(figsize=(10, 8))
-        bars = plt.bar(variables, values, color=set_color(7), edgecolor='black',
-                       linewidth=0.8, label=variables)
-        add_labels(bars, values, plt, '.2f', 0.01)
+        # results processing
+        # 1) unit convert
+        revenue = fin_df['revenue'].iloc[0]
+        if revenue >= 1000:
+            fin_df = fin_df / 1000
+            unit = 'Million'
+        else:
+            unit = 'Thousand'
 
-        plt.axhline(0, color='gray', linewidth=0.8, linestyle='--')
+        # 2) new df for plotting bar charts
+        fin_df['cost'] = fin_df['storCost'] + fin_df['balCost']
+        fin_df1 = fin_df[['revenue', 'income', 'cost']]  # total cost
+        variables = fin_df1.columns.tolist()
+        values = fin_df1.iloc[0].values
+
+        # plotting
+        # fig_width_pt = 252                  # width of single col in double col Latex format
+        # fig_width = fig_width_pt / 72.27    # 1 pt = 1/72.27 inch
+        fig_width = 4.5
+        fig_height = fig_width / 1.1
+
+        # 1) finance
+        fig = plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+        ax = fig.add_subplot(111)
+        bars = ax.bar(variables, values,
+                      color=set_color(8)[-3:],
+                      width=0.5,
+                      edgecolor='black',
+                      linewidth=0.8, label=variables)
+        add_labels(bars, values, ax, '.1f', 0.01)
+
+        ax.axhline(0, color='gray', linewidth=0.8, linestyle='--')
         # plt.ylim(-100, 160)    # Set the value range of the y-axis
-        plt.xlabel('Categories')
-        plt.ylabel('Million Yuan')
-        plt.title('Financial Overview')
-        plt.legend(title='Finance', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., edgecolor='black')
-        plt.tight_layout()
-        plt.savefig(f'{self.fig_dir}Finance_bar.png')
-        # plt.show()
-        # plt.close()
-        print('Finance plotting finished \n'
-              '--------------------------------')
+        ax.set_ylabel(f'{unit} CNY')
+        # ax.set_title('a) Financial Overview', y=-0.2)
+        # ax.legend(title='Finance', bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0., edgecolor='black')
 
-    def plot_flow(self, step='hourly', val_show=False, fig_show=True, fig_save=False):
+        fig.tight_layout()
+        fig.savefig(f'{self.fig_dir}Finance.png')
+
+    # ESS capacity tabel
+    def plot_cap_tab(self):
+        # capacity processing
+        cap_df = self.cap_df
+        cap_df[['eCap', 'sCap', 'xCap']] = cap_df[['eCap', 'sCap', 'xCap']].fillna(0)  # fill NAN with 0
+        cap_sum = cap_df.groupby('ESS')[['eCap', 'sCap', 'xCap']].sum().reset_index()  # sum cap by ESS
+        cap_sum = cap_sum.sort_values(by='ESS')
+
+        # print capacity tabel
+        print(cap_sum.to_latex(index=False))
+
+    # electricity and energy flow plotting
+    def plot_flow(self, step='hourly', start_dt=None, val_show=False, fig_show=True, fig_save=False):
         print(f'Flow plotting start')
 
-        supply_h = self.supply_df['supply'].iloc[0]
-        avg_h = self.supply_df['avg_inflow'].iloc[0]
+        supply_h = self.sup_df['supply'].iloc[0]
+        avg_h = self.sup_df['avg_inf'].iloc[0]
         flow = self.flow_df.copy()
 
-        # print(self.flow_df.head(10))
-        # print(flow.head(10))
-
         # fig = pgo.Figure()
-        fig = make_subplots(rows=2, cols=1, subplot_titles=(f'a) Inflow', f'b) System flows'))
+        fig = make_subplots(rows=2, cols=1, vertical_spacing=0.2,
+                            subplot_titles=(f'a) Inflow', f'b) System flows'))
 
         # set date index
-        n = flow.index[-1] + 1  # numbers of periods
-        n_index = pd.DataFrame(flow.index, columns=['Index'])       # index, number
-        time_deltas = pd.to_timedelta(flow.index, unit='h')
-        start_date = pd.Timestamp('2019-01-01 00:00')
-        date_times = start_date + time_deltas                       # change index number to date
+        n_index = pd.DataFrame(flow.index, columns=['Index'])  # index, number
+        time_deltas = pd.to_timedelta(flow.index, unit='h')  # transfer index to days and hours
+        if start_dt is None:
+            start_date = pd.Timestamp('2025-01-01 00:00')
+        else:
+            start_date = pd.to_datetime(start_dt)
+        # start_date = pd.Timestamp('2019-01-01 00:00')
+
+        date_times = start_date + time_deltas  # change index to date
         flow.index = date_times
 
         if step == 'hourly':
             agg_df = flow
-            avg_inflow = avg_h
             supply = supply_h
-            p_avg_inflow = f'Average hourly inflow = {round(avg_inflow, 2)} MWh'
-            p_supply = f'Average hourly supply = {round(supply, 2)} MWh'
+            avg_inflow = avg_h
+            p_supply = f'Hourly supply = {supply:.0f} MWh'  # print text
+            p_avg_inflow = f'Average hourly inflow = {avg_inflow:.0f} MWh'
             print('step = hourly')
 
         elif step == 'daily':
-            agg_df = flow.resample('D').sum()
-            n_day = round((n/24), 2)
-            avg_inflow = flow['inflow'].sum() / n_day
+            agg_df = flow.resample('D').sum()  # aggregated hourly flow to daily
             supply = supply_h * 24
-            p_avg_inflow = f'Average daily inflow = {round(avg_inflow, 2)} MWh'
-            p_supply = f'Daily supply = {round(supply, 2)} MWh'
+            avg_inflow = avg_h * 24
+            p_avg_inflow = f'Average daily inflow = {avg_inflow:.0f} MWh'
+            p_supply = f'Daily supply = {supply:.0f} MWh'
             print('step = daily')
 
         elif step == 'weekly':
             n_week = round((n / 24 / 7), 0)
             agg_df = flow.resample('7D', origin=start_date).sum()
             if (flow.index[-1] - agg_df.index[-1]).days < 7:
-                agg_df = agg_df.iloc[:-1]       # check if the last agg flow data  is less than 7 days
-            avg_inflow = agg_df['inflow'].sum() / n_week
+                agg_df = agg_df.iloc[:-1]  # check if the last agg flow data is less than 7 days
             supply = supply_h * 168
-            p_avg_inflow = f'Average weekly inflow = {round(avg_inflow, 2)} MWh'
-            p_supply = f'Weekly supply = {round(supply, 2)} MWh'
-            fig.update_xaxes(tickvals=agg_df.index)     # make sure the first week begin from Jan.01
+            p_supply = f'Weekly supply = {supply:.0f} MWh'
+            avg_inflow = agg_df['inflow'].sum() / n_week
+            p_avg_inflow = f'Average weekly inflow = {avg_inflow:.0f} MWh'
+
+            fig.update_xaxes(tickvals=agg_df.index)  # make sure the first week begin from Jan.01
             print('step = weekly')
 
         elif step == 'monthly':
             agg_df = flow.resample('ME').sum()
-            n_month = flow.index.to_period('M').nunique()
-            avg_inflow = flow['inflow'].sum() / n_month
             monthly_hours = flow.resample('ME').size()
             supply = supply_h * monthly_hours
-            p_avg_inflow = f'Average monthly inflow = {round(avg_inflow, 2)} MWh'
-            p_supply = f'Monthly supply = {round(supply, 2)} MWh'
-            fig.update_xaxes(tickvals=agg_df.index)     # make sure the tick values match the bars
+            p_supply = f'Monthly supply = {supply:.0f} MWh'
+            n_month = flow.index.to_period('M').nunique()
+            avg_inflow = flow['inflow'].sum() / n_month
+            p_avg_inflow = f'Average monthly inflow = {avg_inflow:.0f} MWh'
+
+            fig.update_xaxes(tickvals=agg_df.index)  # make sure the tick values match the bars
             print('step = monthly')
 
         elif step == 'original':
             agg_df = flow
             agg_df.index = n_index.index
-            avg_inflow = avg_h
             supply = supply_h
-            p_avg_inflow = f'Average inflow = {round(avg_inflow, 2)} MWh'
-            p_supply = f'Average supply = {round(supply, 2)} MWh'
+            avg_inflow = avg_h
+            p_avg_inflow = f'Average inflow = {avg_inflow:.0f} MWh'
+            p_supply = f'Average supply = {supply:.0f} MWh'
             print('step = original')
 
         else:
@@ -851,12 +749,78 @@ class Plot:
         # print(f'{agg_df.head(10)}')
 
         # plot flows generated by the model
-        for i, variable in enumerate(agg_df.columns[1:]):
+        var_s = ['eOut', 'eOutHess', 'eB']
+        supply_con_df = agg_df[var_s]
+
+        var_i = ['eOut', 'eInHess', 'eS']
+        inflow_con_df = agg_df[var_i]
+
+        # plot supply at top
+        # colors_s = ['#7097a8', '#ecd59f', '#e3a6ae']
+        colors = ['#0a3e65', '#f7ce74', '#c9597f']
+        for i, variable in enumerate(supply_con_df.columns):
             if val_show:
                 fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
-                                      text=agg_df[variable],
+                                      text=round(agg_df[variable], 2),
                                       textposition='auto',
-                                      marker=dict(color=set_color(11)[i],
+                                      marker=dict(color=colors_s[i],
+                                                  # line=dict(color='black', width=1)
+                                                  ),
+                                      ),
+                              row=1, col=1,
+                              )
+            else:
+                fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
+                                      # text=y,
+                                      textposition='auto',
+                                      marker=dict(color=colors[i],
+                                                  # line=dict(color='black', width=0.05)
+                                                  ),
+                                      ),
+                              row=1, col=1,
+                              )
+
+        fig.update_yaxes(title_text=f'{step.capitalize()} Flows (MWh)',
+                         row=1, col=1,
+                         # range=[-30, 16],
+                         )
+
+        # fig.add_shape(type="line",
+        #               x0=(agg_df.index[0]), y0=0,
+        #               x1=(agg_df.index[-1]), y1=0,
+        #               line=dict(color="gray", width=2, dash="dot"),
+        #               showlegend=False,
+        #               )     # add a line: y = 0
+
+        fig.add_shape(type="line",
+                      x0=(agg_df.index[0]), y0=supply,
+                      x1=(agg_df.index[-1]), y1=supply,
+                      line=dict(color="grey", width=2, dash="dot"),
+                      row=1, col=1,
+                      )  # add a line: y = supply
+
+        fig.add_annotation(x=(agg_df.index[0]), y=(1.1 * supply),
+                           text=p_supply,
+                           font=dict(size=18),
+                           bgcolor='#f5f5f5',
+                           showarrow=False,
+                           xanchor='left',  # starting from the left side of the x coordinate
+                           row=1, col=1,
+                           )  # add text for supply
+
+        fig.update_yaxes(title_text=f'{step.capitalize()} supply (MWh) ',
+                         range=[0, 1.2 * supply],
+                         row=1, col=1,
+                         )
+
+        # plot inflow at bottom
+        colors = ['#0a3e65', '#718c3f', '#361005', '#fa9b85']
+        for i, variable in enumerate(inflow_con_df.columns):
+            if val_show:
+                fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
+                                      text=round(agg_df[variable], 2),
+                                      textposition='auto',
+                                      marker=dict(color=colors[i],
                                                   # line=dict(color='black', width=1)
                                                   ),
                                       ),
@@ -866,103 +830,79 @@ class Plot:
                 fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
                                       # text=y,
                                       textposition='auto',
-                                      marker=dict(color=set_color(11)[i],
-                                                  # line=dict(color='black', width=1)
+                                      marker=dict(color=colors[i],
+                                                  # line=dict(color='black', width=0.05)
                                                   ),
                                       ),
                               row=2, col=1,
                               )
 
-        fig.update_yaxes(title_text=f'{step.capitalize()} Flows (MWh)',
-                         # range=[-30, 16],
-                         row=2, col=1)
+        fig.update_yaxes(title_text=f'{step.capitalize()} inflow (MWh) ',
+                         row=2, col=1,
+                         # range=[0, 1.2 * supply]
+                         )
 
-        fig.add_shape(type="line",
-                      x0=(agg_df.index[0]), y0=0,
-                      x1=(agg_df.index[-1]), y1=0,
-                      line=dict(color="gray", width=2, dash="dot"),
-                      showlegend=False,
-                      row=1, col=1,
-                      )     # add a line: y = 0
+        fig.add_shape(type='line',
+                      x0=(agg_df.index[0]), y0=avg_inflow,
+                      x1=(agg_df.index[-1]), y1=avg_inflow,
+                      # xref="paper",
+                      # yref="y",
+                      line=dict(color='grey', width=2, dash='dot'),
+                      row=2, col=1,
+                      )  # add line: y = average inflow
 
-        fig.add_shape(type="line",
+        fig.add_annotation(x=(agg_df.index[0]), y=(1.15 * avg_inflow),
+                           text=p_avg_inflow,
+                           font=dict(size=18),
+                           bgcolor='#f5f5f5',
+                           showarrow=False,
+                           xanchor='left',  # starting from the left side of the x coordinate
+                           row=2, col=1,
+                           )  # add text of average inflow
+
+        fig.add_shape(type='line',
                       x0=(agg_df.index[0]), y0=supply,
                       x1=(agg_df.index[-1]), y1=supply,
-                      line=dict(color="grey", width=2, dash="dot"),
+                      # xref="paper",
+                      # yref="y",
+                      line=dict(color='grey', width=2, dash='dot'),
                       row=2, col=1,
-                      )     # add a line: y = supply
+                      )  # add line: y = average inflow
 
-        fig.add_annotation(x=(agg_df.index[0]), y=(1.1 * supply),
+        fig.add_annotation(x=(agg_df.index[0]), y=(0.8 * supply),
                            text=p_supply,
                            font=dict(size=18),
                            bgcolor='#f5f5f5',
                            showarrow=False,
                            xanchor='left',  # starting from the left side of the x coordinate
                            row=2, col=1,
-                           )       # add text for supply
-
-        # plot inflow at bottom
-        if val_show:
-            fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df['inflow'], name='inflow',
-                                  text=agg_df['inflow'],
-                                  textposition='auto',
-                                  marker=dict(color=set_color(11)[-1]
-                                              # line=dict(color='black', width=1)
-                                              ),
-                                  ),
-                          row=1, col=1,
-                          )
-        else:
-            fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df['inflow'], name='inflow',
-                                  # text=agg_df['inflow'],
-                                  textposition='auto',
-                                  marker=dict(color=set_color(11)[-1]
-                                              # line=dict(color='black', width=1)
-                                              ),
-                                  ),
-                          row=1, col=1,
-                          )
-
-        fig.update_yaxes(title_text=f'{step.capitalize()} Inflow (MWh) ', row=2, col=1,
-                         range=[0, 1.2 * supply])
-
-        fig.add_shape(type="line",
-                      x0=(agg_df.index[0]), y0=avg_inflow,
-                      x1=(agg_df.index[-1]), y1=avg_inflow,
-                      # xref="paper",
-                      # yref="y",
-                      line=dict(color="grey", width=2, dash="dot"),
-                      row=1, col=1,
-                      )     # add line: y = average inflow
-
-        fig.add_annotation(x=(agg_df.index[0]), y=(1.05 * avg_inflow),
-                           text=p_avg_inflow,
-                           font=dict(size=18),
-                           bgcolor='#f5f5f5',
-                           showarrow=False,
-                           xanchor='left',  # starting from the left side of the x coordinate
-                           row=1, col=1,
-                           )    # add text of average inflow
+                           )  # add text of average inflow
 
         # set layout
+        xtickvals = pd.date_range(start=agg_df.index[0], periods=12, freq='MS')  # 每月月初
+        xticktext = [t.strftime('%b %d') for t in xtickvals]
         fig.update_xaxes(title_text='Time',
                          # tickvals=agg_df.index,
                          tickformat='%b %d',
                          tickangle=45,
-                         nticks=12,
-                         # row = 2, col = 1,
+                         tickvals=xtickvals,
+                         ticktext=xticktext,
+                         # nticks=12,
+                         title_standoff=8,     # px
+                         # row=1, col=1,
                          )  # set both axes layout
 
         fig.update_yaxes(nticks=7)
 
         fig.update_layout(
             # barmode='stack',
-            barmode='relative',     # positive and negative values are displayed relative to 0
+            barmode='relative',  # positive and negative values are displayed relative to 0
             # bargap=0,   # set the spacing between the bars
-            title='Flow overview',
-            legend_title='Variables',
-            plot_bgcolor='white',   # background color
-            width=1400, height=800,
+            # title='Flow overview',
+            # legend_title='Variables',
+            legend=dict(yanchor='top', y=1.1, xanchor='left', x=0.6, orientation='h'),
+            plot_bgcolor='white',  # background color
+            width=1400, height=700,
         )
 
         if fig_show:
@@ -975,29 +915,34 @@ class Plot:
         print('Flow overview plotting finished \n'
               '--------------------------------')
 
-    def plot_supply(self, step='hourly', val_show=False, fig_show=True, fig_save=False):
+    def plot_supply(self, step='hourly', start_dt=None, val_show=False, fig_show=True, fig_save=False):
         print(f'supply plotting start')
 
-        supply_h = self.supply_df['supply'].iloc[0]
+        supply_h = self.sup_df['supply'].iloc[0]
         flow = self.flow_df.copy()
 
         fig = pgo.Figure()
 
         # set date index
         n_index = pd.DataFrame(flow.index, columns=['Index'])       # index, number
-        time_deltas = pd.to_timedelta(flow.index, unit='h')
-        start_date = pd.Timestamp('2019-01-01 00:00')
-        date_times = start_date + time_deltas                       # change index number to date
+        time_deltas = pd.to_timedelta(flow.index, unit='h')     # transfer index to days and hours
+        if start_dt is None:
+            start_date = pd.Timestamp('2025-01-01 00:00')
+        else:
+            start_date = pd.to_datetime(start_dt)
+        # start_date = pd.Timestamp('2019-01-01 00:00')
+
+        date_times = start_date + time_deltas       # change index to date
         flow.index = date_times
 
         if step == 'hourly':
             agg_df = flow
             supply = supply_h
-            p_supply = f'Hourly supply = {supply:.0f} MWh'
+            p_supply = f'Hourly supply = {supply:.0f} MWh'      # print text
             print('step = hourly')
 
         elif step == 'daily':
-            agg_df = flow.resample('D').sum()
+            agg_df = flow.resample('D').sum()       # aggregated hourly flow to daily
             supply = supply_h * 24
             p_supply = f'Daily supply = {supply:.0f} MWh'
             print('step = daily')
@@ -1005,7 +950,7 @@ class Plot:
         elif step == 'weekly':
             agg_df = flow.resample('7D', origin=start_date).sum()
             if (flow.index[-1] - agg_df.index[-1]).days < 7:
-                agg_df = agg_df.iloc[:-1]       # check if the last agg flow data  is less than 7 days
+                agg_df = agg_df.iloc[:-1]       # check if the last agg flow data is less than 7 days
             supply = supply_h * 168
             p_supply = f'Weekly supply = {supply:.0f} MWh'
             fig.update_xaxes(tickvals=agg_df.index)     # make sure the first week begin from Jan.01
@@ -1015,7 +960,8 @@ class Plot:
             agg_df = flow.resample('ME').sum()
             monthly_hours = flow.resample('ME').size()
             supply = supply_h * monthly_hours
-            p_supply = f'Monthly supply = {supply:.0f} MWh'
+            p_supply = f'Maximum monthly supply = {supply.max():.0f} MWh'
+            # p_supply = supply.map(lambda x: f'Monthly supply = {x:.0f} MWh')
             fig.update_xaxes(tickvals=agg_df.index)     # make sure the tick values match the bars
             print('step = monthly')
 
@@ -1032,7 +978,7 @@ class Plot:
         # print(f'{agg_df.head(10)}')
 
         # plot flows generated by the model
-        var_s = ['dOut', 'sOut', 'eB']
+        var_s = ['eOut', 'eOutHess', 'eB']
         supply_con_df = agg_df[var_s]
 
         # print(supply_con_df.head(10))
@@ -1042,9 +988,9 @@ class Plot:
         for i, variable in enumerate(supply_con_df.columns):
             if val_show:
                 fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
-                                      text=agg_df[variable],
+                                      text=round(agg_df[variable], 1),
                                       textposition='auto',
-                                      marker=dict(color=colors_s[i],
+                                      marker=dict(color=colors[i],
                                                   # line=dict(color='black', width=1)
                                                   ),
                                       ),
@@ -1076,7 +1022,7 @@ class Plot:
                       line=dict(color="grey", width=2, dash="dot"),
                       )     # add a line: y = supply
 
-        fig.add_annotation(x=(agg_df.index[0]), y=(1.1 * supply),
+        fig.add_annotation(x=(agg_df.index[0]), y=(1.1 * supply.max()),
                            text=p_supply,
                            font=dict(size=18),
                            bgcolor='#f5f5f5',
@@ -1088,11 +1034,15 @@ class Plot:
                          range=[0, 1.2 * supply])
 
         # set layout
+        xtickvals = pd.date_range(start=agg_df.index[0], periods=12, freq='MS')  # 每月月初
+        xticktext = [t.strftime('%b %d') for t in xtickvals]
         fig.update_xaxes(title_text='Time',
                          # tickvals=agg_df.index,
                          tickformat='%b %d',
                          tickangle=45,
-                         nticks=12,
+                         tickvals=xtickvals,
+                         ticktext=xticktext,
+                         # nticks=12,
                          # row = 2, col = 1,
                          )  # set both axes layout
 
@@ -1104,7 +1054,7 @@ class Plot:
             # bargap=0,   # set the spacing between the bars
             # title='Flow overview',
             # legend_title='Variables',
-            legend=dict(yanchor='top', y=0.98, xanchor='left', x=0.82, orientation='h'),
+            legend=dict(yanchor='top', y=0.98, xanchor='left', x=0.78, orientation='h'),
             plot_bgcolor='white',   # background color
             width=1400, height=500,
         )
@@ -1119,11 +1069,11 @@ class Plot:
         print('Flow overview plotting finished \n'
               '--------------------------------')
 
-    def plot_inflow(self, step='hourly', val_show=False, fig_show=True, fig_save=False):
+    def plot_inflow(self, step='hourly', start_dt=None, val_show=False, fig_show=True, fig_save=False):
         print(f'Inflow plotting start')
 
-        supply_h = self.supply_df['supply'].iloc[0]
-        avg_h = self.supply_df['avg_inflow'].iloc[0]
+        supply_h = self.sup_df['supply'].iloc[0]
+        avg_h = self.sup_df['avg_inf'].iloc[0]
         flow = self.flow_df.copy()
 
         # print(self.flow_df.head(10))
@@ -1135,7 +1085,11 @@ class Plot:
         n = flow.index[-1] + 1  # numbers of periods
         n_index = pd.DataFrame(flow.index, columns=['Index'])  # index, number
         time_deltas = pd.to_timedelta(flow.index, unit='h')
-        start_date = pd.Timestamp('2019-01-01 00:00')
+        if start_dt is None:
+            start_date = pd.Timestamp('2025-01-01 00:00')
+        else:
+            start_date = pd.to_datetime(start_dt)
+        # start_date = pd.Timestamp('2019-01-01 00:00')
         date_times = start_date + time_deltas  # change index number to date
         flow.index = date_times
 
@@ -1151,8 +1105,7 @@ class Plot:
 
         elif step == 'daily':
             agg_df = flow.resample('D').sum()
-            n_day = round((n / 24), 2)
-            avg_inflow = flow['inflow'].sum() / n_day
+            avg_inflow = avg_h * 24
             p_avg_inflow = f'Average daily inflow = {avg_inflow:.0f} MWh'
 
             supply = supply_h * 24
@@ -1182,7 +1135,7 @@ class Plot:
 
             monthly_hours = flow.resample('ME').size()
             supply = supply_h * monthly_hours
-            p_supply = f'Monthly supply = {supply:.0f} MWh'
+            p_supply = f'Maximum monthly supply = {supply.max():.0f} MWh'
 
             fig.update_xaxes(tickvals=agg_df.index)  # make sure the tick values match the bars
             print('step = monthly')
@@ -1203,16 +1156,16 @@ class Plot:
         # print(f'{agg_df.head(10)}')
 
         # plot flows generated by the model
-        var_s = ['dOut', 'sIn', 'ePrs', 'eS']
+        var_s = ['eOut', 'eInHess', 'eS']
         inflow_con_df = agg_df[var_s]
         # print(inflow_con_df.head(10))
 
         # colors = ['#7097a8', '#adc1b5', '#f7ce74', '#0a3e65']
-        colors = ['#0a3e65', '#718c3f', '#fa9b85', '#361005']
+        colors = ['#0a3e65', '#718c3f', '#361005', '#fa9b85']
         for i, variable in enumerate(inflow_con_df.columns):
             if val_show:
                 fig.add_trace(pgo.Bar(x=agg_df.index, y=agg_df[variable], name=variable,
-                                      text=agg_df[variable],
+                                      text=round(agg_df[variable], 1),
                                       textposition='auto',
                                       marker=dict(color=colors[i],
                                                   # line=dict(color='black', width=1)
@@ -1266,11 +1219,15 @@ class Plot:
                            )  # add text of average inflow
 
         # set layout
+        xtickvals = pd.date_range(start=agg_df.index[0], periods=12, freq='MS')  # 每月月初
+        xticktext = [t.strftime('%b %d') for t in xtickvals]
         fig.update_xaxes(title_text='Time',
                          # tickvals=agg_df.index,
                          tickformat='%b %d',
                          tickangle=45,
-                         nticks=12,
+                         tickvals=xtickvals,
+                         ticktext=xticktext,
+                         # nticks=12,
                          # row = 2, col = 1,
                          )  # set both axes layout
 
@@ -1297,37 +1254,460 @@ class Plot:
         print('Flow overview plotting finished \n'
               '--------------------------------')
 
-    def plot_dv_flow(self, n, unit='day'):
+    # ESS storage amount
+    def plot_ESS_stor(self, start_dt, temp):
+        dpi = self.dpi
+        cap_df = self.cap_df
+        einr = self.einr_df.copy()
+        eoutr = self.eoutr_df.copy()
+        xins = self.xins_df.copy()
+        sflow = self.flow_s_df
+        xvol = sflow.filter(like='xVol', axis=1).copy()
+
+        einr[einr < 1e-5] = 0   # reset 0
+        eoutr[eoutr < 1e-5] = 0
+        xvol[xvol < 1e-5] = 0
+        xins[xins < 1e-5] = 0
+
+        einr = einr.loc[:, (einr != 0).any(axis=0)]     # delete all zero cols
+        eoutr = eoutr.loc[:, (eoutr != 0).any(axis=0)]
+        xins = xins.loc[:, (xins != 0).any(axis=0)]
+        xvol = xvol.loc[:, (xvol != 0).any(axis=0)]
+
+        # print(f'xins top five = {xins.head(5)}')
+
+        # get xInit
+        scap = cap_df.dropna(subset=['sCap']).copy()
+        xinit = pd.Series(
+            data=scap['sCap'].values * 0.2,
+            index=pd.MultiIndex.from_frame(scap[['ESS', 'Device']]),
+            name='xInit'
+        )
+
+        init_dict = {}
+        for col in xvol.columns:
+            try:
+                _, ess, dev = col.split('_')
+                init_val = xinit.loc[(ess, dev)]
+            except KeyError:
+                init_val = 0.0
+                print(f'There is no xInit, check.')
+            init_dict[col] = [init_val]
+
+        init_row = pd.DataFrame(init_dict)
+        xvol_new = pd.concat([init_row, xvol], ignore_index=True)
+
+        # results processing
+        time_deltas = pd.to_timedelta(einr.index, unit='h')
+        if start_dt is None:        # set start time for the time indexed series
+            start_date = pd.Timestamp('2025-01-01 00:00')
+        else:
+            start_date = pd.to_datetime(start_dt)
+        date_times = start_date + time_deltas  # change index number to date
+        einr.index = date_times     # reset date index
+        eoutr.index = date_times    # reset date inde
+        xins.index = date_times
+
+        vol_deltas = pd.to_timedelta(xvol_new.index, unit='h')
+        xvol_times = (start_date - pd.Timedelta(hours=1)) + vol_deltas
+        xvol_new.index = xvol_times     # reset date index
+
+        # xins_tot = xins.sum(axis=0)       # check
+        # print(xins_tot)
+
+        # reset unit to electricity-equivalent
+        xqe_h = 3.33        # 100kg H2 ≈ 3.33 MWh
+        # xqe_c = 0.83        # CAESS compressor efficiency
+        xqe_c = 1
+        charge_e = 0.87     # Charging efficiency of BESS
+
+        xins_h = xins.filter(like='H2ESS', axis=1)  # get r = HESS cols
+        xins_c = xins.filter(like='CAESS', axis=1)  # get r = CAESS cols
+        xins_e = xins.filter(like='BESS', axis=1)
+
+        xins_h = xqe_h * xins_h  # convert energy to electricity unit using equivalent calorie value
+        xins_c = xqe_c * xins_c  # effective electricity for energy conversion
+        xins_e = charge_e * xins_e
+        hess_cols = xins_h.columns.tolist()
+        caess_cols = xins_c.columns.tolist()
+        bess_cols = xins_e.columns.tolist()
+        xins[caess_cols] = xins_c  # replace old cols with news
+        xins[hess_cols] = xins_h
+        xins[bess_cols] = xins_e
+
+        xvol_h = xvol_new.filter(like='H2ESS', axis=1)       # get r = HESS cols
+        xvol_c = xvol_new.filter(like='CAESS', axis=1)      # get r = CAESS cols
+        xvol_e = xvol_new.filter(like='BESS', axis=1)
+
+        xvol_h = xqe_h * xvol_h     # convert energy to electricity unit using equivalent calorie value
+        xvol_c = xqe_c * xvol_c     # effective electricity for energy conversion
+        xvol_e = charge_e * xvol_e
+        hess_cols = xvol_h.columns.tolist()
+        caess_cols = xvol_c.columns.tolist()
+        bess_cols = xvol_e.columns.tolist()
+        xvol_new[caess_cols] = xvol_c   # replace old cols with news
+        xvol_new[hess_cols] = xvol_h
+        xvol_new[bess_cols] = xvol_e
+
+        xvol_diff = xvol_new.diff()     # different between 2 period
+
+        # plotting
+        # fig_width_pt = 252                  # width of single col in double col Latex format
+        # fig_width = fig_width_pt / 72.27    # 1 pt = 1/72.27 inch
+        fig_width = 10
+        fig_height = 6
+
+        fig = plt.figure(figsize=(fig_width, fig_height), dpi=dpi)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        # plot sub-fig (a)
+        if temp == 'Annual':
+            einr_tot = einr.sum(axis=0)     # annual electricity in ESS
+            eoutr_tot = eoutr.sum(axis=0)   # annual electricity out ESS
+
+            # reset unit
+            if (einr_tot > 1000).any() or (eoutr_tot > 1000).any():
+                einr_tot = einr_tot / 1000
+                eoutr_tot = eoutr_tot / 1000
+                unit = 'GWh'
+            else:
+                unit = 'MWh'
+            # print(f'Total inflow to ESSs: {einr_tot};\n Total outflow from ESSs {eoutr_tot}')     # check
+
+            # plot
+            ess_names = einr_tot.index
+            y_pos = np.arange(len(ess_names))
+            y_spac = 0.1
+            colors = set_color(2)
+            height = 0.3  # bars height
+            linewidth = 0.3     # bars edge width
+
+            # print(ess_names)
+
+            # plot eInr
+            bars_in = ax1.barh(
+                y_pos + (height + y_spac) / 2,  # bars on the top
+                einr_tot.values,
+                color=colors[0],
+                edgecolor='black',
+                linewidth=linewidth,
+                height=height,
+                label='eInr'
+            )
+
+            bars_out = ax1.barh(
+                y_pos - (height + y_spac) / 2,  # bars at the bottom
+                eoutr_tot.values,
+                color=colors[1],
+                edgecolor='black',
+                linewidth=linewidth,
+                height=height,
+                label='eOutr'
+            )
+
+            for bar, val in zip(bars_in, einr_tot.values):
+                w = bar.get_width()
+                ax1.text(
+                    w + einr_tot.max() * 0.01,      # x_axis offset on the right
+                    bar.get_y() + bar.get_height() / 2,     # y position
+                    f'{val:.0f}',
+                    va='center',
+                    ha='left'
+                )
+
+            for bar, val in zip(bars_out, eoutr_tot.values):
+                w = bar.get_width()
+                ax1.text(
+                    w + eoutr_tot.max() * 0.01,      # x_axis offset on the right
+                    bar.get_y() + bar.get_height() / 2,     # y position
+                    f'{val:.0f}',
+                    va='center',
+                    ha='left'
+                )
+            ax1.set_xlim(0, 80)
+            ax1.set_yticks(y_pos)
+            ax1.set_yticklabels(ess_names)
+            ax1.set_ylabel('ESSs')
+            ax1.set_xlabel(f'Electricity ({unit}).')
+            ax1.set_title(f'a) Annual electricity inflow and outflow to/from ESSs.', y=-0.3)
+            ax1.legend(bbox_to_anchor=(0.95, 0.98), loc='upper right', ncol=1,
+                       frameon=False)
+
+        elif temp == 'Monthly':
+            einr_mon = einr.resample('ME').sum()    # monthly eInr, row: month, col: ESS
+            eoutr_mon = eoutr.resample('ME').sum()  # monthly eOutr
+            einr_mon.index = einr_mon.index.strftime('%b')      # change time index to months
+            eoutr_mon.index = eoutr_mon.index.strftime('%b')  # change time index to months
+            # reset unit
+            if (einr_mon > 1000).any().any() or (eoutr_mon > 1000).any().any():
+                einr_mon = einr_mon / 1000
+                eoutr_mon = eoutr_mon / 1000
+                unit = 'GWh'
+            else:
+                unit = 'MWh'
+            # print(einr_mon, eoutr_mon)     # check
+
+            ess_names = einr_mon.columns.tolist()
+            y_pos = np.arange(len(einr_mon.index))
+            colors = set_color(len(ess_names))
+
+            # plot eOutr on the left
+            y_spac = 0.5    # space between two bars
+            offset_l = np.zeros_like(y_pos, dtype=float) * y_spac    # set stacking position
+            height = 0.4
+            linewidth = 0.3
+            seen = set()        # stor labels
+            for i, ess in enumerate(ess_names):
+                label = ess if ess not in seen else None
+                vals = eoutr_mon[ess].values
+                ax1.barh(
+                    y_pos,  # bar position on y_axis
+                    -vals,  # negative values, bars on the left
+                    left=-offset_l,  # start bars at the stacking position
+                    color=colors[i],
+                    edgecolor='black', linewidth=linewidth, height=height,
+                    label=label
+                )
+                offset_l += vals  # update offset
+
+            # plot eInr on the right
+            offset_r = np.zeros_like(y_pos, dtype=float)
+            for i, ess in enumerate(ess_names):
+                vals = einr_mon[ess].values
+                ax1.barh(
+                    y_pos,  # bar position on y_axis
+                    vals,  # negative values, bars on the left
+                    left=offset_r,  # start bars at the stacking position
+                    color=colors[i],
+                    edgecolor='black', linewidth=linewidth, height=height,
+                    label=None
+                )
+                offset_r += vals  # update offset
+
+            ax1.axvline(0, color='gray', linewidth=0.8, linestyle='--')  # line x = 0
+
+            # xmin, xmax = ax1.get_xlim()
+            # xticks = np.linspace(xmin, xmax, 5)
+            # ax1.set_xticks(xticks)
+            abs_fmt = ticker.FuncFormatter(lambda x, pos: f"{abs(x):.0f}")      # set positive value to x_axis
+            ax1.xaxis.set_major_formatter(abs_fmt)
+            ax1.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))        # maximum 5 labels
+            ax1.text(
+                -0.3, -0.02,  # x=0% (left), y=–10% below the axis
+                'Outflow',
+                transform=ax1.transAxes,
+                ha='left',  # align text to the left of that point
+                va='top'  # align top of text at that point
+            )
+            ax1.text(
+                1.02, -0.02,  # x=0% (left), y=–10% below the axis
+                'Inflow',
+                transform=ax1.transAxes,
+                ha='left',  # align text to the left of that point
+                va='top'  # align top of text at that point
+            )
+
+            ax1.set_yticks(y_pos)
+            ax1.set_yticklabels(einr_mon.index)
+            ax1.set_ylabel('Month')
+            ax1.set_xlabel(f'Electricity ({unit})')
+            ax1.set_title(f'a) Monthly electricity inflow and outflow to/from ESSs', y=-0.3)
+            ax1.legend(title='ESSs', bbox_to_anchor=(1.05, 1.02), loc='upper left', ncol=1,
+                       frameon=False)
+
+        else:
+            print(f'Wrong temporal, please choose from "Annual" or "Monthly".')
+
+        # plot sub-fig (b)
+        if temp == 'Annual':
+            xins_tot = xins.sum(axis=0)     # annual storage amount in ESS
+            # xins_tot = xins.resample('Y', label='right', closed='right').sum()  # annual storage amount in ESS
+
+            # reset unit
+            if (xins_tot > 1000).any().any():
+                xins_tot = xins_tot / 1000
+                unit = 'GWh'
+            else:
+                unit = 'MWh'
+
+            print(f'Annual charged energy: \n {round(xins_tot, 2)} {unit}')
+
+            tuples = [col.split('_', 2) for col in xins_tot.index]       # split index
+            mi = pd.MultiIndex.from_tuples(tuples, names=['prefix', 'ess', 'storage'])
+            xins_tot.index = mi
+            ess_order = list(dict.fromkeys(xins_tot.index.get_level_values('ess')))  # store s order
+
+            # print(f'Storage devices order:{ess_order}')
+
+            xins_tot = xins_tot.xs('xIns', level='prefix')
+            xins_table = xins_tot.unstack(level='storage').fillna(0)      # raw: ESSs, col: storage
+            xins_table = xins_table.reindex(index=ess_order)              # keep order with original sequence
+
+            # plot
+            s_names = xins_table.columns.tolist()
+            y_pos = np.arange(len(xins_table.index))
+            colors = set_color(len(s_names))
+
+            # print(f'Storage devices name {s_names}')
+            # print(xins_table.index)
+
+            # plot xVol
+            y_spac = 0.3  # space between two bars
+            offset = np.zeros_like(y_pos, dtype=float) * y_spac  # set stacking position
+            height = 0.25
+            linewidth = 0.3
+            seen = set()  # stor labels
+
+            for i, s in enumerate(s_names):
+                label = s if s not in seen else None
+                vals = xins_table[s].values
+                bars = ax2.barh(
+                    y_pos,  # bar position on y_axis
+                    vals,  # negative values, bars on the left
+                    left=offset,  # start bars at the stacking position
+                    color=colors[i],
+                    edgecolor='black', linewidth=linewidth, height=height,
+                    label=label
+                )
+
+                for bar, val in zip(bars, vals):
+                    if val == 0:
+                        continue
+                    w = bar.get_width()
+                    ax2.text(
+                        w + xins_table.max().max() * 0.01,      # x_axis offset on the right
+                        bar.get_y() + bar.get_height() / 2,     # y position
+                        f'{val:.0f}',
+                        va='center',
+                        ha='left'
+                    )
+
+                offset += vals  # update offset
+
+            ax2.set_xlim(0, 45)
+            ax2.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))  # maximum 5 labels
+            ax2.set_yticks(y_pos)
+            ax2.set_yticklabels(xins_table.index)
+            ax2.set_xlabel(f'Storage amount ({unit}).')
+            ax2.set_title(f'b) Annual storage amount of ESSs.', y=-0.3)
+            ax2.set_ylabel('ESSs')
+            ax2.legend(bbox_to_anchor=(0.95, 0.98), loc='upper right', ncol=1,
+                       frameon=False)
+
+        elif temp == 'Monthly':
+            xvol_mon = xvol_diff.resample('ME', label='right', closed='right').sum()  # monthly xVol
+            xvol_mon.index = xvol_mon.index.strftime('%b')  # change time index to months
+
+            col_name = {c: c.split('_', 1)[1] for c in xvol_mon.columns}        # get the ESS and storage name
+            xvol_mon = xvol_mon.rename(columns=col_name)
+
+            # reset unit
+            if (xvol_mon.abs() > 1000).any().any():
+                xvol_mon = xvol_mon / 1000
+                xvol_mon = round(xvol_mon, 2)
+                unit = 'GWh'
+            else:
+                unit = 'MWh'
+
+            print(f'Monthly net energy storage: \n {xvol_mon} {unit}')
+
+            xvol_mon = xvol_mon.loc[:, (xvol_mon != 0).any(axis=0)]     # delete all zero cols
+
+            # plot
+            ess_names = xvol_mon.columns.tolist()
+            xvol_mon = xvol_mon.iloc[1:]        # delete first raw, Dec
+            y_pos = np.arange(len(xvol_mon.index))
+            colors = set_color(len(ess_names))
+
+            # plot xVol on the left
+            y_spac = 0.5  # space between two bars
+            pos_offset = np.zeros_like(y_pos, dtype=float) * y_spac  # set stacking position
+            neg_offset = np.zeros_like(y_pos, dtype=float) * y_spac  # set stacking position
+            height = 0.4
+            linewidth = 0.3
+            seen = set()  # stor labels
+
+            for i, ess in enumerate(ess_names):
+                label = ess if ess not in seen else None
+                vals = xvol_mon[ess].values
+                left_vals = np.where(
+                    vals >= 0, pos_offset, neg_offset
+                )       # bars start point, >=  pos_offset，<0 neg_offset
+
+                ax2.barh(
+                    y_pos,  # bar position on y_axis
+                    vals,  # negative values, bars on the left
+                    left=left_vals,  # start bars at the stacking position
+                    color=colors[i],
+                    edgecolor='black', linewidth=linewidth, height=height,
+                    label=label
+                )
+                pos_offset += np.where(vals >= 0, vals, 0)      # update offset
+                neg_offset += np.where(vals < 0, vals, 0)    # update offset
+
+            ax2.axvline(0, color='gray', linewidth=0.8, linestyle='--')  # line x = 0
+
+            ax2.set_xlim(-1.6, 1.4)
+            ax2.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))  # maximum 5 labels
+            ax2.set_yticks(y_pos)
+            ax2.set_yticklabels(xvol_mon.index)
+            ax2.set_xlabel(f'Storage amount ({unit}).')
+            ax2.set_title(f'b) Monthly net energy storage amount in ESSs.', y=-0.3)
+            ax2.set_ylabel('Month')
+            ax2.legend(title='Storage', bbox_to_anchor=(1.05, 1.02), loc='upper left', ncol=1,
+                       frameon=False)
+        else:
+            print(f'Wrong temporal, please choose from "Annual" or "Monthly".')
+
+        # plt.subplots_adjust(bottom=0.2)
+        if temp == 'Annual':
+            plt.tight_layout(
+                pad=0.5, w_pad=8, h_pad=1.0,       # inner margin between figs, distance between subfigs
+                rect=(0.05, 0.05, 0.95, 0.95),       # left, bottom, right, top
+            )
+        elif temp == 'Monthly':
+            plt.tight_layout(
+                pad=0.5, w_pad=5, h_pad=1.0,  # inner margin between figs, distance between subfigs
+                rect=(0.05, 0.05, 0.95, 0.95),  # left, bottom, right, top
+            )
+        else:
+            print(f'Wrong temporal, please choose from "Annual" or "Monthly".')
+
+        # fig.tight_layout()
+        fig.savefig(f'{self.fig_dir}ESS_stor_{temp}.png')
+
+    def plot_dev_flow(self, n, unit='day'):
         # todo: date; a) change
         # print hourly flows in specific day or week
         print(f'Plotting energy flows in the {unit} {n} start')
 
         # get values
-        dv_ele_df = self.dvflow_df.filter(like='Elec')
-        dv_hy_df = self.dvflow_df.filter(like='Tank')
-        dv_fc_df = self.dvflow_df.filter(like='Cell')
+        dev_ele_df = self.flow_dev.filter(like='Elec')
+        dev_hy_df = self.flow_dev.filter(like='Tank')
+        dev_fc_df = self.flow_dev.filter(like='Cell')
 
         flow_h_df = self.flow_df.copy()
         flow_h_df = flow_h_df.abs()         # all positive values
-        supply_h = self.supply_df['supply'].iloc[0]
+        supply_h = self.sup_df['supply'].iloc[0]
 
         # plotting
         fig, axs = plt.subplots(4, 1, figsize=(12, 12))
 
         # data processing, day, week
         if unit == 'day':
-            dv_ele = dv_ele_df.iloc[((n - 1) * 24):(n * 24)]
-            dv_hy = dv_hy_df.iloc[((n - 1) * 24):(n * 24)]
-            dv_fc = dv_fc_df.iloc[((n - 1) * 24):(n * 24)]
+            dev_ele = dev_ele_df.iloc[((n - 1) * 24):(n * 24)]
+            dev_hy = dev_hy_df.iloc[((n - 1) * 24):(n * 24)]
+            dev_fc = dev_fc_df.iloc[((n - 1) * 24):(n * 24)]
             flow = flow_h_df.iloc[((n - 1) * 24):(n * 24)]
 
             for ax in axs:
                 ax.xaxis.set_major_locator(ticker.MultipleLocator(4))
 
         elif unit == 'week':
-            dv_ele = dv_ele_df.iloc[((n - 1) * 168):(n * 168)]
-            dv_hy = dv_hy_df.iloc[((n - 1) * 168):(n * 168)]
-            dv_fc = dv_fc_df.iloc[((n - 1) * 168):(n * 168)]
+            dev_ele = dev_ele_df.iloc[((n - 1) * 168):(n * 168)]
+            dev_hy = dev_hy_df.iloc[((n - 1) * 168):(n * 168)]
+            dev_fc = dev_fc_df.iloc[((n - 1) * 168):(n * 168)]
             flow = flow_h_df.iloc[((n - 1) * 168):(n * 168)]
 
             for ax in axs:
@@ -1356,21 +1736,21 @@ class Plot:
         axs[0].tick_params(axis='x', rotation=0)
 
         # 1) electrolyzer flows
-        if dv_ele.empty:
+        if dev_ele.empty:
             print(f'There is no energy flows through the electrolyzer')
         else:
-            # dv_ele_p = dv_ele.loc[:, (dv_ele != 0).any(axis=0)]     # remove 0 columns
-            # dv_ele_p.plot(ax=axs[0],
-            dv_ele.plot(ax=axs[1],
-                        # kind='bar', width=0.8,
-                        # edgecolor='black',
-                        )
+            # dev_ele_p = dev_ele.loc[:, (dev_ele != 0).any(axis=0)]     # remove 0 columns
+            # dev_ele_p.plot(ax=axs[0],
+            dev_ele.plot(ax=axs[1],
+                         # kind='bar', width=0.8,
+                         # edgecolor='black',
+                         )
 
-            max_val = dv_ele.max().max()
-            min_val = dv_ele.min().min()
+            max_val = dev_ele.max().max()
+            min_val = dev_ele.min().min()
 
-            max_t = dv_ele.idxmax().loc[dv_ele.max().idxmax()]
-            min_t = dv_ele.idxmin().loc[dv_ele.min().idxmin()]
+            max_t = dev_ele.idxmax().loc[dev_ele.max().idxmax()]
+            min_t = dev_ele.idxmin().loc[dev_ele.min().idxmin()]
 
             axs[1].annotate(f'{max_val:.2f}', xy=(max_t, max_val), xytext=(max_t, 1.01 * max_val))
             # arrowprops=dict(facecolor='black', shrink=0.05)
@@ -1387,22 +1767,22 @@ class Plot:
             axs[1].tick_params(axis='x', rotation=0)
 
         # 2) hydrogen flows
-        if dv_hy.empty:
+        if dev_hy.empty:
             print(f'There is no energy flows through the hydrogen tank')
         else:
-            # dv_hy = dv_hy.loc[:, (dv_hy != 0).any(axis=0)]  # remove 0 columns
+            # dev_hy = dev_hy.loc[:, (dev_hy != 0).any(axis=0)]  # remove 0 columns
 
-            dv_hy_in = dv_hy.filter(like='hIn')
-            dv_hy_out = dv_hy.filter(like='hOut')
-            dv_hy_vol = dv_hy.filter(like='hVol')
+            dev_hy_in = dev_hy.filter(like='hIn')
+            dev_hy_out = dev_hy.filter(like='hOut')
+            dev_hy_vol = dev_hy.filter(like='hVol')
 
-            mmax = dv_hy_in.max().max()
-            mmin = dv_hy_out.min().min()
-            hmax = dv_hy_vol.max().max()
+            mmax = dev_hy_in.max().max()
+            mmin = dev_hy_out.min().min()
+            hmax = dev_hy_vol.max().max()
 
-            max_idx = dv_hy_in.idxmax().loc[dv_hy_in.max().idxmax()]
-            min_idx = dv_hy_out.idxmin().loc[dv_hy_out.max().idxmax()]
-            hmax_idx = dv_hy_vol.idxmax().loc[dv_hy_vol.max().idxmax()]
+            max_idx = dev_hy_in.idxmax().loc[dev_hy_in.max().idxmax()]
+            min_idx = dev_hy_out.idxmin().loc[dev_hy_out.max().idxmax()]
+            hmax_idx = dev_hy_vol.idxmax().loc[dev_hy_vol.max().idxmax()]
 
             axs[2].annotate(f'{mmax:.2f}',
                             xy=(max_idx, mmax),
@@ -1419,10 +1799,10 @@ class Plot:
 
             axs[2].axhline(y=0, color='black', linestyle=':')
 
-            dv_hy.plot(ax=axs[2],
-                       # kind='bar', width=0.8,
-                       # edgecolor='black',
-                       )
+            dev_hy.plot(ax=axs[2],
+                        # kind='bar', width=0.8,
+                        # edgecolor='black',
+                        )
 
             # for container in axs[2].containers:
             #     axs[2].bar_label(container)
@@ -1430,7 +1810,7 @@ class Plot:
             axins = inset_axes(axs[2], width='70%', height='55%', loc='lower right',
                                bbox_to_anchor=(0.4, 0.2, 0.6, 0.6),
                                bbox_transform=axs[2].transAxes)
-            dv_hy.plot(ax=axins, legend=False)
+            dev_hy.plot(ax=axins, legend=False)
             axins.set_ylim(1.1 * (mmin-3), 1.1 * (mmax+3))
 
             # hide axes or labels
@@ -1446,14 +1826,14 @@ class Plot:
             axs[2].tick_params(axis='x', rotation=0)
 
         # 3) Fuel-cell flows
-        if dv_fc.empty:
+        if dev_fc.empty:
             print(f'There is no energy flows through the fuel cell')
         else:
-            # dv_fc_p = dv_fc.loc[:, (dv_fc != 0).any(axis=0)]      # remove 0 columns
-            # fc_h = dv_fc_p.filter(like='hInc')
-            # fc_e = dv_fc_p.filter(like='cOut')
-            fc_h = dv_fc.filter(like='hInc')
-            fc_e = dv_fc.filter(like='cOut')
+            # dev_fc_p = dev_fc.loc[:, (dev_fc != 0).any(axis=0)]      # remove 0 columns
+            # fc_h = dev_fc_p.filter(like='hInc')
+            # fc_e = dev_fc_p.filter(like='cOut')
+            fc_h = dev_fc.filter(like='hInc')
+            fc_e = dev_fc.filter(like='cOut')
 
             max_h = fc_h.max().max()
             min_h = fc_h.min().min()
@@ -1518,28 +1898,31 @@ class Plot:
 
 
 # ----------------------------------------------------------------
-# path = '.'
-# res_dir = f'{path}/Results/'        # repository of results
-# fig_dir = f'{path}/Figures/'        # repository of figures
-# f_data = f'{path}/Data/dat1.dat'   # data file
-#
-# Fig = Plot(res_dir, fig_dir, f_data)
-# # Fig.plot_CS()
-#
-# # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
-# # 'kaleido' is needed for fig_save: True
-# Fig.plot_flow('original', True, True, True)
-# Fig.plot_flow('daily', False, True, False)
-# # Fig.plot_flow('weekly', False, True)
-# # Fig.plot_flow('monthly', False, True)
-# Fig.plot_supply('daily', False, True, False)
-# Fig.plot_inflow('daily', False, True, False)
-#
-# # Fig.plot_overview()  # Finance and storage overview
-# # Fig.plot_overview_sep()
-# # Fig.plot_dv_flow(10, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
-#
-# # fig.plot_finance()      # Finance overview
-# # fig.plot_capacity()     # Storage capacity
-#
-# show_figs()  # show figures
+if __name__ == '__main__':
+    ppath = '.'
+    reslt_dir = f'{ppath}/Results/0.2cost/'        # repository of results
+    figr_dir = f'{ppath}/Figures/'        # repository of figures
+    # f_data = f'{path}/Data/dat1.dat'   # data file
+    data_f = f'{ppath}/Local/Data/sms3_ex.dat'   # data file
+    stdate = '2024-01-01 00:00'
+
+    Fig = Plot(reslt_dir, figr_dir, data_f)
+    # Fig.plot_finance()      # Finance overview, Income-Cost-Revenue
+    # Fig.plot_CS_3()         # Cost structure
+    # # Fig.plot_cap_tab()      # Storage capacity table (Latex)
+
+    # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
+    # 'kaleido' is needed for fig_save: True
+
+    # Fig.plot_flow('daily', stdate, False, True, True)
+    # Fig.plot_supply('daily', stdate, False, True, True)
+    # Fig.plot_inflow('daily', stdate, False, True, True)
+    # Fig.plot_supply('monthly', stdate, True, True, True)
+    # Fig.plot_inflow('monthly', stdate, True, True, True)
+    Fig.plot_inflow('hourly', stdate, False, True, True)
+    # Fig.plot_ESS_stor(stdate, 'Annual')
+    # Fig.plot_ESS_stor(stdate, 'Monthly')
+
+# Fig.plot_dev_flow(10, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
+
+show_figs()  # show figures
