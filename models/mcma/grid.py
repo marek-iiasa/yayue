@@ -19,7 +19,7 @@ class Grid:     # representation of the neighbors
             self.anch1 = anch1      # id of the corresponding solution defining another corner of the ray
             self.idSols = []        # ids of sols belonging to the ray
             self.sols = grid.sols   # solutions (objects)
-            self.gap = 40
+            self.gap = grid.gap
             #
             self.idSols.append(anch0)
             self.idSols.append(anch1)
@@ -45,23 +45,28 @@ class Grid:     # representation of the neighbors
             if self.anch1 < idBase:
                 idBase = self.anch1
             assert idBase in self.idSols, f'Grid::mkPairs(): solution with id {idBase} not found'
-            dist = []   # distances from the base
+            dist = []   # distances from the base, used for sorting sols
             for idS in self.idSols:
                 d = self.dist(idBase, idS)
                 dist.append([idBase, idS, d])
                 pass
 
-            # sorting dist list
-            dist.sort(key=itemgetter(2), reverse = False)    # sort in ascending order
-            # todo: create pairs from neighbors
-            # todo: distances shall be recalculated (instead of from the base use between the pair-members
+            # creating pairs from neighbor sols, add them to the candidate's dict
+            dist.sort(key=itemgetter(2), reverse = False)    # sort sols in ascending distance from the anchor
             cand = self.grid.cand   # convenience alias of the candidate dict.
-            for item in dist:
-                if item[2] < self.gap:
+            nPairs = len(dist) - 1
+            nSmall = 0
+            for i in range(nPairs):
+                id0 = dist[i][1]
+                id1 = dist[i + 1][1]
+                diff = self.dist(id0, id1)
+                if diff < self.gap:
+                    nSmall += 1
                     continue
-                pair = [item[0], item[1]]
+                pair = [id0, id1]
                 pair = self.grid.sortPair(pair)
-                cand.update({(pair[0], pair[1]): [item[2], self.seq]})
+                cand.update({(pair[0], pair[1]): [diff, self.seq]})
+            print(f'Grid::mkPairs(): ray[{self.seq}]: {nPairs} defined, {nSmall} too close pairs ignored')
             pass
 
     def __init__(self, wflow):      # initialize by the corner, and optionally neutral, solutions
