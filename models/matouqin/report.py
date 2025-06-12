@@ -20,17 +20,22 @@ class Report:
         self.df_vars = None     # df with values (for each iter) of the vars defined in self.sol_vars
         self.f_df_vars = f'{rep_dir}/df_vars.csv'  # file name of the stored df
         self.check_df_vars = f'{rep_dir}/check_vars.csv'    # file name of abnormal value
-        self.check_df_hy = f'{rep_dir}/check_hy.csv'  # file name of abnormal value of hydrogen tank
+        self.check_df_ec = f'{rep_dir}/check_ec.csv'  # file name of abnormal value of hydrogen tank
 
         print(f'\nReport ctor: handling results of the Matouqin model.     -------------')
 
         # set default datastructures
-        self.supply_df = pd.DataFrame()
-        self.finance_df = pd.DataFrame()
-        self.cap_df = pd.DataFrame(index=self.m1.S)
-        self.flow_df = pd.DataFrame(index=self.m1.T)
-        self.dvflow_df = pd.DataFrame(index=self.m1.T)
-        self.flow_all_df = pd.DataFrame(index=self.m1.T)
+        self.fin_df = pd.DataFrame()
+        self.stor_df = pd.DataFrame()
+        self.bal_df = pd.DataFrame()
+        self.cap_df = pd.DataFrame()
+        self.sup_df = pd.DataFrame()
+        self.flow_df = pd.DataFrame()
+        self.flow_dev_df = pd.DataFrame()
+        self.einr_df = pd.DataFrame()
+        self.eoutr_df = pd.DataFrame()
+        self.xins_df = pd.DataFrame()
+        self.flow_s_df = pd.DataFrame()
 
     # extract and store values of the variables to be included in the report
     # parse indexed and un-indexed variable, rewrite the values
@@ -74,180 +79,213 @@ class Report:
               f'"{self.f_df_vars}" file.')
 
     # generate and store needed results in df's in Excel file for plotting
-    def toExcel(self):
+    def to_plt_df(self, plt_fin=None, plt_stor=None, plt_bal=None, plt_cap=None,
+                  plt_sup=None, plt_flow=None, plt_flow_dev=None):
         print(f'\nGet results')
 
+        fin = plt_fin if plt_fin is not None else []
+        stor = plt_stor if plt_stor is not None else []
+        bal = plt_bal if plt_bal is not None else []
+        cap = plt_cap if plt_cap is not None else []
+        sup = plt_sup if plt_sup is not None else []
+        flow = plt_flow if plt_flow is not None else []
+        flow_dev = plt_flow_dev if plt_flow_dev is not None else []
+
         # finance related results
-        self.finance_df.loc[0, 'Revenue'] = pe.value(self.m1.revenue)
-        self.finance_df.loc[0, 'Income'] = pe.value(self.m1.income)
-        self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
-        # self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
-        self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
-        self.finance_df.loc[0, 'SurpCost'] = pe.value(self.m1.surpCost)
-        self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
-        self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.balCost)
+        if fin:
+            self.fin_df = pd.DataFrame(columns=fin)
+            for var in fin:
+                self.fin_df.loc[0, var] = pe.value(getattr(self.m1, var))
+
+        if stor:
+            self.stor_df = pd.DataFrame(
+                {var: [pe.value(getattr(self.m1, var)[r]) for r in self.m1.R] for var in stor},
+                index=list(self.m1.R)
+            )
+
+        if bal:
+            self.bal_df = pd.DataFrame(index=self.m1.T)
+            spls_val = [pe.value(self.m1.eS[t]) for t in self.m1.T]
+            buy_val = [pe.value(self.m1.eB[t]) for t in self.m1.T]
+            esprice = pe.value(self.m1.eSprice)
+            ebprice = pe.value(self.m1.eBprice)
+
+            self.bal_df['Spls'] = pd.Series(spls_val, index=self.m1.T) * esprice
+            self.bal_df['Buy'] = pd.Series(buy_val, index=self.m1.T) * ebprice
 
         # capacity related results
-        for s in self.m1.sNum:
-            # self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
-            self.cap_df.loc[s, 'sNum'] = pe.value(self.m1.sNum[s])
-        for s in self.m1.sCap:
-            # self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
-            if 'Tank' in s:
-                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s]) / 10     # unit change to [thousand kg]
-            else:
-                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s])
+        if cap:
+            self.cap_df = pd.DataFrame(columns=cap)
+            cap_res = []
+
+            # report for sms3
+            for r, e in self.m1.E_:
+                row = {'ESS': r, 'Device': e}
+
+                for var in cap[:2]:
+                    val = pe.value(getattr(self.m1, var)[r, e])
+                    row[var] = val
+
+                cap_res.append(row)
+
+            for r, s in self.m1.S_:
+                row = {'ESS': r, 'Device': s}
+
+                for var in cap[2:4]:
+                    val = pe.value(getattr(self.m1, var)[r, s])
+                    row[var] = val
+
+                cap_res.append(row)
+
+            for r, x in self.m1.X_:
+                row = {'ESS': r, 'Device': x}
+
+                for var in cap[4:]:
+                    val = pe.value(getattr(self.m1, var)[r, x])
+                    row[var] = val
+
+                cap_res.append(row)
+
+            self.cap_df = pd.DataFrame(cap_res)
 
         # supply and average inflows
-        supply = pe.value(self.m1.supply)
-        avg_inflow = sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs
+        if sup:
+            self.sup_df = pd.DataFrame(columns=sup)
+            for var in sup:
+                if var == 'avg_inf':
+                    avg_inf = sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs
+                    self.sup_df.loc[0, var] = avg_inf
+                elif var == 'tot_eOut' or var == 'tot_eInHess' or var == 'tot_eOutHess':
+                    var_ = var.split('_', 1)[1]     # corresponding var in the model
+                    vol = pe.value(sum(getattr(self.m1, var_)[t] for t in self.m1.T))
+                    self.sup_df.loc[0, var] = vol
+                else:
+                    self.sup_df.loc[0, var] = pe.value(getattr(self.m1, var))
 
-        self.supply_df['supply'] = [supply]
-        self.supply_df['avg_inflow'] = [avg_inflow]
+        if flow:
+            for t in self.m1.T:
+                for var in flow:
+                    self.flow_df.loc[t, var] = pe.value(getattr(self.m1, var)[t])
 
-        # flows results
-        for t in self.m1.T:
-            self.flow_df.loc[t, 'inflow'] = round(pe.value(self.m1.inflow[t]), 2)
-            self.flow_df.loc[t, 'dOut'] = round(pe.value(self.m1.dOut[t]), 2)
-            self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
-            self.flow_df.loc[t, 'sOut'] = round(pe.value(self.m1.sOut[t]), 2)
-            self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
-            self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
-            self.flow_df.loc[t, 'eB'] = round(pe.value(self.m1.eB[t]), 2)
+        if flow_dev:
+            flow_dev_res = {}
+            time_idx = self.m1.T
 
-            self.flow_all_df.loc[t, 'inflow'] = pe.value(self.m1.inflow[t])
-            self.flow_all_df.loc[t, 'dOut'] = pe.value(self.m1.dOut[t])
-            self.flow_all_df.loc[t, 'sIn'] = pe.value(self.m1.sIn[t])
-            self.flow_all_df.loc[t, 'sOut'] = pe.value(self.m1.sOut[t])
-            self.flow_all_df.loc[t, 'ePrs'] = pe.value(self.m1.ePrs[t])
-            self.flow_all_df.loc[t, 'eS'] = pe.value(self.m1.eS[t])
-            self.flow_all_df.loc[t, 'eB'] = pe.value(self.m1.eB[t])
+            for var_name in flow_dev:
+                # get the variable object
+                var_obj = getattr(self.m1, var_name, None)
 
-        for t in self.m1.T:
-            for dv in self.m1.Se:
-                self.dvflow_df.loc[t, f'eIn_{dv}'] = round(pe.value(self.m1.eIn[dv, t]), 2)
+                if var_obj is None:
+                    print(f'Warning: {var_name} does not exist in the model and was skipped.')
+                    continue
 
-                self.flow_all_df.loc[t, f'eIn_{dv}'] = pe.value(self.m1.eIn[dv, t])
-            for dv in self.m1.Sh:
-                self.dvflow_df.loc[t, f'hIn_{dv}'] = round(pe.value(self.m1.hIn[dv, t]), 2)
-                self.dvflow_df.loc[t, f'hOut_{dv}'] = -round(pe.value(self.m1.hOut[dv, t]), 2)
-                self.dvflow_df.loc[t, f'hVol_{dv}'] = round(pe.value(self.m1.hVol[dv, t]), 2)
+                # check if indexed var
+                if var_obj.is_indexed():
+                    for idx in var_obj.keys():
+                        # estimate time index, last
+                        new_idx_val = idx[-1] if idx[-1] in time_idx else None
+                        oth_idx = idx[:-1] if new_idx_val is not None else idx
 
-                self.flow_all_df.loc[t, f'hIn_{dv}'] = pe.value(self.m1.hIn[dv, t])
-                self.flow_all_df.loc[t, f'hOut_{dv}'] = pe.value(self.m1.hOut[dv, t])
-                self.flow_all_df.loc[t, f'hVol_{dv}'] = pe.value(self.m1.hVol[dv, t])
-            for dv in self.m1.Sc:
-                self.dvflow_df.loc[t, f'hInc_{dv}'] = round(pe.value(self.m1.hInc[dv, t]), 2)
-                self.dvflow_df.loc[t, f'cOut_{dv}'] = -round(pe.value(self.m1.cOut[dv, t]), 2)
+                        if new_idx_val is None:
+                            print(f'Error: No time index found for {idx}. Skipping this index.')
+                            continue
 
-                self.flow_all_df.loc[t, f'hInc_{dv}'] = pe.value(self.m1.hInc[dv, t])
-                self.flow_all_df.loc[t, f'cOut_{dv}'] = pe.value(self.m1.cOut[dv, t])
+                        # crete col name
+                        col_name = f'{var_name}_' + '_'.join(oth_idx) if oth_idx else var_name
 
-        # print(f'Finance results:\n {self.finance_df} \n')
-        # print(f'Capacity results:\n {self.cap_df} \n')
-        # print(f'Flow results:\n {self.flow_df} \n')
-        # print(f'Dv_flow results:\n {self.dvflow_df} \n')
+                        if new_idx_val not in flow_dev_res:
+                            flow_dev_res[new_idx_val] = {}
 
+                        flow_dev_res[new_idx_val][col_name] = pe.value(var_obj[idx])
+                        # flow_dev_res.setdefault(new_idx_val, {})[col_name] = pe.value(var_obj[idx])
+                else:
+                    # store none indexed var val on time index
+                    for t in time_idx:
+                        flow_dev_res.setdefault(t, {})[var_name] = pe.value(var_obj)
+
+                    # transform to df
+                df = pd.DataFrame.from_dict(flow_dev_res, orient='index')
+                # df = pd.DataFrame.from_dict(flow_dev_res, orient='index').fillna(0)    # set NAN to 0
+                df.index.name = 'T'
+                self.flow_dev_df = df
+
+            # get eInr, eOutr, eIns, eOuts
+            einr_df = self.flow_dev_df.filter(like='eInr', axis=1)
+            eoutr_df = self.flow_dev_df.filter(like='eOutr', axis=1)
+            xins_df = self.flow_dev_df.filter(like='xIns', axis=1)
+            xouts_df = self.flow_dev_df.filter(like='xOuts', axis=1)
+            xvol_df = self.flow_dev_df.filter(like='xVol', axis=1)
+
+            if einr_df.shape[1] == 0:
+                raise ValueError(f'There is no "eInr" in flow_dev_df.')
+            if eoutr_df.shape[1] == 0:
+                raise ValueError(f'There is no "eOutr" in flow_dev_df.')
+            if xins_df.shape[1] == 0:
+                raise ValueError(f'There is no "xIns" in flow_dev_df.')
+            if xouts_df.shape[1] == 0:
+                raise ValueError(f'There is no "xOuts" in flow_dev_df.')
+            if xvol_df.shape[1] == 0:
+                raise ValueError(f'There is no "xVol" in flow_dev_df.')
+
+            col_name_einr = {c: c.split('_')[1] for c in einr_df.columns}
+            col_name_eoutr = {c: c.split('_')[1] for c in eoutr_df.columns}
+
+            # rename cols
+            einr_df = einr_df.rename(columns=col_name_einr)
+            eoutr_df = eoutr_df.rename(columns=col_name_eoutr)
+
+            self.einr_df = einr_df
+            self.eoutr_df = eoutr_df
+            self.xins_df = xins_df
+
+            # get storage flows
+            flow_s = pd.concat([xvol_df, xins_df, xouts_df], axis=1)
+            self.flow_s_df = flow_s
+
+        # print(self.fin_df)
+        # print(self.stor_df)
+        # print(self.bal_df.head(5))
+        # print(self.cap_df)
+        # print(self.sup_df)
+        # print(self.flow_df.head(5))
+        # print(self.flow_dev_df.head(5))
+        # print(f'eInr: {self.einr_df.head(5)}, eOutr: {self.eoutr_df.head(5)}')
+        # print(f'xIns: {self.xins_df.head(5)}')
+        # print(f'sFlows: {self.flow_s_df.head(5)}')
+
+    def to_Excel(self):
         with pd.ExcelWriter(f'{self.rep_dir}plot_vars.xlsx', engine='openpyxl') as writer:
-            self.finance_df.to_excel(writer, sheet_name='finance')
+            self.fin_df.to_excel(writer, sheet_name='finance')
+            self.stor_df.to_excel(writer, sheet_name='cost_Stor', index=True)
+            self.bal_df.to_excel(writer, sheet_name='cost_Bal', index=True)
             self.cap_df.to_excel(writer, sheet_name='capacity', index=True)
-            self.supply_df.to_excel(writer, sheet_name='supply', index=True)
+            self.sup_df.to_excel(writer, sheet_name='supply', index=True)
             self.flow_df.to_excel(writer, sheet_name='flow', index=True)
-            self.dvflow_df.to_excel(writer, sheet_name='dvflow', index=True)
-            self.flow_all_df.to_excel(writer, sheet_name='flow_all', index=True)
+            self.flow_dev_df.to_excel(writer, sheet_name='flow_dev', index=True)
+            self.einr_df.to_excel(writer, sheet_name='eInr', index=True)
+            self.eoutr_df.to_excel(writer, sheet_name='eOutr', index=True)
+            self.xins_df.to_excel(writer, sheet_name='xIns', index=True)
+            self.flow_s_df.to_excel(writer, sheet_name='flow_s', index=True)
 
         print(f'Variables for plotting are saved to: {self.rep_dir}plot_vars.xlsx')
 
     def toCsv(self):
-        print(f'\nGet results')
-
-        # finance related results
-        self.finance_df.loc[0, 'Revenue'] = pe.value(self.m1.revenue)
-        self.finance_df.loc[0, 'Income'] = pe.value(self.m1.income)
-        self.finance_df.loc[0, 'InvCost'] = pe.value(self.m1.invCost)
-        # self.finance_df.loc[0, 'VarCost'] = pe.value(self.m1.varCost)
-        self.finance_df.loc[0, 'OMC'] = pe.value(self.m1.OMC)
-        self.finance_df.loc[0, 'SurpCost'] = pe.value(self.m1.surpCost)
-        self.finance_df.loc[0, 'BuyCost'] = pe.value(self.m1.buyCost)
-        self.finance_df.loc[0, 'BalCost'] = pe.value(self.m1.balCost)
-        self.finance_df.loc[0, 'Cost'] = pe.value(self.m1.invCost) + pe.value(self.m1.OMC) + pe.value(self.m1.balCost)
-
-        # capacity related results
-        # for s in self.m1.sNum:
-        #     self.cap_df.loc[s, 'sNum'] = round(pe.value(self.m1.sNum[s]), 0)
-        # for s in self.m1.sCap:
-        #     self.cap_df.loc[s, 'sCap'] = round(pe.value(self.m1.sCap[s]), 1)
-
-        for s in self.m1.sNum:
-            self.cap_df.loc[s, 'sNum'] = pe.value(self.m1.sNum[s])
-        for s in self.m1.sCap:
-            if 'Tank' in s:
-                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s]) / 10  # unit change to [thousand kg]
-            else:
-                self.cap_df.loc[s, 'sCap'] = pe.value(self.m1.sCap[s])
-
-        # supply and average inflows
-        supply = pe.value(self.m1.supply)
-        avg_inflow = sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs
-
-        self.supply_df['supply'] = [supply]
-        self.supply_df['avg_inflow'] = [avg_inflow]
-
-        # flows results
-        for t in self.m1.T:
-            self.flow_df.loc[t, 'inflow'] = round(pe.value(self.m1.inflow[t]), 2)
-            self.flow_df.loc[t, 'dOut'] = round(pe.value(self.m1.dOut[t]), 2)
-            # self.flow_df.loc[t, 'sIn'] = -round(pe.value(self.m1.sIn[t]), 2)
-            self.flow_df.loc[t, 'sIn'] = round(pe.value(self.m1.sIn[t]), 2)
-            self.flow_df.loc[t, 'sOut'] = round(pe.value(self.m1.sOut[t]), 2)
-            # self.flow_df.loc[t, 'ePrs'] = -round(pe.value(self.m1.ePrs[t]), 2)
-            # self.flow_df.loc[t, 'eS'] = -round(pe.value(self.m1.eS[t]), 2)
-            self.flow_df.loc[t, 'ePrs'] = round(pe.value(self.m1.ePrs[t]), 2)
-            self.flow_df.loc[t, 'eS'] = round(pe.value(self.m1.eS[t]), 2)
-            self.flow_df.loc[t, 'eB'] = round(pe.value(self.m1.eB[t]), 2)
-
-            self.flow_all_df.loc[t, 'inflow'] = pe.value(self.m1.inflow[t])
-            self.flow_all_df.loc[t, 'dOut'] = pe.value(self.m1.dOut[t])
-            self.flow_all_df.loc[t, 'sIn'] = pe.value(self.m1.sIn[t])
-            self.flow_all_df.loc[t, 'sOut'] = pe.value(self.m1.sOut[t])
-            self.flow_all_df.loc[t, 'ePrs'] = pe.value(self.m1.ePrs[t])
-            self.flow_all_df.loc[t, 'eS'] = pe.value(self.m1.eS[t])
-            self.flow_all_df.loc[t, 'eB'] = pe.value(self.m1.eB[t])
-
-        for t in self.m1.T:
-            for dv in self.m1.Se:
-                self.dvflow_df.loc[t, f'eIn_{dv}'] = round(pe.value(self.m1.eIn[dv, t]), 2)
-
-                self.flow_all_df.loc[t, f'eIn_{dv}'] = pe.value(self.m1.eIn[dv, t])
-            for dv in self.m1.Sh:
-                self.dvflow_df.loc[t, f'hIn_{dv}'] = round(pe.value(self.m1.hIn[dv, t]), 2)
-                self.dvflow_df.loc[t, f'hOut_{dv}'] = -round(pe.value(self.m1.hOut[dv, t]), 2)
-                self.dvflow_df.loc[t, f'hVol_{dv}'] = round(pe.value(self.m1.hVol[dv, t]), 2)
-
-                self.flow_all_df.loc[t, f'hIn_{dv}'] = pe.value(self.m1.hIn[dv, t])
-                self.flow_all_df.loc[t, f'hOut_{dv}'] = pe.value(self.m1.hOut[dv, t])
-                self.flow_all_df.loc[t, f'hVol_{dv}'] = pe.value(self.m1.hVol[dv, t])
-            for dv in self.m1.Sc:
-                self.dvflow_df.loc[t, f'hInc_{dv}'] = round(pe.value(self.m1.hInc[dv, t]), 2)
-                self.dvflow_df.loc[t, f'cOut_{dv}'] = -round(pe.value(self.m1.cOut[dv, t]), 2)
-
-                self.flow_all_df.loc[t, f'hInc_{dv}'] = pe.value(self.m1.hInc[dv, t])
-                self.flow_all_df.loc[t, f'cOut_{dv}'] = pe.value(self.m1.cOut[dv, t])
-
-        # print(f'Finance results:\n {self.finance_df} \n')
-        # print(f'Capacity results:\n {self.cap_df} \n')
-        # print(f'Flow results:\n {self.flow_df} \n')
-        # print(f'Dv_flow results:\n {self.dvflow_df} \n')
-
-        self.finance_df.to_csv(f'{self.rep_dir}finance.csv', index=True)
+        self.fin_df.to_csv(f'{self.rep_dir}finance.csv', index=True)
+        self.stor_df.to_csv(f'{self.rep_dir}cost_Stor.csv', index=True)
+        self.bal_df.to_csv(f'{self.rep_dir}cost_Bal.csv', index=True)
         self.cap_df.to_csv(f'{self.rep_dir}capacity.csv', index=True)
-        self.supply_df.to_csv(f'{self.rep_dir}supply.csv', index=True)
-        self.flow_all_df.to_csv(f'{self.rep_dir}allflows.csv', index=True)
+        self.sup_df.to_csv(f'{self.rep_dir}supply.csv', index=True)
         self.flow_df.to_csv(f'{self.rep_dir}flow.csv', index=True)
-        self.dvflow_df.to_csv(f'{self.rep_dir}dvflow.csv', index=True)
+        self.flow_dev_df.to_csv(f'{self.rep_dir}flow_dev.csv', index=True)
+        self.einr_df.to_csv(f'{self.rep_dir}eInr.csv', index=True)
+        self.eoutr_df.to_csv(f'{self.rep_dir}eOutr.csv', index=True)
+        self.xins_df.to_csv(f'{self.rep_dir}xIns.csv', index=True)
+        self.flow_s_df.to_csv(f'{self.rep_dir}flow_s.csv', index=True)
 
-        print(f'Variables for plotting are saved to 5 csv files')
-        print(f'All flow results are saved to {self.rep_dir}allflows.csv')
+        print(f'Variables for plotting are saved to csv files')
+
+    def sflow_toCsv(self):
+        self.flow_s_df.to_csv(f'{self.rep_dir}flow_s.csv', index=True)
 
     def check(self):
         print(f'\nResults check')
@@ -255,12 +293,12 @@ class Report:
         # Check inflow and outflow from storage system
         check = []
         for t in self.m1.T:
-            sin = round(pe.value(self.m1.sIn[t]), 2)
-            sout = round(pe.value(self.m1.sOut[t]), 2)
-            value = sin * sout
+            einhess = round(pe.value(self.m1.eInHess[t]), 2)
+            eouthess = round(pe.value(self.m1.eOutHess[t]), 2)
+            value = einhess * eouthess
 
             if value != 0:
-                check.append({'T': t, 'sIn': sin, 'sOut': sout, 'value': value})
+                check.append({'T': t, 'eInHess': einhess, 'eOutHess': eouthess, 'value': value})
 
         if check:
             check_df = pd.DataFrame(check)
@@ -268,21 +306,22 @@ class Report:
             print(f'Store and release at the same time, please check csv file: {self.check_df_vars}')
 
             # Check inflow and outflow of hydrogen tanks
-            check_hy = []
-            for s in self.m1.Sh:
+            check_x = []
+            for r, s in self.m1.S_:
                 for t in self.m1.T:
-                    hin = round(pe.value(self.m1.hIn[s, t]), 2)
-                    hout = round(pe.value(self.m1.hOut[s, t]), 2)
-                    hvol = round(pe.value(self.m1.hVol[s, t]), 2)
-                    value = hin * hout
+                    xins = round(pe.value(self.m1.xIns[r, s, t]), 2)
+                    xouts = round(pe.value(self.m1.xOuts[r, s, t]), 2)
+                    xvol = round(pe.value(self.m1.xVol[r, s, t]), 2)
+                    value = xins * xouts
 
                     if value != 0:
-                        check_hy.append({'S': s, 'T': t, 'hIn': hin, 'hOut': hout, 'hVol': hvol, 'value': value})
+                        check_x.append({'ESS': r, 'Storage': s, 'T': t,
+                                        'xIns': xins, 'xOuts': xouts, 'xVol': xvol, 'value': value})
 
-            if check_hy:
-                check_hy = pd.DataFrame(check_hy)
-                check_hy.to_csv(self.check_df_hy, index=False)
-                print(f'Store and release hydrogen at the same time, please check csv file: {self.check_df_hy}')
+            if check_x:
+                check_x = pd.DataFrame(check_x)
+                check_x.to_csv(self.check_df_ec, index=False)
+                print(f'Store and release energy carrier at the same time, please check csv file: {self.check_df_ec}')
             else:
                 print(f'Hydrogen tank flows correct')
 
@@ -296,90 +335,158 @@ class Report:
         print(f'Supply = {supply} MW per hour')
 
         print('2) Storage investment ---------------------------------------------')
-        for s in self.m1.S:
-            num = pe.value(self.m1.sNum[s])
+        # for r, s in self.m1.P:
+        #     num = pe.value(self.m1.sNum[r, s])
+        #     if num == 0:
+        #         continue
+        #     else:
+        #         snum = pe.value(self.m1.sNum[r, s])
+        #         # scap = round(pe.value(self.m1.sCap[s]), 2)
+        #
+        #     print(f'Numbers of {r, s} = {snum}')
+        #     # print(f'Total capacity of {s} = {scap} MW')
+
+        for r, e in self.m1.E_:
+            num = pe.value(self.m1.eNum[r, e])
             if num == 0:
                 continue
             else:
-                snum = pe.value(self.m1.sNum[s])
+                enum = pe.value(self.m1.eNum[r, e])
                 # scap = round(pe.value(self.m1.sCap[s]), 2)
 
-            print(f'Numbers of {s} = {snum}')
+            print(f'Numbers of {r, e} = {enum}')
             # print(f'Total capacity of {s} = {scap} MW')
+
+        for r, s in self.m1.S_:
+            num = pe.value(self.m1.sNum[r, s])
+            if num == 0:
+                continue
+            else:
+                snum = pe.value(self.m1.sNum[r, s])
+                # scap = round(pe.value(self.m1.sCap[s]), 2)
+
+            print(f'Numbers of {r, s} = {snum}')
+
+        for r, x in self.m1.X_:
+            num = pe.value(self.m1.xNum[r, x])
+            if num == 0:
+                continue
+            else:
+                xnum = pe.value(self.m1.xNum[r, x])
+                # scap = round(pe.value(self.m1.sCap[s]), 2)
+
+            print(f'Numbers of {r, x} = {xnum}')
 
     def analyze(self):
         print(f'\n Results analysis')
         print('1) Values of inflow -----------------------------------------------------------------------')
-        ave_inflow = round((sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs), 2)
-        print(f'Average inflow = {ave_inflow} MW per hour')
+        avg_inflow = round((sum(self.m1.inflow[t] for t in self.m1.T) / self.m1.nHrs), 2)
+        print(f'Average inflow = {avg_inflow} MW per hour')
 
         print('\n2) Values of supply and storage investment ------------------------------------------------')
         print('2.1 Supply ------------------------------------------------------------------------')
         supply = round(pe.value(self.m1.supply), 2)
-        r_sa = round((supply / ave_inflow), 2)
+        r_sa = round((supply / avg_inflow), 2)
         print(f'Supply = {supply} MW per hour, {r_sa} times of average inflow')
 
         print('\n2.2 Storage investment ---------------------------------------------')
-        for s in self.m1.S:
-            num = pe.value(self.m1.sNum[s])
+        for r, e in self.m1.E_:
+            num = pe.value(self.m1.eNum[r, e])
             if num == 0:
-                print(f'There is no investment to {s}.')
+                print(f'There is no investment to {r, e}.')
                 continue
             else:
-                mxcap = self.m1.mxCap[s]
+                emxcap = self.m1.emxCap[r, e]
 
-                sinv = self.m1.sInv[s]
+                einv = self.m1.eInv[r, e]
+
+                if einv >= 1000:
+                    # unit in [million]
+                    einv = einv / 1e3
+                    unit = 'million'
+                else:
+                    # unit in [thousand]
+                    einv = einv
+                    unit = 'thousand'
+
+                enum = pe.value(self.m1.eNum[r, e])
+                ecap = round(pe.value(self.m1.eCap[r, e]), 2)
+                inv = round((einv * num), 2)     # yearly investment of the storage type
+
+            print(f'\nInvestment of {r, e}:')
+            print(f'Unit capacity of {r, e} is {emxcap} MW')
+            print(f'Investment for one {r, e} is {einv} {unit} CNY')
+            print(f'Numbers of {r, e} = {enum}')
+            print(f'Total capacity = {ecap} MW')
+            print(f'Total investment cost of {r, e} = {inv} {unit} CNY')
+
+        for r, s in self.m1.S_:
+            num = pe.value(self.m1.sNum[r, s])
+            if num == 0:
+                print(f'There is no investment to {r, s}.')
+                continue
+            else:
+                smxcap = self.m1.smxCap[r, s]
+
+                sinv = self.m1.sInv[r, s]
+
                 if sinv >= 1000:
                     # unit in [million]
                     sinv = sinv / 1e3
+                    unit = 'million'
                 else:
                     # unit in [thousand]
                     sinv = sinv
+                    unit = 'thousand'
 
-                snum = pe.value(self.m1.sNum[s])
-                scap = round(pe.value(self.m1.sCap[s]), 2)
+                snum = pe.value(self.m1.sNum[r, s])
+                scap = round(pe.value(self.m1.sCap[r, s]), 2)
                 inv = round((sinv * num), 2)     # yearly investment of the storage type
 
-            print(f'\nInvestment of {s}:')
-            print(f'Unit capacity of {s} is {mxcap} MW')
-            print(f'Investment for one {s} is {sinv} million RMB')
-            print(f'Numbers of {s} = {snum}')
+            print(f'\nInvestment of {r, s}:')
+            print(f'Unit capacity of {r, s} is {smxcap} MW')
+            print(f'Investment for one {r, s} is {sinv} {unit} CNY')
+            print(f'Numbers of {r, s} = {snum}')
             print(f'Total capacity = {scap} MW')
-            print(f'Total investment cost of {s} = {inv} million RMB')
+            print(f'Total investment cost of {r, s} = {inv} {unit} CNY')
 
-        # initialize a dictionary to store the efficiency values
-        pre_dict = {}
-        loss_dict = {}
-        eff_dict = {}
-        for s in self.m1.Se:
-            num_e = pe.value(self.m1.sNum[s])
-            if num_e != 0:
-                for u in self.m1.Sh:
-                    num_h = pe.value(self.m1.sNum[u])
-                    if num_h != 0:
-                        for v in self.m1.Sc:
-                            num_c = pe.value(self.m1.sNum[v])
-                            if num_c != 0:
-                                pre_e = 1 * self.m1.eh2[s] * self.m1.eph2[u]
-                                loss_e = 1 * self.m1.eh2[s] * self.m1.h2Res[u] * self.m1.h2e[v]
-                                stor_e = 1 - pre_e - loss_e
+        for r, x in self.m1.X_:
+            num = pe.value(self.m1.xNum[r, x])
+            if num == 0:
+                print(f'There is no investment to {r, x}.')
+                continue
+            else:
+                xmxcap = self.m1.xmxCap[r, x]
 
-                                # store the efficiency in the dictionary
-                                pre_dict[u] = f'{round(pre_e * 100, 2)}%'
-                                loss_dict[(s, u, v)] = f'{round(loss_e * 100), 4}%'
-                                eff_dict[(s, u, v)] = f'{round(stor_e * 100), 4}%'
+                xinv = self.m1.xInv[r, x]
 
-        print(f'\nElectricity for making high pressure: {pre_dict}')
-        print(f'Energy loss: {loss_dict}')
-        print(f'Efficiency of the storage system: {eff_dict}')
+                if xinv >= 1000:
+                    # unit in [million]
+                    xinv = xinv / 1e3
+                    unit = 'million'
+                else:
+                    # unit in [thousand]
+                    xinv = xinv
+                    unit = 'thousand'
 
-        # hydrogen storage at last period
-        hvol_final = {}
-        for s in self.m1.Sh:
-            num = pe.value(self.m1.sNum[s])
+                xnum = pe.value(self.m1.xNum[r, x])
+                xcap = round(pe.value(self.m1.xCap[r, x]), 2)
+                inv = round((xinv * num), 2)     # yearly investment of the storage type
+
+            print(f'\nInvestment of {r, x}:')
+            print(f'Unit capacity of {r, x} is {xmxcap} MW')
+            print(f'Investment for one {r, x} is {xinv} {unit} CNY')
+            print(f'Numbers of {r, x} = {xnum}')
+            print(f'Total capacity = {xcap} MW')
+            print(f'Total investment cost of {r, x} = {inv} {unit} CNY')
+
+        # energy storage at last period
+        xvol_final = {}
+        for r, s in self.m1.S_:
+            num = pe.value(self.m1.sNum[r, s])
             if num != 0:
-                hvol_final[s] = pe.value(self.m1.hVol[s, self.m1.nHrs_])
-                print(f'\nFinal hydrogen in {s}: {hvol_final[s]}')
+                xvol_final[r, s] = pe.value(self.m1.xVol[r, s, self.m1.nHrs_])
+                print(f'\nFinal energy in {r, s}: {xvol_final[r, s]}')
 
         print('\n3) Overview of outcome variables -------------------------------------------------------------------')
         revenue = pe.value(self.m1.revenue)
@@ -390,7 +497,8 @@ class Report:
             income = round(pe.value(self.m1.income) / 1e3, 2)
             invcost = round(pe.value(self.m1.invCost) / 1e3, 2)
             omc = round(pe.value(self.m1.OMC) / 1e3, 2)
-            overcost = round(pe.value(self.m1.surpCost) / 1e3, 2)
+            storcost = round(pe.value(self.m1.storCost) / 1e3, 2)
+            splscost = round(pe.value(self.m1.splsCost) / 1e3, 2)
             buycost = round(pe.value(self.m1.buyCost) / 1e3, 2)
             balcost = round(pe.value(self.m1.balCost) / 1e3, 2)
         else:
@@ -399,20 +507,21 @@ class Report:
             income = round(pe.value(self.m1.income), 2)
             invcost = round(pe.value(self.m1.invCost), 2)
             omc = round(pe.value(self.m1.OMC), 2)
-            overcost = round(pe.value(self.m1.surpCost), 2)
+            storcost = round(pe.value(self.m1.storCost), 2)
+            splscost = round(pe.value(self.m1.splsCost), 2)
             buycost = round(pe.value(self.m1.buyCost), 2)
             balcost = round(pe.value(self.m1.balCost), 2)
 
-        print(f'Total revenue  = {revenue} {unit} RMB')
-        print(f'Income  = {income} {unit} RMB')
-        print(f'Balance cost  = {balcost} {unit} RMB')
-        print(f'Investment cost  = {invcost} {unit} RMB')
-        print(f'Operation and maintenance cost  = {omc} {unit} RMB')
-        print(f'Surplus cost  = {overcost} {unit} RMB')
-        print(f'Shortage cost  = {buycost} {unit} RMB')
+        print(f'Total revenue  = {revenue} {unit} CNY')
+        print(f'Income  = {income} {unit} CNY')
+        print(f'Storage cost  = {storcost} {unit} CNY')
+        print(f'Balance cost  = {balcost} {unit} CNY')
+        print(f'Investment cost  = {invcost} {unit} CNY')
+        print(f'Operation and maintenance cost  = {omc} {unit} CNY')
+        print(f'Surplus cost  = {splscost} {unit} CNY')
+        print(f'Shortage cost  = {buycost} {unit} CNY')
 
-        cost = invcost + omc + balcost
-        storcost = invcost + omc
+        cost = round(storcost + balcost, 2)
 
         if income != 0:
             r_ci = round((cost / income * 100), 2)
@@ -423,12 +532,12 @@ class Report:
         if revenue > 0:
             r_ir = round((income / revenue), 2)
             print(f'Income is {r_ir} times of revenue')
-            print(f'Total cost is {cost} {unit} RMB, the cost-income ratio is {r_ci}%')
+            print(f'Total cost is {cost} {unit} CNY, the cost-income ratio is {r_ci}%')
         else:
             r_ic = round((income / cost), 2)
             r_cr = round((cost / revenue), 2)
             print(f'\nIncome is {r_ic} times of revenue')
-            print(f'\nTotal cost is {cost} {unit} RMB, the cost-revenue ratio is {r_cr}%')
+            print(f'\nTotal cost is {cost} {unit} CNY, the cost-revenue ratio is {r_cr}%')
 
         print(f'\nCost structure:')
         if cost != 0:
@@ -441,11 +550,11 @@ class Report:
             print(f'Operation and Maintenance cost accounts for {r_oc}% of total cost')
             print(f'Total storage cost is {r_sc} of total cost, and balance cost accounts for {r_bc}% of total cost')
 
-            r_overc = round((overcost / cost * 100), 2)
+            r_overc = round((splscost / cost * 100), 2)
             r_buyc = round((buycost / cost * 100), 2)
 
             if balcost != 0:
-                r_ob = round((overcost / balcost * 100), 2)
+                r_ob = round((splscost / balcost * 100), 2)
                 r_bb = round((buycost / balcost * 100), 2)
                 print(f'Electricity loss accounts for {r_overc}% of total cost, and {r_ob}% of balance cost')
                 print(f'Electricity purchase accounts for {r_buyc}% of total cost, and {r_bb}% of balance cost')
@@ -456,20 +565,18 @@ class Report:
         print(f'\n4) Overview of energy flows ----------------------------------------------------------------')
         inflow_total = round((sum(self.m1.inflow[t] for t in self.m1.T)), 2)
         supply_total = round((pe.value(self.m1.supply) * self.m1.nHrs), 2)
-        dout_total = round((sum(pe.value(self.m1.dOut[t]) for t in self.m1.T)), 2)
-        sin_total = round((sum(pe.value(self.m1.sIn[t]) for t in self.m1.T)), 2)
-        sout_total = round((sum(pe.value(self.m1.sOut[t]) for t in self.m1.T)), 2)
-        # eprs_total = round((sum(pe.value(self.m1.ePrs[t]) for t in self.m1.T)), 2)
+        eout_total = round((sum(pe.value(self.m1.eOut[t]) for t in self.m1.T)), 2)
+        einh_total = round((sum(pe.value(self.m1.eInHess[t]) for t in self.m1.T)), 2)
+        eouth_total = round((sum(pe.value(self.m1.eOutHess[t]) for t in self.m1.T)), 2)
         esurplus_total = round(pe.value(self.m1.eSurplus), 2)
         ebought_total = round(pe.value(self.m1.eBought), 2)
 
-        er_si = round((sin_total / inflow_total * 100), 2)
-        # ev4 = round((eprs_total / inflow_total * 100), 2)
+        er_si = round((einh_total / inflow_total * 100), 2)
         er_esi = round((esurplus_total / inflow_total * 100), 2)
 
         if supply_total != 0:
-            er_ds = round((dout_total / supply_total * 100), 2)
-            er_ss = round((sout_total / supply_total * 100), 2)
+            er_ds = round((eout_total / supply_total * 100), 2)
+            er_ss = round((eouth_total / supply_total * 100), 2)
             er_ebs = round((ebought_total / supply_total * 100), 2)
         else:
             print(f'There is no supply.')
@@ -479,14 +586,14 @@ class Report:
 
         print(f'Total electricity inflow is {inflow_total} MW')
         print(f'Total supply is {supply_total} MW')
-        print(f'Total directly output is {dout_total} MW, {er_ds}% of the total supply.')
-        print(f'Total electricity inflow to storage system is {sin_total} MW, '
+        print(f'Total directly output is {eout_total} MW, {er_ds}% of the total supply.')
+        print(f'Total electricity inflow to storage system is {einh_total} MW, '
               f'{er_si}% of the total inflow.')
-        print(f'Total electricity outflow from storage system is {sout_total} MW, '
+        print(f'Total electricity outflow from storage system is {eouth_total} MW, '
               f'{er_ss}% of the total supply.')
         print(f'Total surplus (loss) is {esurplus_total} MW, '
               f'{er_esi}% of the total inflow, '
-              f'costs {overcost} million RMB.')
+              f'costs {splscost} million CNY.')
         print(f'Total electricity purchase is {ebought_total} MW, '
               f'{er_ebs}% of the total supply, '
-              f'costs {buycost} million RMB.')
+              f'costs {buycost} million CNY.')
