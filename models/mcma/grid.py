@@ -25,6 +25,11 @@ class Grid:     # representation of the neighbors
             self.idSols.append(anch1)
             pass
 
+        def info(self):
+            print(f'Ray[{self.seq}]: anch0 = {self.anch0}, anch1 = {self.anch1}, nSols = {len(self.idSols)}')
+            print(f'\tidSols: {self.idSols}')
+            pass
+
         def getSol(self, idSol):  # return the L^inf distance between the sol-pairs
             for s in self.sols:
                 if s.itr_id == idSol:
@@ -55,6 +60,7 @@ class Grid:     # representation of the neighbors
             dist.sort(key=itemgetter(2), reverse = False)    # sort sols in ascending distance from the anchor
             cand = self.grid.cand   # convenience alias of the candidate dict.
             nPairs = len(dist) - 1
+            nCand = 0       # number of candidates submitted by the ray
             nSmall = 0
             for i in range(nPairs):
                 id0 = dist[i][1]
@@ -63,20 +69,30 @@ class Grid:     # representation of the neighbors
                 if diff < self.gap:
                     nSmall += 1
                     continue
+                else:
+                    nCand += 1
                 pair = [id0, id1]
                 pair = self.grid.sortPair(pair)
                 cand.update({(pair[0], pair[1]): [diff, self.seq]})
-            print(f'Grid::mkPairs(): ray[{self.seq}]: {nPairs} pairs defined, {nSmall} too close pairs ignored')
+            print(f'Grid::mkPairs(): ray[{self.seq}]: {nPairs} pairs defined, {nCand} candidates added, '
+                  f'{nSmall} too close pairs ignored')
+            if nCand == 0:
+                self.is_done = True     # no more cubes to be generated from this ray
+                return False
             pass
+            return True
 
     def __init__(self, wflow):      # initialize by the corner, and optionally neutral, solutions
         # references for convenience access
         self.wflow = wflow    # WrkFlow object
         self.mc = wflow.mc    # CtrMca object
         self.parRep = wflow.par_rep         # PF representation object
+        self.stage = -1       # -1 ctor, 0 rays0 (built on corners), 1 rays1 (built on rays0)
         self.corners = self.wflow.corner
         self.sols = self.parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
-        self.rays = []      # list of ray-objects
+        self.rays0 = []     # ray-objects built on corners
+        self.rays1 = []     # ray-objects built on rays0
+        self.rays = None    # reference to rays used at the current stage
         self.cand = {}      # candidate sol-pairs: key - (sorted by val) pair of sol-ids, val - distance, ray-seq_no
         self.accepted = []  # pairs for cube's gener.: idSol1, idSol2, diff, seq_ray
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
@@ -86,65 +102,8 @@ class Grid:     # representation of the neighbors
         self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.lastRay = None  # seq_no of the ray from which the parents were selected
         #
-        self.init()
+        self.wFlow()    # controls work-flows
         pass
-
-    def init(self):
-        # create rays defined by PF corners
-        sCorners = self.corners.s_corners
-        pair_lst = list(combinations(sCorners, 2))  # pairs of corners
-        for seq, (anch0, anch1) in enumerate(pair_lst):   # ctor of rays defined by corners of the PF
-            self.rays.append(self.aRay(self, seq, anch0, anch1))
-
-        self.addSol()   # sols processed, make sol-pairs for subsequent getPair() calls
-        # raise Exception(f'Grid::init() - not implemented yet.')
-
-    # Entry point: add a new solution and prepare the next pair of solutions to be used for a new cube.
-    # Called from the ctor to store the corner (and optionally neutral) solutions, as well as for each subsequently
-    # found solution; also called for ignored solutions (close to another solution).
-    # The only return point; returns nothing.
-    # The self.getPair() returns either a pair of solutions' ids to be used for defining
-    # a next cube or (None, None) if there are no more pairs to be used for defining a cube
-    def addSol(self, s=None, was_close=False):  # add a Pareto solution
-        if was_close:    # the last solution was close (not included in tthe PF); find a pair from previous solutions
-            if self.verb > 2:
-                print(f'Grid::addSol(): last solution was close to or dominated by, another solution.')
-            pass
-        elif s is None:   # nothing to do (sols are processed by aRay objects
-            pass
-        else:           # add solution to the corresponding ray
-            found = False
-            for r in self.rays:
-                if r.seq == self.lastRay:
-                    found = True
-                    r.idSols.append(s.itr_id)
-                    break
-            if not found:
-                raise Exception(f'Grid::addSol() - last solution (id {s.itr_id}) cannot be allocatek to any ray.')
-        print(f'Grid::addSol(): there are {len(self.sols)} solutions, {len(self.done)} pairs done.')
-        if len(self.cand):
-            found = self.selCand()  # select the pair of the most distant neighbors to be used for defining new cube
-            if found:
-                return      # indices of the pair of most distant neighbors available by self.getPair()
-            else:
-                print(f'\nGrid::addSol(): no more pair candidates. Recalculate neighbors. --------------------------')
-
-        # empty list of candidate pairs; (re)calculate neighbors of each solution
-        print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
-        # self.mkNeigh()     # find neighbors of each solution
-        # self.lastPair = (None, None)
-        # print(f'\nGrid::selCand(): test termination. ------------------')
-        # return
-        self.mkCand()      # select from the neighbors' sol-pairs candidates for making cubes, store them in self.cand{}
-        found = self.selCand()
-        if not found:   # no suitable pairs were found, terminate the iterations
-            self.lastPair = (None, None)
-            print(f'\nGrid::selCand(): all suitable pairs were provided. Terminate the iterations. ------------------')
-        return  # the pair of solution ids (for defining a cube) is available by self.getPair()
-
-    # return indices of the solution-pair selected for making a next cube
-    def getPair(self):
-        return self.lastPair
 
     # helpers
     @staticmethod
@@ -159,20 +118,146 @@ class Grid:     # representation of the neighbors
     def chk(self, pair):    # check if the pair of sol-ids was already used
         pair = self.sortPair(pair)      # the done-dict is hashed by ordered sol-ids
         return (pair[0], pair[1]) in self.done.keys()
-
     # end of helpers
+
+    def wFlow(self):
+        if self.stage == -1:    # called from the ctor,  create rays defined by PF corners
+            self.stage = 0
+            self.rays = self.rays0
+            sCorners = self.corners.s_corners
+            pair_lst = list(combinations(sCorners, 2))  # pairs of corners
+            for seq, (anch0, anch1) in enumerate(pair_lst):   # ctor of rays defined by corners of the PF
+                self.rays.append(self.aRay(self, seq, anch0, anch1))
+        elif self.stage == 0:    # called from self.addSol()
+            pass
+        elif self.stage == 1:  # called from self.addSol()
+            pass
+            raise Exception(f'Grid::wFlow() - stage {self.stage} not implemented.')
+        else:
+            raise Exception(f'Grid::wFlow() - stage {self.stage} not implemented.')
+        self.explore()
+        return
+
+    def mkRays1(self):      # create rays from rays0
+        self.stage = 1
+
+        # select a pair of rays0 having the same anchor
+        idBase = self.corners.s_corners[0]  # take sol_id of the first corner
+        r0 = None
+        r1 = None
+        for seq, r in enumerate(self.rays0):
+            found = None
+            if r.anch0 == idBase:
+                found = [seq, 0]
+            elif r.anch1 == idBase:
+                found = [seq, 1]
+            if found is not None:
+                if r0 is None:
+                    r0 = found
+                elif r1 is None:
+                    r1 = found
+                if r1 is not None:
+                    break
+        pass
+        assert r1 is not None, f'Grid::mkRays1(): cannot find two rays0 for {idBase = }'
+        # print(f'rays for {idBase = }: {r0 = }, {r1 = }')
+
+        # check which points/sols need to be skipped in order to have pairs of points belonging to each ray
+        base0 = self.rays0[r0[0]]
+        base1 = self.rays0[r1[0]]
+        nSol0 =  len(base0.idSols)
+        nSol1 =  len(base1.idSols)
+        assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
+        assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
+        print('two base-rays')
+        base0.info()
+        base1.info()
+        print(f'{nSol1 = }')
+        # todo: add below: sort solutions of base0 and base0 separately by the distance from idBase
+        #   for distance use the aRay.dist()
+        #   then ignore the first (idBase) and the last, use the remaining for making the below rays
+
+        # generate rays1 for each pair, exclude anchors of rays0
+        self.rays = self.rays1
+        for i in range(1, nSol0 - 1):    # ignore first and last sol
+            an0 = base0.idSols[i]
+            an1 = base1.idSols[i]
+            nRay = self.aRay(self, i - 1, an0, an1)
+            print(f'Ray[{i-1}]: {an0 = }, {an1 = }')
+            nRay.info()
+            self.rays.append(nRay)
+            pass
+        pass
+        print(f'Grid::mkRays1(): {len(self.rays)} rays generated for stage {self.stage}.')
+
+        self.explore()
+        # raise Exception(f'Grid::mkRays1() - not implemented yet.')
+
+    def explore(self):      # check, if a pair is available, otherwise generate new set of pairs
+        if len(self.cand):
+            found = self.selCand()  # select the pair of the most distant neighbors to be used for defining new cube
+            if found:
+                return  # indices of the pair of most distant neighbors available by self.getPair()
+            else:
+                print(f'\nGrid::expolore(): no more pair candidates. Generate new set of pairs. ------------------------')
+
+        # empty list of candidate pairs; (re)calculate neighbors of each solution
+        # print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
+        self.mkCand()  # select in each ray sol-pairs candidates for making cubes, store them in self.cand{}
+        found = self.selCand()
+        if not found:  # no suitable pairs were found, terminate the iterations
+            if self.stage == 0:     # mv to stage 1, i.e., create rays1
+                self.mkRays1()
+            else:
+                self.lastPair = (None, None)
+                print(f'\nGrid::selCand(): all suitable pairs were provided. Terminate the iterations. ------------------')
+        return  # the pair of solution ids (for defining a cube) is available by self.getPair()
+
+
+    # Entry point: add a new solution and prepare pairs of solutions to be used for a new cube.
+    # Called from the ctor to store the corner (and optionally neutral) solutions, as well as for each subsequently
+    # found solution; also called for ignored solutions (close to another solution).
+    # Returns nothing.
+    # Access to pairs through the self.getPair() that returns either a pair of solutions' ids to be used
+    # for defining a next cube or (None, None) if there are no more pairs to be used for defining a cube
+    def addSol(self, s=None, was_close=False):  # add a Pareto solution
+        if was_close:    # the last solution was close (not included in the PF); find a pair from previous solutions
+            if self.verb > 2:
+                print(f'Grid::addSol(): last solution was close to or dominated by, another solution.')
+            pass
+        elif s is None:   # nothing to do (sols are processed by aRay objects
+            raise Exception(f'Grid::addSol(None) - unexpeted call with the argument "None".')
+        else:           # add solution to the corresponding ray
+            found = False
+            for r in self.rays:
+                if r.seq == self.lastRay:
+                    found = True
+                    r.idSols.append(s.itr_id)
+                    break
+            if not found:
+                raise Exception(f'Grid::addSol() - last solution (id {s.itr_id}) cannot be allocatek to any ray.')
+        print(f'Grid::addSol(): there are {len(self.sols)} solutions, {len(self.done)} pairs done.')
+        return self.wFlow()
+
+    # return indices of the solution-pair selected for making a next cube
+    def getPair(self):
+        return self.lastPair
 
     def mkPairs(self):      # mk pair(s) (for cube generation)
         allDone = True
+        arePairs = False
         for r in self.rays:
             if r.is_done:
                 continue
-            r.mkPairs()
-            allDone = False
+            rayPairs = r.mkPairs()      # returns True, if the ray provided pair(s)
+            if rayPairs:
+                arePairs = True
+                allDone = False
         if allDone:
             print(f'Grid::mkPairs(): all pairs were done.')
-            raise Exception(f'Grid::mkPairs(): all pairs were done.')
-        return
+            # raise Exception(f'Grid::mkPairs(): all pairs were done.')
+        assert allDone != arePairs, f'Grid::mkPairs(): inconsistency: {allDone =} != {arePairs =}.'
+        return arePairs
 
     # make the candidate pairs from the neighbors' dict
     def mkCand(self):
@@ -180,7 +265,9 @@ class Grid:     # representation of the neighbors
         self.cand = {}
         self.accepted = []
 
-        self.mkPairs()      # generate pairs of solutions suitable for the cube generation
+        arePairs = self.mkPairs()      # generate pairs of solutions suitable for the cube generation
+        assert (arePairs and len(self.cand) > 0) or (not arePairs and len(self.cand) == 0), \
+                f'Grid::mkCand(): inconsistency: {arePairs=}, {len(self.cand)=}'
 
         # scan the pairs and make list of pairs for the cube generation
         for idItem, item in self.cand.items():  # id consists of pt-pair, item of diff and ray's seq_no
