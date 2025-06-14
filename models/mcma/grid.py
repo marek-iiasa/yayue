@@ -15,9 +15,10 @@ class Grid:     # representation of the neighbors
             self.grid = grid
             self.seq = seq          # seq_no of this ray in the set of all rays
             self.is_done = False    # all pairs od neighbor-sols are closer than the gap
-            self.anch0 = anch0      # id of the corresponding solution defining one corner of the ray
-            self.anch1 = anch1      # id of the corresponding solution defining another corner of the ray
+            self.anch0 = min(anch0, anch1)      # id of the corresponding solution defining one corner of the ray
+            self.anch1 = max(anch0, anch1)      # id of the corresponding solution defining another corner of the ray
             self.idSols = []        # ids of sols belonging to the ray
+            self.idSorted = []      # sorted (by the distance to anch0) ids of sols belonging to the ray
             self.sols = grid.sols   # solutions (objects)
             self.gap = grid.gap
             #
@@ -28,6 +29,7 @@ class Grid:     # representation of the neighbors
         def info(self):
             print(f'Ray[{self.seq}]: anch0 = {self.anch0}, anch1 = {self.anch1}, nSols = {len(self.idSols)}')
             print(f'\tidSols: {self.idSols}')
+            print(f'\tidSorted: {self.idSorted}')
             pass
 
         def getSol(self, idSol):  # return the L^inf distance between the sol-pairs
@@ -47,8 +49,8 @@ class Grid:     # representation of the neighbors
 
         def mkPairs(self):
             idBase = self.anch0   # base is the anchor with the lowest id
-            if self.anch1 < idBase:
-                idBase = self.anch1
+            # if self.anch1 < idBase:   # no longer needed: ids sorted by the ctor
+            #     idBase = self.anch1
             assert idBase in self.idSols, f'Grid::mkPairs(): solution with id {idBase} not found'
             dist = []   # distances from the base, used for sorting sols
             for idS in self.idSols:
@@ -56,8 +58,13 @@ class Grid:     # representation of the neighbors
                 dist.append([idBase, idS, d])
                 pass
 
-            # creating pairs from neighbor sols, add them to the candidate's dict
             dist.sort(key=itemgetter(2), reverse = False)    # sort sols in ascending distance from the anchor
+            # store sorted idSols
+            self.idSorted = []
+            for item in dist:
+                self.idSorted.append(item[1])   # item = [idBase, idS, dist]
+
+            # create pairs from neighbor sols, add them to the candidate's dict
             cand = self.grid.cand   # convenience alias of the candidate dict.
             nPairs = len(dist) - 1
             nCand = 0       # number of candidates submitted by the ray
@@ -102,6 +109,8 @@ class Grid:     # representation of the neighbors
         self.lastPair = (None, None)    # ids of the lastly selected solution pair (of most distant neighbors)
         self.lastRay = None  # seq_no of the ray from which the parents were selected
         #
+        assert self.mc.n_crit == 3, \
+            f'Grid: the problem has {self.mc.n_crit} criteria; only 3 crit. processed by this option.'
         self.wFlow()    # controls work-flows
         pass
 
@@ -132,7 +141,7 @@ class Grid:     # representation of the neighbors
             pass
         elif self.stage == 1:  # called from self.addSol()
             pass
-            raise Exception(f'Grid::wFlow() - stage {self.stage} not implemented.')
+            # raise Exception(f'Grid::wFlow() - stage {self.stage} not implemented.')
         else:
             raise Exception(f'Grid::wFlow() - stage {self.stage} not implemented.')
         self.explore()
@@ -169,19 +178,19 @@ class Grid:     # representation of the neighbors
         nSol1 =  len(base1.idSols)
         assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
-        print('two base-rays')
+        print('The two base-rays')
         base0.info()
         base1.info()
         print(f'{nSol1 = }')
         # todo: add below: sort solutions of base0 and base0 separately by the distance from idBase
-        #   for distance use the aRay.dist()
+        #   for distance adapt the aRay.mkPairs() to store the sorted idS
         #   then ignore the first (idBase) and the last, use the remaining for making the below rays
 
         # generate rays1 for each pair, exclude anchors of rays0
         self.rays = self.rays1
         for i in range(1, nSol0 - 1):    # ignore first and last sol
-            an0 = base0.idSols[i]
-            an1 = base1.idSols[i]
+            an0 = base0.idSorted[i]
+            an1 = base1.idSorted[i]
             nRay = self.aRay(self, i - 1, an0, an1)
             print(f'Ray[{i-1}]: {an0 = }, {an1 = }')
             nRay.info()
