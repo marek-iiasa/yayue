@@ -176,15 +176,13 @@ class Grid:     # representation of the neighbors
         base1 = self.rays0[r1[0]]
         nSol0 =  len(base0.idSols)
         nSol1 =  len(base1.idSols)
+        # todo: add handling different numbers of solutions, as well as different anchors
         assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
         print('The two base-rays')
         base0.info()
         base1.info()
         print(f'{nSol1 = }')
-        # todo: add below: sort solutions of base0 and base0 separately by the distance from idBase
-        #   for distance adapt the aRay.mkPairs() to store the sorted idS
-        #   then ignore the first (idBase) and the last, use the remaining for making the below rays
 
         # generate rays1 for each pair, exclude anchors of rays0
         self.rays = self.rays1
