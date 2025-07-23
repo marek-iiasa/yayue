@@ -102,6 +102,7 @@ class Grid:     # representation of the neighbors
         self.rays = None    # reference to rays used at the current stage
         self.cand = {}      # candidate sol-pairs: key - (sorted by val) pair of sol-ids, val - distance, ray-seq_no
         self.accepted = []  # pairs for cube's gener.: idSol1, idSol2, diff, seq_ray
+        self.dist = []      # distances between all pairs of neighbors at the current stage
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
         self.gap = self.parRep.gap
         self.verb = 4   # wflow.verb
@@ -150,6 +151,12 @@ class Grid:     # representation of the neighbors
     def mkRays1(self):      # create rays from rays0
         self.stage = 1
 
+        if self.mc.opt('envOnly', False):
+            print('\nSkipping filling the PF envelope.')
+            self.explore()
+            return
+
+        print('\nFilling the PF envelope.')
         # select a pair of rays0 having the same anchor
         idBase = self.corners.s_corners[0]  # take sol_id of the first corner
         r0 = None
@@ -176,7 +183,7 @@ class Grid:     # representation of the neighbors
         base1 = self.rays0[r1[0]]
         nSol0 =  len(base0.idSols)
         nSol1 =  len(base1.idSols)
-        # todo: add handling different numbers of solutions, as well as different anchors
+        # todo: add handling different numbers of solutions, as well as different anchors, test on banson, gap 30
         assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
         print('The two base-rays')
@@ -206,10 +213,13 @@ class Grid:     # representation of the neighbors
             if found:
                 return  # indices of the pair of most distant neighbors available by self.getPair()
             else:
-                print(f'\nGrid::expolore(): no more pair candidates. Generate new set of pairs. ------------------------')
+                print(f'\nGrid::explore(): no more pair candidates. Generate new set of pairs. ------------------------')
 
         # empty list of candidate pairs; (re)calculate neighbors of each solution
         # print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
+
+        self.dist = []       # reset the distances
+
         self.mkCand()  # select in each ray sol-pairs candidates for making cubes, store them in self.cand{}
         found = self.selCand()
         if not found:  # no suitable pairs were found, terminate the iterations
@@ -283,9 +293,10 @@ class Grid:     # representation of the neighbors
             if was_used:
                 raise Exception(f'Grid::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
             diff = item[0]      # item[1]: seq_no of the ray
+            self.dist.append(diff)  # stores all distances (i.e., also smaller than gap)
             if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
                 continue    # skip pt-pair close in i-th dimension (should be distant in other dimension)
-                # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff  {diff:.2f} should not be in self.neighCube.')
+                # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff {diff:.2f} should not be in self.neighCube.')
             seq_ray = item[1]
             self.accepted.append([idItem[0], idItem[1], diff, seq_ray])
         pass
