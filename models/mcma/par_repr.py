@@ -114,13 +114,18 @@ class ParRep:     # representation of the Pareto set
     # should not be used if neighbors are handled by the Neigh class (cfg option: mCube)
     def solDistr(self):     # distribution of distances between neighbor solutions, called by sizeLog
         #  Note: neighbor (for each solution) is the closest other solution
-        if self.mc.opt('grid', False) or self.mc.opt('grid', False):
-            if self.mc.opt('grid', False):
+        is_grid = self.mc.opt('grid', False)
+        is_mcube = self.mc.opt('mCube', False)
+        if is_grid or is_mcube:
+            if is_grid:
                 self.distances = self.grid.dist
-            elif self.mc.opt('mCube', False):
+            elif is_mcube:
                 self.distances = self.neighSol.distances
             else:
-                raise Exception(f'ParRep::solDistr() - internal error.')
+                raise Exception(f'ParRep::solDistr() - both grid and mCube options declared.')
+            if len(self.distances) == 0:
+                print(f'ParRep::solDistr() - no distances defined, {is_grid = }, {is_mcube = }.')
+                return
             self.distances.sort()
             # print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
             #       f'max {self.distances[-1]:.2e}')

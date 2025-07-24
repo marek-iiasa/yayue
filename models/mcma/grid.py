@@ -73,6 +73,7 @@ class Grid:     # representation of the neighbors
                 id0 = dist[i][1]
                 id1 = dist[i + 1][1]
                 diff = self.dist(id0, id1)
+                self.grid.dist.append(diff)  # stores all distances (i.e., also smaller than gap)
                 if diff < self.gap:
                     nSmall += 1
                     continue
@@ -218,7 +219,7 @@ class Grid:     # representation of the neighbors
         # empty list of candidate pairs; (re)calculate neighbors of each solution
         # print(f'\n\nAll previously generated cubes used. Generate new set of neighbors. ------------------------------')
 
-        self.dist = []       # reset the distances
+        # self.dist = []       # reset the distances
 
         self.mkCand()  # select in each ray sol-pairs candidates for making cubes, store them in self.cand{}
         found = self.selCand()
@@ -281,6 +282,7 @@ class Grid:     # representation of the neighbors
         # drop all old lists and dictionaries
         self.cand = {}
         self.accepted = []
+        self.dist = []
 
         arePairs = self.mkPairs()      # generate pairs of solutions suitable for the cube generation
         assert (arePairs and len(self.cand) > 0) or (not arePairs and len(self.cand) == 0), \
@@ -293,7 +295,7 @@ class Grid:     # representation of the neighbors
             if was_used:
                 raise Exception(f'Grid::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
             diff = item[0]      # item[1]: seq_no of the ray
-            self.dist.append(diff)  # stores all distances (i.e., also smaller than gap)
+            # self.dist.append(diff)  # small gaps are filtered in self.mkPairs()
             if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
                 continue    # skip pt-pair close in i-th dimension (should be distant in other dimension)
                 # raise Exception(f'Neigh::mkCand(): the pair ({idItem}, diff {diff:.2f} should not be in self.neighCube.')

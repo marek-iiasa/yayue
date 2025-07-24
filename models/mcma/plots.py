@@ -394,6 +394,9 @@ class Plots:
         distrAll = self.wflow.par_rep.allDist
         n_samples = len(distrAll)
         print(f'{n_samples} distribution samples available')
+        if n_samples == 0:
+            print(f'No distribution samples available, no plots generated.')
+            return
         # dist = []
         small = self.mc.opt('smallDist', 2.5)  # smaller items to be removed from the distribution of the 2nd histogram
         n_cols = 3   # 3 histograms for each row
