@@ -118,7 +118,8 @@ class ParRep:     # representation of the Pareto set
         is_mcube = self.mc.opt('mCube', False)
         if is_grid or is_mcube:
             if is_grid:
-                self.distances = self.grid.dist
+                self.distances = self.grid.distances()
+                # raise Exception(f'ParRep::solDistr() - processing Grid distances not implemented.')
             elif is_mcube:
                 self.distances = self.neighSol.distances
             else:
@@ -127,8 +128,8 @@ class ParRep:     # representation of the Pareto set
                 print(f'ParRep::solDistr() - no distances defined, {is_grid = }, {is_mcube = }.')
                 return
             self.distances.sort()
-            # print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
-            #       f'max {self.distances[-1]:.2e}')
+            print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '
+                  f'max {self.distances[-1]:.2e}')
             self.allDist.update({self.cur_itr: self.distances})  # distances stored for each sample
             # self.neighInf.update(
             #     {self.cur_itr: [maxDist, mxPair[0], mxPair[1], minDist]})  # summary inf on all neighbors

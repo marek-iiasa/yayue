@@ -20,6 +20,7 @@ class Grid:     # representation of the neighbors
             self.idSols = []        # ids of sols belonging to the ray
             self.idSorted = []      # sorted (by the distance to anch0) ids of sols belonging to the ray
             self.sols = grid.sols   # solutions (objects)
+            self.neighDist = []     # distances between neighbors
             self.gap = grid.gap
             #
             self.idSols.append(anch0)
@@ -69,11 +70,12 @@ class Grid:     # representation of the neighbors
             nPairs = len(dist) - 1
             nCand = 0       # number of candidates submitted by the ray
             nSmall = 0
+            self.neighDist = []
             for i in range(nPairs):
                 id0 = dist[i][1]
                 id1 = dist[i + 1][1]
                 diff = self.dist(id0, id1)
-                self.grid.dist.append(diff)  # stores all distances (i.e., also smaller than gap)
+                self.neighDist.append(diff)     # store all distances between neighbors
                 if diff < self.gap:
                     nSmall += 1
                     continue
@@ -103,7 +105,6 @@ class Grid:     # representation of the neighbors
         self.rays = None    # reference to rays used at the current stage
         self.cand = {}      # candidate sol-pairs: key - (sorted by val) pair of sol-ids, val - distance, ray-seq_no
         self.accepted = []  # pairs for cube's gener.: idSol1, idSol2, diff, seq_ray
-        self.dist = []      # distances between all pairs of neighbors at the current stage
         self.done = {}      # already used sol-pairs: key - (sorted) sol-ids, val - distance
         self.gap = self.parRep.gap
         self.verb = 4   # wflow.verb
@@ -129,6 +130,24 @@ class Grid:     # representation of the neighbors
     def chk(self, pair):    # check if the pair of sol-ids was already used
         pair = self.sortPair(pair)      # the done-dict is hashed by ordered sol-ids
         return (pair[0], pair[1]) in self.done.keys()
+
+    def distances(self):
+        # assembly distances stored in rays0 (envelope) and rays1 (inside envelope)
+        dist0 = []      # distances between neighbors in the envelope
+        for r in self.rays0:
+            for d in r.neighDist:
+                dist0.append(d)
+            pass
+        pass
+        dist1 = []      # distances between neighbors inside the envelope
+        for r in self.rays1:
+            for d in r.neighDist:
+                dist1.append(d)
+            pass
+        pass
+        dist = dist0 + dist1
+        return dist
+        # raise Exception(f'Grid::distances() - not implemented.')
     # end of helpers
 
     def wFlow(self):
@@ -282,7 +301,6 @@ class Grid:     # representation of the neighbors
         # drop all old lists and dictionaries
         self.cand = {}
         self.accepted = []
-        self.dist = []
 
         arePairs = self.mkPairs()      # generate pairs of solutions suitable for the cube generation
         assert (arePairs and len(self.cand) > 0) or (not arePairs and len(self.cand) == 0), \
