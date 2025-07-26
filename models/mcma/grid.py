@@ -204,18 +204,27 @@ class Grid:     # representation of the neighbors
         nSol0 =  len(base0.idSols)
         nSol1 =  len(base1.idSols)
         # todo: add handling different numbers of solutions, as well as different anchors, test on banson, gap 30
-        assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
+        # assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
         print('The two base-rays')
         base0.info()
         base1.info()
-        print(f'{nSol1 = }')
+        nSkip = abs(nSol0 - nSol1)
+        skip0 = nSol0 > nSol1
+        skip1 = nSol0 < nSol1
+        print(f'{nSol0 = }, {nSol1 = }, skipping {nSkip} sols in {skip0 = }, {skip1 = } closest to the base')
 
         # generate rays1 for each pair, exclude anchors of rays0
         self.rays = self.rays1
-        for i in range(1, nSol0 - 1):    # ignore first and last sol
-            an0 = base0.idSorted[i]
-            an1 = base1.idSorted[i]
+        for i in range(1, min(nSol0, nSol1) - 1):    # ignore first and last sol
+            if skip0:
+                an0 = base0.idSorted[i + nSkip]
+            else:
+                an0 = base0.idSorted[i]
+            if skip1:
+                an1 = base1.idSorted[i + nSkip]
+            else:
+                an1 = base1.idSorted[i]
             nRay = self.aRay(self, i - 1, an0, an1)
             print(f'Ray[{i-1}]: {an0 = }, {an1 = }')
             nRay.info()
