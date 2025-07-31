@@ -46,6 +46,14 @@ class Plots:
         self.df[self.cr_name] = self.df[self.cr_name].astype('float')
         self.int_parallel = None
         self.dpi = 200
+        self.dotColor = self.cfg.get('dotColor')
+        self.dotSize = self.cfg.get('dotSize')
+
+        # If dot Size is present in the cfg, turn it into number, if not default to 10
+        if self.dotSize is None:
+            self.dotSize = 10
+        else:
+            self.dotSize = float(self.dotSize)
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -55,10 +63,12 @@ class Plots:
             self.cr_col.append(f'a_{cr.name}')
 
         if self.wflow.cluster is None:
-            self.sol_colors = [self.def_colors[0]]
+            if self.dotColor is None: # If dotColor is not provided, default to blue color
+                self.sol_colors = [self.def_colors[0]]
+            else: # If dotColor is provided, try to use it as a sole solution color
+                self.sol_colors = [self.dotColor]
         else:
-            self.sol_colors = [self.def_colors[i % len(self.def_colors)]
-                               for i in self.wflow.cluster.sol2cl]
+            self.sol_colors = self.def_colors
             self.medoids = self.wflow.cluster.medoids
 
         # SMALL_SIZE = 8
@@ -106,7 +116,6 @@ class Plots:
         mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
         i_plot = 0  # current plot number (subplots numbers from 1)
         ax = []
-        m_size = 5  # marker size  (was 30)
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
             for i_second in range(i_first + 1, self.n_crit):
@@ -142,14 +151,14 @@ class Plots:
                     data_to_draw = [[0, self.df]]
                 for clst, data in data_to_draw:
                     ax[i_plot].scatter(x=data[self.cr_col[i_first]], y=data[self.cr_col[i_second]],
-                                       c=self.def_colors[clst % len(self.def_colors)],
-                                       s=m_size,
+                                       c=self.sol_colors[clst % len(self.sol_colors)],
+                                       s=self.dotSize / 2,
                                        marker=self.def_markers[clst % len(self.def_markers)])
 
                 if self.medoids is not None:
                     for clst, medoid in enumerate(self.medoids):
                         ax[i_plot].scatter(x=medoid[i_first], y=medoid[i_second],
-                                           c=self.def_colors[clst % len(self.def_colors)],
+                                           c=self.sol_colors[clst % len(self.sol_colors)],
                                            s=60, edgecolor='black', linewidths=1,
                                            marker=self.def_markers[clst % len(self.def_markers)])
 
@@ -477,8 +486,8 @@ class Plots:
                     ax.scatter(xs=data[self.cr_col[i]],
                                ys=data[self.cr_col[j]],
                                zs=data[self.cr_col[k]],
-                               c=self.def_colors[clst % len(self.def_colors)],
-                               s=10,
+                               c=self.sol_colors[clst % len(self.sol_colors)],
+                               s=self.dotSize,
                                marker=self.def_markers[clst % len(self.def_markers)],
                                zorder=4)
 
@@ -487,7 +496,7 @@ class Plots:
                     ax.scatter(xs=medoid[i],
                                ys=medoid[j],
                                zs=medoid[k],
-                               c=self.def_colors[clst % len(self.def_colors)],
+                               c=self.sol_colors[clst % len(self.sol_colors)],
                                s=60, edgecolor='black', linewidths=1.5, zorder=5,
                                marker=self.def_markers[clst % len(self.def_markers)])
 
