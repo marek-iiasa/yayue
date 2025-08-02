@@ -84,8 +84,8 @@ class Grid:     # representation of the neighbors
                 pair = [id0, id1]
                 pair = self.grid.sortPair(pair)
                 cand.update({(pair[0], pair[1]): [diff, self.seq]})
-            print(f'Grid::mkPairs(): ray[{self.seq}]: {nPairs} pairs defined, {nCand} candidates added, '
-                  f'{nSmall} too close pairs ignored')
+            # print(f'Grid::mkPairs(): ray[{self.seq}]: {nPairs} pairs defined, {nCand} candidates added, '
+            #       f'{nSmall} too close pairs ignored')
             if nCand == 0:
                 self.is_done = True     # no more cubes to be generated from this ray
                 return False
@@ -206,13 +206,13 @@ class Grid:     # representation of the neighbors
         # todo: add handling different numbers of solutions, as well as different anchors, test on banson, gap 30
         # assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
-        print('The two base-rays')
-        base0.info()
-        base1.info()
+        # print('The two base-rays')
+        # base0.info()
+        # base1.info()
         nSkip = abs(nSol0 - nSol1)
         skip0 = nSol0 > nSol1
         skip1 = nSol0 < nSol1
-        print(f'{nSol0 = }, {nSol1 = }, skipping {nSkip} sols in {skip0 = }, {skip1 = } closest to the base')
+        print(f'Base-rays: {nSol0 = }, {nSol1 = }, skipping {nSkip} sols in {skip0 = }, {skip1 = } closest to the base')
 
         # generate rays1 for each pair, exclude anchors of rays0
         self.rays = self.rays1
@@ -226,7 +226,7 @@ class Grid:     # representation of the neighbors
             else:
                 an1 = base1.idSorted[i]
             nRay = self.aRay(self, i - 1, an0, an1)
-            print(f'Ray[{i-1}]: {an0 = }, {an1 = }')
+            # print(f'Ray[{i-1}]: {an0 = }, {an1 = }')
             nRay.info()
             self.rays.append(nRay)
             pass
@@ -319,9 +319,16 @@ class Grid:     # representation of the neighbors
         for idItem, item in self.cand.items():  # id consists of pt-pair, item of diff and ray's seq_no
             pair = [idItem[0], idItem[1]]   # for self.sort it needs to be a list
             was_used = self.chk(pair)
-            if was_used:
-                raise Exception(f'Grid::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
             diff = item[0]      # item[1]: seq_no of the ray
+            if was_used:
+                # todo: consider to find a better solution than the below ad-hoc fix
+                # raise Exception(f'Grid::mkCand(): the pair {pair} was used (check, if it indicates PF gap).')
+                # a used pair is generated again, if the first use resulted in a "too close" (i.e. filtered-out)
+                # solution. This occurred for the alves model, gap 5, tolClose 0.05.
+                # The below ad-hoc fix resulted in actual gap greater than 5.
+                # Therefore tolClose was changed to 0.005
+                print(f'Grid::mkCand(): already used pair {pair} (diff {diff:.2f}) skipped. --------------------------------')
+                continue
             # self.dist.append(diff)  # small gaps are filtered in self.mkPairs()
             if diff < self.gap:     # diff: difference of achiev. for the pair of points for i-the criterion
                 continue    # skip pt-pair close in i-th dimension (should be distant in other dimension)
@@ -340,7 +347,8 @@ class Grid:     # representation of the neighbors
             seq_ray = item[3]
             is_used = self.chk([id0, id1])
             if is_used:     # should not happen, but just in case...
-                raise Exception(f'Grid::selCand() - pair of sols ({id0}, {id1}) was already used.')
+                # raise Exception(f'Grid::selCand() - pair of sols ({id0}, {id1}) was already used.')
+                continue    # skip (probably a gap, see Grid::mkCand above)
             self.lastPair = (id0, id1)
             self.lastRay = seq_ray
             self.done.update({self.lastPair: diff})
