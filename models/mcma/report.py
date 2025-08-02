@@ -1,5 +1,6 @@
 """
-Reporting results of the MCMA iterations. Handling core-model is generic, i.e., any variable can be selected for report.
+Reporting results of the MCMA iterations. Handling core-models is generic, i.e., any variable can be selected
+for the report.
 """
 
 import warnings
@@ -53,10 +54,10 @@ class Report:
         # print(f'Extracting current solution values from model {m.name}, iter_id {self.itr_id}.')
 
         if not self.mc.is_opt:
-            return  # refrain from handling/storing non-optimal solutions
+            return False  # refrain from handling/storing non-optimal solutions
 
         cri_val = {}    # all criteria values in current solution
-        # cri_ach = {}    # achievemtns cannot be defined before checking, if the solution is in the U/N range
+        # cri_ach = {} achievemtns cannot be defined before checking, if the solution is in the U/N range
         m_vars = self.m1.component_map(ctype=pe.Var)  # only core model uses var-names associated with criteria
         for (i, var_name) in enumerate(self.var_names):  # extract m.vars defining criteria
             m_var = m_vars[var_name]
@@ -207,10 +208,10 @@ class Report:
         self.plots.plot3D()    # 3D plot
         self.plots.plot2D()    # 2D plots
         self.plots.parallel()  # Parallel coordinates plot
-        self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
+        # self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # todo: uncomment the kde plot when the bug (commented in the code) will be fixed
         # self.plots.kde_stages()  # KDE + histograms vs stages
-        self.plots.neighDist()  # distribution of neighbours' distances'
+        self.plots.neighDist()  # distribution of neighbors' distances'
         if n_clust > 0:
             self.plots.plot3D(only_centres=True)    # Only centres, only if clusters enabled
         # plots.vars('actS')    # plot the requested model variables

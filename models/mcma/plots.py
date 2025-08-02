@@ -1,8 +1,8 @@
-from ctypes.wintypes import SMALL_RECT
+# from ctypes.wintypes import SMALL_RECT
 from itertools import combinations
 
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from scipy.special import comb  # for computing number of combinations
 from matplotlib import mlab
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ import matplotlib as mpl
 import seaborn as sns
 from .plots2 import InteractiveParallel
 
-# import mplcursors     # for interactive plots, currently not used
+# import mplcursors (for interactive plots, currently not used)
 sns.set()  # settings for seaborn plotting style
 
 
@@ -37,9 +37,11 @@ class Plots:
         self.cr_col = []  # col-names containing criteria achievements values
         self.n_sol = len(self.df.index)  # number of solutions defined in the df
         self.seq = self.df[self.cols[0]]
-        self.def_colors = ['blue', 'orange', 'lime', 'red', 'fuchsia',
+        # self.def_colors = ['blue', 'orange', 'lime', 'red', 'fuchsia', ...blue is hardly visible with the black border
+        self.def_colors = ['deepskyblue', 'orange', 'lime', 'red', 'fuchsia',
                            'brown', 'pink', 'green', 'cyan', 'yellow']
-        self.def_markers = ['o', 'v', '^', 's', 'h', 'D']
+        # self.def_markers = ['o', 'v', '^', 's', 'h', 'D']   # 'o' is hardly visible amongst small dots
+        self.def_markers = ['D', 'h', 's', 'v', '^', '<']
         self.sol_colors = None
         self.medoids = None
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions
@@ -85,7 +87,8 @@ class Plots:
         plt.rc('ytick', labelsize=SMALL_SIZE)  # fontsize of the tick labels
         plt.rc('legend', fontsize=SMALL_SIZE)  # legend fontsize
 
-    def show_figures(self):
+    @staticmethod
+    def show_figures():
         plt.show()
 
     def save_figures(self):
@@ -115,7 +118,7 @@ class Plots:
             cr_ticklabels.append([f'{label:0.2e}' for label in ticklabels])
 
         mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
-        i_plot = 0  # current plot number (subplots numbers from 1)
+        i_plot = 0  # current plot number (subplots numbered from 1)
         ax = []
         for i_first in range(self.n_crit):
             name1 = self.cr_name[i_first]
@@ -160,7 +163,8 @@ class Plots:
                     for clst, medoid in enumerate(self.medoids):
                         ax[i_plot].scatter(x=medoid[i_first], y=medoid[i_second],
                                            c=self.sol_colors[clst % len(self.sol_colors)],
-                                           s=60, edgecolor='black', linewidths=1,
+                                           # s=60, edgecolor='black', linewidths=1,
+                                           s=min(25 * self.dotSize, 60), edgecolor='black', linewidths=0.5,
                                            marker=self.def_markers[clst % len(self.def_markers)])
 
                 for i, row in self.df.iterrows():
@@ -171,7 +175,7 @@ class Plots:
                                     y=row[self.cr_col[i_second]] + 0.5,
                                     s=row['itr_id'], fontdict=None, fontsize=5)
 
-                # Make little more space for numbers if we want to draw any
+                # Make a little more space for numbers if we want to draw any
                 if mxLabelPlot > 0:
                     ax[i_plot].set_xlim(-10, 110)
                     ax[i_plot].set_ylim(-10, 110)
@@ -219,7 +223,7 @@ class Plots:
 
         df_vars = self.df_vars.astype('float').sort_values(by=x_var)
 
-        x_var_data = df_vars[x_var].to_numpy()  # Should be (N,)
+        x_var_data = df_vars[x_var].to_numpy()  # Should be (N)
         y_vars_data = df_vars[y_vars].to_numpy().T  # Should be (M, N)
 
         ax.stackplot(x_var_data, y_vars_data, labels=y_vars, linewidth=0)
@@ -383,7 +387,7 @@ class Plots:
                     density=True,
                     linewidth=0.5)
 
-            # Check if list has at least two different values, so we can calculate KDE
+            # Check if the list has at least two different values, so we can calculate KDE
             if neighbour_cube_sizes[0] != neighbour_cube_sizes[-1]:
                 kde = mlab.GaussianKDE(neighbour_cube_sizes)
                 x = np.linspace(0, 50, 200)
@@ -399,7 +403,7 @@ class Plots:
         plt.tight_layout()
         self.figures['stageKDE'] = fig
 
-    def neighDist(self):  # plot distributions of neighbouring solutions
+    def neighDist(self):  # plot distributions of neighbor solutions
         mx_hight = 9.0
         distrAll = self.wflow.par_rep.allDist
         n_samples = len(distrAll)
@@ -424,7 +428,7 @@ class Plots:
                                              f'than {small}.')
             fig1.suptitle(f'Distributions of distances between all neighbor solutions for {n_samples} samples.')
             fig2.suptitle(f'Distributions of distances > {small:.1f} between neighbor solutions for {n_samples} samples.')
-        # cur_plot = cur_col = cur_row = 1   # counted from 1
+        # cur_plot = cur_col = cur_row = 1 # counted from 1
         cur_plot = 1   # counted from 1
         noSmall = True
         for i_sample, (itr, dist) in enumerate(distrAll.items()):
@@ -466,18 +470,17 @@ class Plots:
             y = kde(x)
             ax.plot(x, y, color='k', linewidth=1.0)
 
-            pass
             # plot next sample
             cur_plot += 1
         pass
-        if noSmall:
+        if noSmall:     # only one distances plot
             self.figures[f'PFdistr'] = fig1
         else:
-            self.figures[f'PFdistr0'] = fig1
-            self.figures[f'PFdistr1'] = fig2
+            self.figures[f'PFdistr0'] = fig1    # all distances between neighbor pairs
+            self.figures[f'PFdistr1'] = fig2    # without distances < smallDist (cfg option)
 
     def plot3D(self, only_centres=False):
-        if self.n_crit < 3:  # just return for bi-criteria problem
+        if self.n_crit < 3:  # just return for bi-criteria problems
             return
 
         n_plots = comb(self.n_crit, k=3, exact=True)
@@ -518,7 +521,8 @@ class Plots:
                                ys=medoid[j],
                                zs=medoid[k],
                                c=self.sol_colors[clst % len(self.sol_colors)],
-                               s=60, edgecolor='black', linewidths=1.5, zorder=5,
+                               # s=60, edgecolor='black', linewidths=1.5, zorder=5,
+                               s=min(25 * self.dotSize, 60), edgecolor='black', linewidths=0.5, zorder=5,
                                marker=self.def_markers[clst % len(self.def_markers)])
 
             ax.view_init(elev=15, azim=45, roll=0)     # front origin: (100, 100)
