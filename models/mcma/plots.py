@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib import patches
 import matplotlib as mpl
-from matplotlib.colors import ListedColormap
+# from matplotlib.colors import ListedColormap
 # from matplotlib.ticker import LinearLocator
 import seaborn as sns
 from .plots2 import InteractiveParallel
@@ -46,14 +46,15 @@ class Plots:
         self.df[self.cr_name] = self.df[self.cr_name].astype('float')
         self.int_parallel = None
         self.dpi = 200
-        self.dotColor = self.cfg.get('dotColor')
-        self.dotSize = self.cfg.get('dotSize')
+        self.dotColor = self.mc.opt('dotColor', None)
+        self.dotSize = self.mc.opt('dotSize', 7.)   # the default dot-size changed from 10 to 7
 
+        # the below is done by self.mc.opt()
         # If dot Size is present in the cfg, turn it into number, if not default to 10
-        if self.dotSize is None:
-            self.dotSize = 10
-        else:
-            self.dotSize = float(self.dotSize)
+        # if self.dotSize is None:
+        #     self.dotSize = 10
+        # else:
+        #     self.dotSize = float(self.dotSize)
 
         if self.show_plot is None:  # just in case the option is missed in cfg
             self.show_plot = False
@@ -408,22 +409,24 @@ class Plots:
             return
         # dist = []
         small = self.mc.opt('smallDist', 2.5)  # smaller items to be removed from the distribution of the 2nd histogram
-        n_cols = 3   # 3 histograms for each row
+        n_cols = min(n_samples, 3)   # up to 3 histograms for each row
         if n_samples > 9:
-            n_cols = 4
+            n_cols = 4      # increase to 4, if at least 10 samples
         # n_rows = max(1, n_samples // n_cols)
         n_rows = n_samples // n_cols
         if n_rows * n_cols < n_samples:
             n_rows += 1
-        fig1 = plt.figure(figsize=(7, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
-        fig2 = plt.figure(figsize=(7, min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
-        fig1.canvas.manager.set_window_title(f'Distributions of all distance between neighbor solutions.')
-        fig1.suptitle(f'Distributions of distances between all neighbor solutions for {n_samples} samples.')
-        fig2.suptitle(f'Distributions of distances > {small:.1f} between neighbor solutions for {n_samples} samples.')
-        fig2.canvas.manager.set_window_title(f'Distributions of distance between neighbor solutions greater '
+        fig1 = plt.figure(figsize=(min(2.5 * n_cols, 8), min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
+        fig2 = plt.figure(figsize=(min(2.5 * n_cols, 8), min(mx_hight, 2 * n_rows)), dpi=self.dpi, tight_layout=True)
+        if n_samples > 1:
+            fig1.canvas.manager.set_window_title(f'Distributions of all distance between neighbor solutions.')
+            fig2.canvas.manager.set_window_title(f'Distributions of distance between neighbor solutions greater '
                                              f'than {small}.')
+            fig1.suptitle(f'Distributions of distances between all neighbor solutions for {n_samples} samples.')
+            fig2.suptitle(f'Distributions of distances > {small:.1f} between neighbor solutions for {n_samples} samples.')
         # cur_plot = cur_col = cur_row = 1   # counted from 1
         cur_plot = 1   # counted from 1
+        noSmall = True
         for i_sample, (itr, dist) in enumerate(distrAll.items()):
             n_pairs = len(dist)
             min_dist = dist[0]
@@ -435,25 +438,43 @@ class Plots:
                 dist2.pop(0)
                 n_rm += 1
             print(f'{n_rm} distances < {small:.1f} removed from the second distribution.')
+            if n_rm > 0:
+                noSmall = False
             n_pairs2 = len(dist2)
-            # min_dist2 = dist2[0]
+            min_dist2 = dist2[0]
 
             # plot two distributions of the sample (whole, and without small [defined in cfg] items)
             # print(f'Histogram 0: {itr= }, n_pairs {len(dist) }, min_dist {min_dist: .2e} max_dist {max_dist: .2e}')
             # print(f'Histogram 1: {itr= }, n_pairs {len(dist2) }, min_dist {min_dist2: .2e} max_dist {max_dist: .2e}')
             ax = fig1.add_subplot(n_rows, n_cols, cur_plot)
-            ax.hist(dist, bins=20, range=(0, int(max_dist) + 1), density=True, linewidth=0.5)
-            ax.set_title(f'Itr {itr}, maxDist {max_dist:.1f}, {n_pairs} neighbor-pairs', fontsize=6)
+            # ax.hist(dist, bins=20, range=(0, int(max_dist) + 1), density=True, linewidth=0.5)
+            ax.hist(dist, bins=20, range=(max(0, int(min_dist) - 1), int(max_dist) + 1), density=True, linewidth=0.5)
+            ax.set_title(f'Itr {itr}, Dist [{min_dist:.1f}, {max_dist:.1f}], {n_pairs} neighbor-pairs', fontsize=6)
+            kde = mlab.GaussianKDE(dist)
+            x = np.linspace(max(0., min_dist - 1.), max_dist + 1., 50)
+            y = kde(x)
+            ax.plot(x, y, color='k', linewidth=1.0)
+
+            #
             ax = fig2.add_subplot(n_rows, n_cols, cur_plot)
-            ax.hist(dist2, bins=20, range=(int(small), int(max_dist) + 1), density=True, linewidth=0.5)
-            ax.set_title(f'Itr {itr}, maxDist {max_dist:.1f}, {n_pairs2} neighbor-pairs', fontsize=6)
+            # ax.hist(dist2, bins=20, range=(int(small), int(max_dist) + 1), density=True, linewidth=0.5)
+            ax.hist(dist2, bins=20, range=(max(0, int(min_dist2) - 1), int(max_dist) + 1), density=True, linewidth=0.5)
+            # ax.set_title(f'Itr {itr}, maxDist {max_dist:.1f}, {n_pairs2} neighbor-pairs', fontsize=6)
+            ax.set_title(f'Itr {itr}, Dist [{min_dist2:.1f}, {max_dist:.1f}], {n_pairs2} neighbor-pairs', fontsize=6)
+            kde = mlab.GaussianKDE(dist2)
+            x = np.linspace(max(0, min_dist2 - 1.), max_dist + 1., 50)
+            y = kde(x)
+            ax.plot(x, y, color='k', linewidth=1.0)
 
             pass
             # plot next sample
             cur_plot += 1
         pass
-        self.figures[f'PFdistr0'] = fig1
-        self.figures[f'PFdistr1'] = fig2
+        if noSmall:
+            self.figures[f'PFdistr'] = fig1
+        else:
+            self.figures[f'PFdistr0'] = fig1
+            self.figures[f'PFdistr1'] = fig2
 
     def plot3D(self, only_centres=False):
         if self.n_crit < 3:  # just return for bi-criteria problem
