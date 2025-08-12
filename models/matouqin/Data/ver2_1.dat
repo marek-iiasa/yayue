@@ -1,5 +1,5 @@
 # data for Matouqin
-# two type of tanks
+# two type of hydrogen tanks
 
 param nHrs :=
 8760

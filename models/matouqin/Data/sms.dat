@@ -1,0 +1,175 @@
+# small group data for Matouqin sms
+# five time periods
+
+param nHrs :=
+5
+;
+
+param intv :=
+1
+;
+
+set R :=
+BESS
+CAESS
+HyESS
+;
+
+set E[CAESS] :=
+COMP
+;
+
+set E[HyESS] :=
+EL
+;
+
+set S[BESS] :=
+BAT
+;
+
+set S[CAESS] :=
+CAT
+;
+
+set S[HyESS] :=
+HT1
+HT2
+;
+
+set X[CAESS] :=
+AE
+;
+
+set X[HyESS] :=
+FC
+;
+
+param ePrice :=
+4.0
+;
+
+param eBprice :=
+2.400
+;
+
+param eSprice :=
+-0.001
+;
+
+param emxCap :=
+HyESS EL 5.0
+CAESS COMP 0.1
+;
+
+param e2x :=
+HyESS EL 0.17
+CAESS COMP 0.81
+;
+
+param eInv :=
+HyESS EL 2.12
+CAESS COMP 0.02
+;
+
+param eOMC :=
+HyESS EL 0.2
+CAESS COMP 0.0
+;
+
+param smxCap :=
+BESS BAT 0.1
+HyESS HT1 10.0
+HyESS HT2 5.0
+CAESS CAT 0.125
+;
+
+param e2s :=
+BESS BAT 0.0
+HyESS HT1 0.1
+HyESS HT2 0.1
+CAESS CAT 0.0
+;
+
+param mxsIn :=
+BESS BAT 0.05
+HyESS HT1 3.0
+HyESS HT2 1.0
+CAESS CAT 0.08
+;
+
+param mxsOut :=
+BESS BAT 0.05
+HyESS HT1 3.0
+HyESS HT2 1.0
+CAESS CAT 0.08
+;
+
+param sini :=
+BESS BAT 0.2
+HyESS HT1 0.2
+HyESS HT2 0.2
+CAESS CAT 0.2
+;
+
+param xCh :=
+BESS BAT 0.87
+HyESS HT1 1.0
+HyESS HT2 1.0
+CAESS CAT 1.0
+;
+
+param xDid :=
+BESS BAT 0.87
+HyESS HT1 1.0
+HyESS HT2 1.0
+CAESS CAT 1.0
+;
+
+param xRes :=
+BESS BAT 0.99
+HyESS HT1 1.0
+HyESS HT2 1.0
+CAESS CAT 1.0
+;
+
+param sInv :=
+BESS BAT 0.01
+HyESS HT1 0.08
+HyESS HT2 0.04
+CAESS CAT 0.02
+;
+
+param sOMC :=
+BESS BAT 0.0
+HyESS HT1 0.0
+HyESS HT2 0.0
+CAESS CAT 0.0
+;
+
+param xmxCap :=
+HyESS FC 0.1
+CAESS AE 0.1
+;
+
+param x2e :=
+HyESS FC 2.33
+CAESS AE 0.79
+;
+
+param xInv :=
+HyESS FC 0.1
+CAESS AE 0.02
+;
+
+param xOMC :=
+HyESS FC 0.0
+CAESS AE 0.0
+;
+
+param inflow :=
+0 19.50
+1 30.60
+2 34.50
+3 34.65
+4 34.25
+;
