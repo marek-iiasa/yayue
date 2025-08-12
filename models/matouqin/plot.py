@@ -37,8 +37,8 @@ def set_pgo_format():
     pgo_templ1 = pgo.layout.Template(
         layout=pgo.Layout(
             width=1000, height=800,
-            font=dict(family="Times New Roman", size=10, color="black"),
-            titlefont=dict(size=10),
+            font=dict(family="Times New Roman", size=12, color="black"),
+            titlefont=dict(size=12),
             xaxis=dict(showline=True, linecolor='black',
                        linewidth=1, mirror=True,
                        showgrid=False, showticklabels=True,
@@ -51,6 +51,8 @@ def set_pgo_format():
                        tickfont=dict(size=10),
                        title_standoff=12,
                        ),
+            legend=dict(font=dict(size=12),
+                        ),
             # legend=dict(x=0.325, y=0.98, traceorder="normal",
             #             font=dict(size=12),
             #             bgcolor="white",
@@ -72,8 +74,9 @@ def set_color(numbers):
         # light pink and purple
         # colors = ['#ffbeb4', '#b3c2ff']
 
-        # bule and pink
-        colors = ['#0c7bb3', '#f2bae8']
+        # blue and pink
+        # colors = ['#0c7bb3', '#f2bae8']
+        colors = ['#f2bae8', '#0c7bb3']     # pink and blue
 
         # orange and yellow
         # colors = ['#f9957f', '#f2f5d0']
@@ -398,7 +401,7 @@ class Plot:
         bal_df[bal_df < 1e-5] = 0
 
         spls = fin_df['splsCost'].iloc[0]
-        print(spls)
+        # print(spls)
         if spls > 0:
             fin_df['cost'] = fin_df['storCost'] + fin_df['balCost']
         else:
@@ -433,7 +436,7 @@ class Plot:
 
         # middle
         middle_labels = middle_df.columns.tolist()
-        print(middle_labels)
+        # print(middle_labels)
         middle_val = middle_df.iloc[0].tolist()
 
         # outer
@@ -574,19 +577,19 @@ class Plot:
         # hide labels with pct < 0.3%
         for w, at in zip(wedges3, autotexts3):
             frac = (w.theta2 - w.theta1) / 360.0
-            if frac < 0.001:
+            if frac < 0.003:
                 w.set_visible(False)
                 at.set_visible(False)
 
         vis_h = [w for w in outer_handles if w.get_visible()]
         vis_l = [lbl for w, lbl in zip(outer_handles, outer_labels) if w.get_visible()]
 
-        legend3 = ax.legend(vis_h[:3], vis_l[:3],
+        legend3 = ax.legend(vis_h[:2], vis_l[:2],
                             loc='upper left', bbox_to_anchor=(left + 0.4, btm),
                             ncol=1, frameon=False,
                             handlelength=1.0, handletextpad=0.3)
 
-        legend4 = ax.legend(vis_h[3:], vis_l[3:],
+        legend4 = ax.legend(vis_h[2:], vis_l[2:],
                             loc='upper left', bbox_to_anchor=(left + 0.65, btm),
                             ncol=max(1, math.ceil(len(vis_l) / 5)), frameon=False,
                             handlelength=1.0, handletextpad=0.3)
@@ -706,7 +709,7 @@ class Plot:
             supply = supply_h * 24
             avg_inflow = avg_h * 24
             p_avg_inflow = f'Average daily inflow = {avg_inflow:.0f} MWh'
-            p_supply = f'Daily supply = {supply:.0f} MWh'
+            p_supply = f'Daily outflow = {supply:.0f} MWh'
             print('step = daily')
 
         elif step == 'weekly':
@@ -938,13 +941,13 @@ class Plot:
         if step == 'hourly':
             agg_df = flow
             supply = supply_h
-            p_supply = f'Hourly supply = {supply:.0f} MWh'      # print text
+            p_supply = f'Hourly outflow = {supply:.1f} MWh'      # print text
             print('step = hourly')
 
         elif step == 'daily':
             agg_df = flow.resample('D').sum()       # aggregated hourly flow to daily
             supply = supply_h * 24
-            p_supply = f'Daily supply = {supply:.0f} MWh'
+            p_supply = f'Daily outflow = {supply:.0f} MWh'
             print('step = daily')
 
         elif step == 'weekly':
@@ -1030,7 +1033,7 @@ class Plot:
                            xanchor='left',  # starting from the left side of the x coordinate
                            )       # add text for supply
 
-        fig.update_yaxes(title_text=f'{step.capitalize()} supply (MWh) ',
+        fig.update_yaxes(title_text=f'{step.capitalize()} outflow (MWh) ',
                          range=[0, 1.2 * supply])
 
         # set layout
@@ -1054,9 +1057,17 @@ class Plot:
             # bargap=0,   # set the spacing between the bars
             # title='Flow overview',
             # legend_title='Variables',
-            legend=dict(yanchor='top', y=0.98, xanchor='left', x=0.78, orientation='h'),
+            legend=dict(font=dict(size=15), yanchor='top', y=0.98, xanchor='left', x=0.78, orientation='h'),
             plot_bgcolor='white',   # background color
             width=1400, height=500,
+            xaxis=dict(tickfont=dict(size=15),
+                       title_standoff=15,
+                       title_font=dict(size=18)
+                       ),
+            yaxis=dict(tickfont=dict(size=15),
+                       title_standoff=15,
+                       title_font=dict(size=18)
+                       ),
         )
 
         if fig_show:
@@ -1096,10 +1107,10 @@ class Plot:
         if step == 'hourly':
             agg_df = flow
             avg_inflow = avg_h
-            p_avg_inflow = f'Average hourly inflow = {avg_inflow:.0f} MWh'
+            p_avg_inflow = f'Average hourly inflow = {avg_inflow:.1f} MWh'
 
             supply = supply_h
-            p_supply = f'Hourly supply = {supply:.0f} MWh'
+            p_supply = f'Hourly outflow = {supply:.1f} MWh'
 
             print('step = hourly')
 
@@ -1109,7 +1120,7 @@ class Plot:
             p_avg_inflow = f'Average daily inflow = {avg_inflow:.0f} MWh'
 
             supply = supply_h * 24
-            p_supply = f'Daily supply = {supply:.0f} MWh'
+            p_supply = f'Daily outflow = {supply:.0f} MWh'
 
             print('step = daily')
 
@@ -1239,9 +1250,17 @@ class Plot:
             # bargap=0,   # set the spacing between the bars
             # title='Flow overview',
             # legend_title='Variables',
-            legend=dict(yanchor='top', y=0.98, xanchor='left', x=0.78, orientation='h'),
+            legend=dict(font=dict(size=15), yanchor='top', y=0.98, xanchor='left', x=0.78, orientation='h'),
             plot_bgcolor='white',   # background color
             width=1400, height=500,
+            xaxis=dict(tickfont=dict(size=15),
+                       title_standoff=15,
+                       title_font=dict(size=18)
+                       ),
+            yaxis=dict(tickfont=dict(size=15),
+                       title_standoff=15,
+                       title_font=dict(size=18)
+                       ),
         )
 
         if fig_show:
@@ -1253,6 +1272,7 @@ class Plot:
 
         print('Flow overview plotting finished \n'
               '--------------------------------')
+        print(fig.layout.legend)
 
     # ESS storage amount
     def plot_ESS_stor(self, start_dt, temp):
@@ -1321,7 +1341,7 @@ class Plot:
         xqe_c = 1
         charge_e = 0.87     # Charging efficiency of BESS
 
-        xins_h = xins.filter(like='H2ESS', axis=1)  # get r = HESS cols
+        xins_h = xins.filter(like='HyESS', axis=1)  # get r = HESS cols
         xins_c = xins.filter(like='CAESS', axis=1)  # get r = CAESS cols
         xins_e = xins.filter(like='BESS', axis=1)
 
@@ -1335,7 +1355,7 @@ class Plot:
         xins[hess_cols] = xins_h
         xins[bess_cols] = xins_e
 
-        xvol_h = xvol_new.filter(like='H2ESS', axis=1)       # get r = HESS cols
+        xvol_h = xvol_new.filter(like='HyESS', axis=1)       # get r = HESS cols
         xvol_c = xvol_new.filter(like='CAESS', axis=1)      # get r = CAESS cols
         xvol_e = xvol_new.filter(like='BESS', axis=1)
 
@@ -1384,7 +1404,6 @@ class Plot:
             linewidth = 0.3     # bars edge width
 
             # print(ess_names)
-
             # plot eInr
             bars_in = ax1.barh(
                 y_pos + (height + y_spac) / 2,  # bars on the top
@@ -1411,7 +1430,7 @@ class Plot:
                 ax1.text(
                     w + einr_tot.max() * 0.01,      # x_axis offset on the right
                     bar.get_y() + bar.get_height() / 2,     # y position
-                    f'{val:.0f}',
+                    f'{val:.1f}',
                     va='center',
                     ha='left'
                 )
@@ -1421,7 +1440,7 @@ class Plot:
                 ax1.text(
                     w + eoutr_tot.max() * 0.01,      # x_axis offset on the right
                     bar.get_y() + bar.get_height() / 2,     # y position
-                    f'{val:.0f}',
+                    f'{val:.1f}',
                     va='center',
                     ha='left'
                 )
@@ -1558,7 +1577,6 @@ class Plot:
             height = 0.25
             linewidth = 0.3
             seen = set()  # stor labels
-
             for i, s in enumerate(s_names):
                 label = s if s not in seen else None
                 vals = xins_table[s].values
@@ -1578,7 +1596,7 @@ class Plot:
                     ax2.text(
                         w + xins_table.max().max() * 0.01,      # x_axis offset on the right
                         bar.get_y() + bar.get_height() / 2,     # y position
-                        f'{val:.0f}',
+                        f'{val:.1f}',
                         va='center',
                         ha='left'
                     )
@@ -1648,7 +1666,7 @@ class Plot:
 
             ax2.axvline(0, color='gray', linewidth=0.8, linestyle='--')  # line x = 0
 
-            ax2.set_xlim(-1.6, 1.4)
+            # ax2.set_xlim(-1.6, 1.4)
             ax2.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))  # maximum 5 labels
             ax2.set_yticks(y_pos)
             ax2.set_yticklabels(xvol_mon.index)
@@ -1900,7 +1918,9 @@ class Plot:
 # ----------------------------------------------------------------
 if __name__ == '__main__':
     ppath = '.'
-    reslt_dir = f'{ppath}/Results/0.2cost/'        # repository of results
+    # reslt_dir = f'{ppath}/Results/base_new/'        # repository of results
+    reslt_dir = f'{ppath}/Results/'        # repository of results
+    # reslt_dir = f'{ppath}/Results/0.2cost/'  # repository of results
     figr_dir = f'{ppath}/Figures/'        # repository of figures
     # f_data = f'{path}/Data/dat1.dat'   # data file
     data_f = f'{ppath}/Local/Data/sms3_ex.dat'   # data file
@@ -1908,18 +1928,19 @@ if __name__ == '__main__':
 
     Fig = Plot(reslt_dir, figr_dir, data_f)
     # Fig.plot_finance()      # Finance overview, Income-Cost-Revenue
-    # Fig.plot_CS_3()         # Cost structure
+    Fig.plot_CS_3()         # Cost structure
     # # Fig.plot_cap_tab()      # Storage capacity table (Latex)
 
     # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
     # 'kaleido' is needed for fig_save: True
 
-    # Fig.plot_flow('daily', stdate, False, True, True)
+    # Fig.plot_flow('hourly', stdate, False, True, True)
     # Fig.plot_supply('daily', stdate, False, True, True)
     # Fig.plot_inflow('daily', stdate, False, True, True)
     # Fig.plot_supply('monthly', stdate, True, True, True)
     # Fig.plot_inflow('monthly', stdate, True, True, True)
-    Fig.plot_inflow('hourly', stdate, False, True, True)
+    # Fig.plot_inflow('hourly', stdate, False, True, True)
+    # Fig.plot_supply('hourly', stdate, False, True, True)
     # Fig.plot_ESS_stor(stdate, 'Annual')
     # Fig.plot_ESS_stor(stdate, 'Monthly')
 
