@@ -10,11 +10,13 @@ import os
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
 from inst import *
-from sms3 import *      # symbolic model specification
+from sms import *      # symbolic model specification
+# from sms4 import *
+# from sms5 import *
+# from sms6 import *
 # from dat_process import *  # data preprocessing
 from report import *    # report all variables and needed results for plotting
 from plot import *      # plot needed variables
-from stor_dur import *  # analyze storage duration
 
 
 def chk_sol(res):  # check status of the solution
@@ -34,6 +36,7 @@ def chk_sol(res):  # check status of the solution
 def driver():
     path = '.'
     data_dir = f'{path}/Data/'      # repository of data
+    # data_dir = f'{path}/Local/Data/'  # repository of data
     res_dir = f'{path}/Results/'    # repository of results
     fig_dir = f'{path}/Figures/'  # repository of figures
 
@@ -50,38 +53,40 @@ def driver():
     abst = SMS()    # initialize model class that generates model instance
 
     # prepare parameters
-    # data processing (if needed; if not, comment from
+    # data preprocessing: see dat_prep.py
 
-    # f_data = f'{data_dir}sms3_1.dat'           # small grout data for sms3.py
-    # f_data = f'{data_dir}sms3_CAES.dat'  # ESS with CAESS data for sms3.py
-    f_data = f'{data_dir}sms3_all.dat'  # small grout data for sms3.py
-
-    # data processing by Excel
-    # f_data_base = f'{dat_dir}Raw/dat_base.xlsx'       # original data from Excel
-    # f_data = f'{data_dir}dat_base.dat'                # prepare ample format file
-    # par = Params(dat_dir, f_data, af_name, 8760)  # prepare all model parameters or select certain time periods
-    # par.write_to_excel()      # write all parameters to Excel
+    f_data = f'{data_dir}sms_c1.dat'    # case1 data for sms.py
+    # f_data = f'{data_dir}sms_c2.dat'  # case2 data for sms.py
+    # f_data = f'{data_dir}sms4_1.dat'  # small group data for sms4.py
+    # f_data = f'{data_dir}sms4.dat'  # data for sms4.py
+    # f_data = f'{data_dir}sms6.dat'  # small group data for sms5.py
 
     model = inst(abst.m, f_data)      # create model
 
-    # ess = Storage(model)        # revise storage
-    # ess.revise()
+    # add energy storage systems (active when choosing ver2.py)
+    # ess = Storage(model)
+    # ess.set_ess()
 
     # print the model
     print(f'\nAnalysing instance of model {model.name}.')
     # model.pprint()    # print model var, params, constraints...
 
     # select solver
-    # print('\nsolving --------------------------------')
+    print('\nsolving --------------------------------')
 
     # cplex
     opt = pe.SolverFactory('cplex')  # cplex can be used as a solver
     results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
+    # gurobi, academic License
+    # opt = pe.SolverFactory('gurobi')
+    # opt.options['LogFile'] = f'{res_dir}gurobi.log'  # save log file
+    # results = opt.solve(model, tee=True)
+
     # glpk settings
     # opt = pe.SolverFactory('glpk')
-    # opt.options['log'] = f'{res_dir}glpk_log.txt'
-    # # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk
+    # # opt.options['log'] = f'{res_dir}glpk_log.txt'       # output log
+    # # opt.options['wmps'] = f'{res_dir}glpk.mps'  # glpk      # check model
     # results = opt.solve(model, tee=True)  # True to pipe output to the terminal
 
     # Gams settings
@@ -91,11 +96,8 @@ def driver():
     # use cplex through gams, save cplex's Kappa stats, analyze the numerical stability of the model.
 
     # other solvers
-    # opt = pe.SolverFactory('gurobi')
-    # opt.options['LogFile'] = f'{res_dir}gurobi.log'  # save log file
+    # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
     # results = opt.solve(model, tee=True)
-
-    # # opt = pe.SolverFactory('ipopt')  # solves both LP and NLP
 
     chk_sol(results)  # check the status of the solution
 
@@ -107,6 +109,11 @@ def driver():
     rep_vars = ['eNum', 'eCap', 'sNum', 'sCap', 'xNum', 'xCap', 'supply', 'revenue', 'income',
                 'storCost', 'invCost', 'OMC', 'balCost', 'splsCost', 'buyCost',
                 ]
+
+    # sms6.0
+    # rep_vars = ['eNum', 'eCap', 'sNum', 'sCap', 'xNum', 'xCap', 'pOut', 'revenue', 'income',
+    #             'storCost', 'invCost', 'OMC', 'balCost', 'splsCost', 'buyCost',
+    #             ]
     print(f'Values of the following variables will be extracted from the solution and stored in the df:\n{rep_vars}')
 
     rep = Report(model, res_dir, rep_vars)      # report results
@@ -122,7 +129,8 @@ def driver():
     plt_stor = ['rInv', 'rOMC']
     plt_bal = ['Spls', 'Buy']
     plt_cap = ['eNum', 'eCap', 'sNum', 'sCap', 'xNum', 'xCap']
-    plt_sup = ['supply', 'avg_inf', 'tot_eOut', 'tot_eInHess', 'tot_eOutHess', 'eSurplus', 'eBought']
+    # plt_sup = ['supply', 'avg_inf', 'tot_eOut', 'tot_eInHess', 'tot_eOutHess', 'eSurplus', 'eBought']
+    plt_sup = ['avg_inf', 'tot_eOut', 'tot_eInHess', 'tot_eOutHess', 'eSurplus', 'eBought']
     plt_flow = ['inflow', 'eOut', 'eInHess', 'eS', 'eOutHess', 'eB']  # only indexed by t
     plt_flow_dev = ['eInr', 'eOutr', 'eIne', 'eIns', 'xOute', 'xIns', 'xVol', 'xOuts', 'xInx', 'eOutx']
 
@@ -134,34 +142,38 @@ def driver():
     # rep.toCsv()     # store the extracted values in the csv file for plotting
 
     print(f'\n ESSs storage duration analysis begins -----------------------------------------')
-    sflow_file = 'flow_s.csv'
-    sdur_file = 'sDur.csv'
-    dur_df = stor_dur(res_dir, sflow_file)
-    ess_dur = sum_stor_dur(dur_df)
+    # sflow_file = 'flow_s.csv'
+
+    # sdur_file = 'sDur.csv'
+    # dur_df = stor_dur(res_dir, sflow_file)        # FIFO
+    # ess_dur = sum_stor_dur(dur_df)
+
+    # ess_dur = Mix_dur(res_dir, sflow_file)        # Mix
+    # print(ess_dur)
 
     # print(dur_df.head(5))
-    print(f'ESSs storage duration: {ess_dur}')
+    # print(f'ESSs storage duration: {ess_dur}')
+    #
+    # dur_df.to_csv(f'{res_dir}{sdur_file}', index=False)
+    # print(f'\nStorage duration time is stored in {res_dir}{sdur_file}.')
 
-    dur_df.to_csv(f'{res_dir}{sdur_file}', index=False)
-    print(f'\nStorage duration time is stored in {res_dir}{sdur_file}.')
-
-    print(f'\nPlotting begins ----------------------------------------------------------------')
-    fig = Plot(res_dir, fig_dir, f_data)
-    sdate = '2024-01-01 00:00'
-
-    fig.plot_finance()      # Finance overview, Income-Cost-Revenue
-    fig.plot_CS_3()         # Cost structure
-    # # fig.plot_cap_tab()      # Storage capacity table (Latex)
-
-    # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
-    # 'kaleido' is needed for fig_save: True
-    fig.plot_flow('daily', sdate, False, True, True)
-    # fig.plot_supply('daily', sdate, False, True, False)
-    # fig.plot_inflow('daily', sdate, False, True, False)
-    fig.plot_inflow('monthly', sdate, True, True, True)
-    fig.plot_ESS_stor(sdate, 'Annual')
-    fig.plot_ESS_stor(sdate, 'Monthly')
-
-    # Fig.plot_dev_flow(10, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
-
-    show_figs()  # show figures
+    # print(f'\nPlotting begins ----------------------------------------------------------------')
+    # fig = Plot(res_dir, fig_dir, f_data)
+    # sdate = '2024-01-01 00:00'
+    #
+    # fig.plot_finance()      # Finance overview, Income-Cost-Revenue
+    # fig.plot_CS_3()         # Cost structure
+    # # # fig.plot_cap_tab()      # Storage capacity table (Latex)
+    #
+    # # Flow overview, 'hourly', 'daily', 'weekly', 'monthly', 'original' flows; 'original' use for model test results
+    # # 'kaleido' is needed for fig_save: True
+    # fig.plot_flow('daily', sdate, False, True, True)
+    # # fig.plot_supply('daily', sdate, False, True, False)
+    # # fig.plot_inflow('daily', sdate, False, True, False)
+    # fig.plot_inflow('monthly', sdate, True, True, True)
+    # fig.plot_ESS_stor(sdate, 'Annual')
+    # fig.plot_ESS_stor(sdate, 'Monthly')
+    #
+    # # Fig.plot_dev_flow(10, 'week')  # Detailed flow of storage system, unit: 'day', 'week'
+    #
+    # show_figs()  # show figures
