@@ -1,6 +1,9 @@
 """
 sms(): returns the Symbolic model specification (SMS), i.e., the Abstract Model of the Matouqin model.
 All functions used in the m model are defined before mk_sms() to avoid warnings "m shadows name from outer scope".
+Mtq version 2.0 classifies energy  only supports configuration decisions for two ESSs: Battery and Hydrogen.
+The two ESSs have their own energy flow paths.
+Version 1.0 is a prototype of the Matouqin model versions.
 """
 
 import pyomo.environ as pe      # more robust than using import *
@@ -32,7 +35,7 @@ class Storage:
     def RiCstrs(self):
         @self.m.Constraint(self.m.Ri, self.m.T)              # total electricity to each storage system
         def eInsBalRi(mx, r, t):
-            return mx.eIns[r, t] == sum(mx.sInb[r, s, t] for s in mx.Sb)
+            return mx.eIns[r, t] == sum(mx.sInb[r, s, t] for (r, s) in mx.Pb)
 
         @self.m.Constraint(self.m.Pb, self.m.T)     # the actual amount of electricity will be stored
         def eIneBal(mx, r, s, t):
@@ -72,7 +75,7 @@ class Storage:
 
         @self.m.Constraint(self.m.Ri, self.m.T)               # the sum of outflows from the storage system
         def eOutsBalRi(mx, r, t):
-            return mx.eOuts[r, t] == sum(mx.sOutb[r, s, t] for s in mx.Sb)
+            return mx.eOuts[r, t] == sum(mx.sOutb[r, s, t] for (r, s) in mx.Pb)
 
         # relations defining auxiliary variables
         @self.m.Constraint(self.m.Pb)  # maximum electricity inflow for s-th bidirectional storage device
@@ -209,7 +212,7 @@ class Storage:
 # ----------------------------------------------------------------
 # noinspection PyTypeChecker
 def mk_sms():      # p: model parameters prepared in the Params class
-    m = pe.AbstractModel(name='Matouqin v. 0.1')   # instance of the concrete model
+    m = pe.AbstractModel(name='Matouqin v. 2.0')   # instance of the concrete model
     # print(f'Generating AbstractModel model for parameters (version: {p.ver}')
 
     # sets
