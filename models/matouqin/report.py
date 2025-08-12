@@ -303,7 +303,7 @@ class Report:
         if check:
             check_df = pd.DataFrame(check)
             check_df.to_csv(self.check_df_vars, index=False)
-            print(f'Store and release at the same time, please check csv file: {self.check_df_vars}')
+            print(f'HESS store and release at the same time, please check csv file: {self.check_df_vars}')
 
             # Check inflow and outflow of hydrogen tanks
             check_x = []
@@ -321,9 +321,9 @@ class Report:
             if check_x:
                 check_x = pd.DataFrame(check_x)
                 check_x.to_csv(self.check_df_ec, index=False)
-                print(f'Store and release energy carrier at the same time, please check csv file: {self.check_df_ec}')
+                print(f'Devices store and release energy at the same time, please check csv file: {self.check_df_ec}')
             else:
-                print(f'Hydrogen tank flows correct')
+                print(f'Inflow and outflow of storage devices are correct')
 
         else:
             print(f'Storage correct')
