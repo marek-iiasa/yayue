@@ -166,7 +166,9 @@ class Report:
                 d_item = item[2]    # dict with values of indexed var
                 for (ind, val) in d_item.items():
                     idx = f'{item[0]}_{ind}'
-                    new_row.update({idx: f'{val:.2e}'})
+                    # Unexpected type(s):(dict[str, str])Possible type(s):(SupportsKeysAndGetItem[str, int])(Iterable[tuple[str, int]])
+                    # noinspection PyTypeChecker
+                    new_row.update({idx: f'{val:.2e}'})     # supressed the above warning (the string-key is unique)
         self.sol_vars.append(new_row)   # append to the list of rows
 
     # generate and store dfs with info on criteria and the variables requested for report/plots

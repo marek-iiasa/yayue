@@ -17,7 +17,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
         self.cfg = mc.cfg
         self.cr = mc.cr       # objects of Crit class, each representing the corresponding criterion
         self.n_crit = mc.n_crit     # number of defined criteria == len(self.cr)
-        self.f_payoff = 'payoff.txt'     # file with payoff values
+        self.f_payoff = self.mc.opt('payoff', 'payoff.txt')     # file with payoff values
         self.stages = {'utop': 1, 'nad1': 2, 'nad2': 3, 'done': 4} # noqa
         self.cur_stage = None    # Load payOff table, if previously stored
         self.cur_cr = None  # cr_index of the criterion to be processed
@@ -141,7 +141,7 @@ class PayOff:   # payoff table: try to download, set A/R for computing, update N
             print(f'\nPayOff table provided; skipping its computation.')
         else:
             self.cur_stage = 1      # start with computing Utopia
-            print(f"\nFile '{self.f_payoff}' with the payoff table not available.")
+            print(f"\nPayoff table shall be computed: file '{self.f_payoff}') not available.")
 
     def prnPayOff(self, prn_only=False):   # store current values of utopia/nadir in a file for subsequent use
         # to create a dir: os.makedirs(dir_name, mode=0o755)

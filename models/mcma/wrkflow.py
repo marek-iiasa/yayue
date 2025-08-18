@@ -157,7 +157,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             if self.par_rep.neighSol.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
                 next_stage = 6
-        if self.cur_stage > 3 and self.par_rep.grid is not None:  # cur_stage kept at 2 for grid option
+        if self.cur_stage > 3 and self.par_rep.grid is not None:  # cur_stage kept at 2 for the grid option
             # pair =  self.par_rep.grid.getPair()
             if self.par_rep.grid.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')

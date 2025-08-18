@@ -10,6 +10,7 @@ from operator import itemgetter
 
 # noinspection SpellCheckingInspection
 class Grid:     # representation of the neighbors
+    # noinspection SpellCheckingInspection
     class aRay:
         def __init__(self, grid, seq, anch0, anch1):
             self.grid = grid
@@ -200,10 +201,12 @@ class Grid:     # representation of the neighbors
 
         # check which points/sols need to be skipped in order to have pairs of points belonging to each ray
         base0 = self.rays0[r0[0]]
-        base1 = self.rays0[r1[0]]
+        # noinspection PyTypeChecker
+        base1 = self.rays0[r1[0]]   # supressed (misleading?) warning (copied below); see similar stmt just above
+        # Unexpected type(s):(type[NoneType[Any]])Possible type(s):(SupportsIndex)(slice)
         nSol0 =  len(base0.idSols)
         nSol1 =  len(base1.idSols)
-        # todo: add handling different numbers of solutions, as well as different anchors, test on banson, gap 30
+        # todo: add handling different numbers of sols, as well as different anchors, test on benson, gap 30 (DONE)
         # assert nSol0 == nSol1, f'Grid::mkRays1(): different number of solutions ({nSol0=}, {nSol1=}) not handled yet.'
         assert r0[1] == r1[1], f'Grid::mkRays1(): different ray anchors ({r0[1]=}, {r1[1]=}) not handled yet.'
         # print('The two base-rays')
