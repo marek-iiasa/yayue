@@ -9,13 +9,40 @@ class Config:
     def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         self.f_sys = './../Sys/cfg_sys.yml'    # full path to the system config file
         self.f_usr = './cfg.yml'    # usr config
+        self.f_cfgLoc = './cfg.txt'    # alternative cfg-file location (optional)
         self.usrOptions = ''    # user-defined (read from self.f_user file) options
         self.data = None      # config data read from both Sys and usr config files
+        self.cfgLoc()
         self.rd_cfg(self.f_sys)
         self.rd_cfg(self.f_usr)   # usr_cfg is in the current dir
         # print(f'Configuration options read:\n\t{self.data}')
         self.chk_dirs()       # check the needed dirs
         # raise Exception('test stop')
+
+    def cfgLoc(self):       # use optional cfg-file location, if it is available
+        fLoc = self.f_cfgLoc
+        if not os.path.exists(fLoc):
+            print(f'Optional cfg-file specs file "{fLoc}" not found. Using the default: "{self.f_usr}"')
+            return
+        if os.path.exists(self.f_usr):
+            print(f'The cfg-file specs "{self.f_usr}" is ignored.')
+            pass
+        with open(fLoc, "r") as reader:
+            print(f"\nReading the cfg-file location from file '{fLoc}':")
+            for line in reader:     # only one line processed
+                line = line.rstrip("\n")
+                # print(f'line {line}') # noqa
+                words = line.split()
+                n_words = len(words)
+                assert n_words == 1, f'line {line} has {n_words} instead of the required one.'
+                fCfg = words[0]
+                if os.path.exists(fCfg):
+                    self.f_usr = fCfg
+                    # print(f"The analysis cfg will be read from file '{fLoc}':")
+                    return
+                else:
+                    raise FileNotFoundError(f"The specified cfg-file '{fCfg}' not found.")
+        raise Exception(f"Empty file '{fLoc}'.")
 
     def rd_cfg(self, f_name):       # upload yaml config file
         if f_name == self.f_sys:
