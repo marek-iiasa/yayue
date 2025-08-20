@@ -40,8 +40,12 @@ class Plots:
         # self.def_colors = ['blue', 'orange', 'lime', 'red', 'fuchsia', ...blue is hardly visible with the black border
         self.def_colors = ['deepskyblue', 'orange', 'lime', 'red', 'fuchsia',
                            'brown', 'pink', 'green', 'cyan', 'yellow']
-        # self.def_markers = ['o', 'v', '^', 's', 'h', 'D']   # 'o' is hardly visible amongst small dots
-        self.def_markers = ['D', 'h', 's', 'v', '^', '<']
+        if self.mc.opt('nClust', None) is not None:
+            # self.def_markers = ['o', 'v', '^', 's', 'h', 'D']   # 'o' is hardly visible amongst small dots
+            self.def_markers = ['D', 'h', 's', 'v', '^', '<']
+        else:
+            self.def_markers = ['o']   # only one marker needed, if no clustering requested
+            pass
         self.sol_colors = None
         self.medoids = None
         self.figures = {}  # placeholder for all plots, the keys might be names of the corresponding functions

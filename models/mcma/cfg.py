@@ -8,7 +8,7 @@ from yaml.loader import SafeLoader
 class Config:
     def __init__(self):     # current wdir is the ana_dir; cfg.yml must be located here
         self.f_sys = './../Sys/cfg_sys.yml'    # full path to the system config file
-        self.f_usr = './cfg.yml'    # usr config
+        self.f_usr = './cfg.yml'    # usr config (ignored, if optional location provided)
         self.f_cfgLoc = './cfg.txt'    # alternative cfg-file location (optional)
         self.usrOptions = ''    # user-defined (read from self.f_user file) options
         self.data = None      # config data read from both Sys and usr config files
