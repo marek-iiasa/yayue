@@ -440,6 +440,10 @@ class Plots:
             min_dist = dist[0]
             max_dist = dist[-1]
             print(f'sample {i_sample}, {itr = }, {n_pairs = }, min_dist {min_dist:.2e}, max_dist {max_dist:.2e}')
+            rngDiff = abs(max_dist - min_dist)
+            if rngDiff < 0.01:
+                print(f'Skipping distance plot generation for small distances range: {rngDiff:.2e} -------------------')
+                continue
             dist2 = dist.copy()     # small distances will be removed from this list
             n_rm = 0
             while dist2[0] < small:
