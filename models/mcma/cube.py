@@ -104,7 +104,10 @@ class Cubes:     # collection of aCubes
             self.small += 1
 
     def is_empty(self, cube):    # return True if no solution is inside the cube
-        if not cube.empty:
+        # if not cube.empty:    (wrong: cube.empty might be None)
+        # Wrong warning: Expression can be simplified (as commented above); cannot because cube.empty might be None
+        # noinspection PySimplifyBooleanCheck
+        if cube.empty == False:
             return False
         for s in self.sols:     # check, if any solution is in the c-cube
             if s.itr_id == cube.s1.itr_id or s.itr_id == cube.s2.itr_id:  # skip solutions defining the cube
