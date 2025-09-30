@@ -495,7 +495,7 @@ class Plots:
         n_cols = n_rows = int(np.ceil(np.sqrt(n_plots)))
 
         fig2 = plt.figure(figsize=(3.5 * n_cols, 2.5 * n_rows), dpi=self.dpi)
-        fig2.set_facecolor('#EAEAF2')
+        fig2.set_facecolor('#FFFFFF')
         fig2.canvas.manager.set_window_title(
             f'Criteria achievements for {self.n_sol} solutions.')  # window title
         gs = GridSpec(n_rows, n_cols, fig2, hspace=0.05, wspace=0.05,
@@ -504,6 +504,7 @@ class Plots:
         for ax_idx, (i, j, k) in enumerate(combinations(range(self.n_crit), r=3)):
             # ax = fig2.add_subplot(n_rows, n_cols, ax_idx, projection='3d')
             ax = fig2.add_subplot(gs[ax_idx], projection='3d', computed_zorder=False)
+            ax.set_facecolor('#FFFFFF')
             ax.set_xlabel(self.cr_name[i])
             ax.set_ylabel(self.cr_name[j])
             ax.set_zlabel(self.cr_name[k])
