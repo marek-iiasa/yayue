@@ -508,21 +508,41 @@ class Plots:
             ax.set_xlabel(self.cr_name[i])
             ax.set_ylabel(self.cr_name[j])
             ax.set_zlabel(self.cr_name[k])
+
+            if self.wflow.mc.opt('mx3dLims', False):
+                ax.set_xlim(0, 100)
+                ax.set_ylim(0, 100)
+                ax.set_zlim(0, 100)
             # noinspection PyArgumentList
             # warning suppressed here (complains on unfilled params x and y)
+            mxStemPlot = self.wflow.mc.opt('mxStemPlot', 0)
             if not only_centres:
                 if self.wflow.cluster:
                     data_to_draw = self.df.groupby(by=self.wflow.cluster.sol2cl)
                 else:
                     data_to_draw = [[0, self.df]]
                 for clst, data in data_to_draw:
-                    ax.scatter(xs=data[self.cr_col[i]],
-                               ys=data[self.cr_col[j]],
-                               zs=data[self.cr_col[k]],
+                    xs = data[self.cr_col[i]]
+                    ys = data[self.cr_col[j]]
+                    zs = data[self.cr_col[k]]
+                    ax.scatter(xs=xs,
+                               ys=ys,
+                               zs=zs,
                                c=self.sol_colors[clst % len(self.sol_colors)],
                                s=self.dotSize,
                                marker=self.def_markers[clst % len(self.def_markers)],
                                zorder=4)
+                    if mxStemPlot > 0:
+                        for idx, seq in enumerate(xs.index):
+                            if seq > mxStemPlot:
+                                break
+                            ax.plot(
+                                xs=[xs.iloc[idx], xs.iloc[idx]],
+                                ys=[ys.iloc[idx], ys.iloc[idx]],
+                                zs=[0, zs.iloc[idx]],
+                                linewidth=0.7,
+                                color=self.sol_colors[clst % len(self.sol_colors)]
+                            )
 
             if self.medoids is not None:
                 for clst, medoid in enumerate(self.medoids):
