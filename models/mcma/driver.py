@@ -101,6 +101,7 @@ def driver(cfg):
             # results = opt.solve(m, tee=True)
             results = opt.solve(m, tee=False)
             # todo: clarify exception (uncomment next line) while loading the results
+            #   maybe m1 should be replaced by m? Also consider to move this after checking optimality
             # m1.load(results)  # Loading solution into results object
             wflow.mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
 
