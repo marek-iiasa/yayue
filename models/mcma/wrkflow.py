@@ -104,6 +104,15 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             is_pareto = self.par_rep.addSol(self.n_itr)     # store here to get info, it is_Pareto
             all_done = self.corner.next_sol(is_pareto, self.n_itr)  # store info on corners (only by unique Pareto)
             if all_done:
+                # add new
+                # alive_ids = {s.itr_id for s in self.par_rep.sols}
+                # upd_a_corner, upd_s_corner, remove_ids = self.corner.prune(alive_ids)
+                # print(f'sol_id {remove_ids} removed from corners.')
+                # print(f'\nPareto-set {len(upd_a_corner)} (unique) corners after removed pruned solutions:        ')
+                # for (i, cor) in enumerate(upd_a_corner):
+                #     print(f'corner {i}, sol_id {upd_s_corner[i]}:  ({cor})')
+                # print(f'Switch to computing Pareto-front representation based on cuboids. ===============================')
+
                 if self.cfg.get('neutral') is True:
                     next_stage = 3
                 else:

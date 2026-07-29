@@ -106,7 +106,7 @@ class Corners:
                     cor = f'{cr.name}: {cr.a_val:.1f}'
             self.a_corners.append(cor)
             self.s_corners.append(n_itr)
-            # todo: add solution id
+            # cotodo: add solution id
         else:
             print('Non-Pareto solution ignored in corners definitions.')
         if self.all_done:
@@ -120,3 +120,24 @@ class Corners:
         print(f'n_crit = {self.n_crit}, n_corners = {len(self.corners)}')
         for i, cor in enumerate(self.corners):
             print(f'Corner {i}: {cor}')
+
+    # def prune(self, alive_ids):
+    #     """Keep only corners whose solution ids are still alive in ParRep.sols."""
+    #     new_a = []
+    #     new_s = []
+    #     removed = []
+    #
+    #     for cor, sid in zip(self.a_corners, self.s_corners):
+    #         if sid in alive_ids:
+    #             new_a.append(cor)
+    #             new_s.append(sid)
+    #         else:
+    #             removed.append(sid)
+    #
+    #     self.a_corners = new_a
+    #     self.s_corners = new_s
+    #
+    #     if self.verb > 1 and removed:
+    #         print(f'Corners::prune(): removed stale corner ids: {removed}')
+    #
+    #     return new_a, new_s, removed

@@ -38,7 +38,8 @@ class Grid:     # representation of the neighbors
             for s in self.sols:
                 if s.itr_id == idSol:
                    return s
-            raise Exception(f'Grid::getSol() - solution with id {id} not found.')
+            # raise Exception(f'Grid::getSol() - solution with id {id} not found.')
+            raise Exception(f'Grid::getSol() - solution with id {idSol} not found.')
 
         def dist(self, id1, id2):  # return the L^inf distance between the sol-pairs
             p1 = self.getSol(id1)
@@ -46,14 +47,24 @@ class Grid:     # representation of the neighbors
             val = 0.
             for i in range(self.grid.mc.n_crit):
                 val = max(val, abs(p1.a_vals[i] - p2.a_vals[i]))
-            # print(f'p1 = {id1}, p2 = {id1}, L^inf dist = {val:.2f}')
+            # print(f'p1 = {id1}, p2 = {id2}, L^inf dist = {val:.2f}')
             return val
 
         def mkPairs(self):
+            # alive_ids = {s.itr_id for s in self.sols}
+            # # remove stale ids that are no longer in current ParRep.sols
+            # self.idSols = [sid for sid in self.idSols if sid in alive_ids]
+
             idBase = self.anch0   # base is the anchor with the lowest id
             # if self.anch1 < idBase:   # no longer needed: ids sorted by the ctor
             #     idBase = self.anch1
+
+            if idBase not in self.idSols:
+                self.is_done = True     # deactivate ray
+                print(f'Grid::mkPairs(): base id {idBase} not in idSols; ray[{self.seq}] disabled.')
+                return False
             assert idBase in self.idSols, f'Grid::mkPairs(): solution with id {idBase} not found'
+
             dist = []   # distances from the base, used for sorting sols
             for idS in self.idSols:
                 d = self.dist(idBase, idS)
@@ -348,6 +359,12 @@ class Grid:     # representation of the neighbors
             id1 = item[1]
             diff = item[2]
             seq_ray = item[3]
+            #
+            # alive_ids = {s.itr_id for s in self.sols}
+            # if id0 not in alive_ids or id1 not in alive_ids:    # skip disabled pairs, at least one sol in pairs has been removed from self.sols
+            #     print(f'Grid::selCand(): stale pair ({id0}, {id1}) skipped.')
+            #     continue
+
             is_used = self.chk([id0, id1])
             if is_used:     # should not happen, but just in case...
                 # raise Exception(f'Grid::selCand() - pair of sols ({id0}, {id1}) was already used.')

@@ -371,6 +371,11 @@ class ParRep:     # representation of the Pareto set
                     break
             if is_pareto:
                 self.sols.append(new_sol)   # add to self.sols
+
+                # for s2 in toPrune:  # remove dominated solutions from self.sols
+                #     print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
+                #     self.sols.remove(s2)
+
                 if self.cfg.get('verb') > 1:
                     print(f'Solution {itr_id = } added to ParRep. There are {len(self.sols)} unique Pareto solutions.')
                 if self.mc.opt('mCube', False):
@@ -406,6 +411,7 @@ class ParRep:     # representation of the Pareto set
                     else:
                         pass    # do nothing before finishing Corners and neutral solution
                 pass
+            #
             for s2 in toPrune:   # remove dominated solutions from self.sols
                 print(f'\tsolution[{s2.itr_id}] dominated by solution[{itr_id}] removed from self.sols.')
                 self.sols.remove(s2)
