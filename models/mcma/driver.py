@@ -82,6 +82,27 @@ def driver(cfg):
 
         m = pe.ConcreteModel()  # model instance to be composed of two blocks: (1) core model and (2) mc_part
         m.add_component('core_model', m1)  # m.m1 = m1  assign works but (due to warning) replaced by add_component()
+    #    for c in m.core_model.component_objects(pe.Constraint, active=True):
+            #for idx in c:
+                #con = c[idx]
+                #try:
+                    #con.to_bounded_expression(True)
+                #except Exception:
+                    #print(f"OFFENDING: {con.name}  nargs={len(con.expr.args)}  type={type(con.expr)}")
+                    #print(f"  expr: {con.expr}")
+        for c in m.core_model.component_objects(pe.Constraint, active=True):
+            for idx in c:
+                con = c[idx]
+                print(f"--- {con.name}")
+                print(f"    type(con)      = {type(con)}")
+                print(f"    type(con.expr) = {type(con.expr)}")
+                print(f"    con.expr       = {con.expr}")
+                print(f"    nargs          = {len(con.expr.args)}")
+                for attr in ('lower', 'upper', 'body', 'equality'):
+                    try:
+                        print(f"    con.{attr:9s} = {getattr(con, attr)}")
+                    except Exception as e:
+                        print(f"    con.{attr:9s} -> {e!r}")
         mc_gen = McMod(wflow, m1)  # McMod ctor (the MC-part model, i.e. the Achievement Function of MCMA)
         mc_part = mc_gen.mc_itr()   # concrete model of the MC-part (based on the current preferences)
         if mc_part is None:
