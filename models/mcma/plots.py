@@ -12,10 +12,20 @@ import matplotlib as mpl
 # from matplotlib.colors import ListedColormap
 # from matplotlib.ticker import LinearLocator
 import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
 from .plots2 import InteractiveParallel
 
 # import mplcursors (for interactive plots, currently not used)
 sns.set()  # settings for seaborn plotting style
+
+# matplotlib marker -> plotly 3D symbol (plotly 3D supports only: circle, square, diamond, cross, x and their -open)
+MPL2PLOTLY_MARKER = {
+    'o': 'circle', '.': 'circle', ',': 'circle',
+    's': 'square', 'D': 'diamond', 'd': 'diamond',
+    'x': 'x', 'X': 'x', '+': 'cross', 'P': 'cross',
+    'h': 'circle-open', '^': 'diamond-open', 'v': 'square-open', '<': 'x', '*': 'circle-open',
+}
 
 
 # todo: Horizontal size of all plots should not be larger than the A4 paper width minus 20mm
@@ -595,3 +605,151 @@ class Plots:
             self.figures['centres3D'] = fig2
         else:
             self.figures['plot3D'] = fig2
+
+        if self.wflow.mc.opt('plot_html', 0):
+            self.plot3D_html(only_centres=only_centres)
+
+    def plot3D_html(self, only_centres=False):
+        """Interactive (rotatable) 3D plot saved to HTML with plotly; only for exactly 3 criteria."""
+        if self.n_crit != 3:
+            print(f'Plots::plot3D_html(): implemented only for 3 criteria (problem has {self.n_crit}), '
+                  f'HTML plot not generated.')
+            return None
+
+        i, j, k = 0, 1, 2
+        xc, yc, zc = self.cr_col[i], self.cr_col[j], self.cr_col[k]
+        ax_labels = {xc: self.cr_name[i], yc: self.cr_name[j], zc: self.cr_name[k]}
+
+        def color(clst):
+            return mpl.colors.to_hex(self.sol_colors[clst % len(self.sol_colors)])
+
+        def symbol(clst):
+            return MPL2PLOTLY_MARKER.get(self.def_markers[clst % len(self.def_markers)], 'circle')
+
+        def label(clst):
+            return f'Cluster {clst}' if self.wflow.cluster else 'Solutions'
+
+        # cluster id of each solution (the same groups as in plot3D)
+        df = self.df.copy()
+        df['_cl'] = 0
+        if self.wflow.cluster:
+            for clst, data in self.df.groupby(by=self.wflow.cluster.sol2cl):
+                df.loc[data.index, '_cl'] = clst
+        df['_cl'] = df['_cl'].astype(int)
+        clusters = sorted(df['_cl'].unique())
+        df['Cluster'] = df['_cl'].map(label)
+        df['Solution'] = self.seq.astype(str)    # shown on hover
+
+        # options (as in plot3D)
+        mxStemPlot = self.wflow.mc.opt('mxStemPlot', 0)
+        mxLabelPlot = self.wflow.mc.opt('mxLabelPlot', 0)
+        mxCubePlot = 0 if only_centres else self.mc.opt('mxCubePlot', 0)
+
+        # sizes: matplotlib s is area [pt^2], plotly size is diameter [px]
+        dot = max(2., float(np.sqrt(self.dotSize)))
+        med = max(5., float(np.sqrt(min(25 * self.dotSize, 60))) + 2.)
+
+        # solutions (plotly.express)
+        if only_centres:
+            fig = go.Figure()
+        else:
+            fig = px.scatter_3d(
+                df, x=xc, y=yc, z=zc, color='Cluster', symbol='Cluster',
+                color_discrete_map={label(c): color(c) for c in clusters},
+                symbol_map={label(c): symbol(c) for c in clusters},
+                category_orders={'Cluster': [label(c) for c in clusters]},
+                hover_name='Solution', hover_data={'Cluster': False},
+                labels=ax_labels)
+            fig.update_traces(marker=dict(size=dot, line=dict(width=0)))
+            for tr in fig.data:
+                tr.legendgroup = tr.name
+
+            # stems (vertical lines from z=0 to the point)
+            if mxStemPlot > 0:
+                for c in clusters:
+                    data = df[df['_cl'] == c]
+                    sx, sy, sz = [], [], []
+                    for seq, x, y, z in zip(data.index, data[xc], data[yc], data[zc]):
+                        if seq > mxStemPlot:
+                            break
+                        sx += [x, x, None]
+                        sy += [y, y, None]
+                        sz += [0, z, None]
+                    if sx:
+                        fig.add_trace(go.Scatter3d(
+                            x=sx, y=sy, z=sz, mode='lines',
+                            line=dict(color=color(c), width=2),
+                            legendgroup=label(c), showlegend=False, hoverinfo='skip'))
+
+        # medoids (cluster centres)
+        if self.medoids is not None:
+            for clst, medoid in enumerate(self.medoids):
+                fig.add_trace(go.Scatter3d(
+                    x=[medoid[i]], y=[medoid[j]], z=[medoid[k]], mode='markers',
+                    marker=dict(size=med, color=color(clst), symbol=symbol(clst),
+                                line=dict(color='black', width=1)),
+                    name=f'Medoid {clst}', legendgroup=label(clst),
+                    hovertemplate=f'Medoid {clst}<br>{self.cr_name[i]}=%{{x:.2f}}<br>'
+                                  f'{self.cr_name[j]}=%{{y:.2f}}<br>{self.cr_name[k]}=%{{z:.2f}}<extra></extra>'))
+
+        # labels of the first mxLabelPlot solutions
+        n_lab = min(mxLabelPlot, len(self.seq))
+        if n_lab > 0:
+            sub = self.df.iloc[:n_lab]
+            fig.add_trace(go.Scatter3d(
+                x=sub[xc] + 1, y=sub[yc] + 1, z=sub[zc] + 1, mode='text',
+                text=[str(s) for s in list(self.seq)[:n_lab]],
+                name='Labels', showlegend=True, hoverinfo='skip'))
+
+        # cubes (aspiration/reservation), black: used, red: not used
+        cube_lines = {True: ([], [], []), False: ([], [], [])}
+        for idx, cube in self.wflow.par_rep.cubes.all_cubes.items():
+            if idx >= mxCubePlot:
+                break
+            p1 = [cube.s1.a_vals[v] for v in [i, j, k]]
+            p2 = [cube.s2.a_vals[v] for v in [i, j, k]]
+            if not (p1 and p2):
+                continue
+            bottom = [(p1[0], p1[1], p1[2]), (p1[0], p2[1], p1[2]), (p2[0], p2[1], p1[2]), (p2[0], p1[1], p1[2]),
+                      (p1[0], p1[1], p1[2])]
+            top = [(p1[0], p1[1], p2[2]), (p1[0], p2[1], p2[2]), (p2[0], p2[1], p2[2]), (p2[0], p1[1], p2[2]),
+                   (p1[0], p1[1], p2[2])]
+            X, Y, Z = cube_lines[bool(cube.used)]
+            for seg in [bottom, top] + [[b, t] for b, t in zip(bottom, top)]:
+                for x, y, z in seg:
+                    X.append(x)
+                    Y.append(y)
+                    Z.append(z)
+                X.append(None)  # break between line segments
+                Y.append(None)
+                Z.append(None)
+        for used, (X, Y, Z) in cube_lines.items():
+            if X:
+                fig.add_trace(go.Scatter3d(
+                    x=X, y=Y, z=Z, mode='lines',
+                    line=dict(color='black' if used else 'red', width=2),
+                    name='Cubes used' if used else 'Cubes not used', hoverinfo='skip'))
+
+        # axes, camera (as ax.view_init(elev=15, azim=45)) and layout
+        def axis(title):
+            a = dict(title=title, backgroundcolor='white', gridcolor='lightgrey', showbackground=True)
+            if self.wflow.mc.opt('mx3dLims', False):
+                a['range'] = [0, 100]
+            return a
+
+        elev, azim, r = np.radians(15), np.radians(45), 2.0
+        fig.update_layout(
+            title=f'Criteria achievements for {self.n_sol} solutions.',
+            scene=dict(xaxis=axis(self.cr_name[i]), yaxis=axis(self.cr_name[j]), zaxis=axis(self.cr_name[k]),
+                       aspectmode='cube',
+                       camera=dict(eye=dict(x=r * np.cos(elev) * np.cos(azim),
+                                            y=r * np.cos(elev) * np.sin(azim),
+                                            z=r * np.sin(elev)))),
+            legend=dict(itemsizing='constant', title=None),
+            margin=dict(l=0, r=0, t=40, b=0), paper_bgcolor='white')
+
+        name = 'centres3D' if only_centres else 'plot3D'
+        filename = f'{self.dir_name}{name}.html'
+        fig.write_html(filename, include_plotlyjs=True)
+        print(f'Plot "{name}" is saved to "{filename}".')
+        return fig
