@@ -15,10 +15,13 @@ class PWL:  # representation of caf(x) for i-th criterion
         self.is_max = self.cr.mult == 1  # 1 for max-crit, -1 for min.
         self.is_asp = self.cr.asp is not None   # Asp. defined?
         self.is_res = self.cr.res is not None   # Res. defined?
-        self.is_nadir = self.cr.nadir is not None   # Nadir defined?
+        # EXPAND: in the expansion stage the PWL uses the lowered Nadir N' (cr.nadir_pwl), so that the
+        # reservation of a probe may lie below the current Nadir approximation
+        self.nadir = self.cr.nadir if getattr(self.cr, 'nadir_pwl', None) is None else self.cr.nadir_pwl
+        self.is_nadir = self.nadir is not None   # Nadir defined?
         self.verb = verb
         self.asp_val = self.cr.utopia
-        self.res_val = self.cr.nadir
+        self.res_val = self.nadir    # EXPAND: was self.cr.nadir
         self.up_seg = False   # if True, then generate up-PWL segment
         self.lo_seg = False   # if True, then generate lo-PWL segment
         self.chk_ok = self.chk_param()
@@ -38,7 +41,7 @@ class PWL:  # representation of caf(x) for i-th criterion
         assert self.is_res or self.is_nadir, f'Criterion {self.cr_name}: neither reservation nor nadir defined.'
 
         if self.is_nadir:
-            maxVal = max(abs(self.cr.utopia), (abs(self.cr.nadir)))  # value used as basis for min-differences
+            maxVal = max(abs(self.cr.utopia), (abs(self.nadir)))  # value used as basis for min-differences
         else:
             maxVal = max(abs(self.cr.utopia), (abs(self.cr.res)))  # value used as basis for min-differences
         minDiff = self.mc.minDiff * maxVal
@@ -57,14 +60,14 @@ class PWL:  # representation of caf(x) for i-th criterion
 
         # check if N (set in ctor) can be replaced by the provided R
         if self.is_res and self.is_nadir:
-            if abs(self.cr.nadir - self.cr.res) > minDiff:
-                assert self.cr.pwlBetter(self.cr.res, self.cr.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
-                f' R {self.cr.res:.2e} is worse than N {self.cr.nadir:.2e}.'
+            if abs(self.nadir - self.cr.res) > minDiff:
+                assert self.cr.pwlBetter(self.cr.res, self.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
+                f' R {self.cr.res:.2e} is worse than N {self.nadir:.2e}.'
                 self.res_val = self.cr.res
                 self.lo_seg = True
             else:
                 if self.verb > 1:
-                    print(f'crit {self.cr_name}: ignoring R {self.cr.res:.2e} as too close to N {self.cr.nadir:.2e}. '
+                    print(f'crit {self.cr_name}: ignoring R {self.cr.res:.2e} as too close to N {self.nadir:.2e}. '
                           f'N used as R.')
                 self.is_res = False     # ignore R, too close to N
 

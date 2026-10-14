@@ -74,7 +74,11 @@ class Report:
         if self.wflow.cur_stage > 1:   # check, if crit-vals are within U/N range (only after the PayOff tab is avail.)
             in_range = self.wflow.in_range()
             if not in_range:
-                return in_range
+                if self.wflow.cur_stage == 7:   # EXPAND: update the Nadir without restarting the analysis
+                    self.wflow.expand.upd_nadir()
+                    in_range = True
+                else:
+                    return in_range
 
         # store crit values, also CAF for wflow.cur_stage > 1 (except of PayOff comp.)
         self.mc.critVal(cri_val)
@@ -111,7 +115,7 @@ class Report:
             if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                 new_row.update({self.cols[cur_col]: asp})
             else:
-                new_row.update({self.cols[cur_col]: crit.val2ach(asp)})
+                new_row.update({self.cols[cur_col]: crit.val2ach(asp, warn=False)})  # EXPAND: warn
             cur_col += 1
             if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                 new_row.update({self.cols[cur_col]: round(crit.val, 1)})
@@ -123,7 +127,7 @@ class Report:
                 if self.wflow.cur_stage < 2:  # cannot calculate achievements before PayOff is completed
                     res = round(res, 1)
                 else:
-                    res = round(crit.val2ach(res), 1)
+                    res = round(crit.val2ach(res, warn=False), 1)  # EXPAND: R may be below N in stage 7
             new_row.update({self.cols[cur_col]: res})
             cur_col += 1
             new_row.update({self.cols[cur_col]: crit.nadir})
@@ -178,6 +182,8 @@ class Report:
             return
 
         self.wflow.par_rep.summary()    # prepare df_sol (solutions: itr, crit_val, cafs, info)
+        if self.wflow.expand is not None:   # EXPAND: summary and log of the expansion stage
+            self.wflow.expand.summary(self.rep_dir)
         # print(f'\nResults of {self.cur_itr} iters added to results of {self.prev_itr} previously made.')
         self.itr_df.to_csv(self.f_iters, index=True)
         print(f'\nCriteria attributes at each iteration are stored in the DataFrame "{self.f_iters}" file.')

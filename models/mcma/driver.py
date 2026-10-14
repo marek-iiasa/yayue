@@ -120,12 +120,18 @@ def driver(cfg):
             # solve the model instance composed of two blocks: (1) core model m1, (2) MC-part (Achievement Function)
             # print('\nsolving --------------------------------')
             # results = opt.solve(m, tee=True)
+            # EXPAND: in the expansion stage the duals of the link constraints define a supporting hyperplane
+            get_duals = i_stage == 7 and wflow.expand is not None and wflow.expand.want_duals()
+            if get_duals:
+                m.dual = pe.Suffix(direction=pe.Suffix.IMPORT)
             results = opt.solve(m, tee=False)
             # todo: clarify exception (uncomment next line) while loading the results
             #   maybe m1 should be replaced by m? Also consider to move this after checking optimality
             # m1.load(results)  # Loading solution into results object
             wflow.mc.is_opt = chk_sol(results)  # solution status: True, if optimal, False otherwise
-
+            wflow.link_duals = None
+            if get_duals and wflow.mc.is_opt:
+                wflow.link_duals = [m.dual.get(mc_part.xLink[i], None) for i in mc_part.C]
         # print('processing solution ----')
         if wflow.mc.is_opt:
             if n_iter == 7:

@@ -12,6 +12,7 @@ from .corners import Corners
 from .par_repr import ParRep
 from .neigh import Neigh
 from .grid import Grid
+from .expand import ParExpand  # EXPAND: expansion stage of the Pareto-front representation
 
 
 # noinspection SpellCheckingInspection
@@ -28,7 +29,10 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.cluster = None  # (optional) cluster-object of solutions
         self.grid = None
         #
-        self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6} # noqa
+        self.stages = {'payoff': 1, 'corners': 2, 'neutral': 3, 'parfront': 4, 'reset': 5, 'end': 6,
+                       'expand': 7}  # noqa  # EXPAND: stage 7
+        self.expand = None      # EXPAND: ParExpand object (created at the end of stage 4)
+        self.link_duals = None  # EXPAND: duals of the link constraints of the last solution (set by driver)
         if self.payoff.done():
             # self.rep = Report(self, m1)  # Report ctor
             self.mc.scale()  # (re)define scales for criteria values
@@ -58,15 +62,33 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.par_rep.pref(True)     # True implies AR for neutral solution
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 4:     # continue Pareto front
-            self.par_rep.pref()     # the default arg False implies AR from: either a selected cube or usr-defined
+            cube_itr = self.cfg.get('cubeIter')   # EXPAND: optional limit of iterations before the expansion
+            if cube_itr is not None and n_itr >= cube_itr:
+                print(f'\nINFO: cubeIter = {cube_itr} iterations reached; ending the cube stage.')
+                self.end_parfront()
+            else:
+                self.par_rep.pref()     # the default arg False implies AR from: either a selected cube or usr-defined
             # raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 5:  # reset (after Nadir update), restart with Corners
             raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
+        elif self.cur_stage == 7:  # EXPAND: next probe of the expansion stage
+            self.expand.pref()
         # elif self.cur_stage == 6:     # everything done, finish
         #     raise Exception(f'WrkFlow::itr_start() not implemented yet for stage: {self.cur_stage}.')
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_start() implementation error, stage: {self.cur_stage}.')
         return self.cur_stage
+
+    # EXPAND: called when the PF-representation stage (4) is finished: by ParRep.pref() when no cube is left
+    # (default method), or by self.itr_sol() when no more pairs are available (grid and mCube options)
+    def end_parfront(self, set_pref=True):
+        if self.cfg.get('expand', True) is False:
+            self.cur_stage = 6      # terminate the analysis (as before)
+            return
+        self.expand = ParExpand(self)
+        self.cur_stage = 7
+        if set_pref:    # called from itr_start(): preferences of the first probe (may set stage 6, if nothing to do)
+            self.expand.pref()      # otherwise the first probe is set by itr_start() of the next iteration
 
     def in_range(self):     # return True, if the value is within the [U, N] range
         ret_val = True
@@ -148,11 +170,13 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             # raise Exception(f'WrkFlow::itr_sol() not implemented yet for stage: {self.cur_stage}.')
         elif self.cur_stage == 6:  # finish; no more cubes to be processed
             return next_stage
+        elif self.cur_stage == 7:  # EXPAND: the expansion stage decides itself whether to store the solution
+            self.expand.sol(self.n_itr)
         else:           # shouldn't come here
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
 
         # todo: suppress storing the previous solution at start of the PF calculation
-        if self.cur_stage > 2:  # store solutions only if the PayOff table is available
+        if self.cur_stage > 2 and self.cur_stage != 7:  # store sols only if the PayOff table is available
             self.par_rep.addSol(self.n_itr)
 
         if self.corner is None and self.payoff.done():  # initialize Corners and ParRep
@@ -162,14 +186,17 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             self.corner = Corners(self.mc)  # initialize corners of the Pareto set
             next_stage = 2  # PayOff table uploaded, start with corners of the PF
             self.payoff.prnPayOff()     # print to stdout and save to the file
-        if self.cur_stage > 3 and self.par_rep.neighSol is not None:
+        # EXPAND: the checks below only in stage 4 (in stage 7 the expansion decides itself when to finish)
+        if self.cur_stage == 4 and self.par_rep.neighSol is not None:
             if self.par_rep.neighSol.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
-                next_stage = 6
-        if self.cur_stage > 3 and self.par_rep.grid is not None:  # cur_stage kept at 2 for the grid option
+                self.end_parfront(set_pref=False)   # EXPAND: start the expansion stage (7) or terminate (6)
+                next_stage = self.cur_stage
+        if self.cur_stage == 4 and self.par_rep.grid is not None:  # cur_stage kept at 2 for the grid option
             # pair =  self.par_rep.grid.getPair()
             if self.par_rep.grid.getPair() == (None, None):
                 print('\nNo more condidates for making cubes. -------------------------------------------')
-                next_stage = 6
+                self.end_parfront(set_pref=False)   # EXPAND: start the expansion stage (7) or terminate (6)
+                next_stage = self.cur_stage
         self.cur_stage = next_stage
         return next_stage

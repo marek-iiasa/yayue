@@ -33,6 +33,7 @@ class Crit:     # definition and attributes of a single criterion
         self.is_fixed = False   # if True, then the crit. value is fixed at the self.asp value
         self.utopia = None  # set only once
         self.nadir = None   # checked, and possibly updated, every iteration, see self.updNadir()
+        self.nadir_pwl = None   # EXPAND: lowered Nadir N' used only by the PWL in the expansion stage (7)
         self.asp = None     # aspiration value (not scaled)
         self.res = None     # reservation value (not scaled)
         self.val = None     # current computed value (from last solution)
@@ -40,7 +41,7 @@ class Crit:     # definition and attributes of a single criterion
         #
         print(f"criterion '{cr_name}' ({self.attr}), core-model variable = '{var_name}'.")
 
-    def val2ach(self, val):   # set a_val corresponding to the current val
+    def val2ach(self, val, warn=True):   # set a_val corresponding to the current val; EXPAND: warn arg
         if self.nadir is None or val is None:  # don't attempt to compute achievements in initial stages
             self.a_val = 0.
             return self.a_val
@@ -53,8 +54,9 @@ class Crit:     # definition and attributes of a single criterion
         close = abs(self.nadir - val) / sc < 10. * self.minRange
         if not close and self.better(self.nadir, val):
             a_val = - a_val
-            print('\tCrit::val2ach(): WARNING: solution value worse than (not adjusted) Nadir:')
-            print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
+            if warn:
+                print('\tCrit::val2ach(): WARNING: solution value worse than (not adjusted) Nadir:')
+                print(f'\tcrit "{self.name}": {val=:.2e}, {a_val=:.2f}, U {self.utopia:.2e}, N {self.nadir:.2e}')
         return a_val
 
     # noinspection SpellCheckingInspection
