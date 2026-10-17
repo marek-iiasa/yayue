@@ -22,8 +22,20 @@ Variant without dual values: U is built from the secant planes of all known solu
 whose band exceeds rho/2 is a 'shape' probe (kept in K only).  With expandDuals: auto the variant
 with duals is used while the solver returns consistent dual values.
 
+Ray-structured variant (expandMode: rays, three criteria): the diagonal probes are used only to discover the
+outline of the PF outside the region covered by the previous stages (discovery step: one probe far outside
+every edge of the simplified hull of the projected PFR, and a probe at distance rho if the far one does not
+extend the hull); the regions found in this way (pockets, any number of new vertices) are filled by rays of
+cuboids as in the grid option of the SPFR: first the chains bounding each pocket, then sweep rays between the
+two chains (paired by the relative arc length), see expand_rays.py.  The certificate-driven interior step and
+the gap repair (expandCert: True) are then used only as a final check.
+
 Configuration keys (cfg.yml, all optional):
     expand: True             run the stage
+    expandMode: cert         cert (certificate-driven, default) | rays (ray-structured, three criteria)
+    expandCert: True         rays mode: final check by the certificate-driven interior step
+    expandCheck: 2           rays mode: spacing (multiple of rho) of the probes checking the hull edges; parts
+                             of the PF protruding over an edge are found if they are wider than this spacing
     expandRho: <float>       resolution (default: ParRep cube min_size)
     expandDuals: auto        auto | True | False
     expandBudget: 2000       max number of probes (+ 400 for the gap repair)
@@ -35,6 +47,8 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 from . import expand_geom as eg
+from . import expand_rays as er
+from .cube import aCube
 
 
 # noinspection SpellCheckingInspection
@@ -78,13 +92,34 @@ class ParExpand:
         self.scale = None
         self.n_nadir = 0
         self.log = []
-        self.stats = dict(boundary=0, interior=0, shape=0, coverage=0, gap=0)
-        self.added = dict(boundary=0, interior=0, coverage=0, gap=0, promoted=0)
+        self.stats = dict(boundary=0, interior=0, shape=0, coverage=0, gap=0, discover=0, ray=0)
+        self.added = dict(boundary=0, interior=0, coverage=0, gap=0, promoted=0, discover=0, ray=0)
         self.tangent_only = 0
+        # ray-structured variant
+        self.mode = str(opt('expandMode', 'cert')).lower()
+        if self.mode == 'rays' and self.k != 3:
+            print(f'Expansion: expandMode rays is implemented for three criteria only ({self.k} defined); '
+                  f'using expandMode cert.')
+            self.mode = 'cert'
+        self.cert_net = bool(opt('expandCert', True))
+        self.check = float(opt('expandCheck', 2.0))     # spacing (in rho) of the probes checking the hull edges
+        self.start_ids = {s.itr_id for s in self.par_rep.sols}     # solutions defining the old hull H0
+        self.disc_final = set()         # directed hull edges (sol-id pairs) without an extension
+        self.disc_left = {}             # hull edge -> number of its near probes not processed yet
+        self.far_done = set()           # hull edges whose far probe did not extend the hull
+        self.disc_level = 'far'         # far rounds until the hull is stable, then a near (verification) round
+        self.disc_round = 0
+        self.round_added = 0
+        self.pockets = []               # dicts: C0 (old chain), C1 (new chain): lists of sol ids
+        self.rays = {}                  # frozenset(anchor ids) -> dict(id, a, b, kind, members)
+        self.ray_done = set()           # pairs of solutions already used for a cuboid
+        self.pending_fixed = False      # the current probe fixes a criterion (degenerated cuboid edge)
+        if self.mode == 'rays':
+            self.phase = 'discover'
         self.rescale()
         self.par_rep.cur_cube = None
-        print(f'\nExpansion stage: rho = {self.rho}, duals = {self.duals_mode}, budget = {self.budget}, '
-              f'{len(self.par_rep.sols)} solutions from the previous stages. ==========================')
+        print(f'\nExpansion stage: mode = {self.mode}, rho = {self.rho}, duals = {self.duals_mode}, '
+              f'budget = {self.budget}, {len(self.par_rep.sols)} solutions from the previous stages. ============')
 
     # ------------------------------------------------------------------------- scale and data
     def z(self, vals):
@@ -149,6 +184,15 @@ class ParExpand:
                 self.final.add(it['key'])
             elif it['purpose'] == 'gap':
                 self.stuck.add(it['key'])
+            elif it['purpose'] == 'discover':
+                if it['level'] == 'far':
+                    self.far_done.add(it['key'])
+                else:
+                    self.disc_left[it['key']] -= 1
+                    if self.disc_left[it['key']] <= 0:
+                        self.disc_final.add(it['key'])
+            elif it['purpose'] == 'ray':
+                self.ray_done.add(it['key'])
             self.pending = None
         item = self.next_item()
         if item is None:
@@ -156,7 +200,11 @@ class ParExpand:
             self.wflow.cur_stage = 6
             return
         self.pending = item
-        self.set_ar(item['w'])
+        if item['purpose'] == 'ray':
+            self.set_cube(item)
+        else:
+            self.pending_fixed = False
+            self.set_ar(item['w'])
         self.n_probe += 1
         self.round_probes += 1
         self.stats[item['purpose']] += 1
@@ -184,8 +232,23 @@ class ParExpand:
             print(f'Expansion probe ({self.pending["purpose"] if self.pending else ""}) at w = {np.round(w, 2)}: '
                   f'A = {np.round(a, 1)}, R = {np.round(r, 1)}')
 
+    def set_cube(self, item):
+        """A/R of the cuboid defined by a pair of neighbour solutions of a ray (as in the grid option)."""
+        s1 = self.par_rep.get(item['s'][0])
+        s2 = self.par_rep.get(item['s'][1])
+        for cr in self.mc.cr:
+            cr.nadir_pwl = None         # the cuboid is inside [N, U]: no lowered Nadir needed
+            cr.is_ignored = None
+        cube = aCube(self.mc, s1, s2)
+        cube.setAR()
+        self.pending_fixed = any(cr.is_fixed for cr in self.mc.cr)
+        if self.verb > 1:
+            print(f'Expansion probe (ray {item["ray"]}): cuboid of solutions {item["s"]}, size {cube.size:.2f}')
+
     # ------------------------------------------------------------------------- planning
     def next_item(self):
+        if self.mode == 'rays':
+            return self.next_item_rays()
         while True:
             if self.n_probe >= self.budget + self.gap_budget:
                 return None
@@ -332,6 +395,9 @@ class ParExpand:
 
     def still_needed(self, item):
         """Re-check an interior item when tangents were added after it was planned."""
+        if item['purpose'] == 'ray':        # both solutions still Pareto, pair not used yet
+            alive = {s.itr_id for s in self.par_rep.sols}
+            return item['s'][0] in alive and item['s'][1] in alive and item['key'] not in self.ray_done
         if item['purpose'] == 'interior' and len(self.tang) > item['n_tan']:
             tree, data = self.bound_data(False)
             if self.sbound(item['Zs'], tree, data, self.G2)[0] <= self.rho:
@@ -354,6 +420,249 @@ class ParExpand:
             return dict(purpose='gap', w=w, key=key)
         return None
 
+    # ------------------------------------------------------------------------- ray-structured variant
+    def next_item_rays(self):
+        """Phases: discover -> pockets -> chains -> sweep -> (interior, certificate check) -> gap -> done."""
+        n_sols = lambda: len(self.par_rep.sols)
+        while True:
+            if self.n_probe >= self.budget + self.gap_budget:
+                return None
+            if self.queue:
+                item = self.queue.popleft()
+                if self.still_needed(item):
+                    return item
+                continue
+            if self.n_probe >= self.budget and self.phase not in ('gap', 'done'):
+                print(f'Expansion: probe budget {self.budget} reached; proceeding to the gap repair.')
+                self.phase = 'gap'
+            if self.phase == 'discover':
+                if self.disc_round > 0:     # the previous round is finished
+                    if self.disc_level == 'near' and self.round_added == 0:
+                        self.phase = 'pockets'      # the verification round did not extend the hull
+                        continue
+                    self.disc_level = 'far' if self.round_added > 0 else 'near'
+                self.disc_round += 1
+                self.round_added = 0
+                self.rescale()
+                items = self.plan_discover(self.disc_level)
+                if not items and self.disc_level == 'far':
+                    self.disc_level = 'near'
+                    items = self.plan_discover('near')
+                if not items:
+                    self.phase = 'pockets'
+                    continue
+                self.queue.extend(items)
+                continue
+            if self.phase == 'pockets':
+                self.rescale()
+                self.build_pockets()
+                self.phase = 'chains'
+                continue
+            if self.phase in ('chains', 'sweep'):
+                self.rescale()
+                items = self.plan_rays(self.phase)
+                if items:
+                    self.queue.extend(items)
+                    continue
+                if self.phase == 'chains':
+                    self.build_sweep()
+                    self.phase = 'sweep'
+                    continue
+                if self.cert_net:           # final check by the certificate (no boundary step)
+                    self.phase = 'interior'
+                    self.rounds += 1
+                    self.n0, self.round_probes = n_sols(), 0
+                else:
+                    self.phase = 'gap'
+                continue
+            if self.phase == 'interior':
+                items, done = self.plan_interior()
+                if done or (not items and self.round_probes == 0 and n_sols() == self.n0):
+                    self.phase = 'gap'
+                    continue
+                self.queue.extend(items)
+                self.phase = 'after_interior'
+                continue
+            if self.phase == 'after_interior':
+                if self.round_probes == 0 and n_sols() == self.n0:
+                    self.phase = 'gap'
+                else:
+                    self.phase = 'interior'
+                    self.rounds += 1
+                    self.rescale()
+                    self.n0, self.round_probes = n_sols(), 0
+                continue
+            if self.phase == 'gap':
+                self.rescale()
+                item = self.plan_gap()
+                if item is not None:
+                    return item
+                self.phase = 'done'
+            return None
+
+    def ids_W(self):
+        """ids of the PFR solutions and their projections (achievements of the current snapshot)."""
+        ids = [s.itr_id for s in self.par_rep.sols]
+        Y = self.ach(self.E_raw())
+        return ids, Y, Y @ self.Q.T
+
+    def far_point(self, mid, nrm):
+        """The farthest location mid + L*nrm whose diagonal still fits into the box [N', U]."""
+        lo, hi = -100.0 * self.low, 100.0
+        fits = lambda L: np.ptp((mid + L * nrm) @ self.Q) <= 0.95 * (hi - lo - 1.0)
+        if not fits(0.0):
+            return mid
+        a, b = 0.0, 400.0
+        for _ in range(40):
+            m = 0.5 * (a + b)
+            a, b = (m, b) if fits(m) else (a, m)
+        return mid + a * nrm
+
+    def plan_discover(self, level):
+        """Far round: one probe far outside every edge of the simplified hull of the projected PFR that was not
+        probed in this way yet; near (verification) round: probes at distance rho outside every edge that is
+        not final, at most expandCheck * rho apart along the edge."""
+        ids, Y, W = self.ids_W()
+        pos = dict(zip(ids, W))
+        hv = er.hull_ccw(W, ids)
+        if len(hv) >= 3:
+            _, hv = er.simplify_closed([pos[i] for i in hv], hv, self.bmarg * self.rho)
+        edges = [(hv[i], hv[(i + 1) % len(hv)]) for i in range(len(hv))] if len(hv) >= 3 else \
+            ([(hv[0], hv[1]), (hv[1], hv[0])] if len(hv) == 2 else [])
+        items = []
+        for a, b in edges:
+            key = (a, b)
+            if key in self.disc_final or (level == 'far' and key in self.far_done):
+                continue
+            pa, pb = pos[a], pos[b]
+            nrm = er.outward_normal(pa, pb)
+            mid = 0.5 * (pa + pb)
+            base = dict(purpose='discover', key=key, nrm=nrm, off=float(-nrm @ mid), mid=mid)
+            if level == 'far':
+                items.append(dict(base, level='far', w=self.far_point(mid, nrm)))
+            else:
+                n = max(1, int(np.ceil(np.linalg.norm(pb - pa) / (self.check * self.rho))))
+                self.disc_left[key] = n
+                items += [dict(base, level='near', w=pa + (j + 0.5) / n * (pb - pa) + self.rho * nrm)
+                          for j in range(n)]
+        if self.verb > 0:
+            print(f'Expansion discovery round {self.disc_round} ({level}): |E| = {len(ids)}, '
+                  f'hull edges {len(edges)}, probes {len(items)}')
+        return items
+
+    def new_ray(self, a, b, kind):
+        """Ray between solutions a and b; existing PFR solutions close to the segment are adopted."""
+        rkey = frozenset((a, b))
+        if a == b or rkey in self.rays:
+            return self.rays.get(rkey)
+        ids, Y, W = self.ids_W()
+        pos = dict(zip(ids, W))
+        pa, pb = pos[a], pos[b]
+        members = {a, b}
+        for i, w in pos.items():
+            if i not in members and 0.0 < er.seg_param(w, pa, pb) < 1.0 and \
+                    er.seg_dist(w, pa, pb) <= self.bmarg * self.rho:
+                members.add(i)
+        self.rays[rkey] = dict(id=len(self.rays), a=a, b=b, kind=kind, members=members)
+        return self.rays[rkey]
+
+    def ray_order(self, ray, frm=None):
+        """Alive members of the ray ordered along the segment (from the anchor frm, default ray['a'])."""
+        ids, Y, W = self.ids_W()
+        pos = dict(zip(ids, W))
+        a = ray['a'] if frm is None or frm == ray['a'] else ray['b']
+        b = ray['b'] if a == ray['a'] else ray['a']
+        if a not in pos or b not in pos:
+            return []
+        mem = [i for i in ray['members'] if i in pos]
+        return sorted(mem, key=lambda i: er.seg_param(pos[i], pos[a], pos[b]))
+
+    def build_pockets(self):
+        """Pockets between the old hull H0 (solutions of the previous stages) and the current hull H1."""
+        ids, Y, W = self.ids_W()
+        pos = dict(zip(ids, W))
+        H1 = er.hull_ccw(W, ids)
+        S0 = [i for i in ids if i in self.start_ids]
+        H0 = er.hull_ccw(np.array([pos[i] for i in S0]), S0) if len(S0) >= 3 else S0
+        flags = [i not in self.start_ids for i in H1]
+        runs = er.cyclic_runs(flags)
+        nearest_H0 = lambda i: i if i in H0 else min(H0, key=lambda j: np.linalg.norm(pos[j] - pos[i]))
+        for run in runs:
+            n = len(H1)
+            if len(run) == n or len(H0) < 2:
+                print('Expansion: the new hull has no vertex of the old one; pockets not defined.')
+                continue
+            a = nearest_H0(H1[(run[0] - 1) % n])
+            b = nearest_H0(H1[(run[-1] + 1) % n])
+            if a == b:
+                continue
+            ia, ib = H0.index(a), H0.index(b)
+            m = len(H0)
+            C0 = [H0[(ia + j) % m] for j in range(((ib - ia) % m) + 1)]
+            C1 = [a] + [H1[j] for j in run] + [b]
+            self.pockets.append(dict(C0=C0, C1=C1))
+            for chain, kind in ((C1, 'new'), (C0, 'old')):
+                for u, v in zip(chain[:-1], chain[1:]):
+                    self.new_ray(u, v, 'chain-' + kind)
+        print(f'Expansion: {len(self.pockets)} pocket(s) between the old and the new hull; new chain vertices: '
+              f'{[len(p["C1"]) - 2 for p in self.pockets]}; {len(self.rays)} chain rays.')
+
+    def plan_rays(self, phase):
+        """Pairs of neighbour solutions (on the rays of the phase) distant by more than rho, largest first."""
+        kinds = ('chain-new', 'chain-old') if phase == 'chains' else ('sweep',)
+        ids, Y, W = self.ids_W()
+        ach = dict(zip(ids, Y))
+        pos = dict(zip(ids, W))
+        cand, seen = [], set()
+        for rkey, ray in self.rays.items():
+            if ray['kind'] not in kinds:
+                continue
+            order = self.ray_order(ray)
+            for p, q in zip(order[:-1], order[1:]):
+                key = frozenset((p, q))
+                d = eg.linf(ach[p], ach[q])
+                if d > self.rho and key not in self.ray_done and key not in seen:
+                    seen.add(key)
+                    cand.append(dict(purpose='ray', ray=ray['id'], rkey=rkey, s=(p, q), key=key, d=d,
+                                     w=0.5 * (pos[p] + pos[q])))
+        cand.sort(key=lambda it: -it['d'])
+        if self.verb > 0 and cand:
+            print(f'Expansion {phase}: {len(cand)} pairs of neighbours on rays distant by more than rho.')
+        return cand
+
+    def chain_seq(self, chain):
+        """Solutions along a chain (concatenation of its rays, in the chain order)."""
+        seq = []
+        for u, v in zip(chain[:-1], chain[1:]):
+            ray = self.rays.get(frozenset((u, v)))
+            part = self.ray_order(ray, frm=u) if ray is not None else [u, v]
+            for i in part:
+                if not seq or seq[-1] != i:
+                    seq.append(i)
+        return seq
+
+    def build_sweep(self):
+        """Sweep rays between the two (filled) chains of every pocket, paired by the relative arc length."""
+        ids, Y, W = self.ids_W()
+        ach = dict(zip(ids, Y))
+        pos = dict(zip(ids, W))
+        n0 = len(self.rays)
+        for p in self.pockets:
+            A = [i for i in self.chain_seq(p['C1']) if i in pos]
+            B = [i for i in self.chain_seq(p['C0']) if i in pos]
+            if len(A) < 2 or len(B) < 2:
+                continue
+            if len(A) < len(B):
+                A, B = B, A
+            sA = er.arc_length([pos[i] for i in A])
+            sB = er.arc_length([pos[i] for i in B])
+            for i in range(1, len(A) - 1):
+                j = int(np.argmin(np.abs(sB - sA[i])))
+                u, v = A[i], B[j]
+                if u != v and eg.linf(ach[u], ach[v]) > self.rho:
+                    self.new_ray(u, v, 'sweep')
+        print(f'Expansion: {len(self.rays) - n0} sweep rays defined in {len(self.pockets)} pocket(s).')
+
     # ------------------------------------------------------------------------- solutions
     def sol(self, itr_id):
         """Process the solution of a stage-7 iteration (criteria values are in mc.cr[i].val)."""
@@ -363,13 +672,16 @@ class ParExpand:
         vals = [cr.val for cr in self.mc.cr]
         z2 = self.z(vals)
         y2 = self.ach(z2[None])[0]
-        c = self.pending_c
-        y1 = c + np.min(y2 - c)               # exit point of the diagonal through the probed location
-        weak = eg.linf(y2, y1) > 0.05          # probed location outside the efficient domain
+        weak = False
+        if item['purpose'] != 'ray':          # diagonal probe
+            c = self.pending_c
+            y1 = c + np.min(y2 - c)           # exit point of the diagonal through the probed location
+            weak = eg.linf(y2, y1) > 0.05      # probed location outside the efficient domain
         k_new = len(self.K) == 0 or float(cKDTree(self.ach(self.K_raw())).query(y2, p=np.inf)[0]) > self.tol_K
         if k_new:                             # a new known front point (not a repeated solution)
             self.K.append((z2, itr_id))
-        self.add_tangent(z2)
+        if not self.pending_fixed:            # with a fixed criterion the duals do not define a tangent
+            self.add_tangent(z2)
         YE = self.ach(self.E_raw())
         dE = float(cKDTree(YE).query(y2, p=np.inf)[0])
         new = dE > self.tol_new
@@ -409,6 +721,27 @@ class ParExpand:
                 added = self.add(itr_id, 'gap')
             if not added:
                 self.stuck.add(item['key'])
+        elif purpose == 'discover':
+            w2 = y2 @ self.Q.T
+            s_out = float(w2 @ item['nrm'] + item['off'])
+            note = f'{item["level"]}, s_out={s_out:.2f}'
+            if new and s_out > self.bmarg * self.rho:
+                added = self.add(itr_id, 'discover')
+                self.round_added += int(added)
+            if not added:
+                if item['level'] == 'far':      # the edge will be checked in the verification round
+                    self.far_done.add(item['key'])
+                else:
+                    self.disc_left[item['key']] -= 1
+                    if self.disc_left[item['key']] <= 0:
+                        self.disc_final.add(item['key'])
+        elif purpose == 'ray':
+            self.ray_done.add(item['key'])
+            note = f'ray {item["ray"]}, pair {item["s"]}, d={item["d"]:.2f}'
+            if new:
+                added = self.add(itr_id, 'ray')
+                if added:
+                    self.rays[item['rkey']]['members'].add(itr_id)
         self.log.append(dict(n=self.n_probe, itr=itr_id, round=self.rounds, purpose=purpose,
                              w=np.round(item['w'], 3).tolist(), y=np.round(y2, 3).tolist(),
                              weak=weak, dist_E=round(dE, 3), added=added, note=note))
@@ -487,7 +820,8 @@ class ParExpand:
         umin = float(d.min()) if len(d) else float('nan')
         cv = float(d.std() / d.mean()) if len(d) and d.mean() > 0 else float('nan')
         cert, n_simp, n_unc = self.certificate()
-        lines = [f'Expansion stage summary (rho = {self.rho})',
+        lines = [f'Expansion stage summary (rho = {self.rho}, mode = {self.mode}' +
+                 (f', {len(self.pockets)} pocket(s), {len(self.rays)} rays)' if self.mode == 'rays' else ')'),
                  f'variant: {"with" if self.use_duals else "without"} dual values (requested: {self.duals_mode})',
                  f'rounds: {self.rounds}, probes: {self.n_probe}  ' +
                  ', '.join(f'{k}: {v}' for k, v in self.stats.items()),

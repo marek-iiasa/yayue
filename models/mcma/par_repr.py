@@ -420,6 +420,9 @@ class ParRep:     # representation of the Pareto set
                             pass
                     else:
                         pass    # do nothing before finishing Corners and neutral solution
+                elif self.mc.opt('grid', False):    # GRID-FIX: without this the same pair is used forever
+                    if self.wflow.cur_stage == 4 and self.grid is not None and self.cur_cube is not None:
+                        self.grid.addSol(None, True)    # ignore dominated sol, get next pair
                 pass
             #
             for s2 in toPrune:   # remove dominated solutions from self.sols

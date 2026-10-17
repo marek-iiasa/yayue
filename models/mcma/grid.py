@@ -207,7 +207,10 @@ class Grid:     # representation of the neighbors
                 if r1 is not None:
                     break
         pass
-        assert r1 is not None, f'Grid::mkRays1(): cannot find two rays0 for {idBase = }'
+        if r1 is None:  # e.g., degenerated PF (two corners coincide): the envelope cannot be filled
+            print(f'Grid::mkRays1(): WARNING: cannot find two rays0 for {idBase = }; the envelope is not filled.')
+            self.lastPair = (None, None)    # terminate the PF-representation stage
+            return
         # print(f'rays for {idBase = }: {r0 = }, {r1 = }')
 
         # check which points/sols need to be skipped in order to have pairs of points belonging to each ray
