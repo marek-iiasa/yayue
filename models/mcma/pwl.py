@@ -61,8 +61,11 @@ class PWL:  # representation of caf(x) for i-th criterion
         # check if N (set in ctor) can be replaced by the provided R
         if self.is_res and self.is_nadir:
             if abs(self.nadir - self.cr.res) > minDiff:
-                assert self.cr.pwlBetter(self.cr.res, self.nadir), f'crit {self.cr_name} (is_max {self.is_max}): '
-                f' R {self.cr.res:.2e} is worse than N {self.nadir:.2e}.'
+                # FIX: R may be (slightly) worse than N: Crit.better() accepts solutions worse than N by up to 1% of
+                # their value as being within [U, N], and such a solution may define R of a cuboid. The PWL segments
+                # are defined by A and R only (N is not used), therefore R is used also in this case.
+                if not self.cr.pwlBetter(self.cr.res, self.nadir) and self.verb > 0:
+                    print(f'PWL: crit {self.cr_name}: R {self.cr.res:.6e} is worse than N {self.nadir:.6e}; R used.')
                 self.res_val = self.cr.res
                 self.lo_seg = True
             else:
