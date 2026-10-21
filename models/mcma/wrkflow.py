@@ -176,7 +176,9 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             raise Exception(f'WrkFlow::itr_sol() implementation error, stage: {self.cur_stage}.')
 
         # todo: suppress storing the previous solution at start of the PF calculation
-        if self.cur_stage > 2 and self.cur_stage != 7:  # store sols only if the PayOff table is available
+        # Stage 5 (reset): the solution that changed the Nadir must not be stored in the new (empty) ParRep;
+        # otherwise the corner computed again from scratch is treated as close to it and ignored (lost corner).
+        if self.cur_stage > 2 and self.cur_stage not in (5, 7):  # store sols only if the PayOff table is available
             self.par_rep.addSol(self.n_itr)
 
         if self.corner is None and self.payoff.done():  # initialize Corners and ParRep
