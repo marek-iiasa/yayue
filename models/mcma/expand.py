@@ -25,21 +25,27 @@ with duals is used while the solver returns consistent dual values.
 Ray-structured variant (expandMode: rays, three criteria): the diagonal probes are used only to discover the
 outline of the PF outside the region covered by the previous stages (discovery step: one probe far outside
 every edge of the simplified hull of the projected PFR, and a probe at distance rho if the far one does not
-extend the hull); the regions found in this way (pockets, any number of new vertices) are filled by rays of
-cuboids as in the grid option of the SPFR: first the chains bounding each pocket, then sweep rays between the
-two chains (paired by the relative arc length), see expand_rays.py.  The certificate-driven interior step and
-the gap repair (expandCert: True) are then used only as a final check.
+extend the hull, then a verification round with probes at distance rho along every edge); the regions found
+in this way (pockets, any number of new vertices) are filled by rays of cuboids as in the grid option of the
+SPFR: first the chains bounding each pocket, then sweep rays between the two chains (every solution of both
+chains is paired with the solution of the other chain at the nearest relative arc length), see expand_rays.py.
+The certificate-driven interior step (expandCert: True) is then used only as a final check; the gap repair
+runs in both cases.  Pairs of neighbours on rays left farther apart than rho are listed in expandSummary.txt.
+A solution worse than the Nadir updates it only if it is not dominated by the PFR (weakly efficient probe
+results are ignored), so the Nadir approximation is never worse than the true Nadir.
 
 Configuration keys (cfg.yml, all optional):
     expand: True             run the stage
     expandMode: cert         cert (certificate-driven, default) | rays (ray-structured, three criteria)
     expandCert: True         rays mode: final check by the certificate-driven interior step
-    expandCheck: 2           rays mode: spacing (multiple of rho) of the probes checking the hull edges; parts
-                             of the PF protruding over an edge are found if they are wider than this spacing
+    expandCheck: 2           rays mode: spacing (multiple of rho) of the probes checking the hull edges; a part
+                             of the PF protruding over an edge and narrower than this spacing may be missed
+    expandBoundary: mid      cert mode: mid (one probe per hull facet) | sweep (experimental: probes along
+                             the whole facet, expandCheck * rho apart, as in the verification round of rays)
     expandRho: <float>       resolution (default: ParRep cube min_size)
     expandDuals: auto        auto | True | False
     expandBudget: 2000       max number of probes (+ 400 for the gap repair)
-    expandLow: 0.3           lowering of the Nadir for the A/R pairs
+    expandLow: 1.0           lowering of the Nadir for the A/R pairs
     expandMargin: 0.25       boundary threshold (fraction of rho)
 """
 from collections import deque
@@ -66,7 +72,7 @@ class ParExpand:
         self.use_duals = self.duals_mode is not False
         self.budget = int(opt('expandBudget', 2000))
         self.gap_budget = 400
-        self.low = float(opt('expandLow', 0.3))
+        self.low = float(opt('expandLow', 1.0))
         self.bmarg = float(opt('expandMargin', 0.25))
         self.shape_frac = 0.5           # band > shape_frac * rho -> shape probe (variant without duals)
         self.tol_new = 1.0              # pyMCMA treats solutions closer than 1.0 (L-inf) as duplicates
@@ -91,6 +97,7 @@ class ParExpand:
         self.round_probes = 0
         self.scale = None
         self.n_nadir = 0
+        self.n_nadir_skip = 0            # Nadir updates refused: the solution is dominated by the PFR
         self.log = []
         self.stats = dict(boundary=0, interior=0, shape=0, coverage=0, gap=0, discover=0, ray=0)
         self.added = dict(boundary=0, interior=0, coverage=0, gap=0, promoted=0, discover=0, ray=0)
@@ -103,6 +110,9 @@ class ParExpand:
             self.mode = 'cert'
         self.cert_net = bool(opt('expandCert', True))
         self.check = float(opt('expandCheck', 2.0))     # spacing (in rho) of the probes checking the hull edges
+        # cert mode, experimental (ablation): boundary step with probes along the whole facet, expandCheck*rho apart
+        self.bnd_sweep = str(opt('expandBoundary', 'mid')).lower() == 'sweep'
+        self.bnd_left = {}
         self.start_ids = {s.itr_id for s in self.par_rep.sols}     # solutions defining the old hull H0
         self.disc_final = set()         # directed hull edges (sol-id pairs) without an extension
         self.disc_left = {}             # hull edge -> number of its near probes not processed yet
@@ -163,6 +173,11 @@ class ParExpand:
     def upd_nadir(self):
         """Called by Report.itr() when a stage-7 solution is worse than the current Nadir:
         update the Nadir without restarting the analysis, rescale, recompute achievements."""
+        if self.dominated_by_pfr([cr.val for cr in self.mc.cr]):
+            self.n_nadir_skip += 1
+            print('Expansion: solution worse than the Nadir is dominated by the PFR (weakly efficient); '
+                  'the Nadir is not updated.')
+            return False
         changed = self.wflow.payoff.update(7)
         if changed:
             self.n_nadir += 1
@@ -173,6 +188,17 @@ class ParExpand:
                   ', '.join(f'{cr.name} {cr.nadir:.4e}' for cr in self.mc.cr))
         return changed
 
+    def dominated_by_pfr(self, vals):
+        """True if a PFR solution is not worse than vals in any criterion and better in at least one (with a
+        relative tolerance). Such a (weakly efficient) probe result must not move the Nadir: the Nadir
+        approximation is then computed only from Pareto solutions and is never worse than the true Nadir."""
+        tol = [1e-6 * max(abs(cr.utopia - cr.nadir), 1e-12) for cr in self.mc.cr]
+        for s in self.par_rep.sols:
+            d = [cr.mult * (sv - v) for cr, sv, v in zip(self.mc.cr, s.vals, vals)]
+            if all(di >= -t for di, t in zip(d, tol)) and any(di > t for di, t in zip(d, tol)):
+                return True
+        return False
+
     # ------------------------------------------------------------------------- preferences
     def pref(self):
         """Entry point of an iteration of stage 7: set the A/R of the next probe."""
@@ -181,7 +207,7 @@ class ParExpand:
             if it['purpose'] in ('interior', 'shape', 'coverage'):
                 self.dead.add(it['key'])
             elif it['purpose'] == 'boundary':
-                self.final.add(it['key'])
+                self.boundary_done(it['key'])
             elif it['purpose'] == 'gap':
                 self.stuck.add(it['key'])
             elif it['purpose'] == 'discover':
@@ -305,11 +331,26 @@ class ParExpand:
             key = self.key(Z[list(simp)])
             if key in self.final:
                 continue
+            if self.bnd_sweep and W.shape[1] == 2:     # experimental: probes along the whole facet (as near rounds)
+                pa, pb = W[simp[0]], W[simp[1]]
+                n = max(1, int(np.ceil(np.linalg.norm(pb - pa) / (self.check * self.rho))))
+                self.bnd_left[key] = n
+                items += [dict(purpose='boundary', w=pa + (j + 0.5) / n * (pb - pa) + self.rho * nrm, key=key,
+                               nrm=nrm, off=off) for j in range(n)]
+                continue
             mid = W[list(simp)].mean(axis=0)
             items.append(dict(purpose='boundary', w=mid + self.rho * nrm, key=key, nrm=nrm, off=off))
         if self.verb > 0:
             print(f'Expansion round {self.rounds}: |E| = {len(Z)}, boundary probes: {len(items)}')
         return items
+
+    def boundary_done(self, key):
+        """A boundary probe of the facet key did not extend the hull; the facet is final when all its probes
+        did not (one probe per facet unless expandBoundary: sweep)."""
+        left = self.bnd_left.get(key, 1) - 1
+        self.bnd_left[key] = left
+        if left <= 0:
+            self.final.add(key)
 
     def bound_data(self, use_secant):
         Z = self.E_raw()
@@ -642,7 +683,8 @@ class ParExpand:
         return seq
 
     def build_sweep(self):
-        """Sweep rays between the two (filled) chains of every pocket, paired by the relative arc length."""
+        """Sweep rays between the two (filled) chains of every pocket, paired by the relative arc length;
+        every solution of both chains is an end of a sweep ray (unless closer than rho to its partner)."""
         ids, Y, W = self.ids_W()
         ach = dict(zip(ids, Y))
         pos = dict(zip(ids, W))
@@ -652,12 +694,14 @@ class ParExpand:
             B = [i for i in self.chain_seq(p['C0']) if i in pos]
             if len(A) < 2 or len(B) < 2:
                 continue
-            if len(A) < len(B):
-                A, B = B, A
             sA = er.arc_length([pos[i] for i in A])
             sB = er.arc_length([pos[i] for i in B])
-            for i in range(1, len(A) - 1):
-                j = int(np.argmin(np.abs(sB - sA[i])))
+            # every interior solution of each chain is joined with the solution of the other chain at the nearest
+            # relative arc length (both directions: no solution of the shorter chain is skipped; the nearest
+            # mapping is monotone, so the rays do not cross)
+            pairs = {(i, int(np.argmin(np.abs(sB - sA[i])))) for i in range(1, len(A) - 1)}
+            pairs |= {(int(np.argmin(np.abs(sA - sB[j]))), j) for j in range(1, len(B) - 1)}
+            for i, j in sorted(pairs):
                 u, v = A[i], B[j]
                 if u != v and eg.linf(ach[u], ach[v]) > self.rho:
                     self.new_ray(u, v, 'sweep')
@@ -695,7 +739,7 @@ class ParExpand:
             if new and s_out > self.bmarg * self.rho:
                 added = self.add(itr_id, 'boundary')
             if not added:
-                self.final.add(item['key'])
+                self.boundary_done(item['key'])
         elif purpose == 'interior':
             tree, data = self.bound_data(False)
             b2 = self.sbound(item['Zs'], tree, data, self.G2)[0]
@@ -811,6 +855,23 @@ class ParExpand:
             return float('nan'), 0, 0
         return max(b), len(b), int(sum(v > self.rho for v in b))
 
+    def uncovered_pairs(self):
+        """rays mode: pairs of consecutive solutions on a ray farther apart than rho (L-inf, achievements). The
+        cuboid of such a pair returned a duplicate or a dominated solution (or the budget was exhausted), so the
+        ray structure does not cover the part of the PF between them."""
+        if self.mode != 'rays':
+            return []
+        ids, Y, W = self.ids_W()
+        ach = dict(zip(ids, Y))
+        out = []
+        for ray in self.rays.values():
+            m = self.ray_order(ray)
+            for p, q in zip(m, m[1:]):
+                d = eg.linf(ach[p], ach[q])
+                if d > self.rho:
+                    out.append((p, q, round(float(d), 2)))
+        return out
+
     def summary(self, rep_dir):
         self.rescale()
         Z = self.E_raw()
@@ -828,12 +889,18 @@ class ParExpand:
                  'added: ' + ', '.join(f'{k}: {v}' for k, v in self.added.items()),
                  f'tangents stored: {len(self.tang)}, rejected dual vectors: {self.bad_duals}, '
                  f'probes certified by their tangent only: {self.tangent_only}',
-                 f'Nadir updates without restart: {self.n_nadir}',
+                 f'Nadir updates without restart: {self.n_nadir}; refused (solution dominated by the PFR): '
+                 f'{self.n_nadir_skip}',
                  f'final PFR: kappa = {len(Z)}, gap gamma = {gap:.2f}, min distance u = {umin:.2f}, '
                  f'CV = {cv:.2f}',
                  f'certificate: {n_simp - n_unc} of {n_simp} simplices certified (bound <= rho); '
                  f'largest bound {cert:.2f}' +
                  (f'; {n_unc} not certified (probes there returned no new Pareto solution)' if n_unc else '')]
+        if self.mode == 'rays':
+            unc = self.uncovered_pairs()
+            lines.append(f'pairs of neighbours on rays farther apart than rho: {len(unc)}' +
+                         (' (itr ids, L-inf distance): ' + ', '.join(f'[{p}, {q}] {d}' for p, q, d in unc[:20]) +
+                          (' ...' if len(unc) > 20 else '') if unc else ''))
         print('\n' + '\n'.join(lines))
         with open(f'{rep_dir}expandSummary.txt', 'w') as f:
             f.write('\n'.join(lines) + '\n')
