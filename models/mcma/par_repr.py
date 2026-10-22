@@ -307,7 +307,9 @@ class ParRep:     # representation of the Pareto set
 
     # EXPAND: optional vals (criteria values of a solution computed earlier, e.g., a known solution
     # promoted to the PFR by the expansion stage) and origin (stored with the solution, reported)
-    def addSol(self, itr_id, vals=None, origin=None):  # add solution (uses crit-values updated in mc.cr)
+    # EXPAND: parents - ids of two solutions the new one comes from, if it was not generated from a cube of
+    # self.cubes (expand: ray -> pair of solutions spanning the cuboid, discover -> ends (ccw) of the probed edge)
+    def addSol(self, itr_id, vals=None, origin=None, parents=None):  # add solution (uses crit-values updated in mc.cr)
         assert self.mc.is_opt, f'ParRep::addSol() called for non-optimal solution'
         if vals is None:
             self.cur_itr = itr_id
@@ -329,6 +331,8 @@ class ParRep:     # representation of the Pareto set
         if origin is None:  # EXPAND: origin of the solution
             origin = {2: 'corner', 3: 'neutral', 4: 'cube'}.get(self.wflow.cur_stage, 'other')
         new_sol.origin = origin
+        if parents is not None:
+            new_sol.parents = tuple(parents)
         if self.cur_cube is not None:   # cur_cube undefined during computation of selfish solutions
             c = self.cubes.get(self.cur_cube)     # get parent cube (for its id)
             # todo: add conditional call (only for info-print)
@@ -621,7 +625,9 @@ class ParRep:     # representation of the Pareto set
             for (i, cr) in enumerate(self.mc.cr):   # cols with crit achievements
                 new_row.update({'a_' + cr.name: s.a_vals[i]})
             cube_id = s.cube_id
-            if cube_id is None:     # selfish solutions are not generated from a cube
+            if getattr(s, 'parents', None) is not None:     # EXPAND: parents stored with the solution
+                new_row.update({'parents': f'[{s.parents[0]}, {s.parents[1]}]'})
+            elif cube_id is None:     # selfish solutions are not generated from a cube
                 new_row.update({'parents': f'[none]'})
             else:
                 cube = self.cubes.get(cube_id)  # parent cube

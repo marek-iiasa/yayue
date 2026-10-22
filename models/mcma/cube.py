@@ -17,6 +17,7 @@ class ParSol:     # one Pareto solution
         self.domin = 0  # >= 0: is Pareto, domin > 0: itr_id of dominated, domin < 0: itr_id of the dominating solution
         self.closeTo = None     # None replaced by itr_id of a first solution that is close
         self.distMx = None      # None replaced by L-inf distance for close/duplicated solutions
+        self.parents = None     # EXPAND: (itr_id, itr_id) set directly (no cube in ParRep.cubes); see ParRep.addSol()
         # print(f'Solution of itr_id {itr_id}: crit. values: {self.vals}, (achievements: {self.a_vals})')
         print(f'Solution[{itr_id}] a_vals: {self.a_vals}')
 

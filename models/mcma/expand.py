@@ -726,7 +726,7 @@ class ParExpand:
             s_out = float(w2 @ item['nrm'] + item['off'])
             note = f'{item["level"]}, s_out={s_out:.2f}'
             if new and s_out > self.bmarg * self.rho:
-                added = self.add(itr_id, 'discover')
+                added = self.add(itr_id, 'discover', parents=item['key'])     # ends of the probed hull edge
                 self.round_added += int(added)
             if not added:
                 if item['level'] == 'far':      # the edge will be checked in the verification round
@@ -739,7 +739,7 @@ class ParExpand:
             self.ray_done.add(item['key'])
             note = f'ray {item["ray"]}, pair {item["s"]}, d={item["d"]:.2f}'
             if new:
-                added = self.add(itr_id, 'ray')
+                added = self.add(itr_id, 'ray', parents=item['s'])     # pair spanning the cuboid
                 if added:
                     self.rays[item['rkey']]['members'].add(itr_id)
         self.log.append(dict(n=self.n_probe, itr=itr_id, round=self.rounds, purpose=purpose,
@@ -749,9 +749,9 @@ class ParExpand:
             print(f'Expansion probe {self.n_probe} ({purpose}): y = {np.round(y2, 2)}, '
                   f'{"added" if added else "not added"} {note}')
 
-    def add(self, itr_id, origin):
+    def add(self, itr_id, origin, parents=None):
         n_before = len(self.par_rep.sols)
-        self.par_rep.addSol(itr_id, origin=origin)
+        self.par_rep.addSol(itr_id, origin=origin, parents=parents)
         ok = len(self.par_rep.sols) > n_before
         if ok:
             self.added[origin] += 1
