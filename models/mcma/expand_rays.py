@@ -11,8 +11,17 @@ then filled by rays of cuboids, as in the grid option of the SPFR:
 * chain ray: the segment between two consecutive vertices of a chain; filled by cuboids defined by pairs of
              consecutive solutions on the ray (as the envelope of the grid option);
 * sweep ray: the segment between a solution of one (filled) chain and the solution of the other chain at the
-             same relative arc length (as the internal rays of the grid option; the pairing by the arc length
-             handles chains with different numbers of solutions).
+             nearest relative length along the chain (as the internal rays of the grid option; the pairing by the
+             length handles chains with different numbers of solutions).
+
+Distances compared with rho are Chebyshev (L-inf) distances in the achievement space.  Distances between
+solutions (gaps, lengths along the chains: arc_length_inf) are the L-inf distances of the points; questions about
+the outline seen along the diagonal (is a solution on a segment of the outline, how far outside it is) use the
+L-inf distance between the diagonal lines through the points (qdist, seg_dist_q), i.e. the L-inf distance modulo
+the diagonal: min_s ||p - q - s 1||_inf = (max_i d_i - min_i d_i) / 2, d = p - q.  The height along the diagonal
+is ignored there, as in the projection (the PF boundary between two vertices of the outline need not be straight
+in the achievement space).  No Euclidean distance is used; the 2-D projection only gives the convex hull, the side
+of a segment (outward_normal: a direction) and the order of points along a segment (seg_param).
 """
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -40,40 +49,93 @@ def seg_param(p, a, b):
     return float((p - a) @ d / max(d @ d, 1e-18))
 
 
-def seg_dist(p, a, b):
-    t = min(max(seg_param(p, a, b), 0.0), 1.0)
-    return float(np.linalg.norm(p - (a + t * (b - a))))
+def seg_dist_inf(p, a, b):
+    """Chebyshev (L-inf) distance of the point p from the segment [a, b] (achievement space, any dimension).
+    f(t) = max_i |p_i - a_i - t d_i| is convex and piecewise linear; its minimum over [0, 1] is attained at an
+    end point, at a zero of one term or where two terms are equal."""
+    p, a, b = (np.asarray(x, float) for x in (p, a, b))
+    e, d = p - a, b - a
+    cand = [0.0, 1.0]
+    k = len(e)
+    for i in range(k):
+        if abs(d[i]) > 1e-15:
+            cand.append(e[i] / d[i])
+        for j in range(i + 1, k):
+            for s in (1.0, -1.0):           # e_i - t d_i = s (e_j - t d_j)
+                den = d[i] - s * d[j]
+                if abs(den) > 1e-15:
+                    cand.append((e[i] - s * e[j]) / den)
+    return float(min(np.max(np.abs(e - t * d)) for t in cand if 0.0 <= t <= 1.0))
+
+
+def qnorm(d):
+    """L-inf norm modulo the diagonal: min_s ||d - s 1||_inf = (max_i d_i - min_i d_i) / 2."""
+    d = np.asarray(d, float)
+    return float(0.5 * (np.max(d) - np.min(d)))
+
+
+def qdist(p, q):
+    """L-inf distance between the diagonal lines through the points p and q (achievement space)."""
+    return qnorm(np.asarray(p, float) - np.asarray(q, float))
+
+
+def qdual(g):
+    """Dual of qnorm for a direction g with sum(g) = 0 (g = Q^T nrm): sup g.d / qnorm(d) = ||g||_1.  A point at the
+    Euclidean (projection) distance s from a hyperplane with the unit normal nrm is at the L-inf distance modulo the
+    diagonal s / qdual(Q^T nrm) from it."""
+    return float(max(np.sum(np.abs(np.asarray(g, float))), 1e-12))
+
+
+def seg_dist_q(p, a, b):
+    """L-inf distance modulo the diagonal of the point p from the segment [a, b]: the L-inf distance between the
+    diagonal line through p and the strip {a + t (b - a) + s 1, t in [0, 1]}.  g(t) = qnorm(p - a - t (b - a)) is
+    convex and piecewise linear; its minimum over [0, 1] is attained at an end point or where two components of
+    p - a - t (b - a) are equal."""
+    p, a, b = (np.asarray(x, float) for x in (p, a, b))
+    e, d = p - a, b - a
+    cand = [0.0, 1.0]
+    k = len(e)
+    for i in range(k):
+        for j in range(i + 1, k):
+            den = d[i] - d[j]
+            if abs(den) > 1e-15:
+                cand.append((e[i] - e[j]) / den)
+    return float(min(qnorm(e - t * d) for t in cand if 0.0 <= t <= 1.0))
+
+
+def arc_length_inf(Y):
+    """Normalized cumulative length of the polyline Y measured by the Chebyshev (L-inf) distances of
+    consecutive points (achievement space)."""
+    Y = np.asarray(Y, float)
+    if len(Y) < 2:
+        return np.zeros(len(Y))
+    s = np.r_[0.0, np.cumsum(np.max(np.abs(np.diff(Y, axis=0)), axis=1))]
+    return s / max(s[-1], 1e-18)
 
 
 def outward_normal(a, b):
-    """Outward unit normal of the edge a -> b of a counterclockwise polygon."""
+    """Outward normal of the edge a -> b of a counterclockwise polygon (a direction; its length is irrelevant)."""
     d = b - a
     n = np.array([d[1], -d[0]])
     return n / max(np.linalg.norm(n), 1e-18)
 
 
-def simplify_closed(P, ids, tol):
-    """Remove vertices of a closed polygon that are closer than tol to the chord of their neighbours."""
+def simplify_closed(P, ids, tol, dist=None):
+    """Remove vertices of a closed polygon that are closer than tol to the chord of their neighbours.
+    dist(p, a, b): distance of p from the segment [a, b] (default: seg_dist_q, the L-inf distance modulo the
+    diagonal; the points P are achievement vectors)."""
     P = [np.asarray(p, float) for p in P]
     ids = list(ids)
+    dist = seg_dist_q if dist is None else dist
     while len(ids) > 3:
         n = len(ids)
-        d = [seg_dist(P[i], P[i - 1], P[(i + 1) % n]) for i in range(n)]
+        d = [dist(P[i], P[i - 1], P[(i + 1) % n]) for i in range(n)]
         i = int(np.argmin(d))
         if d[i] >= tol:
             break
         del P[i]
         del ids[i]
     return P, ids
-
-
-def arc_length(P):
-    """Normalized cumulative arc length of the polyline P."""
-    P = np.asarray(P, float)
-    if len(P) < 2:
-        return np.zeros(len(P))
-    s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
-    return s / max(s[-1], 1e-18)
 
 
 def cyclic_runs(flags):

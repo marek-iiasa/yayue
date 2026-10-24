@@ -33,6 +33,21 @@ The certificate-driven interior step (expandCert: True) is then used only as a f
 runs in both cases.  Pairs of neighbours on rays left farther apart than rho are listed in expandSummary.txt.
 A solution worse than the Nadir updates it only if it is not dominated by the PFR (weakly efficient probe
 results are ignored), so the Nadir approximation is never worse than the true Nadir.
+In both modes all distances compared with rho or with a tolerance are Chebyshev (L-inf) distances in the
+achievement space; no Euclidean distance is used.  The projection only decides which solutions are on the outline, on which side of a hull edge a solution lies, and
+the order of solutions along a segment.  Distances between solutions (gaps, spacing of the near probes along a hull
+edge, pairing along the chains) are the L-inf distances of the points.  The outline tests (simplification of the
+hull, acceptance of a probe result outside a hull edge or facet, adoption of solutions by a ray, offset of the
+near and boundary probes, distinct probe locations of one interior round) use the L-inf distance between the diagonal lines through the points (L-inf modulo the diagonal, see
+expand_rays.qdist): like the projection they ignore the height along the diagonal, so solutions on a PF boundary
+that is not straight in the achievement space stay on their ray (the distance from a facet hyperplane is
+s_out / ||Q^T nrm||_1, see expand_rays.qdual).  The adoption threshold (expandAdopt) is independent of the
+boundary threshold (expandMargin).  A cuboid of a ray that returns an existing solution lying between its pair makes that
+solution a member of the ray, so the bisection continues on both sides of it (no hole is left behind a solution
+that was not adopted when the ray was defined). The gap repair
+of the rays mode uses the cuboid of the solution and its nearest neighbour first and the diagonal probe only if
+the cuboid gives no new solution. A degenerated edge of a cuboid (almost equal achievements of the pair) does not
+fix the criterion, as in the SPFR, but gets a narrow A/R range, so the result is not only weakly efficient.
 
 Configuration keys (cfg.yml, all optional):
     expand: True             run the stage
@@ -40,13 +55,20 @@ Configuration keys (cfg.yml, all optional):
     expandCert: True         rays mode: final check by the certificate-driven interior step
     expandCheck: 2           rays mode: spacing (multiple of rho) of the probes checking the hull edges; a part
                              of the PF protruding over an edge and narrower than this spacing may be missed
+    expandOffset: 1.0        rays mode: offset of the near probes outside a hull edge (multiple of rho, L-inf
+                             distance of the diagonal lines)
     expandBoundary: mid      cert mode: mid (one probe per hull facet) | sweep (experimental: probes along
                              the whole facet, expandCheck * rho apart, as in the verification round of rays)
     expandRho: <float>       resolution (default: ParRep cube min_size)
     expandDuals: auto        auto | True | False
     expandBudget: 2000       max number of probes (+ 400 for the gap repair)
     expandLow: 1.0           lowering of the Nadir for the A/R pairs
-    expandMargin: 0.25       boundary threshold (fraction of rho)
+    expandMargin: <float>    boundary threshold (fraction of rho): simplification of the hull and acceptance of a
+                             discovered solution outside a hull edge; default: tolClose (the pyMCMA tolerance for
+                             close solutions, 0.01 in achievements), i.e. every solution distinguishable from the
+                             outline counts
+    expandAdopt: 0.25        rays mode: a PFR solution between the anchors of a ray and at most this (fraction of
+                             rho) from the segment is a member of the ray (independent of expandMargin)
 """
 from collections import deque
 import numpy as np
@@ -73,9 +95,16 @@ class ParExpand:
         self.budget = int(opt('expandBudget', 2000))
         self.gap_budget = 400
         self.low = float(opt('expandLow', 1.0))
-        self.bmarg = float(opt('expandMargin', 0.25))
+        # boundary threshold: fraction of rho if expandMargin is given, otherwise the tolerance of pyMCMA for close
+        # (duplicated) solutions, tolClose (achievements, L-inf), as used by ParRep
+        self.tol_close = float(opt('tolClose', 0.01))
+        marg = opt('expandMargin', None)
+        self.bmarg = float(marg) if marg is not None else self.tol_close / self.rho
+        self.adopt = float(opt('expandAdopt', 0.25))   # rays: adoption of solutions by a ray (fraction of rho)
         self.shape_frac = 0.5           # band > shape_frac * rho -> shape probe (variant without duals)
-        self.tol_new = 1.0              # pyMCMA treats solutions closer than 1.0 (L-inf) as duplicates
+        # a probe result closer than tol_new (L-inf, achievements) to a PFR solution is not a new solution of the
+        # expansion (ParRep itself rejects only solutions closer than tolClose); it is not used for the outline
+        self.tol_new = 1.0
         self.tol_K = 0.05               # known points closer than this (achievements) are repetitions
         self.k = self.mc.n_crit
         self.mult = np.array([cr.mult for cr in self.mc.cr], float)
@@ -88,6 +117,9 @@ class ParExpand:
         self.tang = []                  # supporting hyperplanes mu.z <= beta (raw, maximization-oriented)
         self.bad_duals = 0
         self.final, self.dead, self.stuck = set(), set(), set()
+        self.gap_cube_done = set()      # rays mode: points whose gap was already tried by a cuboid
+        self.adopted_dup = 0            # rays mode: existing solutions returned by a cuboid and adopted by its ray
+        self.ray_split = set()          # rays mode: pairs whose cuboid gave a solution between them (on some ray)
         self.queue = deque()
         self.pending = None
         self.phase = 'boundary'
@@ -99,7 +131,7 @@ class ParExpand:
         self.n_nadir = 0
         self.n_nadir_skip = 0            # Nadir updates refused: the solution is dominated by the PFR
         self.log = []
-        self.stats = dict(boundary=0, interior=0, shape=0, coverage=0, gap=0, discover=0, ray=0)
+        self.stats = dict(boundary=0, interior=0, shape=0, coverage=0, gap=0, gapcube=0, discover=0, ray=0)
         self.added = dict(boundary=0, interior=0, coverage=0, gap=0, promoted=0, discover=0, ray=0)
         self.tangent_only = 0
         # ray-structured variant
@@ -112,6 +144,8 @@ class ParExpand:
         self.check = float(opt('expandCheck', 2.0))     # spacing (in rho) of the probes checking the hull edges
         # cert mode, experimental (ablation): boundary step with probes along the whole facet, expandCheck*rho apart
         self.bnd_sweep = str(opt('expandBoundary', 'mid')).lower() == 'sweep'
+        self.offset = float(opt('expandOffset', 1.0))  # rays: offset of the near probes outside a hull edge (x rho)
+        self.degen_w = 1.0              # rays: half-width (achievements) of the A/R range of a degenerated cuboid edge
         self.bnd_left = {}
         self.start_ids = {s.itr_id for s in self.par_rep.sols}     # solutions defining the old hull H0
         self.disc_final = set()         # directed hull edges (sol-id pairs) without an extension
@@ -219,6 +253,8 @@ class ParExpand:
                         self.disc_final.add(it['key'])
             elif it['purpose'] == 'ray':
                 self.ray_done.add(it['key'])
+            elif it['purpose'] == 'gapcube':
+                self.gap_cube_done.add(it['key'])
             self.pending = None
         item = self.next_item()
         if item is None:
@@ -226,7 +262,7 @@ class ParExpand:
             self.wflow.cur_stage = 6
             return
         self.pending = item
-        if item['purpose'] == 'ray':
+        if item['purpose'] in ('ray', 'gapcube'):
             self.set_cube(item)
         else:
             self.pending_fixed = False
@@ -267,9 +303,20 @@ class ParExpand:
             cr.is_ignored = None
         cube = aCube(self.mc, s1, s2)
         cube.setAR()
-        self.pending_fixed = any(cr.is_fixed for cr in self.mc.cr)
+        # A degenerated edge of the cuboid (almost equal achievements) fixes the criterion in SPFR; on a part of the
+        # PF along which this criterion could still improve, the result is then only weakly efficient (found on
+        # Alves). The expansion keeps the criterion active with a narrow A/R range around the common value instead.
+        for cr in self.mc.cr:
+            if cr.is_fixed:
+                y1, y2 = cr.val2ach(cr.asp, warn=False), cr.val2ach(cr.res, warn=False)
+                cr.is_fixed = False
+                cr.is_active = True
+                cr.asp = cr.ach2val(min(max(y1, y2) + self.degen_w, 100.0))
+                cr.res = cr.ach2val(max(min(y1, y2) - self.degen_w, 0.0))
+        self.pending_fixed = False
         if self.verb > 1:
-            print(f'Expansion probe (ray {item["ray"]}): cuboid of solutions {item["s"]}, size {cube.size:.2f}')
+            print(f'Expansion probe ({item["purpose"]} {item.get("ray", "")}): cuboid of solutions {item["s"]}, '
+                  f'size {cube.size:.2f}')
 
     # ------------------------------------------------------------------------- planning
     def next_item(self):
@@ -331,15 +378,17 @@ class ParExpand:
             key = self.key(Z[list(simp)])
             if key in self.final:
                 continue
+            # offset rho outside the facet: L-inf distance (modulo the diagonal) from the facet hyperplane
+            s = self.rho * er.qdual(nrm @ self.Q)
             if self.bnd_sweep and W.shape[1] == 2:     # experimental: probes along the whole facet (as near rounds)
                 pa, pb = W[simp[0]], W[simp[1]]
-                n = max(1, int(np.ceil(np.linalg.norm(pb - pa) / (self.check * self.rho))))
+                n = max(1, int(np.ceil(eg.linf(Y[simp[0]], Y[simp[1]]) / (self.check * self.rho))))
                 self.bnd_left[key] = n
-                items += [dict(purpose='boundary', w=pa + (j + 0.5) / n * (pb - pa) + self.rho * nrm, key=key,
+                items += [dict(purpose='boundary', w=pa + (j + 0.5) / n * (pb - pa) + s * nrm, key=key,
                                nrm=nrm, off=off) for j in range(n)]
                 continue
             mid = W[list(simp)].mean(axis=0)
-            items.append(dict(purpose='boundary', w=mid + self.rho * nrm, key=key, nrm=nrm, off=off))
+            items.append(dict(purpose='boundary', w=mid + s * nrm, key=key, nrm=nrm, off=off))
         if self.verb > 0:
             print(f'Expansion round {self.rounds}: |E| = {len(Z)}, boundary probes: {len(items)}')
         return items
@@ -397,7 +446,7 @@ class ParExpand:
         W_all = Y_all @ self.Q.T
         for (b, dd, gg, simp, lam, key) in todo:
             w = lam @ W_all[simp]
-            if any(eg.linf(w, c) < 0.25 * rho for c in chosen):
+            if any(er.qnorm((w - c) @ self.Q) < 0.25 * rho for c in chosen):     # L-inf between diagonal lines
                 continue
             chosen.append(w)
             item = dict(w=w, key=key, Zs=Zv[simp].copy(), simp=simp, gp=gg, n_tan=len(self.tang))
@@ -439,6 +488,9 @@ class ParExpand:
         if item['purpose'] == 'ray':        # both solutions still Pareto, pair not used yet
             alive = {s.itr_id for s in self.par_rep.sols}
             return item['s'][0] in alive and item['s'][1] in alive and item['key'] not in self.ray_done
+        if item['purpose'] == 'gapcube':
+            alive = {s.itr_id for s in self.par_rep.sols}
+            return item['s'][0] in alive and item['s'][1] in alive
         if item['purpose'] == 'interior' and len(self.tang) > item['n_tan']:
             tree, data = self.bound_data(False)
             if self.sbound(item['Zs'], tree, data, self.G2)[0] <= self.rho:
@@ -458,7 +510,10 @@ class ParExpand:
             if key in self.stuck:
                 continue
             w = ((Y[i] + Y[j[i]]) / 2.0) @ self.Q.T
-            return dict(purpose='gap', w=w, key=key)
+            if self.mode == 'rays' and key not in self.gap_cube_done:     # rays: cuboid of the pair first
+                sols = self.par_rep.sols
+                return dict(purpose='gapcube', s=(sols[i].itr_id, sols[int(j[i])].itr_id), w=w, key=key)
+            return dict(purpose='gap', w=w, key=key)       # diagonal probe at the midpoint (fallback)
         return None
 
     # ------------------------------------------------------------------------- ray-structured variant
@@ -565,9 +620,10 @@ class ParExpand:
         not final, at most expandCheck * rho apart along the edge."""
         ids, Y, W = self.ids_W()
         pos = dict(zip(ids, W))
-        hv = er.hull_ccw(W, ids)
-        if len(hv) >= 3:
-            _, hv = er.simplify_closed([pos[i] for i in hv], hv, self.bmarg * self.rho)
+        ach = dict(zip(ids, Y))
+        hv = er.hull_ccw(W, ids)            # the projection decides only which solutions are on the outline
+        if len(hv) >= 3:                    # distances: Chebyshev, in the achievement space
+            _, hv = er.simplify_closed([ach[i] for i in hv], hv, self.bmarg * self.rho, dist=er.seg_dist_q)
         edges = [(hv[i], hv[(i + 1) % len(hv)]) for i in range(len(hv))] if len(hv) >= 3 else \
             ([(hv[0], hv[1]), (hv[1], hv[0])] if len(hv) == 2 else [])
         items = []
@@ -582,9 +638,12 @@ class ParExpand:
             if level == 'far':
                 items.append(dict(base, level='far', w=self.far_point(mid, nrm)))
             else:
-                n = max(1, int(np.ceil(np.linalg.norm(pb - pa) / (self.check * self.rho))))
+                # spacing along the edge (L-inf distance of its ends) and the offset outside it: the diagonal lines
+                # of the probes are at the L-inf distance (modulo the diagonal) rho from the line of the edge
+                n = max(1, int(np.ceil(eg.linf(ach[a], ach[b]) / (self.check * self.rho))))
+                s = self.offset * self.rho * er.qdual(nrm @ self.Q)
                 self.disc_left[key] = n
-                items += [dict(base, level='near', w=pa + (j + 0.5) / n * (pb - pa) + self.rho * nrm)
+                items += [dict(base, level='near', w=pa + (j + 0.5) / n * (pb - pa) + s * nrm)
                           for j in range(n)]
         if self.verb > 0:
             print(f'Expansion discovery round {self.disc_round} ({level}): |E| = {len(ids)}, '
@@ -598,11 +657,12 @@ class ParExpand:
             return self.rays.get(rkey)
         ids, Y, W = self.ids_W()
         pos = dict(zip(ids, W))
+        ach = dict(zip(ids, Y))
         pa, pb = pos[a], pos[b]
         members = {a, b}
-        for i, w in pos.items():
+        for i, w in pos.items():            # between the anchors (projection), close to the segment (L-inf modulo 1)
             if i not in members and 0.0 < er.seg_param(w, pa, pb) < 1.0 and \
-                    er.seg_dist(w, pa, pb) <= self.bmarg * self.rho:
+                    er.seg_dist_q(ach[i], ach[a], ach[b]) <= self.adopt * self.rho:
                 members.add(i)
         self.rays[rkey] = dict(id=len(self.rays), a=a, b=b, kind=kind, members=members)
         return self.rays[rkey]
@@ -627,7 +687,8 @@ class ParExpand:
         H0 = er.hull_ccw(np.array([pos[i] for i in S0]), S0) if len(S0) >= 3 else S0
         flags = [i not in self.start_ids for i in H1]
         runs = er.cyclic_runs(flags)
-        nearest_H0 = lambda i: i if i in H0 else min(H0, key=lambda j: np.linalg.norm(pos[j] - pos[i]))
+        ach = dict(zip(ids, Y))
+        nearest_H0 = lambda i: i if i in H0 else min(H0, key=lambda j: eg.linf(ach[j], ach[i]))
         for run in runs:
             n = len(H1)
             if len(run) == n or len(H0) < 2:
@@ -694,8 +755,8 @@ class ParExpand:
             B = [i for i in self.chain_seq(p['C0']) if i in pos]
             if len(A) < 2 or len(B) < 2:
                 continue
-            sA = er.arc_length([pos[i] for i in A])
-            sB = er.arc_length([pos[i] for i in B])
+            sA = er.arc_length_inf([ach[i] for i in A])      # relative length along the chains (L-inf)
+            sB = er.arc_length_inf([ach[i] for i in B])
             # every interior solution of each chain is joined with the solution of the other chain at the nearest
             # relative arc length (both directions: no solution of the shorter chain is skipped; the nearest
             # mapping is monotone, so the rays do not cross)
@@ -717,7 +778,7 @@ class ParExpand:
         z2 = self.z(vals)
         y2 = self.ach(z2[None])[0]
         weak = False
-        if item['purpose'] != 'ray':          # diagonal probe
+        if item['purpose'] not in ('ray', 'gapcube'):          # diagonal probe
             c = self.pending_c
             y1 = c + np.min(y2 - c)           # exit point of the diagonal through the probed location
             weak = eg.linf(y2, y1) > 0.05      # probed location outside the efficient domain
@@ -735,8 +796,9 @@ class ParExpand:
         if purpose == 'boundary':
             w2 = y2 @ self.Q.T
             s_out = float(w2 @ item['nrm'] + item['off'])
-            note = f's_out={s_out:.2f}'
-            if new and s_out > self.bmarg * self.rho:
+            d_q = s_out / er.qdual(item['nrm'] @ self.Q)        # L-inf (modulo the diagonal) from the facet hyperplane
+            note = f's_out={s_out:.2f}, d_q={d_q:.2f}'
+            if new and d_q > self.bmarg * self.rho:
                 added = self.add(itr_id, 'boundary')
             if not added:
                 self.boundary_done(item['key'])
@@ -765,11 +827,20 @@ class ParExpand:
                 added = self.add(itr_id, 'gap')
             if not added:
                 self.stuck.add(item['key'])
+        elif purpose == 'gapcube':          # rays mode: cuboid of the point and its nearest neighbour
+            note = f'pair {item["s"]}'
+            if new:
+                added = self.add(itr_id, 'gap', parents=item['s'])
+            if not added:
+                self.gap_cube_done.add(item['key'])     # next time: the diagonal probe (fallback)
         elif purpose == 'discover':
             w2 = y2 @ self.Q.T
-            s_out = float(w2 @ item['nrm'] + item['off'])
-            note = f'{item["level"]}, s_out={s_out:.2f}'
-            if new and s_out > self.bmarg * self.rho:
+            s_out = float(w2 @ item['nrm'] + item['off'])     # > 0: outside the edge (the side only)
+            ea, eb = (self.ach(self.z(self.par_rep.get(i).vals)[None])[0] if i in {s.itr_id for s in self.par_rep.sols}
+                      else None for i in item['key'])
+            d_out = er.seg_dist_q(y2, ea, eb) if ea is not None and eb is not None else float('inf')
+            note = f'{item["level"]}, s_out={s_out:.2f}, d_q={d_out:.2f}'
+            if new and s_out > 0.0 and d_out > self.bmarg * self.rho:
                 added = self.add(itr_id, 'discover', parents=item['key'])     # ends of the probed hull edge
                 self.round_added += int(added)
             if not added:
@@ -786,6 +857,23 @@ class ParExpand:
                 added = self.add(itr_id, 'ray', parents=item['s'])     # pair spanning the cuboid
                 if added:
                     self.rays[item['rkey']]['members'].add(itr_id)
+                    self.ray_split.add(item['key'])
+            else:
+                # the cuboid returned an existing solution x: if x lies between the pair (projection), it becomes a
+                # member of the ray, so that the pairs (p, x) and (x, q) are bisected further (no hole is left
+                # behind a solution that was not adopted when the ray was defined)
+                ids, Y, W = self.ids_W()
+                k = int(np.argmin(np.max(np.abs(Y - y2), axis=1)))
+                x = ids[k]
+                ray = self.rays[item['rkey']]
+                pos = dict(zip(ids, W))
+                p, q = item['s']
+                if x not in ray['members'] and p in pos and q in pos and \
+                        0.0 < er.seg_param(pos[x], pos[p], pos[q]) < 1.0:
+                    ray['members'].add(x)
+                    self.adopted_dup += 1
+                    self.ray_split.add(item['key'])
+                    note += f', existing {x} adopted'
         self.log.append(dict(n=self.n_probe, itr=itr_id, round=self.rounds, purpose=purpose,
                              w=np.round(item['w'], 3).tolist(), y=np.round(y2, 3).tolist(),
                              weak=weak, dist_E=round(dE, 3), added=added, note=note))
@@ -858,7 +946,8 @@ class ParExpand:
     def uncovered_pairs(self):
         """rays mode: pairs of consecutive solutions on a ray farther apart than rho (L-inf, achievements). The
         cuboid of such a pair returned a duplicate or a dominated solution (or the budget was exhausted), so the
-        ray structure does not cover the part of the PF between them."""
+        ray structure does not cover the part of the PF between them.  A pair split by its cuboid on another ray
+        (the same two solutions are neighbours on two rays) is covered and not listed."""
         if self.mode != 'rays':
             return []
         ids, Y, W = self.ids_W()
@@ -868,7 +957,7 @@ class ParExpand:
             m = self.ray_order(ray)
             for p, q in zip(m, m[1:]):
                 d = eg.linf(ach[p], ach[q])
-                if d > self.rho:
+                if d > self.rho and frozenset((p, q)) not in self.ray_split:
                     out.append((p, q, round(float(d), 2)))
         return out
 
@@ -898,6 +987,7 @@ class ParExpand:
                  (f'; {n_unc} not certified (probes there returned no new Pareto solution)' if n_unc else '')]
         if self.mode == 'rays':
             unc = self.uncovered_pairs()
+            lines.append(f'existing solutions returned by a cuboid and adopted by its ray: {self.adopted_dup}')
             lines.append(f'pairs of neighbours on rays farther apart than rho: {len(unc)}' +
                          (' (itr ids, L-inf distance): ' + ', '.join(f'[{p}, {q}] {d}' for p, q, d in unc[:20]) +
                           (' ...' if len(unc) > 20 else '') if unc else ''))
