@@ -15,7 +15,7 @@ class Config:
         self.cfgLoc()
         self.rd_cfg(self.f_sys)
         self.rd_cfg(self.f_usr)   # usr_cfg is in the current dir
-        # print(f'Configuration options read:\n\t{self.data}')
+        print(f'Configuration options read:\n\t{self.data}')
         self.chk_dirs()       # check the needed dirs
         # raise Exception('test stop')
 

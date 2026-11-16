@@ -9,6 +9,7 @@ import argparse
 import shutil
 from datetime import datetime as dt
 # from datetime import timedelta as td
+import time
 
 from .cfg import Config  # configuration (dir/file location, parameter values, etc
 from .driver import driver  # driver (run the analysis set-up and iterations)
@@ -71,7 +72,15 @@ def main():
     version = '2.0.0'
     print(f'pyMCMA ver. {version}')
     tstart = dt.now()
-    # print('Started at:', str(tstart))
+    print('Started at:', str(tstart))
+    '''
+    a = 1
+    b = 2
+    time.sleep(a+b)
+    print(a+b)
+    x = os.path.exists('foo')
+    print(x)
+    '''
 
     module_dir = 'mcma'         # needs to be changed (in the pymcma repo) to pymcma
     module_py = 'driver.py'
