@@ -9,7 +9,7 @@ import argparse
 import shutil
 from datetime import datetime as dt
 # from datetime import timedelta as td
-import time
+# import time
 
 from .cfg import Config  # configuration (dir/file location, parameter values, etc
 from .driver import driver  # driver (run the analysis set-up and iterations)
@@ -89,7 +89,7 @@ def main():
         os.chdir(module_dir)
         print(f'Current working directory changed to "./{module_dir}".')
     args = read_args()
-    # ana_dir = args.ana_id or 'anaTst'
+    # ana_dir = args.ana_id or 'anaTst'     # no longer used
     install = args.install
     ana_dir = args.anaDir
     if install:     # check, if wdir (composed of pymcma's templates and tests) should be installed

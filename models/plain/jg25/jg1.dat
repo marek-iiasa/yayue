@@ -1,0 +1,7 @@
+# AMPL-format data for demo-model example.py
+
+# the default values (set in SMS) are: periods=6, life=0, discr=0.05
+param r := 1.0 ;
+
+
+
