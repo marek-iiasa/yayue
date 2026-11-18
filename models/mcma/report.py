@@ -209,7 +209,9 @@ class Report:
         self.plots = Plots(self.wflow, self.df_vars)    # plots
         self.plots.plot3D()    # 3D plot
         self.plots.plot2D()    # 2D plots
-        self.plots.parallel()  # Parallel coordinates plot
+
+        print('\n ----------------------------------------- parallel plot suspended.\n')
+        # self.plots.parallel()  # Parallel coordinates plot
         # self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # todo: uncomment the kde plot when the bug (commented in the code) will be fixed
         # self.plots.kde_stages()  # KDE + histograms vs stages

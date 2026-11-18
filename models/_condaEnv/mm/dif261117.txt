@@ -1,0 +1,89 @@
+1c1
+< # packages in environment at /Users/marek/anaconda3/envs/pyo11:
+---
+> # packages in environment at /Users/marek/anaconda3/envs/pyo11T:
+9a10,11
+> brotli                    1.1.0                hd74edd7_2    conda-forge
+> brotli-bin                1.1.0                hd74edd7_2    conda-forge
+12c14
+< ca-certificates           2025.1.31            hf0a4a13_0    conda-forge
+---
+> ca-certificates           2026.7.22            hbd8a1cb_0    conda-forge
+14c16
+< certifi                   2025.1.31          pyhd8ed1ab_0    conda-forge
+---
+> certifi                   2026.7.22          pyhd8ed1ab_0    conda-forge
+19a22,24
+> contourpy                 1.3.3           py311h7d85929_4    conda-forge
+> cycler                    0.12.1             pyhcf101f3_2    conda-forge
+> cython                    3.3.0                    pypi_0    pypi
+26a32,34
+> fonttools                 4.63.0          py311hc290fe0_0    conda-forge
+> formulaic                 1.2.2              pyhd8ed1ab_0    conda-forge
+> freetype                  2.14.2               hce30654_0    conda-forge
+35a44
+> interface_meta            1.3.0              pyhd8ed1ab_1    conda-forge
+38a48,51
+> joblib                    1.5.3              pyhd8ed1ab_0    conda-forge
+> kiwisolver                1.5.0           py311h7d85929_0    conda-forge
+> lcms2                     2.17                 h7eeda09_0    conda-forge
+> lerc                      4.2.0                h1eee2c3_0    conda-forge
+39a53,55
+> libbrotlicommon           1.1.0                hd74edd7_2    conda-forge
+> libbrotlidec              1.1.0                hd74edd7_2    conda-forge
+> libbrotlienc              1.1.0                hd74edd7_2    conda-forge
+41a58
+> libdeflate                1.25                 he7e0567_1    conda-forge
+44a62,63
+> libfreetype               2.14.2               hce30654_0    conda-forge
+> libfreetype6              2.14.2               hdfa99f5_0    conda-forge
+47a67
+> libjpeg-turbo             3.2.0                h84a0fba_1    conda-forge
+51a72
+> libpng                    1.6.55               h132b30e_0    conda-forge
+53a75,77
+> libtiff                   4.7.0                h551f018_3    conda-forge
+> libwebp-base              1.6.0                h202fb40_1    conda-forge
+> libxcb                    1.17.0               hbffa61f_2    conda-forge
+56a81,82
+> matplotlib                3.11.0          py311ha1ab1f8_1    conda-forge
+> matplotlib-base           3.11.0          py311haa222d5_0  
+60a87
+> munkres                   1.1.4              pyhd8ed1ab_1    conda-forge
+66,67c93,95
+< numpy                     2.2.4           py311h762c074_0    conda-forge
+< openssl                   3.4.1                h81ee809_0    conda-forge
+---
+> numpy                     2.4.6           py311hbd1492f_0    conda-forge
+> openjpeg                  2.5.3                h889cd5d_1    conda-forge
+> openssl                   3.6.4                h55eecbc_0    conda-forge
+70a99,100
+> patsy                     1.0.2              pyhcf101f3_0    conda-forge
+> pillow                    11.3.0          py311h1f9957d_3    conda-forge
+76a107
+> pthread-stubs             0.4               h84a0fba_1003    conda-forge
+77a109
+> py-spy                    0.4.3                    pypi_0    pypi
+82a115
+> pyparsing                 3.3.2              pyhcf101f3_0    conda-forge
+96a130
+> scikit-learn              1.8.0           np2py311hf1dd2ad_1    conda-forge
+97a132
+> scipy                     1.15.2          py311h0675101_0    conda-forge
+98a134,135
+> seaborn                   0.13.2               hd8ed1ab_3    conda-forge
+> seaborn-base              0.13.2             pyhd8ed1ab_3    conda-forge
+110a148
+> statsmodels               0.15.0          np2py311he0160cf_0    conda-forge
+112a151
+> threadpoolctl             3.6.0              pyhecae5ae_0    conda-forge
+114a154
+> tornado                   6.5.8           py311hc949640_0    conda-forge
+119a160
+> unicodedata2              17.0.1          py311hc949640_0    conda-forge
+124a166,168
+> wrapt                     2.3.0           py311h5edb25e_1    conda-forge
+> xorg-libxau               1.0.12               h84a0fba_2    conda-forge
+> xorg-libxdmcp             1.1.5                h84a0fba_2    conda-forge
+131a176
+> zstd                      1.5.7                hbf9d68e_6    conda-forge
