@@ -1,3 +1,6 @@
+# .gitignore might differ between users/computers
+# 
+# .giignore local for MM
 Notes/
 Notes.txt
 Readme.txt
@@ -10,12 +13,14 @@ wdir/anaTst/Results/
 wdirB*
 pytst/
 docs/source/Bak/
+xejor25/
 xejor26/
-xtst25/
 ZZ/
 # ana_*/
 # anaEx/
 # anaTst/Results/
 # anaTst/pay*
 
+# emd end MM's local version
 
+# add here your local .gitignore
