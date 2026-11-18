@@ -3,7 +3,7 @@
 import sys		# needed for stdout and sys.exit()
 from os import R_OK, access
 from os.path import isfile
-import dill
+import pyomo, datetime, dill
 import pyomo.environ as pe
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
@@ -26,7 +26,7 @@ def chk_sol(res):  # check status of the solution
 
 
 # noinspection SpellCheckingInspection
-if __name__ == '__main__':
+def main():
     m_name = 'alves'     # model name (used for the dll-format file-name)
     # files
     f_data = 'dat_alves.dat'    # data for defining the model instance
@@ -36,9 +36,17 @@ if __name__ == '__main__':
     abst = sms_alves.mk_sms()         # generate abstract model (SMS)
     model = inst(abst, f_data)  # generate model instance
 
+    payload = {
+        'pyomo_version': pyomo.version.version,
+        'created': datetime.datetime.now().isoformat(),
+        'model_id': '1.0',
+        'model': model,
+    }
+
     # ad-hoc dll atore
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
-        dill.dump(model, f, byref=False, recurse=True)
+        dill.dump(payload, f, byref=False, recurse=True)
+        # dill.dump(model, f, byref=False, recurse=True)
     print(f'Model "{m_name}" generated and dill-dumpped to: {f_mod}')
 
     opt = pe.SolverFactory('glpk')
@@ -46,3 +54,6 @@ if __name__ == '__main__':
     results = opt.solve(model, tee=False)
     chk_sol(results)  # check the status of the solution
     model.display()
+
+if __name__ == '__main__':
+        main()
