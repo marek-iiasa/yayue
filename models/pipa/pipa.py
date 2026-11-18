@@ -14,7 +14,7 @@ from os.path import isfile
 import pyomo.environ as pe
 from datetime import datetime as dt
 # from datetime import timedelta as td
-import dill
+import pyomo, datetime, dill
 
 from pyomo.opt import SolverStatus
 from pyomo.opt import TerminationCondition
@@ -81,12 +81,19 @@ if __name__ == '__main__':
         model.dis[p] = (1. - model.discr) ** p
         # print(f'p = {p}, dis = {pe.value(model.dis[p]):.3f}')
 
+    payload = {
+        'pyomo_version': pyomo.version.version,
+        'created': datetime.datetime.now().isoformat(),
+        'model_id': '1.0',
+        'model': model,
+    }
+
     # f_pipa = 'pipa3'
     # f_name = f'{f_pipa}.dll'
     # with dill.detect.trace():
     with open(f_mod, 'wb') as f:  # Serialize and save the Pyomo model
-        # dill.dump(model, f, byref=True, recurse=False, fmode=dill.FILE_FMODE)
-        dill.dump(model, f, recurse=True)
+        dill.dump(payload, f, byref=False, recurse=True)
+        # dill.dump(model, f, recurse=True)
     print(f'Model "{m_name}" dill-dumped to: {f_mod}')
 
     # print('\nmodel display: -----------------------------------------------------------------------------')
@@ -139,7 +146,7 @@ if __name__ == '__main__':
     # print(f'Imported crude oil = {oil_imp}')
     # print(f'Carbon emission (discounted) cost = {carbC}')
 
-    rep.var_vals()  # extract from the solution values of the requessted variables
+    rep.var_vals()  # extract from the solution values of the requested variables
     rep.summary()   # store the extracted values in a df
 
     tend = dt.now()
