@@ -5,24 +5,33 @@ from itertools import combinations, permutations
 
 
 # define corners of Pareto set
+# noinspection DuplicatedCode
 class Corners:
-    def __init__(self, mc):     # initialize corners by regularized selfish solutions
-        self.mc = mc
-        self.n_crit = mc.n_crit
-        # self.verb = 3
-        self.verb = mc.opt('verb', 0)
+    def __init__(self, wflow):     # initialize corners by regularized selfish solutions
+        self.wflow = wflow
+        self.mc = wflow.mc
+        self.n_crit = self.mc.n_crit
+        self.verb = self.mc.opt('verb', 0)
+        self.verb = 3
         self.corners = []         # criteria states at the Pareto-set corners
         self.a_corners = []       # corners defined by the achievements
         self.s_corners = []       # id of solution defining the corresponding corner
         self.cur_corner = 0       # seq_no of current corner
         self.n_corners = 0        # number of prepared corners
         self.all_done = False     # set to True, after last corner processed
-        self.mk_corners()         # make list of corners
+        self.nSet = self.wflow.corners   # 1: only selfish; 2: second set
+        self.curSet = 1           # current set of corners in [1, 2]
+        self.mk_corners(self.curSet)      # make list of corners of first set (self.nSet = 1) or both sets (self.nSet = 2)
+        if self.nSet == 2:
+            self.curSet = 2
+            self.mk_corners(self.curSet)
         # self.lst_corners()
         # self.next_corner()      # API for handling next corner, returns True, if the last corner is processed
-        # self.set_ar()           # set A/R for the current corner
+        # self.set_ar()           # set A/R for the current corner   (moved to mc_blcok() )
 
-    def mk_corners(self):
+    def mk_corners(self, curSet):
+        print(f'Corners: {curSet}')
+        assert curSet in [1, 2], f'curSet = {curSet} must be either 1 or 2.'
         n = self.n_crit     # number of criteria
         all_ids = range(n)  # ids of all criteria
         pair_lst = list(combinations(range(n), 2))  # pairs of criteria
@@ -31,23 +40,24 @@ class Corners:
             for i in all_ids:
                 if i not in pair:
                     ign_ids.append(i)
-            # print(f'ids of crit ({ign_ids}) to be ignored with two corners defined by permuted pair({pair}).')
+            print(f'ids of crit ({ign_ids}) to be ignored with two corners defined by permuted pair({pair}).')
             per2 = permutations(pair)   # crit-pair will generate 2 permutations
             twins = list(per2)  # permuted pairs
-            # print(twins)
+            print(twins)
             for p in twins:     # list of criteria state: defining a corner
                 a_cor = {p[0]: 'a'}   # first criterion active
                 a_cor.update({p[1]: 'n'})   # second criterion not active
                 for i in ign_ids:
                     a_cor.update({i: 'i'})   # all remaining criteria, if any to be ignored
                 self.corners.append(a_cor)
-                # print(f'p = {p}, a_cor = {a_cor}')
+                print(f'p = {p}, a_cor = {a_cor}')
         self.n_corners = len(self.corners)
         if self.verb > 1:
             print(f'Prepared specs of {self.n_corners} corners for {self.n_crit} criteria.')
             self.lst_corners()
             print('--------------------------------------------------------------------')
 
+    # noinspection DuplicatedCode
     def next_corner(self):
         assert self.cur_corner <= self.n_corners, f'requesting {self.cur_corner}-th corner out of {self.n_corners}.'
         if self.verb > 2:

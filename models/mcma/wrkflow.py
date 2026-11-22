@@ -21,6 +21,12 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.mc = CtrMca(self)   # initialize criteria
         self.verb = self.mc.verb
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
+        self.corners = self.mc.opt('corners', 1)   # 1: only selfish; 2: second set
+        self.parCube = self.mc.opt('cubes', 1)   # if True, then compute corners of the Pareto set
+        if self.parCube == 'parent':
+            self.parCube = True
+        else:
+            self.parCube = False
         # self.rep = None  # Report ctor
         self.rep = Report(self, m1)  # Report ctor
         self.par_rep = None    # ParRep object, currently always used (not only, if is_par_rep == True)
@@ -33,7 +39,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
             # self.rep = Report(self, m1)  # Report ctor
             self.mc.scale()  # (re)define scales for criteria values
             self.par_rep = ParRep(self)  # ParRep object, currently always used (not only, if is_par_rep == True)
-            self.corner = Corners(self.mc)  # initialize corners of the Pareto set
+            self.corner = Corners(self)  # initialize corners of the Pareto set
             self.cur_stage = 2      # PayOff table uploaded, start with corners of the PF
         else:
             self.cur_stage = 1      # start with computing PayOff table

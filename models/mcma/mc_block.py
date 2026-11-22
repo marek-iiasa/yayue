@@ -10,7 +10,7 @@ class McMod:
         self.mc = wflow.mc    # CtrMca class handling MCMA data and process/analysis status
         self.m1 = m1    # instance of the core model (first block of the aggregate model)
         self.verb = self.mc.verb    # verbosity level
-        # self.verb = 3   # tmp/debug verbosity level
+        self.verb = 3   # tmp/debug verbosity level
 
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of m1 variables defining criteria
@@ -177,7 +177,7 @@ class McMod:
                     raise Exception(f'mc_itr() bug in cafD() {ix = }, {sc_len = }.')
                 sc_coe = sc_var[ix]
                 abx = pwlx[sx]      # params of line defining the sx-th segment:  y = abx[0] * x + abx[1]
-                if self.mc.verb > 3:
+                if self.mc.verb > 5:
                     print(f'generating constraint for pair of indices (CAF, segment of its PWL) = ({ix}, {sx}).')
                     print(f'({ix = }, sc_coef {sc_coe:.2e},  {sx = }): a = {abx[0]:.2e}, b = {abx[1]:.2e}')
                 cons_item = mx.caf[ix] <= abx[0] * sc_coe * mx.x[var_seq[ix]] + abx[1]
@@ -249,7 +249,7 @@ class McMod:
         def obj(mx):
             return mx.af
 
-        if self.verb > 4:    # set to 1 for testing, restore 2 after testing
+        if self.verb > 6:    # set to 1 for testing, restore 2 after testing
             print('\nMC_block (returned to driver):')
             m.pprint()
 

@@ -27,7 +27,7 @@ def rd_inst(cfg):  # load the core model
         m1 = payload['model']
     print(f'\nModel "{m1.name}" loaded from the dill-format file "{f_name}"')
 
-    if cfg.get('verb') > 2:
+    if cfg.get('verb') > 6:
         print('\ncore model display: -----------------------------------------------------------------------------')
         m1.pprint()
         print('end of model display: ------------------------------------------------------------------------\n')
