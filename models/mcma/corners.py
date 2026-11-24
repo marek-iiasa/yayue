@@ -12,7 +12,7 @@ class Corners:
         self.mc = wflow.mc
         self.n_crit = self.mc.n_crit
         self.verb = self.mc.opt('verb', 0)
-        self.verb = 3
+        self.verb = 3          # temporary for debugging
         self.corners = []         # criteria states at the Pareto-set corners
         self.a_corners = []       # corners defined by the achievements
         self.s_corners = []       # id of solution defining the corresponding corner
@@ -116,7 +116,7 @@ class Corners:
                     cor = f'{cr.name}: {cr.a_val:.1f}'
             self.a_corners.append(cor)
             self.s_corners.append(n_itr)
-            # cotodo: add solution id
+            # todo: add solution id
         else:
             print('Non-Pareto solution ignored in corners definitions.')
         if self.all_done:
@@ -151,3 +151,116 @@ class Corners:
     #         print(f'Corners::prune(): removed stale corner ids: {removed}')
     #
     #     return new_a, new_s, removed
+
+# define corners of Pareto set
+# noinspection DuplicatedCode
+import numpy as np
+from scipy.spatial import Delaunay, QhullError
+class Triangle:
+    def __init__(self, corn):     # initialize triangles (ctor called after all corners are generated)
+        self.corners = corn
+        self.wflow = corn.wflow
+        # self.mc = wflow.mc
+        pass
+        self.verb = corn.verb
+        self.scale = self.mc.cafAsp  # upper bound of achievements: [0, scale]
+        self.cr_names = [cr.name for cr in self.mc.cr]  # fixed column order = order of criteria
+        self.n_crit = len(self.cr_names)
+        self.sol_ids = list(corn.s_corners)  # solution id of each corner (row)
+
+        # parse corners "name: val, name: val, ..." into an (n_corners, n_crit) array
+        rows = []
+        for cor in corn.a_corners:
+            d = {}
+            for item in cor.split(','):
+                name, val = item.rsplit(':', 1)
+                d[name.strip()] = float(val)
+            missing = set(self.cr_names) - d.keys()
+            assert not missing, f'corner "{cor}" lacks criteria {missing}.'
+            rows.append([d[nm] for nm in self.cr_names])
+        self.pts = np.array(rows, dtype=float)  # vertices in achievement space
+        self.n_pts = self.pts.shape[0]
+        self.pts_n = self.pts / self.scale  # same, normalized to [0, 1] (scale-independent)
+
+        assert self.n_pts >= self.n_crit, \
+            f'{self.n_pts} corners are too few to span a {self.n_crit - 1}-dim facet.'
+        if self.verb > 1:
+            print(f'Triangle: {self.n_pts} corners x {self.n_crit} criteria (scale {self.scale}):')
+            for i, row in enumerate(self.pts):
+                print(f'  vertex {i} (sol_id {self.sol_ids[i]}): {np.round(row, 1)}')
+        self.triangulate()  # triangulate the corners on the (n_crit-1)-dim Pareto surface
+        pass
+
+
+       #  raise NotImplementedError('Triangle class is not implemented yet.')
+
+    def triangulate(self, max_edge=None):
+        """Triangulate the corners (any number) on the (n_crit-1)-dim Pareto surface.
+        Result: self.simplices, an int array (n_simplices, n_crit); each row = indices into self.pts.
+        max_edge: optional, in [0, 1] units of scale; drops simplices with a longer edge
+                  (crude guard against spanning concave notches of the front)."""
+
+        '''
+        # orthonormal basis of the hyperplane orthogonal to the diagonal (1,...,1)
+        basis = np.linalg.svd(np.ones((1, n)))[2][1:]  # shape (n-1, n)
+        self.proj = (self.pts_n - self.pts_n.mean(axis=0)) @ basis.T  # (n_pts, n-1)
+
+        if n == 2:  # 1-D front: "simplices" are segments between neighbours along the projection
+            order = np.argsort(self.proj[:, 0])
+            self.simplices = np.column_stack([order[:-1], order[1:]])
+        else:
+            try:
+                self.simplices = Delaunay(self.proj).simplices
+            except QhullError as e:
+                raise ValueError(f'corners are degenerate in the projected {n - 1}-dim space '
+                                 f'(e.g. collinear); cannot triangulate.') from e
+        '''
+
+        n = self.n_crit
+        basis = np.linalg.svd(np.ones((1, n)))[2][1:]  # (n-1, n), orthogonal to diagonal
+        self.proj = (self.pts_n - self.pts_n.mean(axis=0)) @ basis.T  # (n_pts, n-1), centered
+
+        # actual dimension r of the projected point set (handles all-collinear / all-coplanar corners)
+        _, sv, vt = np.linalg.svd(self.proj, full_matrices=False)
+        tol = 1e-6
+        r = int(np.sum(sv > tol)) if sv.size else 0
+        self.dim = r
+        red = self.proj @ vt[:r].T  # coords in the r-dim subspace
+
+        if r == 0:  # single (or coincident) point: nothing to triangulate
+            self.simplices = np.empty((0, 1), dtype=int)
+        elif r == 1:  # all collinear: chain of segments ordered along the line
+            order = np.argsort(red[:, 0])
+            self.simplices = np.column_stack([order[:-1], order[1:]])
+        else:  # QJ: keep every point as vertex (collinear boundary points included)
+            tri = Delaunay(red, qhull_options='Qbb Qc Qz QJ')
+            simp = tri.simplices
+            # drop slivers: near-zero r-volume simplices produced by collinear/coplanar subsets
+            vols = np.array([abs(np.linalg.det(red[s[1:]] - red[s[0]])) for s in simp])
+            self.simplices = simp[vols > tol * max(vols.max(), tol)]
+            # report collinear triples (= dropped slivers)
+            self.collinear = [s.tolist() for s in simp[vols <= tol * max(vols.max(), tol)]]
+            for s in self.collinear:
+                print(f'Triangle: collinear corners {s} (sol_ids {[self.sol_ids[i] for i in s]}); '
+                      f'flat simplex dropped.')
+            # safety check: corners not used by any remaining simplex
+            unused = sorted(set(range(self.n_pts)) - set(self.simplices.ravel().tolist()))
+            if unused:
+                print(f'Triangle: corners {unused} (sol_ids {[self.sol_ids[i] for i in unused]}) '
+                      f'not in any simplex.')
+
+        if r < n - 1 and self.verb > 0:
+            print(f'Triangle: corners span only {r} of {n - 1} dims; simplices have {r + 1} vertices.')
+        if max_edge is not None:  # drop simplices with an overlong edge (in normalized units)
+            keep = []
+            for s in self.simplices:
+                v = self.pts_n[s]
+                edges = [np.linalg.norm(v[i] - v[j]) for i in range(len(s)) for j in range(i + 1, len(s))]
+                keep.append(max(edges) <= max_edge)
+            self.simplices = self.simplices[np.array(keep, dtype=bool)]
+
+        if self.verb > 1:
+            print(f'Triangle: {len(self.simplices)} simplices on {self.n_pts} corners:')
+            for k, s in enumerate(self.simplices):
+                print(f'  simplex {k}: vertices {s.tolist()}, sol_ids {[self.sol_ids[i] for i in s]}')
+        return self.simplices

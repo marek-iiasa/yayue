@@ -18,6 +18,7 @@ def rd_inst(cfg):  # load the core model
         # m1 = cloudpickle.load(f)
         m1 = dill.load(f)
     '''
+
     with open(f_name, 'rb') as f:
         payload = dill.load(f)
         if payload['pyomo_version'] != pyomo.version.version:

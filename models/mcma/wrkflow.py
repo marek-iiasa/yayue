@@ -8,6 +8,7 @@ from .ctr_mca import CtrMca
 from .payoff import PayOff
 from .report import Report  # organize the results of each iteration into reports
 from .corners import Corners
+from .corners import Triangle
 # from .crit import Crit, CrPref
 from .par_repr import ParRep
 from .neigh import Neigh
@@ -22,6 +23,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.verb = self.mc.verb
         self.payoff = PayOff(self.mc)   # initialiaze PayOff table
         self.corners = self.mc.opt('corners', 1)   # 1: only selfish; 2: second set
+        self.triangle = None
         self.parCube = self.mc.opt('cubes', 1)   # if True, then compute corners of the Pareto set
         if self.parCube == 'parent':
             self.parCube = True
@@ -119,6 +121,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                 #     print(f'corner {i}, sol_id {upd_s_corner[i]}:  ({cor})')
                 # print(f'Switch to computing Pareto-front representation based on cuboids. ===============================')
 
+                self.triangle = Triangle(self.corner)  # initialize triangle of the Pareto set
                 if self.cfg.get('neutral') is True:
                     next_stage = 3
                 else:

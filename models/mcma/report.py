@@ -210,11 +210,14 @@ class Report:
         self.plots.plot3D()    # 3D plot
         self.plots.plot2D()    # 2D plots
 
-        print('\n ----------------------------------------- parallel plot suspended.\n')
-        # self.plots.parallel()  # Parallel coordinates plot
+        # print('\n ----------------------------------------- parallel plot suspended.\n')
+        self.plots.parallel()  # Parallel coordinates plot
+
+        # todo: kde/stages plots no longer used
         # self.plots.sol_stages()  # solutions & itr vs stage, cube-sizes vs stages
         # todo: uncomment the kde plot when the bug (commented in the code) will be fixed
         # self.plots.kde_stages()  # KDE + histograms vs stages
+
         self.plots.neighDist()  # distribution of neighbors' distances'
         if n_clust > 0:
             self.plots.plot3D(only_centres=True)    # Only centres, only if clusters enabled
