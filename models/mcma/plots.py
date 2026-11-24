@@ -109,9 +109,8 @@ class Plots:
         dpi = 300
         for name, fig in self.figures.items():
             filename = f'{self.dir_name}{name}.png'
-            # fig.savefig(filename, dpi=dpi)
+            fig.savefig(filename, dpi=dpi)
             print(f'Plot "{name}" is saved to "{filename}".')
-            print(f'----------------------------------------------  saving plots sustepnded')
 
     def plot2D(self):
         n_plots = comb(self.n_crit, 2, exact=True)  # number of pairs for n_crit
