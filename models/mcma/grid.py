@@ -109,6 +109,7 @@ class Grid:     # representation of the neighbors
         self.wflow = wflow    # WrkFlow object
         self.mc = wflow.mc    # CtrMca object
         self.parRep = wflow.par_rep         # PF representation object
+        self.is_trian = self.mc.opt('triang', False)
         self.stage = -1       # -1 ctor, 0 rays0 (built on corners), 1 rays1 (built on rays0)
         self.corners = self.wflow.corner
         self.sols = self.parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions

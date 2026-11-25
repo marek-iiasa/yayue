@@ -115,6 +115,7 @@ class ParRep:     # representation of the Pareto set
     def solDistr(self):     # distribution of distances between neighbor solutions, called by sizeLog
         #  Note: neighbor (for each solution) is the closest other solution
         is_grid = self.mc.opt('grid', False)
+        is_trian = self.mc.opt('triang', False)
         is_mcube = self.mc.opt('mCube', False)
         if is_grid or is_mcube:
             if is_grid:
