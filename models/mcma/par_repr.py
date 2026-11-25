@@ -74,6 +74,9 @@ class ParProg:
 class ParRep:     # representation of the Pareto set
     def __init__(self, wflow):         # initialize corners by regularized selfish solutions
         self.wflow = wflow        # WrkFlow object
+        self.is_grid = self.wflow.is_grid
+        self.is_trian = self.wflow.is_trian
+        self.is_mcube = self.wflow.is_mcube
         self.mc = wflow.mc        # CtrMca object
         self.cfg = wflow.cfg      # Config object
         self.sols = []            # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
@@ -114,19 +117,19 @@ class ParRep:     # representation of the Pareto set
     # should not be used if neighbors are handled by the Neigh class (cfg option: mCube)
     def solDistr(self):     # distribution of distances between neighbor solutions, called by sizeLog
         #  Note: neighbor (for each solution) is the closest other solution
-        is_grid = self.mc.opt('grid', False)
-        is_trian = self.mc.opt('triang', False)
-        is_mcube = self.mc.opt('mCube', False)
-        if is_grid or is_mcube:
-            if is_grid:
+        # is_grid = self.is_grid
+        # is_trian = self.is_trian
+        # is_mcube = self.is_mcube
+        if self.is_grid or self.is_mcube:
+            if self.is_grid:
                 self.distances = self.grid.distances()
                 # raise Exception(f'ParRep::solDistr() - processing Grid distances not implemented.')
-            elif is_mcube:
+            elif self.is_mcube:
                 self.distances = self.neighSol.distances
             else:
                 raise Exception(f'ParRep::solDistr() - both grid and mCube options declared.')
             if len(self.distances) == 0:
-                print(f'ParRep::solDistr() - no distances defined, {is_grid = }, {is_mcube = }.')
+                print(f'ParRep::solDistr() - no distances defined, {self.is_grid = }, {self.is_mcube = }.')
                 return
             self.distances.sort()
             print(f'Distances between {len(self.distances)} neighbor-pairs: min {self.distances[0]:.2e}, '

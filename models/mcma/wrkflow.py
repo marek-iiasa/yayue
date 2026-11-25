@@ -25,6 +25,9 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
         self.corners = self.mc.opt('corners', 1)   # 1: only selfish; 2: second set
         self.triangle = None
         self.parCube = self.mc.opt('cubes', 1)   # if True, then compute corners of the Pareto set
+        self.is_grid = self.mc.opt('grid', False)
+        self.is_trian = self.mc.opt('triang', False)
+        self.is_mcube = self.mc.opt('mCube', False)
         if self.parCube == 'parent':
             self.parCube = True
         else:
@@ -141,7 +144,7 @@ class WrkFlow:   # payoff table: try to download, set A/R for computing, update 
                 # else:
                 #     raise Exception(f'WrkFlow::itr_sol() - duplicated Neigh-object initialization.')
                 pass
-            elif self.mc.opt('grid', False):
+            elif self.mc.opt('grid', True):
                 if self.par_rep.grid is None:
                     self.par_rep.grid = Grid(self) # initialize with corners and neutral sol.
                 # else:

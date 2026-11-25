@@ -109,9 +109,11 @@ class Grid:     # representation of the neighbors
         self.wflow = wflow    # WrkFlow object
         self.mc = wflow.mc    # CtrMca object
         self.parRep = wflow.par_rep         # PF representation object
-        self.is_trian = self.mc.opt('triang', False)
+        self.is_trian = wflow.is_trian
+        # self.is_mcube = wflow.is_mcube
         self.stage = -1       # -1 ctor, 0 rays0 (built on corners), 1 rays1 (built on rays0)
         self.corners = self.wflow.corner
+        self.triang = self.wflow.triangle
         self.sols = self.parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
         self.rays0 = []     # ray-objects built on corners
         self.rays1 = []     # ray-objects built on rays0
@@ -167,10 +169,33 @@ class Grid:     # representation of the neighbors
         if self.stage == -1:    # called from the ctor,  create rays defined by PF corners
             self.stage = 0
             self.rays = self.rays0
-            sCorners = self.corners.s_corners
-            pair_lst = list(combinations(sCorners, 2))  # pairs of corners
-            for seq, (anch0, anch1) in enumerate(pair_lst):   # ctor of rays defined by corners of the PF
-                self.rays.append(self.aRay(self, seq, anch0, anch1))
+            # todo: optionally, generate here rays from Trangle() (if self.is_trian is True)
+            if self.is_trian:
+                print('\nRays generated from triangles')
+                trian = self.triang
+                n_rays = trian.n_edges()
+                for j in range(n_rays):
+                    ray = trian.edge(j)
+                    pass
+                    ends = ray[0]
+                    anch0 = ends[0]
+                    anch1 = ends[1]
+                    trId = ray[1]
+                    edgeLen = ray[2]
+                    print(f'ray[{j}]: edge of triangle {trId}, anch0 {anch0}, anch1 {anch1}, len {edgeLen:.2f}')
+                    pass
+                    # anch0, anch1 = trian.get_edge(j)
+                    self.rays.append(self.aRay(self, j, anch0, anch1))
+                pass
+                print(f'Number of generated rays: {len(self.rays)}')
+                raise Exception(f'Grid::wFlow() - reading rays from triangles not implemented.')
+            else:
+                print('\nRays generated from corners')
+                sCorners = self.corners.s_corners
+                pair_lst = list(combinations(sCorners, 2))  # pairs of corners
+                for seq, (anch0, anch1) in enumerate(pair_lst):   # ctor of rays defined by corners of the PF
+                    self.rays.append(self.aRay(self, seq, anch0, anch1))
+            print(f'Number of generated rays: {len(self.rays)}')
         elif self.stage == 0:    # called from self.addSol()
             pass
         elif self.stage == 1:  # called from self.addSol()
