@@ -10,7 +10,7 @@ class McMod:
         self.mc = wflow.mc    # CtrMca class handling MCMA data and process/analysis status
         self.m1 = m1    # instance of the core model (first block of the aggregate model)
         self.verb = self.mc.verb    # verbosity level
-        self.verb = 3   # tmp/debug verbosity level
+        self.verb = 1   # tmp/debug verbosity level
 
         self.cr_names = []   # names of all criteria
         self.var_names = []  # names of m1 variables defining criteria
@@ -139,7 +139,7 @@ class McMod:
                 var_seq.append(-1)
                 if self.mc.cfg.get('verb') > 1:
                     print(f'PWL of crit. {cr.name} CAF not generated (crit. value is fixed)')
-        if self.mc.verb > 3:
+        if self.verb > 3:
             print(f'\nParams of s-th segment defining PWL for i-th CAF:')
             for (i, pwl) in enumerate(pwls):
                 if pwl is None:

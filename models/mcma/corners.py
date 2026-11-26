@@ -32,32 +32,52 @@ class Corners:
         # self.set_ar()           # set A/R for the current corner   (moved to mc_blcok() )
 
     def mk_corners(self, curSet):
-        print(f'Corners: {curSet}')
+        print(f'\nCorners:  set {curSet}')
         assert curSet in [1, 2], f'curSet = {curSet} must be either 1 or 2.'
         n = self.n_crit     # number of criteria
+        if n > 3:
+            print(f'\nWARNING: not tested for {n} criteria. -----------------------------------\n')
         all_ids = range(n)  # ids of all criteria
-        pair_lst = list(combinations(range(n), 2))  # pairs of criteria
-        for pair in pair_lst:
-            ign_ids = []    # ids of crit not belonging to a pair (will be ignored)
-            for i in all_ids:
-                if i not in pair:
-                    ign_ids.append(i)
-            print(f'ids of crit ({ign_ids}) to be ignored with two corners defined by permuted pair({pair}).')
-            per2 = permutations(pair)   # crit-pair will generate 2 permutations
-            twins = list(per2)  # permuted pairs
-            print(twins)
-            for p in twins:     # list of criteria state: defining a corner
-                a_cor = {p[0]: 'a'}   # first criterion active
-                a_cor.update({p[1]: 'n'})   # second criterion not active
-                for i in ign_ids:
-                    a_cor.update({i: 'i'})   # all remaining criteria, if any to be ignored
+        set1 = curSet == 1
+        if set1:
+            pair_lst = list(combinations(all_ids, 2))  # pairs of criteria
+            for pair in pair_lst:
+                ign_ids = []    # ids of crit not belonging to a pair (will be ignored)
+                for i in all_ids:
+                    if i not in pair:
+                        ign_ids.append(i)
+                # print(f'ids of crit ({ign_ids}) to be ignored with two corners defined by permuted pair({pair}).')
+                per2 = permutations(pair)   # crit-pair will generate 2 permutations
+                twins = list(per2)  # permuted pairs
+                print(twins)
+                for p in twins:     # list of criteria state: defining a corner
+                    a_cor = {p[0]: 'a'}   # first criterion active
+                    a_cor.update({p[1]: 'n'})   # second criterion not active
+                    for i in ign_ids:
+                        a_cor.update({i: 'i'})   # all remaining criteria, if any to be ignored
+                    self.corners.append(a_cor)
+                    # print(f'p = {p}, a_cor = {a_cor}')
+            self.n_corners = len(self.corners)
+            if self.verb > 1:
+                print(f'Prepared specs of {self.n_corners} corners for regularized selfish opt. (set1).')
+                self.lst_corners()
+        else:
+            tuples = combinations(all_ids, 2)
+            for pair in tuples:
+                a_cor = {pair[0]: 'a'}  # first criterion active
+                a_cor.update({pair[1]: 'a'})  # second criterion active
+                for i in all_ids:
+                    if i not in pair:     # remaining criteria inactive
+                        a_cor.update({i: 'n'})  # all remaining criteria, if any to be ignored
                 self.corners.append(a_cor)
-                print(f'p = {p}, a_cor = {a_cor}')
-        self.n_corners = len(self.corners)
-        if self.verb > 1:
-            print(f'Prepared specs of {self.n_corners} corners for {self.n_crit} criteria.')
-            self.lst_corners()
-            print('--------------------------------------------------------------------')
+                # print(f'p = {pair}, a_cor = {a_cor}')
+            pass
+            self.n_corners = len(self.corners)
+            if self.verb > 1:
+                print(f'Added 2nd set of corners. Together there are {self.n_corners} corners.')
+                self.lst_corners()
+
+        print('--------------------------------------------------------------------')
 
     # noinspection DuplicatedCode
     def next_corner(self):
@@ -201,7 +221,7 @@ class Triangle:
 
        #  raise NotImplementedError('Triangle class is not implemented yet.')
 
-    def triangulate(self, max_edge=None, keep_flat=True):
+    def triangulate(self, max_edge=None, keep_flat=False):
         """Triangulate the corners (any number >= 3) on the 2-dim Pareto surface (n_crit = 3 only).
         Result: self.simplices, an int array (n_triangles, 3); each row = indices into self.pts.
                 self.flat, a bool array (n_triangles,): True for a flat triangle (3 collinear corners).
@@ -268,11 +288,6 @@ class Triangle:
             print(f'Triangle: corners {unused} (sol_ids {[self.sol_ids[i] for i in unused]}) '
                   f'not in any triangle.')
 
-        if self.verb > 1:
-            print(f'Triangle: {len(self.simplices)} triangles on {self.n_pts} corners:')
-            for k, t in enumerate(self.simplices):
-                print(f'  triangle {k}: vertices {t.tolist()}, sol_ids {[self.sol_ids[i] for i in t]}'
-                      f'{"  (flat)" if self.flat[k] else ""}')
         self.mk_edges()
         return self.simplices
 
@@ -301,11 +316,15 @@ class Triangle:
         self.edges = np.array(edges, dtype=int).reshape(-1, 2)
         self.edge_tris = np.array(e_tris, dtype=int).reshape(-1, 2)
         self.edge_len = np.abs(self.pts[self.edges[:, 0]] - self.pts[self.edges[:, 1]]).max(axis=1)
-        if self.verb > 1:
+        if self.verb > 1:  # printed here, as triangles list their edge ids
+            print(f'Triangle: {self.n_tri()} triangles on {self.n_pts} corners:')
+            for i in range(self.n_tri()):
+                _, e_ids, is_flat, sids = self.tri(i)
+                print(f'  triangle {i}: sol_ids {sids}, edges {e_ids}{"  (flat)" if is_flat else ""}')
             print(f'Triangle: {self.n_edges()} edges ({len(self.shared_edges())} shared):')
             for j in range(self.n_edges()):
-                vert, tris, length = self.edge(j)
-                print(f'  edge {j}: corners {vert}, triangles {tris}, Chebyshev length {length:.1f}')
+                _, tris, length, sids = self.edge(j)
+                print(f'  edge {j}: sol_ids {sids}, triangles {tris}, Chebyshev length {length:.1f}')
 
     # --- interface for other parts of the code ---
     def n_tri(self):
@@ -313,17 +332,20 @@ class Triangle:
         return len(self.simplices)
 
     def tri(self, i):
-        """i-th triangle: (corner ids [3], edge ids [3], is_flat); edge k is opposite corner k."""
-        return self.simplices[i].tolist(), self.tri_edges[i].tolist(), bool(self.flat[i])
+        """i-th triangle: (corner ids [3], edge ids [3], is_flat, sol_ids [3] of its corners);
+        edge k is opposite corner k."""
+        v = self.simplices[i].tolist()
+        return v, self.tri_edges[i].tolist(), bool(self.flat[i]), [self.sol_ids[a] for a in v]
 
     def n_edges(self):
         """Number of edges (sides); each shared edge is counted once."""
         return len(self.edges)
 
     def edge(self, j):
-        """j-th edge: (corner ids [2], triangle ids [1 or 2], Chebyshev length)."""
+        """j-th edge: (corner ids [2], triangle ids [1 or 2], Chebyshev length, sol_ids [2] of its ends)."""
         tris = [int(i) for i in self.edge_tris[j] if i >= 0]
-        return self.edges[j].tolist(), tris, float(self.edge_len[j])
+        a, b = self.edges[j].tolist()
+        return [a, b], tris, float(self.edge_len[j]), [self.sol_ids[a], self.sol_ids[b]]
 
     def shared_edges(self):
         """Ids of the edges shared by two triangles (interior edges)."""

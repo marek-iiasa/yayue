@@ -39,7 +39,7 @@ class Grid:     # representation of the neighbors
                 if s.itr_id == idSol:
                    return s
             # raise Exception(f'Grid::getSol() - solution with id {id} not found.')
-            raise Exception(f'Grid::getSol() - solution with id {idSol} not found.')
+            raise Exception(f'Grid::getSol() - solution with itr_id {idSol} not found.')
 
         def dist(self, id1, id2):  # return the L^inf distance between the sol-pairs
             p1 = self.getSol(id1)
@@ -115,7 +115,7 @@ class Grid:     # representation of the neighbors
         self.corners = self.wflow.corner
         self.triang = self.wflow.triangle
         self.sols = self.parRep.sols      # Pareto-solutions (ParSol objects), excluding duplicated/close solutions
-        self.rays0 = []     # ray-objects built on corners
+        self.rays0 = []     # ray-objects built on corner s or on edges of triangles (if self.is_trian is True)
         self.rays1 = []     # ray-objects built on rays0
         self.rays = None    # reference to rays used at the current stage
         self.cand = {}      # candidate sol-pairs: key - (sorted by val) pair of sol-ids, val - distance, ray-seq_no
@@ -169,33 +169,27 @@ class Grid:     # representation of the neighbors
         if self.stage == -1:    # called from the ctor,  create rays defined by PF corners
             self.stage = 0
             self.rays = self.rays0
-            # todo: optionally, generate here rays from Trangle() (if self.is_trian is True)
+            sCorners = self.corners.s_corners   # itr_id of the corner solutions
+            # note: anch[0,1] are the ids of the solutions defining the ray, not the indices of corners
             if self.is_trian:
-                print('\nRays generated from triangles')
+                print('\nRays generated from edges of triangles')
                 trian = self.triang
                 n_rays = trian.n_edges()
                 for j in range(n_rays):
-                    ray = trian.edge(j)
-                    pass
-                    ends = ray[0]
-                    anch0 = ends[0]
-                    anch1 = ends[1]
-                    trId = ray[1]
-                    edgeLen = ray[2]
-                    print(f'ray[{j}]: edge of triangle {trId}, anch0 {anch0}, anch1 {anch1}, len {edgeLen:.2f}')
-                    pass
-                    # anch0, anch1 = trian.get_edge(j)
+                    edge = trian.edge(j)
+                    anch0, anch1 = edge[3]   # itr_ids (sol_ids) of the solutions at the edge ends
+                    trId = edge[1]       # id of the host riangle
+                    edgeLen = edge[2]
+                    print(f'edge[{j}]: host triangle id {trId}, anch0 [{anch0}], anch1 [{anch1}], len {edgeLen:.1f}')
                     self.rays.append(self.aRay(self, j, anch0, anch1))
-                pass
-                print(f'Number of generated rays: {len(self.rays)}')
-                raise Exception(f'Grid::wFlow() - reading rays from triangles not implemented.')
+                # print(f'Number of defined edges: {len(self.rays)}')
+                # raise Exception(f'Grid::wFlow() - reading edges from triangles not yet tested.')
             else:
                 print('\nRays generated from corners')
-                sCorners = self.corners.s_corners
                 pair_lst = list(combinations(sCorners, 2))  # pairs of corners
                 for seq, (anch0, anch1) in enumerate(pair_lst):   # ctor of rays defined by corners of the PF
                     self.rays.append(self.aRay(self, seq, anch0, anch1))
-            print(f'Number of generated rays: {len(self.rays)}')
+            print(f'Number of defined rays: {len(self.rays)}')
         elif self.stage == 0:    # called from self.addSol()
             pass
         elif self.stage == 1:  # called from self.addSol()
