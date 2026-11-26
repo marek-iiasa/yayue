@@ -178,22 +178,46 @@ class Corners:
 # noinspection DuplicatedCode
 class Triangle:
     def __init__(self, corn):     # initialize triangles (ctor called after all corners are generated)
+        # tolerances (defaults)
+        self.tol_rank = 1e-6    # singular value below which a direction of the projected corners is void
+        self.tol_flat = 1e-6    # triangle with area <= tol_flat * (max area) is flat (3 collinear corners)
+        # links to other objects
         self.corners = corn
         self.wflow = corn.wflow
         self.mc = self.wflow.mc
-        pass
         self.verb = corn.verb
+        # criteria
         # self.scale = self.mc.cafAsp  # upper bound of achievements: [0, scale]
         self.cr_names = [cr.name for cr in self.mc.cr]  # fixed column order = order of criteria
         self.n_crit = len(self.cr_names)
+        # corners (set by rd_corners())
         self.sol_ids = list(corn.s_corners)  # solution id of each corner (row)
+        self.pts = None         # float (n_pts, n_crit): corners in achievement space
+        self.n_pts = None       # number of corners
+        self.pts_n = None       # corners used for geometry (= pts, achievements are already normalized)
+        # triangulation (set by triangulate())
+        self.proj = None        # float (n_pts, n_crit-1): corners projected on the plane orthogonal to (1,...,1)
+        self.dim = None         # dimension spanned by the projected corners (2 required)
+        self.collinear = None   # list of collinear corner triples (flat triangles)
+        self.simplices = None   # int (n_tri, 3): corner ids of each triangle
+        self.flat = None        # bool (n_tri,): True for a flat triangle
+        # edges (set by mk_edges())
+        self.edges = None       # int (n_edges, 2): corner ids of the edge ends (a < b)
+        self.edge_len = None    # float (n_edges,): Chebyshev length of the edge
+        self.edge_tris = None   # int (n_edges, 2): triangles sharing the edge; -1 = none (boundary edge)
+        self.tri_edges = None   # int (n_tri, 3): edge ids of each triangle; edge k opposite corner k
 
         if self.verb > 1:
             print(f'\n----------- Start generations of triangles. -----------\n')
+        self.rd_corners()   # parse the corners into self.pts
+        self.triangulate()  # triangulate the corners on the (n_crit-1)-dim Pareto surface
+        if self.verb > 1:
+            print(f'\n----------- Finished generations of triangles. -----------\n')
 
-        # parse corners "name: val, name: val, ..." into an (n_corners, n_crit) array
+    def rd_corners(self):
+        """Parse corners "name: val, name: val, ..." (Corners.a_corners) into self.pts (n_pts, n_crit)."""
         rows = []
-        for cor in corn.a_corners:
+        for cor in self.corners.a_corners:
             d = {}
             for item in cor.split(','):
                 name, val = item.rsplit(':', 1)
@@ -201,7 +225,7 @@ class Triangle:
             missing = set(self.cr_names) - d.keys()
             assert not missing, f'corner "{cor}" lacks criteria {missing}.'
             rows.append([d[nm] for nm in self.cr_names])
-        self.pts = np.array(rows, dtype=float)  # vertices in achievement space
+        self.pts = np.array(rows, dtype=float)
         self.n_pts = self.pts.shape[0]
         # self.pts_n = self.pts / self.scale  # same, normalized to [0, 1] (scale-independent)
         self.pts_n = self.pts       # refrain from further (points already normalized) normalization
@@ -213,13 +237,6 @@ class Triangle:
             print(f'Triangle: {self.n_pts} corners x {self.n_crit}:')
             for i, row in enumerate(self.pts):
                 print(f'  vertex {i} (sol_id {self.sol_ids[i]}): {np.round(row, 1)}')
-        self.triangulate()  # triangulate the corners on the (n_crit-1)-dim Pareto surface
-        pass
-        if self.verb > 1:
-            print(f'\n----------- Finished generations of triangles. -----------\n')
-
-
-       #  raise NotImplementedError('Triangle class is not implemented yet.')
 
     def triangulate(self, max_edge=None, keep_flat=False):
         """Triangulate the corners (any number >= 3) on the 2-dim Pareto surface (n_crit = 3 only).
@@ -227,7 +244,7 @@ class Triangle:
                 self.flat, a bool array (n_triangles,): True for a flat triangle (3 collinear corners).
         max_edge: optional, in achievement units (currently [0, 100]); drops triangles with a longer edge
                   (crude guard against spanning concave notches of the front).
-        keep_flat: True (default) keeps flat triangles (flagged in self.flat and printed); False drops them."""
+        keep_flat: True keeps flat triangles (flagged in self.flat and printed); False (default) drops them."""
 
         '''
         # orthonormal basis of the hyperplane orthogonal to the diagonal (1,...,1)
@@ -251,8 +268,7 @@ class Triangle:
 
         # actual dimension r of the projected point set (handles all-collinear / all-coplanar corners)
         _, sv, vt = np.linalg.svd(self.proj, full_matrices=False)
-        tol = 1e-6
-        r = int(np.sum(sv > tol)) if sv.size else 0
+        r = int(np.sum(sv > self.tol_rank)) if sv.size else 0  # tol_rank: see ctor
         self.dim = r
         red = self.proj @ vt[:r].T  # coords in the r-dim subspace
 
@@ -267,7 +283,7 @@ class Triangle:
             simp = Delaunay(red, qhull_options='Qbb Qc QJ').simplices
         # flat triangles: near-zero area (3 collinear corners)
         areas = np.array([abs(np.linalg.det(red[t[1:]] - red[t[0]])) / 2 for t in simp])
-        flat = areas <= tol * max(areas.max(), tol)
+        flat = areas <= self.tol_flat * max(areas.max(), self.tol_flat)  # tol_flat: see ctor
         self.collinear = [t.tolist() for t in simp[flat]]
         for t in self.collinear:
             print(f'Triangle: collinear corners {t} (sol_ids {[self.sol_ids[i] for i in t]}); flat triangle '
