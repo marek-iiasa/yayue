@@ -1,8 +1,13 @@
 """
 Reporting results of the MCMA iterations. Handling core-models is generic, i.e., any variable can be selected
 for the report.
+
+Options (analysis cfg):
+    dashboard: False    # True: interactive HTML dashboard of the PFR in <resDir>dashboard.html (dashboard.py)
+    dashboardJs: ../plotly.min.js   # shared plotly.js file (relative to the analysis folder); False: plotly CDN
 """
 
+import os
 import warnings
 import pandas as pd
 import pyomo.environ as pe  # more robust than using import *
@@ -171,6 +176,19 @@ class Report:
                     new_row.update({idx: f'{val:.2e}'})     # supressed the above warning (the string-key is unique)
         self.sol_vars.append(new_row)   # append to the list of rows
 
+    def dashboard(self):    # HTML dashboard of the solutions stored in parFront.csv; a failure is only reported
+        try:
+            from .dashboard import Dashboard, prepare_plotlyjs, subtitle, DASHBOARD, PLOTLYJS_DEFAULT
+            df = pd.read_csv(self.f_pareto)     # as stored (df_sol has the criteria values formatted as strings)
+            crit = [{'name': cr.name, 'sense': 'min' if cr.mult < 0 else 'max', 'utopia': cr.utopia,
+                     'nadir': cr.nadir} for cr in self.mc.cr]
+            js = prepare_plotlyjs(self.mc.opt('dashboardJs', PLOTLYJS_DEFAULT))
+            dash = Dashboard(df, crit, title=os.path.basename(os.getcwd()), subtitle=subtitle(self.cfg))
+            f_name = dash.write(f'{self.rep_dir}{DASHBOARD}', plotlyjs=js)
+            print(f'Dashboard of {len(dash.df)} solutions is stored in "{f_name}".')
+        except Exception as e:  # the analysis results are already stored, the dashboard is optional
+            print(f'WARNING: Report::dashboard() - dashboard not generated: {type(e).__name__}: {e}')
+
     # generate and store dfs with info on criteria and the variables requested for report/plots
     def summary(self):
         if self.wflow.par_rep is None:  # Pareto-front summary
@@ -196,6 +214,8 @@ class Report:
         df.to_csv(f_name, index=True)
         print(f'{len(df)} unique solutions stored in {f_name}. '
               f'{len(self.wflow.par_rep.clSols)} duplicated solutions skipped.')
+        if self.mc.opt('dashboard', False):
+            self.dashboard()    # interactive HTML dashboard (before the plots: written also if a plot fails)
 
         # clustering solutions
         n_clust = self.wflow.mc.opt('nClust', 0)
