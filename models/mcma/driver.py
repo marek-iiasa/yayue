@@ -37,6 +37,7 @@ def driver(cfg):
     m1 = rd_inst(cfg)    # upload or generate m1 (core model)
     print(f'Generating Pareto-front representation of the core-model instance: {m1.name}.')
 
+    # todo:  check the cause of bug detected by aS (pipa, cold start)
     # initialize the WrkFlow
     wflow = WrkFlow(cfg, m1)
     verb = wflow.mc.verb
